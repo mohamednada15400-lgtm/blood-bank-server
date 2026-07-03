@@ -1644,6 +1644,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'خطأ داخلي' });
 });
 
+// Health check for monitoring & keep-alive
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
 // === Auto-detect port & start ===
 function startServer(port) {
   const server = app.listen(port, '0.0.0.0');
@@ -1652,11 +1657,13 @@ function startServer(port) {
     console.log(`✅ Blood Bank Server running on port ${p}`);
     console.log(`   Device: ${os.hostname()}`);
     const url = `http://localhost:${p}`;
-    // Auto-open browser after 1s
-    setTimeout(() => {
-      const cmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-      require('child_process').exec(`${cmd} ${url}`, (e) => { if (e) {} });
-    }, 1000);
+    // Auto-open browser only in dev/portable mode (not on Render/Koyeb/etc)
+    if (!process.env.RENDER && !process.env.KOYEB && !process.env.PORT) {
+      setTimeout(() => {
+        const cmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+        require('child_process').exec(`${cmd} ${url}`, (e) => { if (e) {} });
+      }, 1000);
+    }
   });
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
