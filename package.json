@@ -1,0 +1,31 @@
+{
+  "name": "blood-bank-server",
+  "version": "1.0.0",
+  "description": "نظام إدارة بنوك الدم - نسخة محمولة",
+  "bin": "server.js",
+"main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "node init-db.js",
+    "build:exe": "pkg . --target node18-win-x64 --output dist/BloodBankServer.exe --debug"
+  },
+  "pkg": {
+    "assets": [
+      "public/**/*"
+    ],
+    "targets": ["node18-win-x64"],
+    "outputPath": "dist"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "connect-pg-simple": "^9.0.1",
+    "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
+    "express-rate-limit": "^8.5.2",
+    "express-session": "^1.17.3",
+    "helmet": "^8.2.0",
+    "memorystore": "^1.6.8",
+    "pg": "^8.11.3",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+backups/
+temp_restore/
+*.zip
+tunnel_*.txt
+cloudflared*.log
+backup.ps1
+backup.bat
+serve-zip.js
+start-cloud.ps1
+tunnel.cmd
