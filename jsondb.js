@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','users','hospitals','governorates','inventory','role_perms','readiness'];
+const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','users','hospitals','governorates','inventory','role_perms','readiness','equipment'];
 
 function makePerm(v,a,e,d,x) { return {v,a,e,d,x}; }
 
@@ -49,7 +49,8 @@ class JSONDB {
       readiness_notifications: [],
       archives: [],
       role_perms: Object.entries(DEF_PERMS).map(([role, perms]) => ({ role, permissions: JSON.parse(JSON.stringify(perms)) })),
-_counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, employee_monthly_updates: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1 }
+_counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, employee_monthly_updates: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1 },
+      blood_bank_equipment: {}
     };
   }
 
@@ -147,6 +148,7 @@ _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_s
     if (!this.data._counters.readiness_reports) this.data._counters.readiness_reports = 1;
     if (!this.data.readiness_notifications) this.data.readiness_notifications = [];
     if (!this.data._counters.readiness_notifications) this.data._counters.readiness_notifications = 1;
+    if (!this.data.blood_bank_equipment) this.data.blood_bank_equipment = {};
     if (!this.data.hospital_types || !this.data.hospital_types.length) this.data.hospital_types = [{ id: 1, name: 'تجميعي' }, { id: 2, name: 'تخزيني' }];
     if (!this.data._counters.hospital_types) this.data._counters.hospital_types = this.data.hospital_types.length + 1;
     if (!this.data.role_perms || !Array.isArray(this.data.role_perms)) {

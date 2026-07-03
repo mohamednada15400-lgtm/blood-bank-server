@@ -59,6 +59,7 @@ const PERM_PAGES = [
   { key: 'monthly_small', label: 'مؤشرات تخزينيه', cat: 'monthly', icon: 'fa-chart-bar' },
   { key: 'employees', label: 'بيان العاملين', cat: 'other', icon: 'fa-users' },
   { key: 'readiness', label: 'شيت الجاهزيه', cat: 'other', icon: 'fa-clipboard-check' },
+  { key: 'equipment', label: 'أجهزة بنك الدم', cat: 'other', icon: 'fa-microscope' },
   { key: 'archive', label: 'أرشيف', cat: 'other', icon: 'fa-folder-open' },
   { key: 'strategic_stock', label: 'الرصيد الاستراتيجي', cat: 'other', icon: 'fa-shield' },
   { key: 'inventory', label: 'المخزون', cat: 'admin', icon: 'fa-boxes-stacked' },
@@ -182,6 +183,7 @@ const MENU_CATS = [
     items: [
       { key: 'employees', label: 'بيان العاملين', icon: 'fa-users', page: 'renderEmployeeStatement' },
       { key: 'readiness', label: 'شيت الجاهزيه', icon: 'fa-clipboard-check', page: 'renderReadinessSheet' },
+      { key: 'equipment', label: 'أجهزة بنك الدم', icon: 'fa-microscope', page: 'renderBloodBankEquipment' },
       { key: 'strategic_stock', label: 'الرصيد الاستراتيجي', icon: 'fa-shield', page: 'renderStrategicStock' },
       { key: 'sync', label: 'مزامنة مع Drive', icon: 'fa-cloud-upload-alt', page: 'showSyncDialog' }
     ]
@@ -6192,7 +6194,206 @@ async function syncImport(event) {
   event.target.value = '';
 }
 
-// Fetch hospitals once for archive type filter
+// === Blood Bank Equipment ===
+async function renderBloodBankEquipment() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `<div class="page-header"><h2><i class="fas fa-microscope"></i> أجهزة بنوك الدم</h2></div>
+    <div id="eqToolbar" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;padding:8px 12px;background:var(--card-bg);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1)"></div>
+    <div id="eqStats" style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap"></div>
+    <div id="eqContent" class="loading" style="text-align:center;padding:40px;color:#999">جاري التحميل...</div>`;
+  try {
+    const data = await api('GET', '/blood-bank-equipment');
+    if (!data || !data.hospitals || !data.hospitals.length) {
+      document.getElementById('eqContent').innerHTML = '<div class="alert alert-info">لا توجد بيانات أجهزة — قم باستيراد ملف Excel</div>';
+      return;
+    }
+    const { types, hospitals } = data;
+    types.sort((a,b) => a.id - b.id);
+    // Compute stats
+    const total = hospitals.length;
+    const eqCounts = {};
+    types.forEach(t => { eqCounts[t.id] = { ok: 0, bad: 0, total: 0 }; });
+    hospitals.forEach(h => {
+      if (!h.equipment) return;
+      Object.entries(h.equipment).forEach(([tid, eq]) => {
+        if (eq.status && eq.status !== 'غير كفئ' && eq.status !== 'غير' && eq.status !== 0) eqCounts[tid].ok++;
+        else if (eq.status) eqCounts[tid].bad++;
+        eqCounts[tid].total++;
+      });
+    });
+    // Stats cards
+    const allOk = Object.values(eqCounts).reduce((s, c) => s + c.ok, 0);
+    const allBad = Object.values(eqCounts).reduce((s, c) => s + c.bad, 0);
+    const allTotal = Object.values(eqCounts).reduce((s, c) => s + c.total, 0);
+    const statsHtml = [
+      { label: 'بنوك الدم', value: total, icon: 'fa-hospital', color: '#17a2b8' },
+      { label: 'أجهزة "كفء"', value: allOk, icon: 'fa-check-circle', color: '#27ae60' },
+      { label: 'أجهزة "غير كفء"', value: allBad, icon: 'fa-exclamation-triangle', color: '#e74c3c' },
+      { label: 'إجمالي الأجهزة', value: allTotal, icon: 'fa-microscope', color: '#6c757d' },
+    ].map(s => `<div style="flex:1;min-width:120px;padding:10px 12px;background:var(--card-bg);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;border-right:3px solid ${s.color}">
+      <div style="font-size:11px;color:#888;margin-bottom:2px"><i class="fas ${s.icon}" style="color:${s.color}"></i> ${s.label}</div>
+      <div style="font-size:20px;font-weight:bold;color:${s.color}">${s.value}</div>
+    </div>`).join('');
+    document.getElementById('eqStats').innerHTML = statsHtml;
+    // Toolbar
+    const govs = [...new Set(hospitals.map(h => h.governorate).filter(Boolean))];
+    const toolbarHtml = [
+      `<span style="font-size:13px;color:var(--text-color)"><i class="fas fa-microscope" style="color:#795548"></i> <strong>أجهزة بنوك الدم</strong></span>`,
+      `<select id="eqGovFilter" onchange="renderEqTable()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px">
+        <option value="">كل المحافظات</option>${govs.map(g => `<option value="${g}">${g}</option>`).join('')}</select>`,
+      `<input id="eqSearch" placeholder="بحث..." oninput="renderEqTable()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;min-width:150px">`,
+      `<span id="eqResultCount" style="font-size:12px;color:#888"></span>`,
+    ].join(' | ');
+    document.getElementById('eqToolbar').innerHTML = toolbarHtml;
+    // Type filter chips
+    let chipHtml = '<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px">';
+    types.forEach(t => {
+      const c = eqCounts[t.id];
+      const pct = c.total ? Math.round(c.ok / c.total * 100) : 0;
+      chipHtml += `<span class="eq-type-chip" data-id="${t.id}" onclick="toggleEqType(${t.id})" style="cursor:pointer;padding:3px 8px;border-radius:12px;font-size:11px;background:${pct >= 80 ? '#e8f8e8' : pct >= 50 ? '#fff8e1' : '#fde8e8'};color:${pct >= 80 ? '#27ae60' : pct >= 50 ? '#f39c12' : '#e74c3c'};border:1px solid ${pct >= 80 ? '#a3d9a5' : pct >= 50 ? '#f0d58c' : '#f5a3a3'}">
+        ${t.name} <small>(${c.ok}/${c.total})</small>
+      </span>`;
+    });
+    chipHtml += '</div>';
+    document.getElementById('eqToolbar').insertAdjacentHTML('afterend', chipHtml);
+    window._eqData = { types, hospitals, eqCounts, typeFilter: new Set(types.map(t => t.id)) };
+    renderEqTable();
+  } catch (e) {
+    document.getElementById('eqContent').innerHTML = '<div class="alert alert-error">' + sanitize(e.message) + '</div>';
+  }
+}
+
+function toggleEqType(id) {
+  const d = window._eqData;
+  if (!d) return;
+  if (d.typeFilter.has(id)) d.typeFilter.delete(id);
+  else d.typeFilter.add(id);
+  document.querySelectorAll('.eq-type-chip').forEach(el => {
+    const tid = parseInt(el.dataset.id);
+    el.style.opacity = d.typeFilter.has(tid) ? '1' : '0.4';
+  });
+  renderEqTable();
+}
+
+function renderEqTable() {
+  const { types, hospitals, eqCounts, typeFilter } = window._eqData || {};
+  if (!hospitals) return;
+  const gov = document.getElementById('eqGovFilter')?.value || '';
+  const q = (document.getElementById('eqSearch')?.value || '').trim().toLowerCase();
+  let filtered = hospitals;
+  if (gov) filtered = filtered.filter(h => h.governorate === gov);
+  if (q) filtered = filtered.filter(h => h.name.toLowerCase().includes(q) || (h.governorate || '').toLowerCase().includes(q));
+  document.getElementById('eqResultCount').textContent = filtered.length + '/' + hospitals.length;
+  const visibleTypes = types.filter(t => typeFilter.has(t.id));
+  let html = '<div style="overflow-x:auto;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1)">';
+  html += '<table style="border-collapse:collapse;width:100%;font-size:12px;min-width:' + (visibleTypes.length * 90 + 300) + 'px">';
+  html += '<thead><tr style="background:var(--card-bg);position:sticky;top:0;z-index:2">';
+  html += '<th style="padding:8px 6px;border:1px solid var(--border);text-align:center;min-width:110px">المحافظة</th>';
+  html += '<th style="padding:8px 6px;border:1px solid var(--border);text-align:center;min-width:160px">بنك الدم</th>';
+  html += '<th style="padding:8px 4px;border:1px solid var(--border);text-align:center;width:50px">صلاحية</th>';
+  visibleTypes.forEach(t => {
+    const c = eqCounts[t.id];
+    const pct = c.total ? Math.round(c.ok / c.total * 100) : 0;
+    html += `<th style="padding:6px 4px;border:1px solid var(--border);text-align:center;min-width:80px;font-size:11px;background:${pct >= 80 ? '#e8f8e8' : pct >= 50 ? '#fff8e1' : '#fde8e8'}">${t.name} <small style="color:#999">${c.ok}/${c.total}</small></th>`;
+  });
+  html += '</tr></thead><tbody>';
+  filtered.forEach(h => {
+    const eq = h.equipment || {};
+    const vals = Object.values(eq);
+    const totalEq = vals.length;
+    const badEq = vals.filter(v => v && (v.status === 'غير كفئ' || v.status === 'غير' || v.status === 0 || v.status === 'غير كفء')).length;
+    const goodEq = totalEq - badEq;
+    const pct = totalEq ? Math.round(goodEq / totalEq * 100) : 0;
+    html += '<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="eqEditHospital(\'' + esc(h.name) + '\')">';
+    html += `<td style="padding:6px;border:1px solid var(--border);text-align:center;font-size:11px">${esc(h.governorate || '')}</td>`;
+    html += `<td style="padding:6px 8px;border:1px solid var(--border);text-align:right;font-weight:bold">${esc(h.name)}</td>`;
+    html += `<td style="padding:6px;border:1px solid var(--border);text-align:center"><span style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:bold;color:#fff;background:${pct >= 80 ? '#27ae60' : pct >= 50 ? '#f39c12' : '#e74c3c'}">${goodEq}/${totalEq}</span></td>`;
+    visibleTypes.forEach(t => {
+      const e = eq[t.id];
+      if (!e) {
+        html += '<td style="padding:4px;border:1px solid var(--border);text-align:center;color:#ddd">-</td>';
+      } else {
+        const count = e.count;
+        const status = e.status;
+        const isBad = !status || status === 'غير كفئ' || status === 'غير' || status === 0 || status === 'غير كفء';
+        const isMid = status === 'متوسط';
+        const bg = isBad ? '#fde8e8' : isMid ? '#fff8e1' : '#e8f8e8';
+        const clr = isBad ? '#e74c3c' : isMid ? '#f39c12' : '#27ae60';
+        let info = count != null ? count : '';
+        if (e.brand) info += ' ' + e.brand.substring(0, 12);
+        html += `<td style="padding:3px 4px;border:1px solid var(--border);text-align:center;background:${bg};font-size:11px">
+          <div style="font-weight:bold;color:${clr}">${info || '-'}</div>
+          ${status ? `<div style="font-size:10px;color:${clr}">${status}</div>` : ''}
+        </td>`;
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div style="margin-top:8px;text-align:center;font-size:11px;color:#999">انقر على أي مستشفى لعرض وتعديل الأجهزة</div>';
+  document.getElementById('eqContent').innerHTML = html;
+}
+
+function eqEditHospital(name) {
+  const { types, hospitals } = window._eqData || {};
+  const hos = hospitals.find(h => h.name === name);
+  if (!hos) return;
+  const eq = hos.equipment || {};
+  let body = `<div style="max-height:70vh;overflow-y:auto">
+    <div style="margin-bottom:12px;padding:8px 12px;background:#f5f5f5;border-radius:6px">
+      <strong>${esc(hos.name)}</strong>
+      <span style="color:#888;font-size:12px;margin-right:12px">${esc(hos.governorate || '')}</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:#e9ecef">
+        <th style="padding:6px;border:1px solid #ddd;text-align:center">الجهاز</th>
+        <th style="padding:6px;border:1px solid #ddd;text-align:center;width:60px">العدد</th>
+        <th style="padding:6px;border:1px solid #ddd;text-align:center">الماركة</th>
+        <th style="padding:6px;border:1px solid #ddd;text-align:center;width:70px">السعة</th>
+        <th style="padding:6px;border:1px solid #ddd;text-align:center;width:90px">الحالة</th>
+      </tr></thead><tbody>`;
+  types.forEach(t => {
+    const e = eq[t.id] || {};
+    body += `<tr>
+      <td style="padding:6px;border:1px solid #ddd;text-align:right;font-weight:bold">${t.name}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center"><input type="number" id="eq_${t.id}_count" value="${e.count || 0}" min="0" style="width:50px;text-align:center;padding:4px;border:1px solid #ccc;border-radius:4px"></td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center"><input type="text" id="eq_${t.id}_brand" value="${esc(e.brand || '')}" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:4px"></td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center"><input type="text" id="eq_${t.id}_capacity" value="${esc(e.capacity || '')}" style="width:60px;text-align:center;padding:4px;border:1px solid #ccc;border-radius:4px"></td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center">
+        <select id="eq_${t.id}_status" style="padding:4px;border:1px solid #ccc;border-radius:4px">
+          <option value="كفئ" ${e.status === 'كفئ' ? 'selected' : ''}>كفء</option>
+          <option value="متوسط" ${e.status === 'متوسط' ? 'selected' : ''}>متوسط</option>
+          <option value="غير كفئ" ${e.status === 'غير كفئ' || e.status === 'غير كفء' ? 'selected' : ''}>غير كفء</option>
+          <option value="" ${!e.status ? 'selected' : ''}>---</option>
+        </select>
+      </td>
+    </tr>`;
+  });
+  body += '</tbody></table></div>';
+  const footer = `<button class="btn btn-success" onclick="eqSaveHospital('${esc(name)}')"><i class="fas fa-save"></i> حفظ</button>`;
+  openModal('تعديل أجهزة ' + name, body, footer);
+}
+
+async function eqSaveHospital(name) {
+  const { types } = window._eqData || {};
+  const equipment = {};
+  types.forEach(t => {
+    const count = parseInt(document.getElementById('eq_' + t.id + '_count')?.value) || 0;
+    const brand = document.getElementById('eq_' + t.id + '_brand')?.value || '';
+    const capacity = document.getElementById('eq_' + t.id + '_capacity')?.value || '';
+    const status = document.getElementById('eq_' + t.id + '_status')?.value || '';
+    equipment[t.id] = { count, brand, capacity, status };
+  });
+  try {
+    await api('PUT', '/blood-bank-equipment/hospital', { name, equipment });
+    closeModal();
+    renderBloodBankEquipment();
+    showToast('✅ تم حفظ التعديلات');
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
 let _archHospitals = null;
 async function getArchHospitals() {
   if (!_archHospitals) _archHospitals = await api('GET', '/hospitals');

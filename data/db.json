@@ -2307,6 +2307,13 @@
           "e": 1,
           "d": 1,
           "x": 1
+        },
+        "equipment": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
         }
       }
     },
@@ -2447,6 +2454,13 @@
           "x": 1
         },
         "readiness": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "equipment": {
           "v": 1,
           "a": 1,
           "e": 1,
@@ -2597,6 +2611,13 @@
           "e": 1,
           "d": 1,
           "x": 1
+        },
+        "equipment": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
         }
       }
     },
@@ -2737,6 +2758,13 @@
           "x": 0
         },
         "readiness": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "equipment": {
           "v": 1,
           "a": 1,
           "e": 1,
@@ -2887,6 +2915,13 @@
           "e": 0,
           "d": 0,
           "x": 1
+        },
+        "equipment": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 1
         }
       }
     },
@@ -3032,6 +3067,13 @@
           "e": 0,
           "d": 0,
           "x": 0
+        },
+        "equipment": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
         }
       }
     }
@@ -3055,9 +3097,9 @@
     "monthly_small_indicators": 8,
     "employee_statements": 346,
     "employee_monthly_updates": 1,
-    "readiness_occasions": 14,
-    "readiness_reports": 10,
-    "readiness_notifications": 11
+    "readiness_occasions": 15,
+    "readiness_reports": 11,
+    "readiness_notifications": 12
   },
   "monthly_consumption": [
     {
@@ -13410,5 +13452,5030 @@
   "employee_monthly_updates": [],
   "readiness_occasions": [],
   "readiness_reports": [],
-  "readiness_notifications": []
+  "readiness_notifications": [],
+  "blood_bank_equipment": {
+    "types": [
+      {
+        "id": 1,
+        "name": "فريزر بلازما",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 2,
+        "name": "ثلاجة دم",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 3,
+        "name": "ثلاجة مستهلكات",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 4,
+        "name": "ثلاجة اعدام",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 5,
+        "name": "حضان للصفائح الدموية",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 6,
+        "name": "جهاز تسييح البلازما",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 7,
+        "name": "نظام مغلق Close sys",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 8,
+        "name": "عاصر انبوب Tube Stripper",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 9,
+        "name": "التوافق Cm set",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 10,
+        "name": "Pipette Fixed 50µ",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 11,
+        "name": "Pipette Variable 100-1000µ",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 12,
+        "name": "Pipette Variable 20-200µ",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 13,
+        "name": "Pipette Variable 10-100µ",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 14,
+        "name": "ميزان ديجيتال Lab Balance",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 15,
+        "name": "سنترفيوج مبرد",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 16,
+        "name": "جهاز فصل يدوي Extractor",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 17,
+        "name": "سرير متبرع",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 18,
+        "name": "جهاز هزاز وميزان قرب الدم",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 19,
+        "name": "جهاز قياس هيموجلوبين",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 20,
+        "name": "Adult Sphygmomanometer",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 21,
+        "name": "Stethoscope",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      },
+      {
+        "id": 22,
+        "name": "ميزان أشخاص",
+        "sub": [
+          "عدد",
+          "حالة"
+        ]
+      }
+    ],
+    "hospitals": [
+      {
+        "governorate": "",
+        "name": "٣٠ يونيو",
+        "consumption": {
+          "blood": 65,
+          "plasma": 3,
+          "platelets": 0
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "KW",
+            "capacity": "600"
+          },
+          "2": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "thalheimer Haemo500",
+            "capacity": "500"
+          },
+          "3": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "4": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "5": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "6": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Barkey",
+            "capacity": ""
+          },
+          "7": {
+            "count": 3,
+            "status": "كفئ",
+            "brand": "Tesonic",
+            "capacity": ""
+          },
+          "8": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "9": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "CAPP",
+            "capacity": ""
+          },
+          "10": {
+            "count": 2,
+            "status": "متوسط",
+            "brand": "Acura",
+            "capacity": ""
+          },
+          "11": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "12": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "13": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "14": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "15": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "16": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "17": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "18": {
+            "count": 0,
+            "brand": "",
+            "capacity": "",
+            "status": ""
+          },
+          "19": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "20": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "21": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "22": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          }
+        },
+        "lastUpdated": "2026-07-03T05:11:02.488Z"
+      },
+      {
+        "governorate": "",
+        "name": "ابوسمبل الدولي",
+        "consumption": {
+          "blood": 15,
+          "plasma": 3,
+          "platelets": 0
+        },
+        "equipment": {
+          "1": {
+            "count": 0,
+            "status": "غير كفئ",
+            "brand": "Thalheimer",
+            "capacity": null
+          },
+          "2": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "Thalheimer",
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "centrking",
+            "capacity": null
+          },
+          "10": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "اسوان (الصداقه)",
+        "consumption": {
+          "blood": 240,
+          "plasma": 100,
+          "platelets": 200
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Meling",
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Lab tech",
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "Ideal",
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": "KW",
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Barkey",
+            "capacity": null
+          },
+          "7": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "Delcon",
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Ortho",
+            "capacity": null
+          },
+          "10": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Finnpipette F2",
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "الاطفال التخصصي",
+        "consumption": {
+          "blood": 120,
+          "plasma": 60,
+          "platelets": 40
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "التل الكبير التخصصي",
+        "consumption": {
+          "blood": 10,
+          "plasma": 14,
+          "platelets": 0
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "الحياة بورفؤاد *",
+        "consumption": {
+          "blood": 285,
+          "plasma": 35,
+          "platelets": 30
+        },
+        "equipment": {
+          "1": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 4,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 3,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "الزهور",
+        "consumption": {
+          "blood": 116,
+          "plasma": 20,
+          "platelets": 6
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Trust eg",
+            "capacity": "500"
+          },
+          "2": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Medline",
+            "capacity": "500"
+          },
+          "3": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "JAC",
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "KW",
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Bio _tech",
+            "capacity": null
+          },
+          "7": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "LMB",
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": "0",
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Ohaus",
+            "capacity": null
+          },
+          "10": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Socorex",
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": "0",
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "السباعية التخصصي",
+        "consumption": {
+          "blood": 58,
+          "plasma": 6,
+          "platelets": 14
+        },
+        "equipment": {
+          "1": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "0",
+            "brand": "Medical Project K.W",
+            "capacity": "180"
+          },
+          "3": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "يونيون إير",
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 1,
+            "status": "متوسط",
+            "brand": "Accumax Pro",
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "السلام",
+        "consumption": {
+          "blood": 399,
+          "plasma": 183,
+          "platelets": 124
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": "Barkey",
+            "capacity": null
+          },
+          "7": {
+            "count": 3,
+            "status": "كفئ",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "2",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "القصاصين التخصصي",
+        "consumption": {
+          "blood": 170,
+          "plasma": 30,
+          "platelets": 0
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "القنطرة شرق التخصصي",
+        "consumption": {
+          "blood": 71,
+          "plasma": 21,
+          "platelets": 34
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "القنطرة غرب التخصصي",
+        "consumption": {
+          "blood": 91,
+          "plasma": 47,
+          "platelets": 15
+        },
+        "equipment": {
+          "1": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "الكرنك الدولي *",
+        "consumption": {
+          "blood": 296,
+          "plasma": 201,
+          "platelets": 95
+        },
+        "equipment": {
+          "1": {
+            "count": 2,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 4,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 3,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 4,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 4,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 3,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "المجمع الطبي الاقصر",
+        "consumption": {
+          "blood": 434,
+          "plasma": 284,
+          "platelets": 73
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 0,
+            "status": "2",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "المرأه والطفل ( حوض الدرس )",
+        "consumption": {
+          "blood": null,
+          "plasma": null,
+          "platelets": null
+        },
+        "equipment": {
+          "1": {
+            "count": 0,
+            "status": "غير كفئ",
+            "brand": "zanussi",
+            "capacity": "287"
+          },
+          "2": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "B medical system",
+            "capacity": "300"
+          },
+          "3": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "متوسط",
+            "brand": "K",
+            "capacity": null
+          },
+          "10": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "dragon lab",
+            "capacity": null
+          },
+          "11": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "ET",
+            "capacity": null
+          },
+          "12": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": null,
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "المسلة",
+        "consumption": {
+          "blood": 154,
+          "plasma": 43,
+          "platelets": 93
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "المناظير و الجهاز الهضمي",
+        "consumption": {
+          "blood": null,
+          "plasma": null,
+          "platelets": null
+        },
+        "equipment": {}
+      },
+      {
+        "governorate": "",
+        "name": "النصر *",
+        "consumption": {
+          "blood": 350,
+          "plasma": 85,
+          "platelets": 75
+        },
+        "equipment": {
+          "1": {
+            "count": 3,
+            "status": "كفئ",
+            "brand": "LG",
+            "capacity": "500"
+          },
+          "2": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 3,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 3,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 2,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          }
+        },
+        "lastUpdated": "2026-07-03T05:11:26.821Z"
+      },
+      {
+        "governorate": "",
+        "name": "ايزيس التخصصي",
+        "consumption": {
+          "blood": 104,
+          "plasma": 63,
+          "platelets": 57
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 2,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 2,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "حورس",
+        "consumption": {
+          "blood": 328,
+          "plasma": 210,
+          "platelets": 134
+        },
+        "equipment": {
+          "1": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "Thalheimer",
+            "capacity": null
+          },
+          "2": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "Thalheimer",
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "Alaska",
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Biotech",
+            "capacity": null
+          },
+          "7": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "LMP",
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "متوسط",
+            "brand": "Afak Med",
+            "capacity": null
+          },
+          "10": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Diab",
+            "capacity": null
+          },
+          "11": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Dragon",
+            "capacity": null
+          },
+          "12": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "دراو",
+        "consumption": {
+          "blood": 100,
+          "plasma": 20,
+          "platelets": 10
+        },
+        "equipment": {
+          "1": {
+            "count": 0,
+            "status": "غير كفئ",
+            "brand": "توشيبا منزلى",
+            "capacity": "238"
+          },
+          "2": {
+            "count": 0,
+            "status": "متوسط",
+            "brand": "Electrolux",
+            "capacity": "600"
+          },
+          "3": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Nahita",
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "دهب",
+        "consumption": {
+          "blood": null,
+          "plasma": null,
+          "platelets": null
+        },
+        "equipment": {}
+      },
+      {
+        "governorate": "",
+        "name": "سانت كاترين",
+        "consumption": {
+          "blood": 17,
+          "plasma": 8,
+          "platelets": 12
+        },
+        "equipment": {
+          "1": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Barkey",
+            "capacity": null
+          },
+          "7": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "شرم الشيخ الدولي",
+        "consumption": {
+          "blood": 150,
+          "plasma": 100,
+          "platelets": 100
+        },
+        "equipment": {
+          "1": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "طابا",
+        "consumption": {
+          "blood": 9,
+          "plasma": 0,
+          "platelets": 0
+        },
+        "equipment": {
+          "1": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": "barkey",
+            "capacity": null
+          },
+          "7": {
+            "count": 3,
+            "status": "كفئ",
+            "brand": "delcon",
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "digicen",
+            "capacity": null
+          },
+          "10": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "thermo scientific",
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "طوارئ ابو خليفه",
+        "consumption": {
+          "blood": 100,
+          "plasma": 60,
+          "platelets": 0
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Thalheimer",
+            "capacity": "500"
+          },
+          "2": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Thalheimer",
+            "capacity": "500"
+          },
+          "3": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "KW",
+            "capacity": "150"
+          },
+          "6": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "Barket",
+            "capacity": null
+          },
+          "7": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "jeshra instruments",
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "kendro",
+            "capacity": null
+          },
+          "10": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Socorex",
+            "capacity": null
+          },
+          "11": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Biohit",
+            "capacity": null
+          },
+          "12": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "فايد التخصصي",
+        "consumption": {
+          "blood": 152,
+          "plasma": 66,
+          "platelets": 1
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "2",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "كوم امبو *",
+        "consumption": {
+          "blood": 270,
+          "plasma": 121,
+          "platelets": 15
+        },
+        "equipment": {
+          "1": {
+            "count": 0,
+            "status": "3",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "مجمع الفيروز *",
+        "consumption": {
+          "blood": 100,
+          "plasma": 42,
+          "platelets": 24
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 0,
+            "status": "2",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "2",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "مركز 30 يونيو",
+        "consumption": {
+          "blood": 110,
+          "plasma": 50,
+          "platelets": 0
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "KW",
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "Thalheimer",
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": "0",
+            "capacity": null
+          },
+          "6": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 1,
+            "status": "متوسط",
+            "brand": "jeshra instruments",
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": "0",
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "Socorex",
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "1",
+            "brand": "Socorex",
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "",
+        "name": "معهد الاورام",
+        "consumption": {
+          "blood": 135,
+          "plasma": 51,
+          "platelets": 22
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "توشيبا",
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "kirsch",
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "FACIS",
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "KW",
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "KW",
+            "capacity": null
+          },
+          "7": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "CRC658",
+            "capacity": null
+          },
+          "10": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "اســـوان",
+        "name": "* النيل (ادفو)",
+        "consumption": {
+          "blood": 200,
+          "plasma": 110,
+          "platelets": 100
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 3,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 3,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 2,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "الإســـمـــاعــيــلية",
+        "name": "المجمع الطبي *",
+        "consumption": {
+          "blood": 1052,
+          "plasma": 645,
+          "platelets": 182
+        },
+        "equipment": {
+          "1": {
+            "count": 4,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 5,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 4,
+            "status": "2",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 1,
+            "status": "2",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 10,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 2,
+            "status": "2",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 5,
+            "status": null,
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 2,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "الأقـصــــــر",
+        "name": "طيبة التخصصي *",
+        "consumption": {
+          "blood": 600,
+          "plasma": 550,
+          "platelets": 190
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 1,
+            "status": "2",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 3,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 3,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "السويس",
+        "name": "مجمع السويس الطبي *",
+        "consumption": {
+          "blood": 700,
+          "plasma": 350,
+          "platelets": 0
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "2": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "3": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "4": {
+            "count": 1,
+            "status": "",
+            "brand": "",
+            "capacity": ""
+          },
+          "5": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "6": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "7": {
+            "count": 3,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "8": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "9": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "10": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "11": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "12": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "13": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "14": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "15": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "16": {
+            "count": 3,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "17": {
+            "count": 3,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "18": {
+            "count": 3,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "19": {
+            "count": 2,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "20": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "21": {
+            "count": 0,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          },
+          "22": {
+            "count": 1,
+            "status": "كفئ",
+            "brand": "",
+            "capacity": ""
+          }
+        },
+        "lastUpdated": "2026-07-03T05:11:21.915Z"
+      },
+      {
+        "governorate": "بــورســـعيد",
+        "name": "التضامن (مجمع الشفاء)*",
+        "consumption": {
+          "blood": 269,
+          "plasma": 172,
+          "platelets": 60
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 3,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 2,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 2,
+            "status": "2",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 3,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      },
+      {
+        "governorate": "جنوب سيناء",
+        "name": "راس سدر *",
+        "consumption": {
+          "blood": 150,
+          "plasma": 50,
+          "platelets": 5
+        },
+        "equipment": {
+          "1": {
+            "count": 1,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "2": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "3": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "4": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "5": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "6": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "7": {
+            "count": 3,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "8": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "9": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "10": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "11": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "12": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "13": {
+            "count": 0,
+            "status": "1",
+            "brand": null,
+            "capacity": null
+          },
+          "14": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "15": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "16": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "17": {
+            "count": 2,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "18": {
+            "count": 3,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "19": {
+            "count": 0,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "20": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "21": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          },
+          "22": {
+            "count": 1,
+            "status": "0",
+            "brand": null,
+            "capacity": null
+          }
+        }
+      }
+    ],
+    "lastUpdated": "2026-07-03T05:09:19.636Z"
+  }
 }

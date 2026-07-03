@@ -1599,6 +1599,32 @@ app.get('/api/readiness-sheet', requireAuth(), async (req, res) => {
   }
 });
 
+// === Blood Bank Equipment ===
+app.get('/api/blood-bank-equipment', requireAuth(), requirePerm('equipment', 'view'), async (req, res) => {
+  const eq = db.data.blood_bank_equipment || {};
+  res.json(eq);
+});
+
+app.put('/api/blood-bank-equipment/hospital', requireAuth(), requirePerm('equipment', 'edit'), async (req, res) => {
+  const { name, equipment } = req.body;
+  const eq = db.data.blood_bank_equipment;
+  if (!eq || !eq.hospitals) return res.status(400).json({ error: 'لا توجد بيانات' });
+  const hos = eq.hospitals.find(h => h.name === name);
+  if (!hos) return res.status(404).json({ error: 'المستشفى غير موجود' });
+  if (equipment) {
+    Object.keys(equipment).forEach(typeId => {
+      if (hos.equipment[typeId]) {
+        Object.assign(hos.equipment[typeId], equipment[typeId]);
+      } else {
+        hos.equipment[typeId] = equipment[typeId];
+      }
+    });
+  }
+  hos.lastUpdated = new Date().toISOString();
+  db._save();
+  res.json({ success: true });
+});
+
 // === Sync endpoints (Drive / cloud) ===
 const MASTER_ONLY = requireMaster();
 
@@ -1634,6 +1660,11 @@ process.on('unhandledRejection', (reason) => {
   console.error('UNHANDLED REJECTION:', reason);
 });
 
+// Health check for monitoring & keep-alive
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
 // Catch-all — serve index.html for SPA routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -1642,11 +1673,6 @@ app.get('*', (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
   res.status(500).json({ error: err.message || 'خطأ داخلي' });
-});
-
-// Health check for monitoring & keep-alive
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
 
 // === Auto-detect port & start ===

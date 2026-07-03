@@ -739,6 +739,12 @@ body.dark-mode .ind-table tbody tr:nth-child(even) .gov-col { background: #15153
 .rdn-print-table th, .rdn-print-table td { word-break: break-word; white-space: normal; }
 .rdn-print-table { min-width: 700px !important; }
 
+/* Equipment page styles */
+.eq-type-chip:hover { transform: scale(1.05); transition: 0.2s; }
+#eqContent table tr:hover td { background: var(--hover-bg) !important; }
+#eqContent table td { transition: background 0.2s; }
+#eqModalTable input:focus, #eqModalTable select:focus { outline: 2px solid #1565c0; outline-offset: -1px; }
+
 @media print {
   body * { visibility: hidden; }
   #rdnPrintTable, #rdnPrintTable *, #rdnSummaryTable, #rdnSummaryTable * { visibility: visible; }
