@@ -68,8 +68,8 @@ app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(express.static(path.join(BASE_DIR, 'public')));
 
 // Rate limiting
-const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 15, message: { error: 'محاولات كثيرة جدًا، حاول بعد 15 دقيقة' } });
-const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 200, message: { error: 'طلبات كثيرة جدًا، حاول بعد دقيقة' } });
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, message: { error: 'محاولات كثيرة جدًا، حاول بعد 15 دقيقة' } });
+const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 300, message: { error: 'طلبات كثيرة جدًا، حاول بعد دقيقة' } });
 app.use('/api/', apiLimiter);
 
 function requireAuth(roles) {

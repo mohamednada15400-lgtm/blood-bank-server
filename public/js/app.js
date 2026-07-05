@@ -198,7 +198,7 @@ async function doLogin() {
     const res = await api('POST', '/login', { username, password });
     initApp(res.user);
   } catch (e) {
-    document.getElementById('loginError').textContent = 'Username or Password خطأ يرجي الاتصال بالمطور';
+    document.getElementById('loginError').textContent = e.message || 'Username or Password خطأ يرجي الاتصال بالمطور';
   }
 }
 

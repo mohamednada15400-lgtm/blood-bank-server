@@ -1,0 +1,12 @@
+/.git
+/node_modules
+/dist
+/backups
+/data/drive*
+/data/*.xlsx
+*.log
+server_output.*
+.dockerignore
+.env
+Dockerfile
+fly.toml
