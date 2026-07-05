@@ -4,7 +4,7 @@ let _clockInterval = null;
 
 function getCairoDate() {
   const now = new Date();
-  return new Date(now.getTime() + (_timeOffset - 1) * 3600000);
+  return new Date(now.getTime() + _timeOffset * 3600000);
 }
 function fmtCairoDate(fmt) {
   const d = getCairoDate();
