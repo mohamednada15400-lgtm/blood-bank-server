@@ -16,14 +16,21 @@ const DATA_DIR = process.env.DATA_DIR || path.join(BASE_DIR, 'data');
 const os = require('os');
 function getLocalIP() { const ifs = os.networkInterfaces(); for (const k in ifs) { for (const i of ifs[k]) { if (i.family === 'IPv4' && !i.internal) return i.address; } } return '127.0.0.1'; }
 
-// First run: copy initial db.json to DATA_DIR if volume is empty
+// Cloud deploy: copy initial db.json if volume is empty or has default data
 if (DATA_DIR !== path.join(BASE_DIR, 'data')) {
   const srcDb = path.join(BASE_DIR, 'data', 'db.json');
   const dstDb = path.join(DATA_DIR, 'db.json');
-  if (fs.existsSync(srcDb) && !fs.existsSync(dstDb)) {
-    try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {}
+  try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {}
+  let needsCopy = !fs.existsSync(dstDb);
+  if (!needsCopy) {
+    try {
+      const dstData = JSON.parse(fs.readFileSync(dstDb, 'utf8'));
+      if (!dstData.users || dstData.users.length < 10) needsCopy = true;
+    } catch { needsCopy = true; }
+  }
+  if (needsCopy && fs.existsSync(srcDb)) {
     fs.copyFileSync(srcDb, dstDb);
-    console.log('📦 Copied initial db.json to', dstDb);
+    console.log('📦 Deployed initial db.json to', dstDb);
   }
 }
 
