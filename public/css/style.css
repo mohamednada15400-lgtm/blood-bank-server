@@ -7,6 +7,7 @@
   --sidebar-width: 250px; --header-height: 60px;
   --card-bg: #fff; --hover-bg: #f8f9fa; --thead-bg: #e9ecef;
   --gradient-start: #667eea; --gradient-end: #764ba2;
+  --font-sm: clamp(11px, 1.2vw, 14px); --font-base: clamp(13px, 1.5vw, 16px); --font-lg: clamp(16px, 2.5vw, 24px);
 }
 
 /* Animations */
@@ -37,7 +38,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-
 
 /* Login */
 .login-page {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  min-height: 100dvh; display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, #0d7a72 0%, #1a9e8f 50%, #dc3545 100%);
   padding: 20px; position: relative; z-index: 0;
 }
@@ -280,7 +281,7 @@ body.dark-mode *::-webkit-scrollbar-thumb { background: #2a2a4a; }
 .blood-item.good { border-color: var(--success); } .blood-item.good .qty { color: var(--success); }
 
 /* Table */
-.table-wrapper { overflow-x: auto; }
+.table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
 table { width: 100%; border-collapse: collapse; }
 table th { text-align: right; padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--text-light); border-bottom: 2px solid var(--border); white-space: nowrap; }
 table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
@@ -672,15 +673,23 @@ body.dark-mode .strategic-table .cell-under { background: #3a2a1a; color: #ffb74
 
 /* ====== Mobile Responsive Enhancements ====== */
 @media (max-width: 600px) {
-  .header { padding: 0 8px; }
-  .header-logo { width: 28px; height: 28px; margin-left: 4px; }
+  .header { padding: 0 6px; }
+  .header-logo { width: 26px; height: 26px; margin-left: 4px; }
+  .header-brand { font-size: 14px; }
+  .header-sep { margin: 0 3px; }
   .credit-text { display: none; }
-  .header-right { gap: 6px; }
-  .header-left { gap: 6px; }
-  .user-badge { font-size: 11px; padding: 2px 8px; }
+  .header-right { gap: 4px; }
+  .header-left { gap: 4px; }
+  .user-badge { font-size: 11px; padding: 2px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
   .date-display { display: none; }
+  .clock-display { font-size: 12px; padding: 2px 6px; }
+  .header-icon-btn { font-size: 14px; width: 32px; height: 32px; }
   .content { padding: 8px; }
   .login-box { padding: 20px 16px; }
+  .login-box h1 { font-size: clamp(20px, 6vw, 32px); }
+  .login-subtitle { font-size: clamp(11px, 3vw, 14px); }
+  .login-logo { width: 60px; height: 60px; }
+  .login-icon { font-size: 28px; width: 56px; height: 56px; }
   .main-icons-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 100%; margin: 16px auto; padding: 0; }
   .main-icon-card { padding: 18px 6px 14px; }
   .main-icon-circle { width: 50px; height: 50px; }
@@ -718,11 +727,12 @@ body.dark-mode .strategic-table .cell-under { background: #3a2a1a; color: #ffb74
   .sub-nav-item { padding: 7px 8px; font-size: 11px; white-space: nowrap; flex-shrink: 0; }
   .btn { padding: 10px 14px; font-size: 13px; min-height: 44px; }
   .btn-sm { padding: 8px 10px; min-height: 36px; font-size: 11px; }
-  .modal { width: 98%; margin: 5px; max-height: 95vh; }
+  .modal { width: 98%; margin: 5px; max-height: 95vh; border-radius: 12px; }
   .modal-header { padding: 10px 12px; }
+  .modal-header h3 { font-size: 14px; }
   .modal-body { padding: 10px; }
   .modal-footer { padding: 10px 12px; flex-wrap: wrap; }
-  .modal-footer .btn { flex: 1; justify-content: center; }
+  .modal-footer .btn { flex: 1; justify-content: center; min-height: 44px; }
   .form-control { padding: 10px 10px; font-size: 14px; min-height: 44px; }
   .form-group { margin-bottom: 10px; }
   .form-group label { font-size: 12px; }
@@ -768,24 +778,64 @@ body.dark-mode .strategic-table .cell-under { background: #3a2a1a; color: #ffb74
   .ind-form-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
 }
 
-@media (max-width: 380px) {
-  .main-icons-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+@media (max-width: 420px) {
+  .header { padding: 0 4px; }
+  .header-logo { width: 22px; height: 22px; margin-left: 2px; }
+  .header-brand { font-size: 12px; }
+  .header-sep { display: none; }
+  .user-badge { font-size: 10px; max-width: 80px; padding: 2px 4px; }
+  .clock-display { display: none; }
+  .header-icon-btn { font-size: 12px; width: 28px; height: 28px; }
+  .main-icons-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 0 2px; }
   .main-icon-card { padding: 12px 4px 10px; }
   .main-icon-circle { width: 40px; height: 40px; }
   .main-icon-circle i { font-size: 18px; }
   .main-icon-label { font-size: 10px; }
+  .sub-icons-grid { gap: 6px; }
+  .sub-icon-circle { width: 38px; height: 38px; }
+  .sub-icon-label { font-size: 10px; }
   .gov-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
   .gov-card { padding: 10px 4px; }
   .gov-icon { width: 40px; height: 40px; }
   .gov-name { font-size: 11px; }
+  .hosp-grid { gap: 6px; }
+  .hosp-card { padding: 8px 4px; }
   .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
   .stat-number { font-size: 15px; }
+  #dashboardBar { gap: 4px; }
+  .db-stat { padding: 8px 4px; gap: 4px; }
+  .db-stat-icon { width: 28px; height: 28px; font-size: 12px; }
+  .db-stat-number { font-size: 14px; }
+  .db-stat-label { font-size: 8px; }
   .strategic-table { font-size: 8px; min-width: 450px; }
   .strategic-table th, .strategic-table td { padding: 1px 2px; }
   .blood-grid { grid-template-columns: repeat(4, 1fr); gap: 3px; }
   .blood-item { padding: 6px 2px; }
   .blood-item .type { font-size: 11px; }
   .blood-item .qty { font-size: 13px; }
+  .modal { width: 100%; margin: 0; border-radius: 0; min-height: 100dvh; max-height: none; }
+  .modal-header { padding: 8px 10px; }
+  .modal-header h3 { font-size: 13px; }
+  .modal-body { padding: 8px; }
+  .modal-footer { padding: 8px 10px; }
+  .login-box { padding: 16px 12px; border-radius: 16px; }
+  .login-box h1 { font-size: 22px; }
+  .login-logo { width: 50px; height: 50px; }
+  .login-icon { font-size: 24px; width: 48px; height: 48px; }
+  .content { padding: 4px; }
+  .page-title { font-size: 13px; padding: 4px 0 4px 8px; }
+  .card-header { padding: 6px 8px; }
+  .card-header h3 { font-size: 11px; }
+  .card-body { padding: 4px; }
+  .btn { font-size: 12px; padding: 8px 10px; min-height: 40px; }
+  .btn-sm { font-size: 10px; padding: 6px 8px; min-height: 32px; }
+  .form-control { font-size: 13px; min-height: 40px; }
+  .sub-nav-item { padding: 6px 8px; font-size: 10px; }
+  .page-actions { gap: 4px; }
+  .filter-bar { gap: 4px; }
+  .app-footer { padding: 6px; font-size: 10px; }
+  .empty-msg { padding: 12px; font-size: 11px; }
+  .table-wrapper { margin: 0 -4px; }
 }
 
 @media (min-width: 601px) and (max-width: 900px) {
