@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
-  <title>نظام إدارة بنوك الدم</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha384-/o6I2CkkWC//PSjvWC/eYN7l3xM3tJm8ZzVkCOfp//W05QcE3mlGskpoHB6XqI+B" crossorigin="anonymous">
-  <link rel="stylesheet" href="css/style.css">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: data:; font-src 'self' https: http: data:; img-src 'self' data:;">
+  <title>بنك الدم — نظام إدارة بنوك الدم</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="css/style.css?v=20260705b">
   <link rel="icon" href="img/logo.jpg">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
   <div id="loginPage" class="login-page">
@@ -14,20 +16,20 @@
       <img src="img/logo.jpg" class="login-logo" alt="Nada">
       <div class="login-icon"><i class="fas fa-tint"></i></div>
       <h1>بنك الدم</h1>
-      <p class="login-subtitle">نظام إدارة بنوك الدم</p>
+      <div class="login-subtitle">نظام إدارة بنوك دم هيئة التأمين الصحي الشامل</div>
       <div onkeypress="if(event.key==='Enter')doLogin()">
-      <div class="form-group">
-        <label for="loginUser" style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;text-align:right"><i class="fas fa-user"></i> اسم المستخدم</label>
-        <input type="text" id="loginUser" class="form-control" placeholder="اسم المستخدم" autofocus>
+        <div class="form-group">
+          <label for="loginUser">اسم المستخدم</label>
+          <input type="text" id="loginUser" class="form-control" placeholder="اسم المستخدم" autofocus>
+        </div>
+        <div class="form-group">
+          <label for="loginPass">كلمة المرور</label>
+          <input type="password" id="loginPass" class="form-control" placeholder="كلمة المرور" autocomplete="off">
+        </div>
+        <div id="loginError" class="login-error"></div>
+        <button class="btn btn-primary btn-block" onclick="doLogin()" id="loginBtn"><i class="fas fa-sign-in-alt"></i> دخول</button>
       </div>
-      <div class="form-group">
-        <label for="loginPass" style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;text-align:right"><i class="fas fa-lock"></i> كلمة المرور</label>
-        <input type="password" id="loginPass" class="form-control" placeholder="كلمة المرور" autocomplete="off">
-      </div>
-      <div id="loginError" class="login-error"></div>
-      <button class="btn btn-primary btn-block" onclick="doLogin()" id="loginBtn">دخول</button>
-      </div>
-      <div style="margin-top:16px;font-size:13px;color:#2e7d32;border-top:2px solid #2e7d32;padding-top:12px;font-weight:600"><i class="fas fa-code"></i> إعداد و برمجة محمد ندا 01068880999</div>
+      <div class="login-footer"><i class="fas fa-code"></i> إعداد و برمجة محمد ندا 01068880999</div>
     </div>
   </div>
 
@@ -35,17 +37,23 @@
     <header class="header">
       <div class="header-right">
         <img src="img/logo.jpg" class="header-logo" alt="Nada">
-        <span id="userBadge" style="font-size:13px;color:var(--text-light)"></span>
+        <span class="header-brand">بنك الدم</span>
+        <span class="header-sep">|</span>
+        <span id="userBadge"></span>
+        <button onclick="showMyProfile()" class="header-icon-btn" title="الملف الشخصي"><i class="fas fa-user-circle"></i></button>
       </div>
       <div class="header-left">
-        <span class="credit-text">إعداد و برمجة محمد ندا 01068880999</span>
+        <span class="credit-text"><i class="fas fa-code"></i> محمد ندا 01068880999</span>
         <span class="date-display" id="dateDisplay"></span>
-        <button onclick="toggleDarkMode()" id="darkModeBtn" style="background:none;border:none;color:var(--text-light);cursor:pointer;font-size:16px;transition:color 0.3s" title="الوضع الليلي"><i class="fas fa-moon"></i></button>
-        <button class="btn-logout" onclick="doLogout()" style="background:none;border:none;color:var(--text-light);cursor:pointer;font-size:16px"><i class="fas fa-sign-out-alt"></i></button>
+        <span class="clock-display" id="clockDisplay"></span>
+        <button onclick="toggleTime()" id="timeToggleBtn" style="display:none" class="header-icon-btn" title="تغيير التوقيت"><i class="fas fa-clock"></i> <span id="timeOffsetLabel">صيفي</span></button>
+        <button onclick="toggleDarkMode()" id="darkModeBtn" class="header-icon-btn" title="الوضع الليلي"><i class="fas fa-moon"></i></button>
+        <button onclick="doLogout()" class="header-icon-btn" title="تسجيل الخروج"><i class="fas fa-sign-out-alt"></i></button>
       </div>
     </header>
+    <div class="dashboard-bar" id="dashboardBar"></div>
     <div class="content" id="mainContent"></div>
-    <div class="app-footer"><i class="fas fa-code"></i> إعداد و برمجة محمد ندا 01068880999</div>
+    <div class="app-footer"><i class="fas fa-code"></i> إعداد و برمجة محمد ندا 01068880999 | جميع الحقوق محفوظة &copy; 2026</div>
   </div>
 
   <div class="modal-overlay" id="modalOverlay">
@@ -59,7 +67,6 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" integrity="sha384-+VfUPEb0PdtChMwmBcBmykRMDd+v6D/oFmB3rZM/puCMDYcIvF968OimRh4KQY9a" crossorigin="anonymous"></script>
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20260705b"></script>
 </body>
 </html>

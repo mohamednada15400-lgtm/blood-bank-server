@@ -1,19 +1,47 @@
 const API_BASE = '/api';
+let _timeOffset = 3;
+let _clockInterval = null;
 
-function esc(str) {
-  if (str == null) return '';
-  return String(str).replace(/[&<>"']/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    if (m === '"') return '&quot;';
-    if (m === "'") return '&#x27;';
-    return m;
-  });
+function getCairoDate() {
+  const now = new Date();
+  return new Date(now.getTime() + (_timeOffset - 1) * 3600000);
 }
-
-function slink(url) {
-  return url ? url.replace(/[<>"'()]/g, '') : '';
+function fmtCairoDate(fmt) {
+  const d = getCairoDate();
+  const pad = n => String(n).padStart(2, '0');
+  const dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const monthNames = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
+  if (fmt === 'date') return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;
+  if (fmt === 'time') { const h = d.getUTCHours(); const a = h >= 12 ? 'م' : 'ص'; return `${pad(h % 12 || 12)}:${pad(d.getUTCMinutes())} ${a}`; }
+  if (fmt === 'full') return `${dayNames[d.getUTCDay()]}، ${d.getUTCDate()} ${monthNames[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return d.toLocaleDateString('ar-EG');
+}
+async function loadTimeConfig() {
+  try {
+    const cfg = await api('GET', '/config/time');
+    _timeOffset = cfg.time_offset || 3;
+    const btn = document.getElementById('timeToggleBtn');
+    if (btn) btn.style.display = window._user && window._user.role === 'admin' ? '' : 'none';
+    const lbl = document.getElementById('timeOffsetLabel');
+    if (lbl) lbl.textContent = _timeOffset === 3 ? 'صيفي' : 'شتوي';
+  } catch(e) {}
+}
+function updateClock() {
+  const el = document.getElementById('clockDisplay');
+  if (el) el.textContent = fmtCairoDate('time');
+}
+async function toggleTime() {
+  _timeOffset = _timeOffset === 3 ? 2 : 3;
+  try {
+    await api('POST', '/config/time', { time_offset: _timeOffset });
+    const lbl = document.getElementById('timeOffsetLabel');
+    if (lbl) lbl.textContent = _timeOffset === 3 ? 'صيفي' : 'شتوي';
+    updateClock();
+    const dd = document.getElementById('dateDisplay');
+    if (dd) dd.textContent = fmtCairoDate('full');
+  } catch(e) {
+    _timeOffset = _timeOffset === 3 ? 2 : 3;
+  }
 }
 
 async function api(method, url, data) {
@@ -25,14 +53,22 @@ async function api(method, url, data) {
   return json;
 }
 
-let _dpurify;
-function sanitize(str) {
-  if (!str) return '';
-  if (typeof DOMPurify !== 'undefined') {
-    if (!_dpurify) _dpurify = DOMPurify;
-    return _dpurify.sanitize(str);
-  }
-  return esc(str);
+function esc(v) {
+  if (v == null) return '';
+  return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+function sanitize(v) {
+  if (v == null) return '';
+  if (typeof DOMPurify !== 'undefined' && DOMPurify.sanitize) return DOMPurify.sanitize(v);
+  return esc(v);
+}
+
+function togglePasswordVisibility(fieldId, el) {
+  const inp = document.getElementById(fieldId);
+  if (!inp) return;
+  const isPass = inp.type === 'password';
+  inp.type = isPass ? 'text' : 'password';
+  if (el) el.innerHTML = isPass ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
 }
 
 function toggleDarkMode() {
@@ -46,20 +82,28 @@ function applyDarkMode() {
   const btn = document.getElementById('darkModeBtn');
   if (btn) btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
 }
-document.addEventListener('DOMContentLoaded', applyDarkMode);
+async function checkSession() {
+  try {
+    const res = await api('GET', '/me');
+    if (res.user) initApp(res.user);
+  } catch(e) {
+    applyDarkMode();
+  }
+}
+document.addEventListener('DOMContentLoaded', () => { applyDarkMode(); checkSession(); });
 
 const PERM_PAGES = [
-  { key: 'daily_stock', label: 'المخزون اليومي', cat: 'daily', icon: 'fa-chart-bar' },
-  { key: 'daily_total', label: 'إجمالي المخزون', cat: 'daily', icon: 'fa-chart-pie' },
-  { key: 'daily_statement', label: 'البيان اليومي', cat: 'daily', icon: 'fa-file-lines' },
-  { key: 'daily_branch', label: 'بيان الفرع', cat: 'daily', icon: 'fa-store' },
+  { key: 'daily_stock', label: 'المخزون اليومي', cat: 'daily', icon: 'fa-vial' },
+  { key: 'daily_total', label: 'إجمالي المخزون', cat: 'daily', icon: 'fa-cubes' },
+  { key: 'daily_statement', label: 'البيان اليومي', cat: 'daily', icon: 'fa-file-waveform' },
+  { key: 'daily_branch', label: 'بيان الفرع', cat: 'daily', icon: 'fa-code-branch' },
   { key: 'monthly_indicators', label: 'مؤشرات شهرية', cat: 'monthly', icon: 'fa-chart-line' },
   { key: 'monthly_consumption', label: 'منصرف فصائل الدم', cat: 'monthly', icon: 'fa-droplet' },
   { key: 'monthly_big', label: 'مؤشرات تجميعيه', cat: 'monthly', icon: 'fa-chart-simple' },
-  { key: 'monthly_small', label: 'مؤشرات تخزينيه', cat: 'monthly', icon: 'fa-chart-bar' },
-  { key: 'employees', label: 'بيان العاملين', cat: 'other', icon: 'fa-users' },
-  { key: 'readiness', label: 'شيت الجاهزيه', cat: 'other', icon: 'fa-clipboard-check' },
-  { key: 'equipment', label: 'أجهزة بنك الدم', cat: 'other', icon: 'fa-microscope' },
+  { key: 'monthly_small', label: 'مؤشرات تخزينيه', cat: 'monthly', icon: 'fa-boxes-stacked' },
+  { key: 'employees', label: 'بيان العاملين', cat: 'other', icon: 'fa-user-tie' },
+  { key: 'readiness', label: 'شيت الجاهزية', cat: 'other', icon: 'fa-clipboard-check' },
+  { key: 'equipment', label: 'الأجهزة', cat: 'other', icon: 'fa-tools' },
   { key: 'archive', label: 'أرشيف', cat: 'other', icon: 'fa-folder-open' },
   { key: 'strategic_stock', label: 'الرصيد الاستراتيجي', cat: 'other', icon: 'fa-shield' },
   { key: 'inventory', label: 'المخزون', cat: 'admin', icon: 'fa-boxes-stacked' },
@@ -67,7 +111,8 @@ const PERM_PAGES = [
   { key: 'role_perms', label: 'صلاحيات الأدوار', cat: 'admin', icon: 'fa-shield-check' },
   { key: 'hospitals', label: 'المستشفيات', cat: 'admin', icon: 'fa-hospital' },
   { key: 'governorates', label: 'المحافظات', cat: 'admin', icon: 'fa-location-dot' },
-  { key: 'supervisor_data', label: 'بيانات المشرفين', cat: 'admin', icon: 'fa-address-card' }
+  { key: 'supervisor_data', label: 'بيانات المشرفين', cat: 'admin', icon: 'fa-address-card' },
+  { key: 'time_config', label: 'التوقيت', cat: 'admin', icon: 'fa-clock' }
 ];
 
 const PERM_ACTIONS = [
@@ -100,7 +145,7 @@ function hasPerm(section, action) {
 
 function openModal(title, body, footer) {
   document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalBody').innerHTML = body || '';
+  document.getElementById('modalBody').innerHTML = body;
   document.getElementById('modalFooter').innerHTML = footer || '';
   document.getElementById('modalOverlay').classList.add('active');
 }
@@ -109,31 +154,85 @@ function closeModal() {
   document.getElementById('modalOverlay').classList.remove('active');
 }
 
+let _confirmCallback = null;
+
+function showConfirmModal(msg, onConfirm) {
+  _confirmCallback = onConfirm || null;
+  document.getElementById('modalTitle').textContent = 'تأكيد';
+  document.getElementById('modalBody').innerHTML = `<div style="font-size:15px;padding:8px 0">${sanitize(msg)}</div>`;
+  document.getElementById('modalFooter').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()" style="margin-left:8px"><i class="fas fa-times"></i> إلغاء</button>
+    <button class="btn btn-danger" onclick="doConfirm()"><i class="fas fa-check"></i> تأكيد</button>`;
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function doConfirm() {
+  closeModal();
+  if (typeof _confirmCallback === 'function') _confirmCallback();
+  _confirmCallback = null;
+}
+
+function initApp(u) {
+  window._user = u;
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = '';
+  const roleLabels = { admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
+  if (u.role === 'hospital') {
+    document.getElementById('userBadge').textContent = 'مستخدم: ' + u.name;
+  } else {
+    document.getElementById('userBadge').textContent = u.name + ' (' + (roleLabels[u.role] || u.role) + ')';
+  }
+  loadTimeConfig();
+  document.getElementById('dateDisplay').textContent = fmtCairoDate('full');
+  if (_clockInterval) clearInterval(_clockInterval);
+  _clockInterval = setInterval(updateClock, 10000);
+  updateClock();
+  applyDarkMode(); showMenu();
+}
+
 async function doLogin() {
   const username = document.getElementById('loginUser').value.trim();
   const password = document.getElementById('loginPass').value.trim();
-  if (!username || !password) {
-    document.getElementById('loginError').textContent = 'يرجى إدخال اسم المستخدم وكلمة المرور';
-    return;
-  }
-  const btn = document.getElementById('loginBtn');
-  const original = btn.textContent;
-  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الدخول...';
+  if (!username || !password) return;
   try {
     const res = await api('POST', '/login', { username, password });
-    window._user = res.user;
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('appPage').style.display = '';
-    const u = window._user;
-    document.getElementById('userBadge').textContent = u.name + ' (' + u.role + ')';
-    const now = new Date();
-    document.getElementById('dateDisplay').textContent = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    applyDarkMode(); showMenu();
+    initApp(res.user);
   } catch (e) {
-    document.getElementById('loginError').textContent = e.message || 'اسم المستخدم أو كلمة المرور خطأ';
-  } finally {
-    btn.disabled = false; btn.textContent = original;
+    document.getElementById('loginError').textContent = 'Username or Password خطأ يرجي الاتصال بالمطور';
   }
+}
+
+function showMyProfile() {
+  const u = window._user;
+  if (!u) return;
+  const roleLabels = { admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
+  openModal('الملف الشخصي',
+    `<div style="text-align:center;margin-bottom:16px"><i class="fas fa-user-circle" style="font-size:64px;color:#dc3545;opacity:0.7"></i>
+    <h3 style="margin:8px 0 4px">${esc(u.name || u.username)}</h3>
+    <span style="display:inline-block;padding:4px 16px;border-radius:20px;font-size:13px;background:#dc354522;color:#dc3545;font-weight:600">${roleLabels[u.role] || u.role}</span></div>
+    <div class="form-group"><label>اسم المستخدم</label><input class="form-control" value="${esc(u.username)}" readonly style="background:#f5f5f5;direction:ltr"></div>
+    <div class="form-group"><label>الاسم</label><input class="form-control" id="mpName" value="${esc(u.name || '')}"></div>
+    <div class="form-group" style="border-top:1px solid #eee;padding-top:12px;margin-top:12px">
+      <button class="btn btn-primary" style="width:100%" onclick="changeUserPassword(${u.id})"><i class="fas fa-key"></i> تغيير كلمة المرور</button>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>
+    <button class="btn btn-primary" onclick="saveMyProfile()">حفظ التغييرات</button>`);
+}
+async function saveMyProfile() {
+  const name = document.getElementById('mpName').value.trim();
+  if (!name) { showToast('⚠ الاسم مطلوب'); return; }
+  try {
+    await api('PUT', '/users/' + window._user.id, { name });
+    window._user.name = name;
+    const u = window._user;
+    if (u.role === 'hospital') {
+      document.getElementById('userBadge').textContent = 'مستخدم: ' + name;
+    } else {
+      document.getElementById('userBadge').textContent = name + ' (' + ({ admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' }[u.role] || u.role) + ')';
+    }
+    closeModal();
+    showToast('تم حفظ الملف الشخصي');
+  } catch(e) { showToast('❌ '+e.message); }
 }
 
 function doLogout() {
@@ -147,54 +246,57 @@ function doLogout() {
 }
 
 const ITEM_COLORS = {
-  daily_stock: '#e74c3c', daily_total: '#c0392b', daily_statement: '#e91e63', daily_branch: '#f39c12',
-  monthly_storage: '#2196f3', monthly_aggregate: '#00bcd4', monthly_indicators: '#3f51b5',   monthly_consumption: '#e91e63', monthly_big: '#dc3545', monthly_small: '#17a2b8',
-  consumption: '#ff9800', archive: '#795548', strategic_stock: '#2e7d32', employees: '#795548', readiness: '#1565c0',
-  inventory: '#4caf50', users: '#009688', role_perms: '#673ab7', hospitals: '#f44336', governorates: '#9e9e9e'
+  daily_stock: '#dc3545', daily_total: '#c0392b', daily_statement: '#e91e63', daily_branch: '#e67e22',
+  monthly_storage: '#2196f3', monthly_aggregate: '#00bcd4', monthly_indicators: '#0d7377', monthly_consumption: '#e91e63', monthly_big: '#dc3545', monthly_small: '#795548',
+  consumption: '#ff9800', archive: '#5d4037', strategic_stock: '#1565c0', employees: '#5d4037', readiness: '#7b1fa2', equipment: '#e65100',
+  inventory: '#2e7d32', users: '#00695c', role_perms: '#4a148c', hospitals: '#c62828', governorates: '#37474f',
+  sync: '#1a73e8',
+  about: '#6c757d'
 };
 
 const MENU_CATS = [
-  { key: 'daily', label: 'يومي', icon: 'fa-sun', color: '#dc3545',
+  { key: 'daily', label: 'يومي', icon: 'fa-calendar-day', color: ['#dc3545','#e74c3c'],
     items: [
-      { key: 'daily_stock', label: 'STOCK Mang', icon: 'fa-chart-bar', page: 'renderDailyStock' },
-      { key: 'daily_total', label: 'total STOCK Mang', icon: 'fa-chart-pie', page: 'renderTotal' },
-      { key: 'daily_statement', label: 'البيان اليومي', icon: 'fa-file-lines', page: 'renderDailyStatement' },
-      { key: 'daily_branch', label: 'بيان الفرع', icon: 'fa-store', page: 'renderBranchStatement' }
+      { key: 'daily_stock', label: 'المخزون اليومي', icon: 'fa-vial', page: 'renderDailyStock' },
+      { key: 'daily_total', label: 'إجمالي المخزون', icon: 'fa-cubes', page: 'renderTotal' },
+      { key: 'daily_statement', label: 'البيان اليومي', icon: 'fa-file-waveform', page: 'renderDailyStatement' },
+      { key: 'daily_branch', label: 'بيان الفرع', icon: 'fa-code-branch', page: 'renderBranchStatement' }
     ]
   },
-  { key: 'monthly', label: 'شهري', icon: 'fa-moon', color: '#17a2b8',
+  { key: 'monthly', label: 'شهري', icon: 'fa-calendar-alt', color: ['#0d7377','#17a2b8'],
     items: [
-      { key: 'monthly_indicators', label: 'مؤشرات الأداء', icon: 'fa-chart-line',
+      { key: 'monthly_indicators', label: 'مؤشرات الأداء', icon: 'fa-gauge-high',
         subitems: [
           { key: 'monthly_big', label: 'مؤشرات تجميعيه', icon: 'fa-chart-simple', page: 'renderBigIndicators' },
-          { key: 'monthly_small', label: 'مؤشرات تخزينيه', icon: 'fa-chart-bar', page: 'renderSmallIndicators' }
+          { key: 'monthly_small', label: 'مؤشرات تخزينيه', icon: 'fa-boxes-stacked', page: 'renderSmallIndicators' }
         ]
       },
-      { key: 'monthly_consumption', label: 'منصرف فصائل الدم', icon: 'fa-droplet', page: 'renderBloodConsumption' }
+      { key: 'monthly_consumption', label: 'منصرف فصائل الدم', icon: 'fa-hand-holding-droplet', page: 'renderBloodConsumption' }
     ]
   },
-  { key: 'archive', label: 'أرشيف', icon: 'fa-folder-open', color: '#795548', page: 'renderArchive',
+  { key: 'archive', label: 'أرشيف', icon: 'fa-folder-open', color: ['#5d4037','#8d6e63'], page: 'renderArchive',
     items: [
-      { key: 'archive_consumption', label: 'منصرف الفصائل', icon: 'fa-droplet', page: 'showArchiveConsumption' },
-      { key: 'archive_indicators', label: 'مؤشرات الأداء', icon: 'fa-chart-line', page: 'showArchiveIndicators' }
+      { key: 'archive_consumption', label: 'منصرف الفصائل', icon: 'fa-box-archive', page: 'showArchiveConsumption' },
+      { key: 'archive_indicators', label: 'مؤشرات الأداء', icon: 'fa-clock-rotate', page: 'showArchiveIndicators' }
     ]
   },
-  { key: 'other', label: 'أخرى', icon: 'fa-ellipsis-h', color: '#6c757d',
+  { key: 'other', label: 'أخرى', icon: 'fa-ellipsis-h', color: ['#546e7a','#78909c'],
     items: [
-      { key: 'employees', label: 'بيان العاملين', icon: 'fa-users', page: 'renderEmployeeStatement' },
-      { key: 'readiness', label: 'شيت الجاهزيه', icon: 'fa-clipboard-check', page: 'renderReadinessSheet' },
-      { key: 'equipment', label: 'أجهزة بنك الدم', icon: 'fa-microscope', page: 'renderBloodBankEquipment' },
-      { key: 'strategic_stock', label: 'الرصيد الاستراتيجي', icon: 'fa-shield', page: 'renderStrategicStock' },
-      { key: 'sync', label: 'مزامنة مع Drive', icon: 'fa-cloud-upload-alt', page: 'showSyncDialog' }
+      { key: 'employees', label: 'بيان العاملين', icon: 'fa-user-tie', page: 'renderEmployeeStatement' },
+      { key: 'readiness', label: 'شيت الجاهزية', icon: 'fa-clipboard-check', page: 'renderReadinessSheet' },
+      { key: 'equipment', label: 'الأجهزة', icon: 'fa-tools', page: 'renderEquipment' },
+      { key: 'strategic_stock', label: 'الرصيد الاستراتيجي', icon: 'fa-shield-halved', page: 'renderStrategicStock' }
     ]
   },
-  { key: 'admin', label: 'الصلاحيات', icon: 'fa-lock', color: '#28a745',
+  { key: 'admin', label: 'الإدارة', icon: 'fa-gear', color: ['#1565c0','#1e88e5'],
     items: [
-      { key: 'users', label: 'المستخدمين', icon: 'fa-users-gear', page: 'renderUsers' },
-      { key: 'role_perms', label: 'صلاحيات الأدوار', icon: 'fa-shield-check', page: 'renderRolePerms' },
+      { key: 'users', label: 'المستخدمين', icon: 'fa-users', page: 'renderUsers' },
+      { key: 'role_perms', label: 'الصلاحيات', icon: 'fa-lock', page: 'renderRolePerms' },
       { key: 'hospitals', label: 'المستشفيات', icon: 'fa-hospital', page: 'renderHospitals' },
-      { key: 'governorates', label: 'المحافظات', icon: 'fa-location-dot', page: 'renderGovernorates' },
-      { key: 'supervisor_data', label: 'بيانات المشرفين', icon: 'fa-address-card', page: 'renderSupervisorData' }
+      { key: 'governorates', label: 'المحافظات', icon: 'fa-map', page: 'renderGovernorates' },
+      { key: 'supervisor_data', label: 'بيانات المشرفين', icon: 'fa-address-book', page: 'renderSupervisorData' },
+      { key: 'sync', label: 'المزامنة مع Drive', icon: 'fa-cloud-upload-alt', page: 'showSyncDialog' },
+      { key: 'about', label: 'حول النظام', icon: 'fa-info-circle', page: 'showAbout' }
     ]
   }
 ];
@@ -231,18 +333,22 @@ function showToast(msg) {
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 400); }, 2500);
 }
 
+function grad(arr) { return `linear-gradient(135deg,${arr[0]},${arr[1]})`; }
+
 function showMenu() { _navStack = [];
   let html = '<div id="alertArea" style="overflow-x:auto;overflow-y:hidden;white-space:nowrap;height:26px;line-height:26px;margin-bottom:4px;scrollbar-width:thin"></div><div class="main-icons-grid">';
   MENU_CATS.forEach(c => {
+    const bg = Array.isArray(c.color) ? grad(c.color) : c.color;
+    const icn = Array.isArray(c.color) ? c.color[0] : c.color;
     const itemsTip = (c.items || []).filter(i => hasPerm(i.key, 'view'));
     if (c.page && !itemsTip.length) {
       html += `<div class="main-icon-card" onclick="navigateTo('${c.page}','${c.key}')">
-        <div class="main-icon-circle" style="background:${c.color}"><i class="fas ${c.icon}"></i></div>
+        <div class="main-icon-circle" style="background:${bg}"><i class="fas ${c.icon}"></i></div>
         <div class="main-icon-label">${c.label}</div>
       </div>`;
     } else {
       html += `<div class="main-icon-card" onclick="${c.page ? "navigateTo('"+c.page+"','"+c.key+"')" : "showSubMenu('"+c.key+"')"}">
-        <div class="main-icon-circle" style="background:${c.color}"><i class="fas ${c.icon}"></i></div>
+        <div class="main-icon-circle" style="background:${bg}"><i class="fas ${c.icon}"></i></div>
         <div class="main-icon-label">${c.label}</div>
         ${itemsTip.length ? `<div class="main-icon-tip">${itemsTip.map(i => `<span class="tip-item"><i class="fas ${i.icon}"></i> ${i.label}</span>`).join('')}</div>` : ''}
       </div>`;
@@ -313,74 +419,64 @@ async function checkAlerts() {
     if (missSmall.length > 0) {
       alerts.push({ icon: 'fa-chart-simple', color: '#17a2b8', title: 'لم يتم إدخال مؤشرات تخزيني ' + months[prevMonth] + ' ' + prevYear, detail: missSmall.slice(0,5).map(h => h.name).join('، ') + (missSmall.length > 5 ? ' +' + (missSmall.length - 5) : ''), all: missSmall.map(h => h.name) });
     }
-    // Check employee statements - hospitals without monthly review
+    // Check employee statements - hospitals without update in the current month
     try {
       const empRes = await api('GET', '/employee-statements');
-      const isHospital = window.me?.user?.role === 'hospital';
-      const myHospId = window.me?.user?.hospitalId;
       const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const overdueEmp = (empRes.hospitalStatus||[]).filter(h => h.employeeCount > 0 && !h.monthlyUpdated && (!h.lastUpdate || new Date(h.lastUpdate) < curMonthStart));
-      if (overdueEmp.length > 0) {
-        const isMyHosp = isHospital && overdueEmp.some(h => h.id === myHospId);
-        alerts.push({ icon: 'fa-users', color: '#dc3545', title: isMyHosp ? '⚠ يجب مراجعة بيان العاملين لمستشفاك هذا الشهر' : 'بيان العاملين: ' + overdueEmp.length + ' بنك لم يراجع هذا الشهر', detail: overdueEmp.slice(0,5).map(h => h.name).join('، ') + (overdueEmp.length > 5 ? ' +' + (overdueEmp.length - 5) : ''), all: overdueEmp.map(h => h.name) });
-      }
-      // Show red card for hospital user who hasn't reviewed this month
-      if (isHospital && myHospId) {
-        const myHospStatus = (empRes.hospitalStatus||[]).find(h => h.id === myHospId);
-        if (myHospStatus && !myHospStatus.monthlyUpdated && myHospStatus.employeeCount > 0) {
-          const mainEl = document.getElementById('mainContent');
-          if (mainEl && !mainEl.querySelector('.emp-review-card')) {
-            const card = document.createElement('div');
-            card.className = 'emp-review-card';
-            card.style.cssText = 'margin-bottom:10px;border:2px solid #dc3545;border-radius:10px;background:linear-gradient(135deg,#fff5f5,#ffe8e8);padding:16px;text-align:center';
-            card.innerHTML = '<div style="font-size:22px;color:#dc3545;margin-bottom:6px"><i class="fas fa-users"></i></div>'
-              + '<div style="font-size:16px;font-weight:700;color:#b71c1c;margin-bottom:4px">برجاء ادخال بيانات العاملين الخاصة بكم</div>'
-              + '<div style="font-size:13px;color:#c62828;margin-bottom:12px">يرجى مراجعة وتحديث بيانات العاملين لديك لهذا الشهر</div>'
-              + '<button onclick="navigateTo(\'renderEmployeeStatement\',\'other\');this.closest(\'.emp-review-card\').remove()" style="background:#dc3545;color:#fff;border:none;border-radius:8px;padding:8px 28px;font-size:14px;font-weight:600;cursor:pointer"><i class="fas fa-eye"></i> مراجعه</button>';
-            mainEl.insertBefore(card, mainEl.firstChild);
+      const hasData = (empRes.rows||[]).length > 0;
+      if (!hasData) {
+        alerts.push({ icon: 'fa-users', color: '#dc3545', title: 'بيان العاملين: لم يتم إدخال بيانات أي موظف بعد', detail: 'يرجى الدخول إلى بيان العاملين وإضافة البيانات', all: ['بيان العاملين فارغ — يجب إدخال بيانات الموظفين'] });
+      } else {
+        const overdueEmp = (empRes.hospitalStatus||[]).filter(h => h.employeeCount > 0 && (!h.lastUpdate || new Date(h.lastUpdate) < curMonthStart));
+        if (overdueEmp.length > 0) {
+          const isMyHosp = window.me?.user?.role === 'hospital' && overdueEmp.some(h => h.id === window.me?.user?.hospitalId);
+          alerts.push({ icon: 'fa-users', color: '#dc3545', title: isMyHosp ? '⚠ يجب تحديث بيان العاملين لمستشفاك هذا الشهر' : 'بيان العاملين: ' + overdueEmp.length + ' بنك لم يحدث هذا الشهر', detail: overdueEmp.slice(0,5).map(h => h.name).join('، ') + (overdueEmp.length > 5 ? ' +' + (overdueEmp.length - 5) : ''), all: overdueEmp.map(h => h.name) });
+        }
+        // Check unreviewed employees
+        const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+        const unreviewed = (empRes.rows||[]).filter(r => !r.reviewed || r.review_month !== curMonth);
+        if (unreviewed.length > 0) {
+          const byHosp = {};
+          unreviewed.forEach(r => { const k = r.hospital_name||'غير معروف'; if (!byHosp[k]) byHosp[k] = []; byHosp[k].push(r); });
+          const hospKeys = Object.keys(byHosp);
+          if (window.me?.user?.role === 'hospital') {
+            alerts.push({ icon: 'fa-check-double', color: '#e65100', title: 'لم يتم مراجعة بيانات العاملين بعد', detail: unreviewed.slice(0,5).map(r => r.employee).join('، ') + (unreviewed.length > 5 ? ' +' + (unreviewed.length - 5) : ''), all: unreviewed.map(r => r.employee) });
+          } else {
+            const preview = hospKeys.slice(0,5).map(h => h + ' (' + byHosp[h].length + ')').join('، ');
+            alerts.push({ icon: 'fa-check-double', color: '#e65100', title: 'بيان العاملين: ' + unreviewed.length + ' موظف لم يُراجع في ' + hospKeys.length + ' بنك', detail: preview + (hospKeys.length > 5 ? ' +' + (hospKeys.length - 5) : ''), all: hospKeys.map(h => h + ': ' + byHosp[h].length + ' موظف') });
           }
         }
       }
     } catch (e) { /* ignore */ }
-    // Readiness notifications
+    // Check equipment
     try {
-      const rdnNotifs = await api('GET', '/readiness-notifications');
-      if (rdnNotifs && rdnNotifs.length > 0) {
-        rdnNotifs.forEach(n => {
-          if (n.missing_count > 0) {
-            alerts.push({
-              icon: 'fa-clipboard-list', color: '#e65100',
-              title: n.dynamic_message,
-              detail: 'المستشفيات: ' + n.missing_hospitals.join('، ') + (n.missing_count > 5 ? ' +' + (n.missing_count - 5) : ''),
-              all: n.all_missing || [], notifId: n.id, occasionId: n.occasion_id,
-              isReadiness: true
-            });
-          } else {
-            alerts.push({
-              icon: 'fa-check-circle', color: '#2e7d32',
-              title: n.dynamic_message,
-              detail: '', all: [], notifId: n.id, occasionId: n.occasion_id,
-              isReadiness: true
-            });
-          }
-        });
+      const eqRes = await api('GET', '/equipment');
+      const eqHospitals = (eqRes.hospitals||[]);
+      const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+      if (eqHospitals.length === 0) {
+        alerts.push({ icon: 'fa-microscope', color: '#8e44ad', title: 'الأجهزة: لم يتم إدخال بيانات أي مستشفى بعد', detail: 'يرجى الدخول إلى الأجهزة وإضافة البيانات', all: ['بيانات الأجهزة فارغة — يجب إدخال بيانات الأجهزة'] });
+      } else {
+        const unreviewedEq = eqHospitals.filter(h => !h.reviewed || h.review_month !== curMonth);
+        if (unreviewedEq.length > 0) {
+          alerts.push({ icon: 'fa-microscope', color: '#8e44ad', title: 'الأجهزة: ' + unreviewedEq.length + ' مستشفى لم يُراجع أجهزته هذا الشهر', detail: unreviewedEq.slice(0,5).map(h => h.name).join('، ') + (unreviewedEq.length > 5 ? ' +' + (unreviewedEq.length - 5) : ''), all: unreviewedEq.map(h => h.name) });
+        }
       }
     } catch (e) { /* ignore */ }
+    // Check readiness notifications
+    try {
+      const rdnNotifs = await api('GET', '/readiness-notifications');
+      rdnNotifs.forEach(n => {
+        alerts.push({ icon: 'fa-clipboard-check', color: '#9c27b0', title: n.message, detail: n._missingHospitals ? n._missingHospitals.slice(0,5).join('، ') : '', all: n._missingHospitals || [], _rdnNotifId: n.id, _rdnNotifDismiss: true });
+      });
+    } catch (e) { /* ignore */ }
     window._alertsData = alerts;
-    const al = alerts.map((a, i) => a.isReadiness && a.notifId
-      ? `<div style="display:inline-flex;align-items:center;gap:3px;background:${a.missing_count>0?'#fff3e0':'#e8f5e9'};border-right:3px solid ${a.color};border-radius:4px;padding:2px 6px;margin-left:4px;font-size:10px;white-space:nowrap;transition:0.15s">
-          <span style="cursor:pointer" onclick="showAlertList(${i})" onmouseover="this.style.background='#ffe0b2'" onmouseout="this.style.background='transparent'">
-            <i class="fas ${a.icon}" style="color:${a.color};font-size:9px"></i>
-            <span style="color:#1565c0;font-weight:600">${sanitize(a.title)}</span>
-          </span>
-          <i class="fas fa-times" style="cursor:pointer;color:#999;font-size:8px;margin-right:2px" onclick="event.stopPropagation();rdnDismissNotif(${a.notifId},this)"></i>
-        </div>`
-      : `<span style="display:inline-flex;align-items:center;gap:3px;background:${a.missing_count>0?'#fff3e0':'#e8f5e9'};border-right:3px solid ${a.color};border-radius:4px;padding:2px 6px;margin-left:4px;font-size:10px;white-space:nowrap;transition:0.15s;cursor:pointer" onclick="showAlertList(${i})" onmouseover="this.style.background='#ffe0b2'" onmouseout="this.style.background='#fff3e0'">
-          <i class="fas ${a.icon}" style="color:${a.color};font-size:9px"></i>
-          <span style="color:#1565c0;font-weight:600">${sanitize(a.title)}</span>
-        </span>`).join('');
+    const al = alerts.map((a, i) => `<span onclick="showAlertList(${i})" style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;background:#fff3e0;border-right:3px solid ${a.color};border-radius:4px;padding:2px 6px;margin-left:4px;font-size:10px;white-space:nowrap;transition:0.15s" onmouseover="this.style.background='#ffe0b2'" onmouseout="this.style.background='#fff3e0'">
+      <i class="fas ${a.icon}" style="color:${a.color};font-size:9px"></i>
+      <span style="color:#c62828;font-weight:600">${a.title}</span>
+      ${a._rdnNotifDismiss ? `<i class="fas fa-times" onclick="event.stopPropagation();rdnDismissNotifAlert(${i})" style="color:#999;font-size:8px;padding:2px;margin-right:2px;cursor:pointer"></i>` : ''}
+    </span>`).join('');
     el.innerHTML = alerts.length === 0
-      ? '<span style="background:#e8f5e9;border-radius:4px;padding:4px 12px;font-size:12px;color:#2e7d32;display:inline-flex;align-items:center;gap:4px"><i class="fas fa-check-circle" style="font-size:12px"></i> كل البيانات محدثة ✓</span>'
+      ? '<span style="background:#e8f5e9;border-radius:4px;padding:2px 8px;font-size:10px;color:#2e7d32;display:inline-flex;align-items:center;gap:3px"><i class="fas fa-check-circle" style="font-size:9px"></i> كل البيانات محدثة ✓</span>'
       : al;
   } catch (e) { /* ignore */ }
 }
@@ -388,8 +484,8 @@ async function checkAlerts() {
 function showAlertList(idx) {
   const a = window._alertsData && window._alertsData[idx];
   if (!a || !a.all || a.all.length === 0) return;
-  openModal(sanitize(a.title),
-    `<div style="max-height:400px;overflow-y:auto;direction:ltr"><ol style="direction:rtl;text-align:right;font-size:13px;padding-right:20px;margin:0">${a.all.map(n => `<li style="padding:4px 0">${sanitize(n)}</li>`).join('')}</ol></div>`,
+  openModal(a.title,
+    `<div style="max-height:400px;overflow-y:auto;direction:ltr"><ol style="direction:rtl;text-align:right;font-size:13px;padding-right:20px;margin:0">${a.all.map(n => `<li style="padding:4px 0">${n}</li>`).join('')}</ol></div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>`);
 }
 
@@ -412,13 +508,17 @@ function showSubMenu(catKey, subKey) {
   items.forEach(item => {
     if (item.subitems) {
       if (!item.subitems.some(si => hasPerm(si.key, 'view'))) return;
-      const ic = ITEM_COLORS[item.key] || cat.color;
+      let ic = ITEM_COLORS[item.key];
+      if (!ic) ic = Array.isArray(cat.color) ? grad(cat.color) : cat.color;
+      else ic = Array.isArray(ic) ? grad(ic) : ic;
       html += `<div class="sub-icon-card" onclick="showSubMenu('${catKey}','${item.key}')">
         <div class="sub-icon-circle" style="background:${ic}"><i class="fas ${item.icon}"></i></div>
         <div class="sub-icon-label">${item.label}</div>
       </div>`;
-    } else if (hasPerm(item.key, 'view')) {
-      const ic = ITEM_COLORS[item.key] || cat.color;
+    } else if (hasPerm(item.key, 'view') || ((item.key === 'sync' || item.key === 'about') && window._user && window._user.role === 'admin')) {
+      let ic = ITEM_COLORS[item.key];
+      if (!ic) ic = Array.isArray(cat.color) ? grad(cat.color) : cat.color;
+      else ic = Array.isArray(ic) ? grad(ic) : ic;
       html += `<div class="sub-icon-card" onclick="navigateTo('${item.page}','${catKey}'${isNested ? ",'"+subKey+"'" : ''})">
         <div class="sub-icon-circle" style="background:${ic}"><i class="fas ${item.icon}"></i></div>
         <div class="sub-icon-label">${item.label}</div>
@@ -453,8 +553,8 @@ async function renderDailyStock() {
     const canExport = hasPerm('daily_stock', 'export');
     el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
       ${canAdd ? '<button class="btn btn-primary" onclick="showAddDailyModal()"><i class="fas fa-plus"></i> إضافة</button>' : ''}
-      ${canExport ? '<button class="btn btn-success" onclick="exportStockExcel()"><i class="fas fa-file-excel"></i> Excel</button>' : ''}</div>
-      <div class="card"><div class="card-body table-scroll" id="dailyStockWrap"></div></div>`;
+      ${canExport ? '<button class="btn btn-success" onclick="exportStockExcel()"><i class="fas fa-file-excel"></i> تحميل Excel</button>' : ''}</div>
+      <div class="card-body table-scroll" id="dailyStockWrap"></div>`;
     const reports = await api('GET', '/daily-reports');
     const SUB = ['رصيد سابق', 'وارد', 'منصرف', 'اعدام', 'رصيد متاح'];
     const SUB_TOT = ['رصيد سابق', 'وارد', 'منصرف', 'اعدام', 'رصيد متاح'];
@@ -491,7 +591,7 @@ async function renderDailyStock() {
         const pTot = { previous: 0, incoming: 0, outgoing: 0, disposal: 0, available: 0 };
         h += `<tr class="data-row gov-${govIdx % 2 === 0 ? 'even' : 'odd'}" data-rid="${r.id}">`;
         if (idx === 0) h += `<td class="gov-cell" rowspan="${reps.length}">${gov}</td>`;
-        const todayStr = new Date().toISOString().slice(0,10);
+        const todayStr = fmtCairoDate('date');
         const dateStyle = r.date && r.date !== todayStr ? ' style="color:red;font-weight:700"' : '';
         h += `<td>${r.hospital_name || ''}</td><td data-role="date"${dateStyle}>${r.date || ''}</td><td data-role="time">${r.time || ''}</td>`;
         h += `<td class="${canEdit ? 'editable' : ''}" data-group="meta" data-sub="under_inspection" data-rid="${r.id}">${r.under_inspection || 0}</td>`;
@@ -527,6 +627,28 @@ async function renderDailyStock() {
     document.getElementById('dailyStockWrap').innerHTML = h;
     if (canEdit) setupInlineEdit();
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+
+function exportStockExcel() {
+  const table = document.getElementById('dailyStockTable');
+  if (!table) return;
+  let html = table.outerHTML;
+  html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:10px;"');
+  html = html.replace(/<th(?!\s)/g, '<th style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap"');
+  html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap">`);
+  html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px"');
+  html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px">`);
+  const dateStr = fmtCairoDate('full');
+  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
+    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#2c3e50;border:none">المخزون اليومي لبنوك الدم</td></tr>
+      <tr><td style="text-align:center;font-size:11px;color:#7f8c8d;border:none">${dateStr}</td></tr></table>
+    ${html}
+    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
+  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'stock-management-' + fmtCairoDate('date') + '.xls'; a.click();
+  URL.revokeObjectURL(url);
 }
 
 function setupInlineEdit() {
@@ -592,9 +714,9 @@ async function collectGroupData(table, rid) {
   const pTot = { previous: 0, incoming: 0, outgoing: 0, disposal: 0, available: 0 };
   BTYPES.forEach(t => { bTot.previous += bd[t].previous; bTot.incoming += bd[t].incoming; bTot.outgoing += bd[t].outgoing; bTot.disposal += bd[t].disposal; bTot.available += bd[t].available; });
   PTYPES.forEach(t => { pTot.previous += pd[t].previous; pTot.incoming += pd[t].incoming; pTot.outgoing += pd[t].outgoing; pTot.disposal += pd[t].disposal; pTot.available += pd[t].available; });
-  const now = new Date();
-  const date = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
-  const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Africa/Cairo' });
+  const date = fmtCairoDate('date');
+  const now = getCairoDate();
+  const time = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
   try {
     const body = { blood: bd, plasma: pd, underInspection: under_inspection, date, time };
     if (platelets !== null) body.platelets = platelets;
@@ -607,7 +729,7 @@ async function collectGroupData(table, rid) {
   } catch(e) { console.error(e); }
 }
 function updateRow(row, bd, pd, bTot, pTot, under_inspection, date, time) {
-  const todayStr = new Date().toISOString().slice(0,10);
+  const todayStr = fmtCairoDate('date');
   const dateCell = row.querySelector('[data-role="date"]');
   dateCell.textContent = date;
   dateCell.style.color = date && date.slice(0,10) !== todayStr ? 'red' : '';
@@ -636,9 +758,9 @@ function updateRow(row, bd, pd, bTot, pTot, under_inspection, date, time) {
 
 async function showAddDailyModal() {
   const hospitals = await api('GET', '/hospitals');
-  const now = new Date();
-  const d = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
-  const t = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Africa/Cairo' });
+  const d = fmtCairoDate('date');
+  const now = getCairoDate();
+  const t = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
   let html = `<div class="form-group"><label>المستشفى</label><select class="form-control" id="addDailyHospital">
     ${hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>
     <div class="form-group"><label>التاريخ</label><input type="date" class="form-control" id="addDailyDate" value="${d}"></div>
@@ -651,12 +773,12 @@ async function createDailyReport() {
   const hospitalId = parseInt(document.getElementById('addDailyHospital').value);
   const date = document.getElementById('addDailyDate').value;
   const time = document.getElementById('addDailyTime').value.trim();
-  if (!hospitalId || !date) { alert('اختر المستشفى والتاريخ'); return; }
+  if (!hospitalId || !date) { showToast('⚠ اختر المستشفى والتاريخ'); return; }
   try {
     await api('POST', '/daily-reports', { hospitalId, date, time });
     closeModal();
     renderDailyStock();
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast('❌ '+e.message); }
 }
 
 // ============== الرصيد الاستراتيجي (Strategic Reserve) ==============
@@ -905,7 +1027,7 @@ async function renderStrategicStock() {
     const dateSub = showDates ? `<th>اليوم</th><th>الوقت</th>` : '';
 
     el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      ${canExport ? '<button class="btn btn-success" onclick="exportStrategicExcel()"><i class="fas fa-file-excel"></i> Excel</button><button class="btn btn-danger" onclick="exportStrategicPDF()" style="margin-right:6px"><i class="fas fa-file-pdf"></i> PDF</button>' : ''}</div>
+      ${canExport ? '<button class="btn btn-success" onclick="exportStrategicExcel()"><i class="fas fa-file-excel"></i> تحميل Excel</button><button class="btn btn-danger" onclick="exportStrategicPDF()" style="margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>' : ''}</div>
       <div class="page-title"><i class="fas fa-shield" style="color:#2e7d32"></i> الرصيد الاستراتيجي</div>
       <div class="card"><div class="card-body">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -946,13 +1068,13 @@ async function showStrategicCalcModal() {
     </div>`;
     openModal('حساب الرصيد الاستراتيجي', html,
       `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn btn-primary" onclick="doStrategicCalc()">حساب وحفظ</button>`);
-  } catch (e) { alert('حدث خطأ: ' + e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 async function doStrategicCalc() {
   const formula = parseInt(document.getElementById('calcFormula').value);
   const holidayDays = parseInt(document.getElementById('calcHolidayDays').value);
-  if (!holidayDays || holidayDays < 0) { alert('يرجى إدخال عدد أيام الإجازات'); return; }
+  if (!holidayDays || holidayDays < 0) { showToast('⚠ يرجى إدخال عدد أيام الإجازات'); return; }
   closeModal();
   const el = document.getElementById('mainContent');
   el.innerHTML = '<div class="empty-msg" style="padding:40px"><i class="fas fa-spinner fa-spin" style="font-size:24px"></i><br>جاري حساب الرصيد الاستراتيجي...</div>';
@@ -993,39 +1115,29 @@ function exportStrategicExcel() {
   URL.revokeObjectURL(url);
 }
 
+function downloadPdf(bodyHtml, filename) {
+  const w = window.open('', '_blank');
+  if (!w) return;
+  w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>' + filename + '</title><style>@page{size:landscape;margin:8mm 6mm}body{font-family:\'Traditional Arabic\',\'Segoe UI\',Arial,sans-serif;padding:8px;background:#fff;margin:0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>' + bodyHtml + '<script>window.print();window.close();</' + 'script></body></html>');
+  w.document.close();
+}
+
 function exportStrategicPDF() {
   const wrap = document.getElementById('strategicTableWrap');
   if (!wrap) return;
-  const w = window.open('', '_blank');
-  if (!w) return;
   const dateStr = new Date().toLocaleDateString('ar-EG');
   const tbl = wrap.querySelector('table');
-  if (!tbl) { w.close(); return; }
+  if (!tbl) return;
   let html = tbl.outerHTML;
-  // Add inline styles
   html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:11px"');
   html = html.replace(/<th(?!\s)/g, '<th style="background:#2e7d32;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #1b5e20;text-align:center"');
   html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2e7d32;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #1b5e20;text-align:center">`);
   html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-size:11px"');
   html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-size:11px">`);
-  w.document.write(`<html dir="rtl"><head><meta charset="utf-8"><style>
-    @page { size: landscape; margin: 10mm 8mm; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 10px; }
-    .header { text-align:center; margin-bottom:10px }
-    .header h2 { color:#2e7d32; margin:0 0 3px 0; font-size:16px }
-    .header p { color:#666; margin:0; font-size:11px }
-    table { border-collapse:collapse; width:100%; font-size:11px }
-    td, th { padding:3px 5px; border:1px solid #ccc; text-align:center }
-    .footer { text-align:center; margin-top:10px; font-size:10px; color:#888 }
-    .blood-cell { font-weight:600 }
-    .pos { color:#2e7d32 } .neg { color:#dc3545 }
-  </style></head><body>
-    <div class="header"><h2>الرصيد الاستراتيجي</h2><p>تاريخ التقرير: ${dateStr}</p></div>
+  const bodyHtml = `<div style="text-align:center;margin-bottom:10px"><h2 style="color:#2e7d32;margin:0 0 3px 0;font-size:16px">الرصيد الاستراتيجي</h2><p style="color:#666;margin:0;font-size:11px">تاريخ التقرير: ${dateStr}</p></div>
     ${html}
-    <div class="footer">إعداد و برمجة محمد ندا 01068880999</div>
-    </body></html>`);
-  w.document.close();
-  setTimeout(() => { w.print(); w.close(); }, 600);
+    <div style="text-align:center;margin-top:10px;font-size:10px;color:#888">إعداد و برمجة محمد ندا 01068880999</div>`;
+  downloadPdf(bodyHtml, 'strategic-stock.pdf');
 }
 
 // ============== TOTAL STOCK (total STOCK Mang) ==============
@@ -1035,8 +1147,8 @@ async function renderTotal() {
   const canExport = hasPerm('daily_total', 'export');
   try {
     el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      ${canExport ? '<button class="btn btn-success" onclick="exportTotalExcel()"><i class="fas fa-file-excel"></i> Excel</button>' : ''}
-      ${canExport ? '<button class="btn btn-danger" onclick="exportTotalPDF()"><i class="fas fa-file-pdf"></i> PDF</button>' : ''}</div>
+      ${canExport ? '<button class="btn btn-success" onclick="exportTotalExcel()"><i class="fas fa-file-excel"></i> تحميل Excel</button>' : ''}
+      ${canExport ? '<button class="btn btn-danger" onclick="exportTotalPDF()"><i class="fas fa-file-pdf"></i> تحميل PDF</button>' : ''}</div>
       <div class="card"><div class="card-body table-scroll"><table id="totalTable"><thead id="totalThead"></thead><tbody id="totalTbody"></tbody></table></div></div>`;
     const data = await api('GET', '/daily-reports');
     renderTotalTable(data);
@@ -1124,23 +1236,10 @@ function exportTotalPDF() {
   html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2e7d32;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1b5e20;text-align:center;white-space:nowrap">`);
   html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 4px;border:1px solid #ccc;text-align:center;font-size:10px"');
   html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 4px;border:1px solid #ccc;text-align:center;font-size:10px">`);
-  const win = window.open('', '_blank');
-  if (!win) return;
-  win.document.write(`<html dir="rtl"><head><meta charset="utf-8"><title>إجمالي الرصيد</title>
-    <style>
-      @page { size: landscape; margin: 8mm 6mm; }
-      body { font-family: 'Segoe UI', Arial, sans-serif; padding: 8px; }
-      .header { text-align:center; margin-bottom:8px }
-      .header h2 { color:#2e7d32; margin:0 0 2px; font-size:15px }
-      .header p { color:#666; margin:0; font-size:10px }
-      .footer { text-align:center; margin-top:10px; font-size:10px; color:#888 }
-      @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-    </style></head><body>
-    <div class="header"><h2>إجمالي الرصيد ببنوك الدم</h2><p>تاريخ التقرير: ${dateStr}</p></div>
+  const bodyHtml = `<div style="text-align:center;margin-bottom:8px"><h2 style="color:#2e7d32;margin:0 0 2px;font-size:15px">إجمالي الرصيد ببنوك الدم</h2><p style="color:#666;margin:0;font-size:10px">تاريخ التقرير: ${dateStr}</p></div>
     ${html}
-    <div class="footer">إعداد و برمجة محمد ندا 01068880999</div>
-    <script>window.print();window.close();</scr` + `ipt></body></html>`);
-  win.document.close();
+    <div style="text-align:center;margin-top:10px;font-size:10px;color:#888">إعداد و برمجة محمد ندا 01068880999</div>`;
+  downloadPdf(bodyHtml, 'total-stock.pdf');
 }
 
 // ============== DAILY STATEMENT (بيان يومى) ==============
@@ -1172,7 +1271,7 @@ function renderStatementReport(data, hospitals) {
   const hosp = hospitals.find(h => h.id === hId);
   if (!hosp) { document.getElementById('stmtReport').innerHTML = '<div class="empty-msg">اختر المستشفى</div>'; return; }
   const report = data.find(r => r.hospital_id === hId);
-  if (!report) { document.getElementById('stmtReport').innerHTML = '<div class="empty-msg">لا يوجد تقرير لهذا المستشفى</div>'; return; }
+  if (!report) { document.getElementById('stmtReport').innerHTML = '<div class="empty-msg">يوجد تقرير لهذا المستشفى</div>'; return; }
   const bd = tryParse(report.blood_data) || {};
   const pd = tryParse(report.plasma_data) || {};
   const pdData = tryParse(report.plat_data) || {};
@@ -1301,7 +1400,7 @@ async function saveStatementPlat(rid) {
   const cryo = parseInt(table.querySelector('.cryo-editable')?.textContent.trim()) || 0;
   try {
     await api('PUT', '/daily-reports/' + rid, { platData, cryo });
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast('❌ '+e.message); }
 }
 
 function printStatement() {
@@ -1339,11 +1438,13 @@ async function renderBranchStatement() {
   try {
     const me = (await api('GET', '/me')).user;
     const isMaster = me.id === 1;
+    const canExport = hasPerm('daily_branch', 'export');
     let gov = me.governorate;
     if (!gov && !isMaster) { el.innerHTML = '<div class="empty-msg">لا توجد فرع مرتبطة بحسابك</div>'; return; }
 
     // Check if dropdown already exists (master switching governorates)
     const existingSel = document.getElementById('branchGovSelect');
+    const exportBtns = canExport ? `<button class="btn btn-sm btn-success" onclick="branchExportExcel()" style="margin-right:6px;height:32px"><i class="fas fa-file-excel"></i> تحميل Excel</button><button class="btn btn-sm btn-danger" onclick="branchExportPdf()" style="margin-right:4px;height:32px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>` : '';
     if (existingSel) { gov = existingSel.value; }
     else if (!gov && isMaster) {
       const govs = await api('GET', '/governorates');
@@ -1351,10 +1452,12 @@ async function renderBranchStatement() {
       if (!arr.length) { el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div><div class="empty-msg">لا توجد محافظات</div>`; return; }
       gov = arr[0];
       el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+        ${exportBtns}
         <div style="display:inline-block;margin-right:10px"><select class="form-control" id="branchGovSelect" style="display:inline-block;width:auto" onchange="renderBranchStatement()">${arr.map(g => `<option value="${g}" ${g===gov?'selected':''}>${g}</option>`).join('')}</select></div></div>
         <div class="branch-stmt-report" id="branchStmtReport"></div>`;
     } else if (!existingSel) {
-      el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
+      el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+        ${exportBtns}</div>
         <div class="branch-stmt-report" id="branchStmtReport"></div>`;
     }
     const reports = await api('GET', '/daily-reports');
@@ -1442,6 +1545,43 @@ async function renderBranchStatement() {
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
 }
 
+function branchExportExcel() {
+  const table = document.querySelector('#branchStmtReport table');
+  if (!table) return;
+  let html = table.outerHTML;
+  html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:10px"');
+  html = html.replace(/<th(?!\s)/g, '<th style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap"');
+  html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap">`);
+  html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px"');
+  html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px">`);
+  const title = document.querySelector('.stmt-title')?.textContent || 'بيان الفرع';
+  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
+    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#2c3e50;border:none">${title}</td></tr></table>
+    ${html}
+    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
+  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'branch-statement-' + fmtCairoDate('date') + '.xls'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function branchExportPdf() {
+  const table = document.querySelector('#branchStmtReport table');
+  if (!table) return;
+  const title = document.querySelector('.stmt-title')?.textContent || 'بيان الفرع';
+  let html = table.outerHTML;
+  html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Traditional Arabic\',Arial;font-size:11px"');
+  html = html.replace(/<th(?!\s)/g, '<th style="background:#2c3e50;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #1a252f;text-align:center"');
+  html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2c3e50;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #1a252f;text-align:center">`);
+  html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-size:11px"');
+  html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-size:11px">`);
+  const bodyHtml = `<div style="text-align:center;margin-bottom:8px"><h2 style="color:#2c3e50;margin:0 0 2px;font-size:15px">${title}</h2></div>
+    ${html}
+    <div style="text-align:center;margin-top:10px;font-size:10px;color:#888">إعداد و برمجة محمد ندا 01068880999</div>`;
+  downloadPdf(bodyHtml, 'branch-statement.pdf');
+}
+
 // ============== OTHER PAGES (read-only) ==============
 
 async function renderMonthlyStorage() {
@@ -1490,11 +1630,23 @@ async function renderBloodConsumption() {
     if (isHospital) filteredHospitals = hospitals.filter(h => h.id === user.hospitalId);
     else if (isBranchSup) filteredHospitals = hospitals.filter(h => h.governorate === user.governorate);
 
+    const now = new Date();
+    const isLocked = now.getDate() >= 25;
+    // Always default to previous month
+    let prevYear = now.getFullYear();
+    let prevMonth = now.getMonth() + 1; // 1-indexed (e.g. 7 for July)
+    prevMonth--; // 6 for July → 6 (June)
+    if (prevMonth === 0) { prevMonth = 12; prevYear--; }
+    const year = prevYear;
+    const monthVal = prevMonth;
+
     el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
     </div>`;
 
     if (canEdit) {
-      const year = 2026;
+      if (isLocked) {
+        el.innerHTML += `<div style="background:#fff3cd;color:#856404;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;text-align:center"><i class="fas fa-lock"></i> التعديل مغلق بعد يوم 25 — يتم عرض بيانات الشهر السابق</div>`;
+      }
       el.innerHTML += `<div class="card" style="margin-bottom:16px;border-right:4px solid #e91e63">
         <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-edit"></i> إدخال منصرف فصائل الدم</strong></div>
         <div class="card-body" style="padding:10px 16px">
@@ -1502,7 +1654,7 @@ async function renderBloodConsumption() {
             <div class="form-group"><label>السنة</label>
               <select class="form-control" id="bcYear" style="width:100px" onchange="loadExistingConsumption()">${[2026,2025,2024,2023,2022].map(y => `<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('')}</select></div>
             <div class="form-group"><label>الشهر</label>
-              <select class="form-control" id="bcMonth" style="width:120px" onchange="loadExistingConsumption()">${months.map((m,i) => `<option value="${i+1}">${m}</option>`).join('')}</select></div>
+              <select class="form-control" id="bcMonth" style="width:120px" onchange="loadExistingConsumption()">${months.map((m,i) => `<option value="${i+1}" ${i+1===monthVal?'selected':''}>${m}</option>`).join('')}</select></div>
             ${isHospital 
               ? `<div class="form-group" style="min-width:200px"><label>بنك الدم</label><div style="padding:6px 0;font-weight:600">${user.name}</div></div>`
               : `<div class="form-group" style="flex:1;min-width:200px"><label>بنك الدم</label>
@@ -1629,17 +1781,25 @@ async function saveBloodConsumption() {
     // Check if record already exists for same hospital/month/year in current table
     const existing = window._bcItems || [];
     const dup = existing.find(r => r.hospital_id === hospitalId && r.year === year && r.month === month);
-    if (dup && !confirm('⚠ تم إدخال بيانات هذا الشهر مسبقاً!\n\nهل تريد تعديل البيانات؟ اضغط OK للتعديل، أو إلغاء للرجوع.')) return;
+    if (dup) {
+      showConfirmModal('⚠ تم إدخال بيانات هذا الشهر مسبقاً!\n\nهل تريد تعديل البيانات؟ اضغط OK للتعديل، أو إلغاء للرجوع.', async function() {
+        await api('POST', '/monthly-consumption', { hospitalId, year, month, bloodTypes });
+        showToast('✅ تم تعديل البيانات بنجاح');
+        renderBloodConsumption();
+      });
+      return;
+    }
     await api('POST', '/monthly-consumption', { hospitalId, year, month, bloodTypes });
-    showToast(dup ? '✅ تم تعديل البيانات بنجاح' : '✅ تم حفظ البيانات بنجاح');
+    showToast('✅ تم حفظ البيانات بنجاح');
     renderBloodConsumption();
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 async function deleteBloodConsumption(id) {
-  if (!confirm('هل أنت متأكد من حذف هذا السجل؟')) return;
-  try { await api('DELETE', '/monthly-consumption/' + id); renderBloodConsumption(); }
-  catch (e) { alert(e.message); }
+  showConfirmModal('هل أنت متأكد من حذف هذا السجل؟', async function() {
+    try { await api('DELETE', '/monthly-consumption/' + id); renderBloodConsumption(); }
+    catch (e) { showToast('❌ '+e.message); }
+  });
 }
 
 const MONTHS_AR = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
@@ -1651,12 +1811,11 @@ async function renderEmployeeStatement() {
   const canDelete = hasPerm('employees', 'delete');
   el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button>
     ${canAdd ? `<button class="btn btn-info" onclick="empShowAddModal()" style="height:32px"><i class="fas fa-plus"></i> إضافة موظف</button>` : ''}
-    <button class="btn btn-primary" onclick="printEmployeeTable()" style="height:32px"><i class="fas fa-print"></i> طباعة / PDF</button>
+    ${window._user?.role === 'admin' ? `<button class="btn btn-warning" onclick="toggleEmpInlineEdit()" id="empInlineEditBtn" style="height:32px"><i class="fas fa-pen"></i> فتح التعديل</button><button class="btn btn-success" onclick="empInlineSave()" id="empInlineSaveBtn" style="height:32px;display:none"><i class="fas fa-save"></i> حفظ التعديلات</button>` : ''}
+    <button class="btn btn-danger" onclick="exportEmployeePDF()" style="height:32px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
     <button class="btn btn-success" onclick="exportEmployeeExcel()" style="height:32px"><i class="fas fa-file-excel"></i> تحميل Excel</button>
-    ${window.me?.user?.role === 'hospital' ? `<button class="btn btn-warning" id="empReviewBtn" onclick="markEmployeeMonthReview()" style="height:32px;background:#17a2b8;color:#fff"><i class="fas fa-check-circle"></i> تمت المراجعه</button>` : ''}
   </div>
   <div class="page-title"><i class="fas fa-users" style="color:#795548"></i> بيان العاملين</div>
-  <div id="empReviewStatus" style="margin-bottom:8px"></div>
   <div id="empLoading" style="text-align:center;padding:40px;color:#999"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
   <div id="empContent"></div>`;
   try {
@@ -1750,6 +1909,43 @@ const branchSupMissingRecords = branchSupHasMissingData ? branchSupervisors.filt
         </div>
       </div>
     </div>
+    <!-- Hospital Review Section -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-check-double"></i> حالة المراجعة حسب المستشفى</strong></div>
+      <div class="card-body" style="padding:8px 12px">
+        ${(() => {
+          const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+          const byHosp = {};
+          data.forEach(d => {
+            const key = d.hospital_id;
+            if (key == null) return;
+            if (!byHosp[key]) byHosp[key] = { name: d.hospital_name, gov: d.governorate, employees: [] };
+            byHosp[key].employees.push(d);
+          });
+          const hospIds = Object.keys(byHosp).sort((a, b) => (byHosp[a].gov||'').localeCompare(byHosp[b].gov||''));
+          const hospRows = hospIds.map(id => {
+            const h = byHosp[id];
+            const total = h.employees.length;
+            const reviewed = h.employees.filter(e => e.reviewed && e.review_month === curMonth).length;
+            const allReviewed = reviewed === total;
+            if (allReviewed) return '';
+            return `<tr>
+              <td>${h.gov||''}</td>
+              <td><strong>${h.name||''}</strong></td>
+              <td style="text-align:center">${total}</td>
+              <td style="text-align:center;color:#dc3545">${reviewed}/${total}</td>
+              ${canEdit ? `<td><button class="btn btn-sm btn-outline" onclick="empReviewHospital(${id})" style="color:#1976d2;font-size:10px"><i class="fas fa-check-double"></i> مراجعة الكل</button></td>` : ''}
+            </tr>`;
+          }).filter(r => r).join('');
+          return hospRows ? `<table class="data-table" style="font-size:12px">
+            <thead><tr style="background:#f5f5f5">
+              <th>الفرع</th><th>بنك الدم</th><th>العدد</th><th>تمت المراجعة</th>${canEdit ? '<th></th>' : ''}
+            </tr></thead>
+            <tbody>${hospRows}</tbody>
+          </table>` : '<div style="text-align:center;padding:16px;color:#2e7d32;font-size:13px"><i class="fas fa-check-circle"></i> تمت مراجعة جميع المستشفيات</div>';
+        })()}
+      </div>
+    </div>
     <!-- Branch Supervisor Table -->
     <div class="card" style="margin-bottom:12px">
       <div class="card-header" style="padding:10px 16px;background:#e8f5e9;cursor:pointer" onclick="toggleSupSection()">
@@ -1814,33 +2010,10 @@ const branchSupMissingRecords = branchSupHasMissingData ? branchSupervisors.filt
     window._empCanDelete = canDelete;
     window._empHospGovMap = hospGovMap;
     window._branchSupervisors = branchSupervisors;
-    // Update monthly review status
-    const reviewStatusEl = document.getElementById('empReviewStatus');
-    const reviewBtn = document.getElementById('empReviewBtn');
-    if (window.me?.user?.role === 'hospital') {
-      const myStatus = (hospitalStatus||[]).find(h => h.id === window.me.user.hospitalId);
-      if (myStatus && myStatus.monthlyUpdated) {
-        if (reviewStatusEl) reviewStatusEl.innerHTML = '<div style="background:#e8f5e9;border-right:5px solid #2e7d32;border-radius:6px;padding:10px 14px;font-size:13px;color:#1b5e20"><i class="fas fa-check-circle" style="color:#2e7d32"></i> <strong>✓ تمت المراجعة</strong> — تمت مراجعة بيانات العاملين لهذا الشهر</div>';
-        if (reviewBtn) reviewBtn.style.display = 'none';
-      } else {
-        if (reviewStatusEl) reviewStatusEl.innerHTML = '<div style="background:#fff3e0;border-right:5px solid #e65100;border-radius:6px;padding:10px 14px;font-size:13px;color:#bf360c"><i class="fas fa-exclamation-circle" style="color:#e65100"></i> <strong>يرجى مراجعة بيانات العاملين</strong> — لم يتم تأكيد مراجعة هذا الشهر بعد</div>';
-        if (reviewBtn) reviewBtn.style.display = '';
-      }
-    }
     applySupFilter();
     applyEmpFilter();
   } catch (e) {
-    document.getElementById('empLoading').innerHTML = `<span style="color:#dc3545"><i class="fas fa-exclamation-circle"></i> ${e.message}</span>`;
-  }
-}
-
-async function markEmployeeMonthReview() {
-  try {
-    await api('POST', '/employee-statements/mark-updated');
-    showToast('✅ تم تأكيد مراجعة بيانات العاملين لهذا الشهر');
-    renderEmployeeStatement();
-  } catch (e) {
-    showToast('❌ ' + e.message);
+    document.getElementById('empLoading').innerHTML = `<span style="color:#dc3545"><i class="fas fa-exclamation-circle"></i> ${sanitize(e.message)}</span>`;
   }
 }
 
@@ -1925,7 +2098,7 @@ async function doAddSupInEmpPage() {
     if (missing.length) { showToast('❌ البيانات الناقصة: ' + missing.join('، ')); return; }
     const hospitals = window._supHospitals || [];
     const govHospitals = hospitals.filter(h => h.governorate === gov);
-    if (!govHospitals.length) { showToast('❌ لا يوجد بنوك دم في هذا الفرع'); return; }
+    if (!govHospitals.length) { showToast('❌ يوجد بنوك دم في هذا الفرع'); return; }
     const hospitalId = govHospitals[0].id;
     await api('POST', '/employee-statements', {
       hospital_id: hospitalId,
@@ -1994,7 +2167,7 @@ async function doEditSupInEmpPage(id) {
     const hospitals = window._supHospitals || [];
     const govHospitals = hospitals.filter(h => h.governorate === gov);
     const hospitalId = govHospitals.length ? govHospitals[0].id : null;
-    if (!hospitalId) { showToast('❌ لا يوجد بنوك دم في هذا الفرع'); return; }
+    if (!hospitalId) { showToast('❌ يوجد بنوك دم في هذا الفرع'); return; }
     await api('PUT', '/employee-statements/' + id, {
       hospital_id: hospitalId,
       employee: name,
@@ -2010,8 +2183,9 @@ async function doEditSupInEmpPage(id) {
   } catch (e) { showToast('❌ ' + e.message); }
 }
 function showDeleteSupInEmpPage(id) {
-  if (!confirm('هل أنت متأكد من حذف مشرف الفرع؟')) return;
-  empDeleteRecord(id);
+  showConfirmModal('هل أنت متأكد من حذف مشرف الفرع؟', function() {
+    empDeleteRecord(id);
+  });
 }
 
 function applySupFilter() {
@@ -2023,7 +2197,7 @@ function applySupFilter() {
   const tbody = document.getElementById('supTbody');
   if (!tbody) return;
   const canEditDel = window._empCanEdit || window._empCanDelete;
-  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="${canEditDel ? 9 : 8}" style="text-align:center;padding:10px;color:#999">لا يوجد مشرفين لهذا الفرع</td></tr>`; return; }
+  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="${canEditDel ? 9 : 8}" style="text-align:center;padding:10px;color:#999">يوجد مشرفين لهذا الفرع</td></tr>`; return; }
   tbody.innerHTML = filtered.map((s,i) => `<tr${i%2?' style="background:#fafafa"':''}>
     <td>${i+1}</td>
     <td>${s.governorate}</td>
@@ -2041,6 +2215,7 @@ function applySupFilter() {
 }
 
 function applyEmpFilter() {
+  const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
   const gov = document.getElementById('empFilterGov')?.value || '';
   const hosp = document.getElementById('empFilterHosp')?.value || '';
   const cat = document.getElementById('empFilterCat')?.value || '';
@@ -2065,7 +2240,7 @@ function applyEmpFilter() {
   if (!tbody) return;
   const colSpan = canEdit||canDelete ? 10 : 9;
   if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;padding:20px;color:#999">لا توجد نتائج</td></tr>`; return; }
-  tbody.innerHTML = filtered.map((d,i) => `<tr${i%2?' style="background:#fafafa"':''}>
+  tbody.innerHTML = filtered.map((d,i) => `<tr${i%2?' style="background:#fafafa"':''} data-id="${d.id}">
     <td>${i+1}</td>
     <td>${d.governorate}</td>
     <td>${d.hospital_name}</td>
@@ -2101,7 +2276,7 @@ function updateEmpStats(filtered) {
   }
 }
 
-function printEmployeeTable() {
+async function printEmployeeTable() {
   const data = window._empData || [];
   if (!data.length) return showToast('لا توجد بيانات للطباعة');
   
@@ -2263,15 +2438,93 @@ function exportEmployeeExcel() {
     if (search && (!d.employee || !d.employee.toLowerCase().includes(search)) && !(d.national_id||'').includes(search)) return false;
     return true;
   });
-  let csv = '\uFEFFالمحافظة,بنك الدم,الموظف,الفئه,التصنيف,الرقم القومي,التليفون,البريد الالكتروني\n';
-  filtered.forEach(d => {
-    const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
-    csv += [esc(d.governorate), esc(d.hospital_name), esc(d.employee), esc(d.category), esc(d.classification), esc(d.national_id||''), esc(d.phone||''), esc(d.email||'')].join(',') + '\n';
-  });
-  csv += '\n"إعداد و برمجة محمد ندا 01068880999"\n';
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'بيان_العاملين.csv'; a.click();
+  const branchName = gov || 'جميع الفروع';
+  const hospitalName = hosp || 'جميع بنوك الدم';
+  const rows = filtered.map((d,i) => `<tr>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${i+1}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.governorate||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.hospital_name||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.employee||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.category||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.classification||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.national_id||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.phone||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.email||''}</td>
+  </tr>`).join('');
+  const dateStr = new Date().toLocaleDateString('ar-EG');
+  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
+    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#795548;border:none">بيان العاملين ببنوك الدم</td></tr>
+      <tr><td style="text-align:center;font-size:11px;color:#7f8c8d;border:none">${dateStr} | ${branchName} | ${hospitalName}</td></tr></table>
+    <table style="border-collapse:collapse;width:100%;font-family:'Segoe UI',Arial;font-size:10px">
+      <thead><tr>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">م</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">المحافظة</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">بنك الدم</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الموظف</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الفئه</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">التصنيف</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الرقم القومي</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">التليفون</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">البريد</th>
+      </tr></thead>
+      <tbody>${rows}</tbody></table>
+    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
+  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'بيان_العاملين.xls'; a.click();
+  URL.revokeObjectURL(url);
   showToast('✅ تم التحميل');
+}
+
+function exportEmployeePDF() {
+  const data = window._empData || [];
+  if (!data.length) return showToast('لا توجد بيانات');
+  const gov = document.getElementById('empFilterGov')?.value || '';
+  const hosp = document.getElementById('empFilterHosp')?.value || '';
+  const cat = document.getElementById('empFilterCat')?.value || '';
+  const cls = document.getElementById('empFilterClass')?.value || '';
+  const search = (document.getElementById('empSearch')?.value || '').trim().toLowerCase();
+  const filtered = data.filter(d => {
+    if (gov && d.governorate !== gov) return false;
+    if (hosp && d.hospital_name !== hosp) return false;
+    if (cat && d.category !== cat) return false;
+    if (cls && d.classification !== cls) return false;
+    if (search && (!d.employee || !d.employee.toLowerCase().includes(search)) && !(d.national_id||'').includes(search)) return false;
+    return true;
+  });
+  const branchName = gov || 'جميع الفروع';
+  const hospitalName = hosp || 'جميع بنوك الدم';
+  const dateStr = new Date().toLocaleDateString('ar-EG');
+  const rows = filtered.map((d,i) => `<tr>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${i+1}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.governorate||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.hospital_name||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.employee||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.category||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.classification||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.national_id||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.phone||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.email||''}</td>
+  </tr>`).join('');
+  const bodyHtml = `<div style="text-align:center;margin-bottom:12px">
+    <h2 style="color:#795548;margin:0 0 3px 0;font-size:18px">بيان العاملين ببنوك الدم</h2>
+    <p style="color:#666;margin:0;font-size:12px">${dateStr} | ${branchName} | ${hospitalName}</p></div>
+    <table style="border-collapse:collapse;width:100%;font-family:'Segoe UI',Arial;font-size:10px">
+      <thead><tr>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">م</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">المحافظة</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">بنك الدم</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الموظف</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الفئه</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">التصنيف</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الرقم القومي</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">التليفون</th>
+        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">البريد</th>
+      </tr></thead>
+      <tbody>${rows}</tbody></table>
+    <div style="text-align:center;margin-top:10px;font-size:10px;color:#888">إعداد و برمجة محمد ندا 01068880999</div>`;
+  downloadPdf(bodyHtml, 'بيان_العاملين.pdf');
 }
 
 async function empShowAddModal(defaultCategory) {
@@ -2443,12 +2696,172 @@ async function empDoEdit(id) {
 }
 
 async function empDeleteRecord(id) {
-  if (!confirm('هل أنت متأكد من حذف هذا الموظف؟')) return;
+  showConfirmModal('هل أنت متأكد من حذف هذا الموظف؟', async function() {
+    try {
+      await api('DELETE', '/employee-statements/' + id);
+      showToast('✅ تم الحذف');
+      renderEmployeeStatement();
+    } catch (e) { showToast('❌ ' + e.message); }
+  });
+}
+
+let _empInlineEdit = false;
+
+function toggleEmpInlineEdit() {
+  _empInlineEdit = !_empInlineEdit;
+  const btn = document.getElementById('empInlineEditBtn');
+  const saveBtn = document.getElementById('empInlineSaveBtn');
+  if (!btn) return;
+  if (_empInlineEdit) {
+    btn.innerHTML = '<i class="fas fa-lock"></i> قفل التعديل';
+    btn.className = 'btn btn-secondary';
+    if (saveBtn) saveBtn.style.display = '';
+    document.querySelectorAll('#empTbody tr').forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length < 9) return;
+      [1,2,3,4,5,6,7,8].forEach(idx => {
+        if (cells[idx]) {
+          cells[idx].contentEditable = true;
+          cells[idx].style.background = '#fff9c4';
+          cells[idx].style.outline = '2px solid #f9a825';
+          cells[idx].style.borderRadius = '3px';
+        }
+      });
+    });
+  } else {
+    btn.innerHTML = '<i class="fas fa-pen"></i> فتح التعديل';
+    btn.className = 'btn btn-warning';
+    if (saveBtn) saveBtn.style.display = 'none';
+    document.querySelectorAll('#empTbody tr').forEach(row => {
+      const cells = row.querySelectorAll('td');
+      [1,2,3,4,5,6,7,8].forEach(idx => {
+        if (cells[idx]) {
+          cells[idx].contentEditable = false;
+          cells[idx].style.background = '';
+          cells[idx].style.outline = '';
+          cells[idx].style.borderRadius = '';
+        }
+      });
+    });
+  }
+}
+
+async function empInlineSave() {
+  const data = window._empData || [];
+  const rows = document.querySelectorAll('#empTbody tr[data-id]');
+  const hospitals = await api('GET', '/hospitals');
+  const changes = [];
+  for (const row of rows) {
+    const id = parseInt(row.getAttribute('data-id'));
+    const rec = data.find(r => r.id === id);
+    if (!rec) continue;
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 9) continue;
+    const newGov = cells[1].textContent.trim();
+    const newHosp = cells[2].textContent.trim();
+    const newName = cells[3].textContent.trim();
+    const newCat = cells[4].textContent.trim();
+    const newClass = cells[5].textContent.trim();
+    const newNid = cells[6].textContent.trim();
+    const newPhone = cells[7].textContent.trim();
+    const newEmail = cells[8].textContent.trim();
+    let newHospId = rec.hospital_id;
+    if (newHosp !== (rec.hospital_name||'') || newGov !== (rec.governorate||'')) {
+      const match = hospitals.find(h => h.name === newHosp && h.governorate === newGov);
+      if (match) { newHospId = match.id; }
+      else { showToast('⚠ لم يتم العثور على مستشفى "' + newHosp + '" في فرع "' + newGov + '" — تخطي'); continue; }
+    }
+    if (newName !== (rec.employee||'') || newCat !== (rec.category||'') || newClass !== (rec.classification||'') || newNid !== (rec.national_id||'') || newPhone !== (rec.phone||'') || newEmail !== (rec.email||'') || newHospId !== rec.hospital_id) {
+      changes.push({ id: rec.id, hospital_id: newHospId, employee: newName, category: newCat, classification: newClass, national_id: newNid, phone: newPhone, email: newEmail });
+    }
+  }
+  if (!changes.length) { showToast('⚠ لا توجد تغييرات'); return; }
+  const changesCount = changes.length;
+  showConfirmModal('هل أنت متأكد من حفظ ' + changesCount + ' تعديلات؟', async function() {
+    try {
+      for (const ch of changes) {
+        await api('PUT', '/employee-statements/' + ch.id, ch);
+      }
+      showToast('✅ تم حفظ ' + changesCount + ' تعديل');
+      toggleEmpInlineEdit();
+      renderEmployeeStatement();
+      if (window._empPendingReviewId) {
+        const pendingId = window._empPendingReviewId;
+        window._empPendingReviewId = null;
+        empToggleReview(pendingId);
+      }
+    } catch (e) { showToast('❌ ' + e.message); }
+  });
+}
+
+async function empToggleReview(id) {
   try {
-    await api('DELETE', '/employee-statements/' + id);
-    showToast('✅ تم الحذف');
-    renderEmployeeStatement();
-  } catch (e) { showToast('❌ ' + e.message); }
+  const data = window._empData || [];
+  const rec = data.find(r => r.id === id);
+  if (!rec) { showToast('❌ السجل غير موجود'); return; }
+  const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+  const isReviewed = rec.reviewed && rec.review_month === curMonth;
+  if (isReviewed) { showToast('ℹ️ تمت المراجعة مسبقاً — لا يمكن إلغاؤها'); return; }
+  // Validate before marking as reviewed
+  const errors = [];
+  const name = (rec.employee||'').trim();
+  if (!name) errors.push('الاسم ناقص');
+  else { const nameParts = name.split(/\s+/); if (nameParts.length < 3) errors.push('الاسم يجب أن يكون ثلاثي (3 أسماء)'); }
+  if (!rec.category) errors.push('الفئه ناقصة');
+  if (!rec.classification) errors.push('التصنيف ناقص');
+  const nid = String(rec.national_id||'').trim();
+  if (!nid) errors.push('الرقم القومي ناقص');
+  else if (!/^\d{14}$/.test(nid)) errors.push('الرقم القومي يجب أن يكون 14 رقم');
+  // if (!rec.shift) errors.push('الوردية ناقصة'); // removed — no shift field in UI
+  const phone = String(rec.phone||'').trim();
+  if (!phone) errors.push('التليفون ناقص');
+  if (errors.length) {
+    window._empPendingReviewId = id;
+    openModal('❌ لا يمكن المراجعة', `<div style="font-size:14px;line-height:2"><strong>الموظف: ${rec.employee}</strong><br>${errors.map(e => '• ' + e).join('<br>')}</div><div style="margin-top:12px;color:#888;font-size:12px">يرجى تصحيح البيانات من زر التعديل <i class="fas fa-edit"></i> ثم المحاولة مرة أخرى</div>`, () => {});
+    return;
+  }
+  await api('PUT', '/employee-statements/' + id, { reviewed: true, review_month: curMonth });
+  rec.reviewed = true; rec.review_month = curMonth;
+  showToast('✅ تمت المراجعة');
+  renderEmployeeStatement();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+async function empReviewHospital(hospId) {
+  try {
+  const data = window._empData || [];
+  const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+  const employees = data.filter(d => d.hospital_id === hospId);
+  if (!employees.length) { showToast('❌ لا يوجد موظفين لهذا المستشفى'); return; }
+  const allReviewed = employees.every(e => e.reviewed && e.review_month === curMonth);
+  if (allReviewed) { showToast('ℹ️ تمت المراجعة مسبقاً'); return; }
+  const errorsList = [];
+  employees.forEach(rec => {
+    const errs = [];
+    if (!(rec.employee||'').trim()) errs.push('الاسم ناقص');
+    else { const parts = (rec.employee||'').trim().split(/\s+/); if (parts.length < 3) errs.push('الاسم يجب أن يكون ثلاثي'); }
+    if (!rec.category) errs.push('الفئه ناقصة');
+    if (!rec.classification) errs.push('التصنيف ناقص');
+    const nid = String(rec.national_id||'').trim();
+    if (!nid) errs.push('الرقم القومي ناقص');
+    else if (!/^\d{14}$/.test(nid)) errs.push('الرقم القومي يجب أن يكون 14 رقم');
+    const phone = String(rec.phone||'').trim();
+    if (!phone) errs.push('التليفون ناقص');
+    if (errs.length) errorsList.push({ name: rec.employee, errors: errs });
+  });
+  if (errorsList.length) {
+    const body = errorsList.map(e => `<div style="margin-bottom:8px"><strong>${e.name}</strong><br>${e.errors.map(er => '• ' + er).join('<br>')}</div>`).join('<hr style="margin:6px 0">');
+    openModal('❌ لا يمكن المراجعة — بيانات ناقصة', `<div style="font-size:13px;line-height:2">${body}</div><div style="margin-top:12px;color:#888;font-size:12px">يرجى تصحيح البيانات من زر التعديل <i class="fas fa-edit"></i> لكل موظف ثم المحاولة مرة أخرى</div>`, () => {});
+    return;
+  }
+  for (const rec of employees) {
+    if (rec.reviewed && rec.review_month === curMonth) continue;
+    await api('PUT', '/employee-statements/' + rec.id, { reviewed: true, review_month: curMonth });
+    rec.reviewed = true; rec.review_month = curMonth;
+  }
+  showToast('✅ تمت مراجعة ' + employees.length + ' موظف');
+  renderEmployeeStatement();
+  } catch(e) { showToast('❌ ' + e.message); }
 }
 
 function toggleMissingData() {
@@ -2546,12 +2959,13 @@ async function doEditSupervisorUser(id) {
 }
 
 async function deleteSupervisorUser(id) {
-  if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
-  try {
-    await api('DELETE', '/users/' + id);
-    showToast('✅ تم الحذف');
-    renderSupervisorData();
-  } catch (e) { showToast('❌ ' + e.message); }
+  showConfirmModal('هل أنت متأكد من حذف هذا المستخدم؟', async function() {
+    try {
+      await api('DELETE', '/users/' + id);
+      showToast('✅ تم الحذف');
+      renderSupervisorData();
+    } catch (e) { showToast('❌ ' + e.message); }
+  });
 }
 
 async function renderArchive() {
@@ -2762,7 +3176,7 @@ async function renderArchiveConsumptionTable() {
         <span style="font-size:13px;color:#666">إجمالي السجلات: ${filtered.length}</span>
         <div>
           <button class="btn btn-sm btn-outline" onclick="exportExcel()" style="color:#2e7d32"><i class="fas fa-file-excel"></i> تحميل Excel</button>
-          <button class="btn btn-sm btn-outline" onclick="exportPDF()" style="color:#c62828;margin-right:6px"><i class="fas fa-file-pdf"></i> طباعة PDF</button>
+          <button class="btn btn-sm btn-outline" onclick="exportPDF()" style="color:#c62828;margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
         </div>
       </div>
       <div class="table-scroll" id="exportTable"><table class="data-table consumption-table"><thead><tr>
@@ -2789,10 +3203,10 @@ async function editArchiveRecord(archiveId, hospitalId, year, month, period) {
   try {
     const items = await api('GET', '/archive');
     const arch = items.find(a => a.id === archiveId);
-    if (!arch) { alert('لم يتم العثور على الأرشيف'); return; }
+    if (!arch) { showToast('⚠ لم يتم العثور على الأرشيف'); return; }
     let data = tryParse(arch.data) || [];
     const record = data.find(r => r.hospital_id === hospitalId && r.year === year && (month > 0 ? r.month === month : true) && (r.period || 'monthly') === (period || 'monthly'));
-    if (!record) { alert('لم يتم العثور على السجل'); return; }
+    if (!record) { showToast('⚠ لم يتم العثور على السجل'); return; }
     const bt = typeof record.blood_types === 'string' ? tryParse(record.blood_types) : record.blood_types || {};
     const BP = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
     openModal('تعديل بيانات الأرشيف',
@@ -2804,7 +3218,7 @@ async function editArchiveRecord(archiveId, hospitalId, year, month, period) {
       </div>`,
       `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
       <button class="btn btn-primary" onclick="saveEditArchiveRecord(${archiveId},${hospitalId},${year},${month},'${period}')">حفظ</button>`);
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 async function saveEditArchiveRecord(archiveId, hospitalId, year, month, period) {
@@ -2815,7 +3229,7 @@ async function saveEditArchiveRecord(archiveId, hospitalId, year, month, period)
     });
     const items = await api('GET', '/archive');
     const arch = items.find(a => a.id === archiveId);
-    if (!arch) { alert('لم يتم العثور على الأرشيف'); return; }
+    if (!arch) { showToast('⚠ لم يتم العثور على الأرشيف'); return; }
     let data = tryParse(arch.data) || [];
     data = data.map(r => {
       if (r.hospital_id === hospitalId && r.year === year && (month > 0 ? r.month === month : true) && (r.period || 'monthly') === (period || 'monthly')) {
@@ -2827,22 +3241,22 @@ async function saveEditArchiveRecord(archiveId, hospitalId, year, month, period)
     closeModal();
     showToast('✅ تم تعديل البيانات في الأرشيف بنجاح');
     renderArchiveConsumptionTable();
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 async function deleteArchiveRecord(archiveId, hospitalId, year, month, period) {
-  if (!confirm('هل أنت متأكد من حذف هذا السجل من الأرشيف؟')) return;
-  try {
-    const items = await api('GET', '/archive');
-    const arch = items.find(a => a.id === archiveId);
-    if (!arch) { alert('لم يتم العثور على الأرشيف'); return; }
-    let data = tryParse(arch.data) || [];
-    data = data.filter(r => {
-      if (r.hospital_id !== hospitalId) return true;
-      if (r.year !== year) return true;
-      if (month > 0 && r.month !== month) return true;
-      const rPeriod = r.period || 'monthly';
-      const btnPeriod = period || 'monthly';
+  showConfirmModal('هل أنت متأكد من حذف هذا السجل من الأرشيف؟', async function() {
+    try {
+      const items = await api('GET', '/archive');
+      const arch = items.find(a => a.id === archiveId);
+      if (!arch) { showToast('⚠ لم يتم العثور على الأرشيف'); return; }
+      let data = tryParse(arch.data) || [];
+      data = data.filter(r => {
+        if (r.hospital_id !== hospitalId) return true;
+        if (r.year !== year) return true;
+        if (month > 0 && r.month !== month) return true;
+        const rPeriod = r.period || 'monthly';
+        const btnPeriod = period || 'monthly';
       if (rPeriod !== btnPeriod) return true;
       return false;
     });
@@ -2852,7 +3266,8 @@ async function deleteArchiveRecord(archiveId, hospitalId, year, month, period) {
       await api('PUT', '/archive/' + archiveId, { data });
     }
     renderArchiveConsumptionTable();
-  } catch (e) { alert(e.message); }
+    } catch (e) { showToast('❌ '+e.message); }
+  });
 }
 
 async function saveArchiveConsumption() {
@@ -2871,7 +3286,7 @@ async function saveArchiveConsumption() {
     });
     showToast('✅ تم حفظ البيانات في الأرشيف بنجاح');
     renderArchiveConsumptionTable();
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 // ============== أرشيف مؤشرات الأداء ==============
@@ -2888,27 +3303,6 @@ async function showArchiveIndicators() {
       <button class="btn-back" onclick="renderArchive()"><i class="fas fa-arrow-right"></i> الأرشيف</button>
     </div>
     <div class="page-title"><i class="fas fa-chart-line" style="color:#3f51b5"></i> أرشيف مؤشرات الأداء</div>
-    ${isAdmin ? `
-    <div class="card" style="margin-bottom:16px;border-right:4px solid #795548">
-      <div class="card-header" style="padding:10px 16px;background:#efebe9"><strong><i class="fas fa-pen"></i> إدخال بيانات سابقة</strong></div>
-      <div class="card-body" style="padding:10px 16px">
-        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
-          <div class="form-group"><label>السنة</label>
-            <select class="form-control" id="addIndArchYear" style="width:100px">${[2026,2025,2024,2023,2022].map(y => `<option value="${y}">${y}</option>`).join('')}</select></div>
-          <div class="form-group"><label>الشهر</label>
-            <select class="form-control" id="addIndArchMonth" style="width:120px">${MONTHS_AR.map((m,i) => `<option value="${i+1}">${m}</option>`).join('')}</select></div>
-          <div class="form-group" style="min-width:200px"><label>بنك الدم</label>
-            <select class="form-control" id="addIndArchHosp"></select></div>
-          <div class="form-group"><label>النوع</label>
-            <select class="form-control" id="addIndArchType" onchange="toggleIndArchForm()" style="width:120px">
-              <option value="big">تجميعي</option>
-              <option value="small">تخزيني</option>
-            </select></div>
-        </div>
-        <div id="addIndArchFormWrap"></div>
-        <div style="margin-top:10px"><button class="btn btn-primary" onclick="saveArchiveIndicators()" style="height:32px"><i class="fas fa-save"></i> حفظ في الأرشيف</button></div>
-      </div>
-    </div>` : ''}
     <div class="card" style="margin-bottom:16px">
       <div class="card-header" style="padding:10px 16px;background:#e8f5e9"><strong><i class="fas fa-filter"></i> فلترة البيانات</strong></div>
       <div class="card-body" style="padding:10px 16px">
@@ -2954,13 +3348,8 @@ async function showArchiveIndicators() {
         </div>
       </div>
     </div>
+    ${new Date().getDate() >= 25 ? '<div style="background:#fff3cd;color:#856404;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;text-align:center"><i class="fas fa-lock"></i> التعديل مغلق بعد يوم 25 — يتم عرض بيانات الشهر السابق</div>' : ''}
     <div id="archIndTable"></div>`;
-
-    if (isAdmin) {
-      const hospitals = await api('GET', '/hospitals');
-      document.getElementById('addIndArchHosp').innerHTML = hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
-      toggleIndArchForm();
-    }
 
     const govs = [...new Set((await api('GET', '/hospitals')).map(h => h.governorate))];
     const govEl = document.getElementById('filterIndGov');
@@ -2972,33 +3361,6 @@ async function showArchiveIndicators() {
 
     renderArchiveIndicatorsTable();
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
-}
-
-function toggleIndArchForm() {
-  const type = document.getElementById('addIndArchType').value;
-  const wrap = document.getElementById('addIndArchFormWrap');
-  const defs = type === 'big' ? BIG_COL_DEFS : SMALL_COL_DEFS;
-  wrap.innerHTML = buildIndicatorFormHTML(defs, 'archIndInput', '');
-}
-
-async function saveArchiveIndicators() {
-  const hospitalId = parseInt(document.getElementById('addIndArchHosp').value);
-  const year = parseInt(document.getElementById('addIndArchYear').value);
-  const month = parseInt(document.getElementById('addIndArchMonth').value);
-  const type = document.getElementById('addIndArchType').value;
-  const colDefs = type === 'big' ? BIG_COL_DEFS : SMALL_COL_DEFS;
-  const data = collectIndicatorFormData('archIndInput', colDefs);
-  try {
-    const endpoint = type === 'big' ? '/monthly-big-indicators/archive-direct' : '/monthly-small-indicators/archive-direct';
-    await api('POST', endpoint, { hospitalId, year, month, data });
-    // Reset form fields to 0
-    colDefs.filter(c => !c.formula && c.key !== 'governorate' && c.key !== 'hospital_name').forEach(c => {
-      const el = document.getElementById('archIndInput_' + c.key);
-      if (el) el.value = 0;
-    });
-    showToast('✅ تم حفظ البيانات في الأرشيف بنجاح');
-    renderArchiveIndicatorsTable();
-  } catch (e) { alert(e.message); }
 }
 
 function onIndicatorsArchiveFilterChange() {
@@ -3167,7 +3529,7 @@ function renderArchiveIndicatorsTable() {
             return td;
           }).join('')}
           ${canEditDel && isAgg && r._childArchiveIds && r._childArchiveIds.length
-            ? `<td style="text-align:center"><button class="btn btn-sm btn-outline" onclick="if(confirm('حذف كل سجلات ${PERIODS[fPeriod]?.label || 'الفترة'} لهذا المستشفى؟')){deleteArchiveIndicatorGroup([${r._childArchiveIds.join(',')}])}" style="color:#dc3545;font-size:10px"><i class="fas fa-trash"></i> حذف المجموعة</button></td>`
+            ? `<td style="text-align:center"><button class="btn btn-sm btn-outline" onclick="confirmDeleteArchiveGroup('${PERIODS[fPeriod]?.label || 'الفترة'}',[${r._childArchiveIds.join(',')}])" style="color:#dc3545;font-size:10px"><i class="fas fa-trash"></i> حذف المجموعة</button></td>`
             : (canEditDel && r._archiveId && !isAgg
               ? `<td><button class="btn btn-sm btn-outline" onclick="editIndicatorArchiveRecord(${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${(r.period||'monthly')}')" style="color:#1976d2;font-size:10px;margin-left:4px"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline" onclick="deleteIndicatorArchiveRecord(${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${(r.period||'monthly')}')" style="color:#dc3545;font-size:10px"><i class="fas fa-trash"></i></button></td>`
               : '<td></td>')}
@@ -3181,12 +3543,19 @@ function renderArchiveIndicatorsTable() {
       <span style="font-size:13px;color:#666">إجمالي السجلات: ${totalCount}</span>
       <div>
         <button class="btn btn-success btn-sm" onclick="exportArchiveIndicatorsExcel()" style="font-size:11px"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+        <button class="btn btn-danger btn-sm" onclick="exportArchiveIndicatorsPdf()" style="font-size:11px;margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
       </div>
     </div>`;
     if (!fType || fType === 'تجميعي') html += renderGroup(filteredBig, BIG_COL_DEFS, computeBigFormulas, 'مؤشرات أداء البنوك التجميعية');
     if (!fType || fType === 'تخزيني') html += renderGroup(filteredSmall, SMALL_COL_DEFS, computeSmallFormulas, 'مؤشرات أداء البنوك التخزينية');
     el.innerHTML = html;
   }).catch(e => { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; });
+}
+
+function confirmDeleteArchiveGroup(periodLabel, archiveIds) {
+  showConfirmModal('حذف كل سجلات ' + periodLabel + ' لهذا المستشفى؟', function() {
+    deleteArchiveIndicatorGroup(archiveIds);
+  });
 }
 
 async function deleteArchiveIndicatorGroup(archiveIds) {
@@ -3197,7 +3566,7 @@ async function deleteArchiveIndicatorGroup(archiveIds) {
     }
     showToast('✅ تم حذف جميع سجلات الفترة');
     renderArchiveIndicatorsTable();
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 let _archiveCellOldValue = '';
@@ -3334,33 +3703,53 @@ async function saveArchiveCell(el) {
     showToast('✅ تم الحفظ');
   } catch (e) {
     el.textContent = _archiveCellOldValue;
-    alert(e.message);
+    showToast('❌ '+e.message);
   }
 }
 
 function exportArchiveIndicatorsExcel() {
   const tables = document.querySelectorAll('#archIndTable table.ind-table');
   if (!tables.length) return;
-  let csv = '\uFEFF';
-  csv += '"أرشيف مؤشرات الأداء"\n';
-  csv += '"\n';
+  let html = '';
   tables.forEach((table, ti) => {
-    if (ti > 0) csv += '"\n';
-    const rows = table.querySelectorAll('tr');
-    rows.forEach(tr => {
-      const cells = tr.querySelectorAll('th, td');
-      const cols = Array.from(cells).slice(0, -1);
-      csv += cols.map(c => '"' + (c.textContent || '').replace(/"/g, '""') + '"').join('\t') + '\n';
-    });
+    let tbl = table.outerHTML;
+    tbl = tbl.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:10px;margin-top:12px"');
+    tbl = tbl.replace(/<th(?!\s)/g, '<th style="background:#5A7A9A;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #3a5a7a;text-align:center;white-space:nowrap"');
+    tbl = tbl.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#5A7A9A;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #3a5a7a;text-align:center;white-space:nowrap">`);
+    tbl = tbl.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px"');
+    tbl = tbl.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px">`);
+    // Remove action buttons column (last td in each row)
+    tbl = tbl.replace(/<td[^>]*><button[\s\S]*?<\/button><\/td>/g, '<td></td>');
+    html += tbl;
   });
-  csv += '\n';
-  csv += '"إعداد و برمجة محمد ندا 01068880999"\n';
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
+    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#5A7A9A;border:none">أرشيف مؤشرات الأداء</td></tr></table>
+    ${html}
+    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
+  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  const now = new Date();
-  a.download = 'ارشيف_مؤشرات_الاداء_' + now.toLocaleDateString('ar-EG').replace(/\//g, '-') + '.xls';
-  a.click();
+  a.href = url; a.download = 'archive_indicators_' + fmtCairoDate('date') + '.xls'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportArchiveIndicatorsPdf() {
+  const tables = document.querySelectorAll('#archIndTable table.ind-table');
+  if (!tables.length) return;
+  let html = '';
+  tables.forEach(table => {
+    let tbl = table.outerHTML;
+    tbl = tbl.replace(/<th(?!\s)/g, '<th style="background:#5A7A9A;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #3a5a7a;text-align:center"');
+    tbl = tbl.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#5A7A9A;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #3a5a7a;text-align:center">`);
+    tbl = tbl.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-size:11px"');
+    tbl = tbl.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-size:11px">`);
+    tbl = tbl.replace(/<td[^>]*><button[\s\S]*?<\/button><\/td>/g, '<td></td>');
+    html += tbl;
+  });
+  const bodyHtml = `<div style="text-align:center;margin-bottom:8px"><h2 style="color:#5A7A9A;margin:0 0 2px;font-size:15px">أرشيف مؤشرات الأداء</h2></div>
+    ${html}
+    <div style="text-align:center;margin-top:10px;font-size:10px;color:#888">إعداد و برمجة محمد ندا 01068880999</div>`;
+  downloadPdf(bodyHtml, 'indicators-archive.pdf');
 }
 function exportExcel() {
   const table = document.querySelector('#exportTable table');
@@ -3378,22 +3767,23 @@ function exportExcel() {
   if (fGov) parts.push('فرع ' + fGov);
   if (hospName) parts.push(hospName);
   if (parts.length) title += ' (' + parts.join(' - ') + ')';
-  let csv = '\uFEFF';
-  csv += '"' + title + '"\n';
-  csv += '"\n';
-  const rows = table.querySelectorAll('tr');
-  rows.forEach(tr => {
-    const cells = tr.querySelectorAll('th, td');
-    const cols = Array.from(cells).slice(0, -1);
-    csv += cols.map(c => '"' + (c.textContent || '').replace(/"/g, '""') + '"').join('\t') + '\n';
-  });
-  csv += '\n';
-  csv += '"إعداد و برمجة محمد ندا 01068880999"\n';
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  let html = table.outerHTML;
+  html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:10px"');
+  html = html.replace(/<th(?!\s)/g, '<th style="background:#2e7d32;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1b5e20;text-align:center;white-space:nowrap"');
+  html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2e7d32;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1b5e20;text-align:center;white-space:nowrap">`);
+  html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px"');
+  html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px">`);
+  // Remove action buttons column (last td)
+  html = html.replace(/<td[^>]*><button[\s\S]*?<\/button><\/td>/g, '<td></td>');
+  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
+    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#2e7d32;border:none">${title}</td></tr></table>
+    ${html}
+    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
+  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'منصرف_فصائل_الدم_' + new Date().toLocaleDateString('ar-EG') + '.xls';
-  a.click();
+  a.href = url; a.download = 'consumption_archive_' + fmtCairoDate('date') + '.xls'; a.click();
+  URL.revokeObjectURL(url);
 }
 
 function exportPDF() {
@@ -3418,24 +3808,12 @@ function exportPDF() {
   html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2e7d32;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #1b5e20;text-align:center">`);
   html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #ccc;text-align:center"');
   html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #ccc;text-align:center">`);
-  const w = window.open('', '_blank');
-  if (!w) return;
-  w.document.write(`<html dir="rtl"><head><meta charset="utf-8"><title>منصرف فصائل الدم${subtitle}</title>
-    <style>
-      @page { size: landscape; margin: 8mm 6mm; }
-      body { font-family: 'Traditional Arabic', Arial, sans-serif; padding: 8px; }
-      .header { text-align:center; margin-bottom:8px }
-      .header h2 { color:#2e7d32; margin:0 0 2px; font-size:15px }
-      .header h3 { color:#666; margin:0; font-weight:normal; font-size:12px }
-      .footer { text-align:center; margin-top:10px; font-size:10px; color:#888 }
-      @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-    </style></head><body>
-    <div class="header"><h2>معدل صرف الفصائل ببنوك دم هيئة الرعاية الصحية</h2>
-    ${subtitle ? '<h3>' + subtitle.replace(/[()]/g,'') + '</h3>' : ''}</div>
+  html = html.replace(/<td[^>]*><button[\s\S]*?<\/button><\/td>/g, '<td></td>');
+  const bodyHtml = `<div style="text-align:center;margin-bottom:8px"><h2 style="color:#2e7d32;margin:0 0 2px;font-size:15px">معدل صرف الفصائل ببنوك دم هيئة الرعاية الصحية</h2>
+    ${subtitle ? '<h3 style="color:#666;margin:0;font-weight:normal;font-size:12px">' + subtitle.replace(/[()]/g,'') + '</h3>' : ''}</div>
     ${html}
-    <div class="footer">إعداد و برمجة محمد ندا 01068880999</div>
-    <script>window.print();window.close();</scr` + `ipt></body></html>`);
-  w.document.close();
+    <div style="text-align:center;margin-top:10px;font-size:10px;color:#888">إعداد و برمجة محمد ندا 01068880999</div>`;
+  downloadPdf(bodyHtml, 'consumption-archive.pdf');
 }
 
 async function renderUsers() {
@@ -3445,25 +3823,61 @@ async function renderUsers() {
     const isMaster = me.id === 1;
     const roles = ['admin','hospital','branch_supervisor','org_supervisor','visitor'];
     const roleLabels = { admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
+    const roleColors = { admin:'#dc3545', hospital:'#17a2b8', branch_supervisor:'#fd7e14', org_supervisor:'#28a745', visitor:'#6c757d' };
     el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      ${isMaster ? '<button class="btn btn-primary" onclick="showAddUserModal()"><i class="fas fa-plus"></i> إضافة</button>' : ''}</div>
-      <div class="card"><div class="card-body table-scroll"><table class="data-table"><thead><tr><th>#</th><th>الاسم</th><th>اسم المستخدم</th><th>كلمة المرور</th><th>الدور</th><th>التليفون</th><th>البريد</th><th>المستشفى</th><th>الفرع</th><th></th></tr></thead><tbody id="usersBody"></tbody></table></div></div>`;
+      <div class="search-input-wrap"><input class="search-input" id="userSearchInput" placeholder="بحث بالاسم أو المستخدم أو المحافظة..." oninput="filterUserTable()" style="min-width:200px;max-width:300px"></div>
+      ${isMaster ? '<button class="btn btn-primary" onclick="showAddUserModal()"><i class="fas fa-plus"></i> إضافة مستخدم</button>' : ''}
+      <button class="btn btn-outline" onclick="copyUsersTable()" title="نسخ الجدول"><i class="fas fa-copy"></i> نسخ</button>
+      <button class="btn btn-outline" onclick="exportUsersExcel()" title="تصدير Excel"><i class="fas fa-file-excel"></i> Excel</button></div>
+      <div class="card"><div class="card-body table-scroll"><table class="data-table" id="userTable"><thead><tr><th>#</th><th>الاسم</th><th>اسم المستخدم</th><th>الدور</th><th>التليفون</th><th>المستشفى</th><th>الفرع</th><th></th></tr></thead><tbody id="usersBody"></tbody></table></div></div>`;
     const [users, hospitals] = await Promise.all([api('GET', '/users'), api('GET', '/hospitals')]);
     const hospMap = {};
     hospitals.forEach(h => hospMap[h.id] = h.name);
+    window._usersData = users;
     document.getElementById('usersBody').innerHTML = users.map((u, i) => {
       const canEdit = isMaster || (me.role === 'branch_supervisor' && u.role === 'hospital' && u.governorate === me.governorate);
       const canEditSelf = me.id === u.id;
       const showEdit = canEdit || canEditSelf;
       const showKey = canEdit || canEditSelf || (me.role === 'branch_supervisor' && u.role === 'hospital' && u.governorate === me.governorate);
-      return `<tr>
-      <td>${i+1}</td><td>${u.name || ''}</td><td>${u.username}</td><td>${u.password || ''}</td><td>${roleLabels[u.role] || u.role}</td><td style="direction:ltr">${u.phone || ''}</td><td style="direction:ltr;font-size:11px">${u.email || ''}</td><td>${hospMap[u.hospital_id] || u.hospital_id || ''}</td><td>${u.governorate || ''}</td>
+      const rc = roleColors[u.role] || '#6c757d';
+      return `<tr data-name="${(u.name||'').toLowerCase()}" data-user="${(u.username||'').toLowerCase()}" data-gov="${(u.governorate||'').toLowerCase()}">
+      <td>${i+1}</td><td><strong>${u.name || ''}</strong></td><td style="direction:ltr">${u.username}</td><td><span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;background:${rc}22;color:${rc};font-weight:600">${roleLabels[u.role] || u.role}</span></td><td style="direction:ltr">${u.phone || '-'}</td><td>${hospMap[u.hospital_id] || u.hospital_id || '-'}</td><td>${u.governorate || '-'}</td>
       <td>${!showEdit && !showKey ? '' :
-        `${showEdit ? `<button class="btn btn-sm btn-outline" onclick="editUser(${u.id})"><i class="fas fa-edit"></i></button>` : ''}
-        ${showKey ? `<button class="btn btn-sm btn-outline" onclick="changeUserPassword(${u.id})"><i class="fas fa-key"></i></button>` : ''}
-        ${isMaster && u.id !== 1 ? `<button class="btn btn-sm btn-outline" onclick="deleteUser(${u.id})"><i class="fas fa-trash"></i></button>` : ''}`}</td></tr>`;
+        `${showEdit ? `<button class="btn btn-sm btn-outline" onclick="editUser(${u.id})" title="تعديل"><i class="fas fa-edit"></i></button>` : ''}
+        ${showKey ? `<button class="btn btn-sm btn-outline" onclick="changeUserPassword(${u.id})" title="تغيير كلمة المرور"><i class="fas fa-key"></i></button>` : ''}
+        ${isMaster && u.id !== 1 ? `<button class="btn btn-sm btn-outline" onclick="deleteUser(${u.id})" title="حذف"><i class="fas fa-trash"></i></button>` : ''}`}</td></tr>`;
     }).join('');
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+function copyUsersTable() {
+  const rows = []; const headers = [];
+  document.querySelectorAll('#userTable thead th').forEach((th, i) => { if (i < 7) headers.push(th.textContent.trim()); });
+  rows.push(headers.join('\t'));
+  document.querySelectorAll('#usersBody tr:not([style*="display:none"])').forEach(tr => {
+    const cells = [];
+    tr.querySelectorAll('td').forEach((td, i) => { if (i < 7) cells.push(td.textContent.trim()); });
+    rows.push(cells.join('\t'));
+  });
+  navigator.clipboard.writeText(rows.join('\n')).then(() => showToast('✅ تم نسخ الجدول'));
+}
+function exportUsersExcel() {
+  const table = document.getElementById('userTable');
+  if (!table) return;
+  const clone = table.cloneNode(true);
+  clone.querySelectorAll('tr').forEach(tr => {
+    const last = tr.querySelector('td:last-child, th:last-child');
+    if (last) last.remove();
+  });
+  const html = `<html><meta charset="utf-8"><body>${clone.outerHTML}</body></html>`;
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'users.xls'; a.click();
+}
+function filterUserTable() {
+  const q = document.getElementById('userSearchInput').value.trim().toLowerCase();
+  document.querySelectorAll('#usersBody tr').forEach(tr => {
+    const match = !q || tr.dataset.name.includes(q) || tr.dataset.user.includes(q) || tr.dataset.gov.includes(q);
+    tr.style.display = match ? '' : 'none';
+  });
 }
 function showAddUserModal() {
   api('GET', '/hospitals').then(hospitals => {
@@ -3473,7 +3887,7 @@ function showAddUserModal() {
       openModal('إضافة مستخدم',
         `<div class="form-group"><label>الاسم</label><input class="form-control" id="auName"></div>
         <div class="form-group"><label>اسم المستخدم</label><input class="form-control" id="auUsername"></div>
-        <div class="form-group"><label>كلمة المرور</label><input class="form-control" id="auPassword" value="123456"></div>
+        <div class="form-group" style="position:relative"><label>كلمة المرور</label><input class="form-control" id="auPassword" value="123" style="padding-left:36px"><span onclick="togglePasswordVisibility('auPassword',this)" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
         <div class="form-group"><label>الدور</label><select class="form-control" id="auRole" onchange="toggleUserFields()">
           ${roles.map(r => `<option value="${r}">${roleLabels[r]}</option>`).join('')}</select></div>
         <div class="form-group" id="auGovGroup" style="display:none"><label>الفرع</label><select class="form-control" id="auGov">
@@ -3502,15 +3916,26 @@ async function createUser() {
   const gov = document.getElementById('auGov').value || null;
   const phone = document.getElementById('auPhone').value.trim();
   const email = document.getElementById('auEmail').value.trim();
-  if (!username) { alert('اسم المستخدم مطلوب'); return; }
+  if (!username) { showToast('⚠ اسم المستخدم مطلوب'); return; }
   try {
     await api('POST', '/users', { username, password, name, role, hospitalId, governorate: gov, viewPermission: role === 'visitor' ? 'limited' : 'all', phone, email });
     closeModal(); renderUsers();
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast('❌ '+e.message); }
 }
 async function deleteUser(id) {
-  if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
-  try { await api('DELETE', '/users/' + id); renderUsers(); } catch(e) { alert(e.message); }
+  const users = window._usersData || [];
+  const u = users.find(x => x.id === id);
+  const name = u ? (u.name || u.username) : 'هذا المستخدم';
+  openModal('حذف مستخدم',
+    `<div style="text-align:center;padding:16px"><i class="fas fa-user-minus" style="font-size:48px;color:#dc3545;opacity:0.6"></i>
+    <p style="margin:12px 0;font-size:15px">هل أنت متأكد من حذف "<strong>${esc(name)}</strong>"؟</p>
+    <p style="font-size:12px;color:#999">لا يمكن التراجع عن هذا الإجراء</p></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+    <button class="btn btn-danger" onclick="confirmDeleteUser(${id})"><i class="fas fa-trash"></i> حذف</button>`);
+}
+async function confirmDeleteUser(id) {
+  closeModal();
+  try { await api('DELETE', '/users/' + id); renderUsers(); showToast('✅ تم حذف المستخدم'); } catch(e) { showToast('❌ ' + e.message); }
 }
 function editUser(id) {
   Promise.all([api('GET', '/me'), api('GET', '/users'), api('GET', '/hospitals'), api('GET', '/governorates')]).then(([me, users, hospitals, govs]) => {
@@ -3523,7 +3948,7 @@ function editUser(id) {
       `<div class="form-group"><label>الاسم</label><input class="form-control" id="euName" value="${String(u.name||'').replace(/"/g,'&quot;')}"></div>
       ${isMaster ? `<div class="form-group"><label>الدور</label><select class="form-control" id="euRole" onchange="toggleEditUserFields()">
         ${roles.map(r => `<option value="${r}" ${r===u.role?'selected':''}>${roleLabels[r]}</option>`).join('')}</select></div>` : ''}
-      <div class="form-group"><label>كلمة المرور الجديدة (اتركه فارغاً إن لم ترد التغيير)</label><input class="form-control" id="euPassword" type="password" placeholder="أدخل كلمة المرور الجديدة"></div>
+      <div class="form-group" style="position:relative"><label>كلمة المرور</label><input class="form-control" id="euPassword" value="123" style="padding-left:36px"><span onclick="togglePasswordVisibility('euPassword',this)" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
       ${isMaster ? `<div class="form-group" id="euGovGroup" style="${u.role==='branch_supervisor'?'':'display:none'}"><label>الفرع</label><select class="form-control" id="euGov">${govArr.map(g => `<option value="${g}" ${g===u.governorate?'selected':''}>${g}</option>`).join('')}</select></div>` : ''}
       ${isMaster ? `<div class="form-group" id="euHospGroup" style="${u.role==='hospital'?'':'display:none'}"><label>المستشفى</label><select class="form-control" id="euHosp">${hospitals.map(h => `<option value="${h.id}" ${h.id===u.hospital_id?'selected':''}>${h.name}</option>`).join('')}</select></div>` : ''}
       <div class="form-group"><label>التليفون</label><input class="form-control" id="euPhone" value="${String(u.phone||'').replace(/"/g,'&quot;')}" dir="ltr"></div>
@@ -3548,7 +3973,7 @@ async function saveUser(id) {
   const email = document.getElementById('euEmail').value.trim();
   if (phone) body.phone = phone;
   if (email) body.email = email;
-  if (password && password.length >= 4) body.password = password;
+  if (password && password.length >= 3) body.password = password;
   if (isMaster) {
     const role = document.getElementById('euRole').value;
     body.role = role;
@@ -3560,18 +3985,29 @@ async function saveUser(id) {
   try {
     await api('PUT', '/users/' + id, body);
     closeModal(); renderUsers();
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast('❌ '+e.message); }
 }
 function changeUserPassword(id) {
-  openModal('تغيير كلمة المرور',
-    `<div class="form-group"><label>كلمة المرور الجديدة</label><input class="form-control" id="cpPassword" type="password"></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-    <button class="btn btn-primary" onclick="savePassword(${id})">حفظ</button>`);
+  Promise.all([api('GET', '/me'), api('GET', '/users')]).then(([me, users]) => {
+    const u = users.find(x => x.id === id); if (!u) return;
+    const isSelf = me.user.id === id;
+    openModal('تغيير كلمة المرور - ' + (u.name || u.username),
+      `${isSelf ? `<div class="form-group" style="position:relative"><label>كلمة المرور الحالية</label><input class="form-control" id="cpCurrentPass" type="password" style="padding-left:36px"><span onclick="togglePasswordVisibility('cpCurrentPass',this)" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>` : ''}
+      <div class="form-group" style="position:relative"><label>كلمة المرور الجديدة</label><input class="form-control" id="cpPassword" type="password" style="padding-left:36px" placeholder="4 أحرف على الأقل"><span onclick="togglePasswordVisibility('cpPassword',this)" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
+      <div class="form-group" style="position:relative"><label>تأكيد كلمة المرور الجديدة</label><input class="form-control" id="cpConfirm" type="password" style="padding-left:36px"><span onclick="togglePasswordVisibility('cpConfirm',this)" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>`,
+      `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-primary" onclick="savePassword(${id})">حفظ</button>`);
+  });
 }
 async function savePassword(id) {
   const pwd = document.getElementById('cpPassword').value.trim();
-  if (pwd.length < 4) { alert('كلمة المرور قصيرة (4 أحرف على الأقل)'); return; }
-  try { await api('PUT', '/users/' + id + '/password', { password: pwd }); alert('تم تغيير كلمة المرور بنجاح'); closeModal(); } catch(e) { alert(e.message); }
+  const confirm = document.getElementById('cpConfirm')?.value.trim();
+  if (pwd.length < 3) { showToast('⚠ كلمة المرور قصيرة (3 أحرف على الأقل)'); return; }
+  if (confirm !== undefined && pwd !== confirm) { showToast('⚠ كلمة المرور غير متطابقة مع التأكيد'); return; }
+  const body = { password: pwd };
+  const current = document.getElementById('cpCurrentPass');
+  if (current) body.currentPassword = current.value;
+  try { await api('PUT', '/users/' + id + '/password', body); alert('تم تغيير كلمة المرور بنجاح'); closeModal(); } catch(e) { showToast('❌ '+e.message); }
 }
 
 async function renderHospitals() {
@@ -3604,11 +4040,11 @@ function showAddHospitalModal() {
 }
 async function addHospital() {
   const name = document.getElementById('ahName').value.trim();
-  if (!name) { alert('الاسم مطلوب'); return; }
+  if (!name) { showToast('⚠ الاسم مطلوب'); return; }
   try {
     await api('POST', '/hospitals', { name, code: document.getElementById('ahCode').value.trim(), governorate: document.getElementById('ahGov').value, type: document.getElementById('ahType').value });
     closeModal(); renderHospitals();
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast('❌ '+e.message); }
 }
 function editHospital(id) {
   Promise.all([api('GET', '/hospitals'), api('GET', '/governorates'), api('GET', '/hospital-types')]).then(([h, govs, types]) => {
@@ -3626,15 +4062,16 @@ function editHospital(id) {
 }
 async function saveHospital(id) {
   const name = document.getElementById('ehName').value.trim();
-  if (!name) { alert('الاسم مطلوب'); return; }
+  if (!name) { showToast('⚠ الاسم مطلوب'); return; }
   try {
     await api('PUT', '/hospitals/' + id, { name, code: document.getElementById('ehCode').value.trim(), governorate: document.getElementById('ehGov').value, type: document.getElementById('ehType').value.trim() || 'تخزيني' });
     closeModal(); renderHospitals();
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast('❌ '+e.message); }
 }
 async function deleteHospital(id) {
-  if (!confirm('هل أنت متأكد من حذف هذا المستشفى؟')) return;
-  try { await api('DELETE', '/hospitals/' + id); renderHospitals(); } catch(e) { alert(e.message); }
+  showConfirmModal('هل أنت متأكد من حذف هذا المستشفى؟', async function() {
+    try { await api('DELETE', '/hospitals/' + id); renderHospitals(); } catch(e) { showToast('❌ '+e.message); }
+  });
 }
 
 async function showHospitalTypesModal() {
@@ -3654,16 +4091,17 @@ async function showHospitalTypesModal() {
 
 async function addHospitalType() {
   const name = document.getElementById('newTypeName').value.trim();
-  if (!name) { alert('الاسم مطلوب'); return; }
+  if (!name) { showToast('⚠ الاسم مطلوب'); return; }
   try {
     await api('POST', '/hospital-types', { name });
     showHospitalTypesModal();
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast('❌ '+e.message); }
 }
 
 async function deleteHospitalType(id) {
-  if (!confirm('هل أنت متأكد؟')) return;
-  try { await api('DELETE', '/hospital-types/' + id); showHospitalTypesModal(); } catch(e) { alert(e.message); }
+  showConfirmModal('هل أنت متأكد؟', async function() {
+    try { await api('DELETE', '/hospital-types/' + id); showHospitalTypesModal(); } catch(e) { showToast('❌ '+e.message); }
+  });
 }
 
 async function renderGovernorates() {
@@ -3691,12 +4129,13 @@ function showAddGovModal() {
 }
 async function addGovernorate() {
   const name = document.getElementById('agName').value.trim();
-  if (!name) { alert('الاسم مطلوب'); return; }
-  try { await api('POST', '/governorates', { name }); closeModal(); renderGovernorates(); } catch(e) { alert(e.message); }
+  if (!name) { showToast('⚠ الاسم مطلوب'); return; }
+  try { await api('POST', '/governorates', { name }); closeModal(); renderGovernorates(); } catch(e) { showToast('❌ '+e.message); }
 }
 async function deleteGovernorate(name) {
-  if (!confirm('هل أنت متأكد من حذف فرع "' + name + '"؟')) return;
-  try { await api('DELETE', '/governorates/' + encodeURIComponent(name)); renderGovernorates(); } catch(e) { alert(e.message); }
+  showConfirmModal('هل أنت متأكد من حذف فرع "' + name + '"؟', async function() {
+    try { await api('DELETE', '/governorates/' + encodeURIComponent(name)); renderGovernorates(); } catch(e) { showToast('❌ '+e.message); }
+  });
 }
 
 async function renderSupervisorData() {
@@ -3834,7 +4273,12 @@ async function renderRolePerms() {
       PERM_CATS.forEach(c => {
         const pages = PERM_PAGES.filter(p => p.cat === c.key);
         if (!pages.length) return;
-        html += `<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:${c.color};margin-bottom:6px;display:flex;align-items:center;gap:4px"><i class="fas ${c.icon}"></i> ${c.label}</div>`;
+        html += `<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:${c.color};margin-bottom:6px;display:flex;align-items:center;gap:4px"><i class="fas ${c.icon}"></i> ${c.label}
+          <span style="margin-right:auto;font-size:11px;font-weight:400;display:flex;gap:4px">
+            <span onclick="toggleCatPerms('${rp.role}','${c.key}',1)" style="cursor:pointer;color:#28a745;padding:1px 6px;border-radius:4px;border:1px solid #28a74555;font-size:10px"><i class="fas fa-check"></i> الكل</span>
+            <span onclick="toggleCatPerms('${rp.role}','${c.key}',0)" style="cursor:pointer;color:#dc3545;padding:1px 6px;border-radius:4px;border:1px solid #dc354555;font-size:10px"><i class="fas fa-times"></i> إلغاء</span>
+          </span>
+        </div>`;
         pages.forEach(p => {
           const pv = perms[p.key] || {v:0,a:0,e:0,d:0,x:0};
           html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px">
@@ -3869,24 +4313,47 @@ function showAddRoleModal() {
 async function addNewRole() {
   const key = document.getElementById('arKey').value.trim();
   const label = document.getElementById('arName').value.trim();
-  if (!key) { alert('اسم الدور مطلوب'); return; }
-  if (!label) { alert('الاسم المعروض مطلوب'); return; }
+  if (!key) { showToast('⚠ اسم الدور مطلوب'); return; }
+  if (!label) { showToast('⚠ الاسم المعروض مطلوب'); return; }
   try {
     await api('PUT', '/role-permissions', { role: key, permissions: {} });
     closeModal();
     renderRolePerms();
     showToast('تم إضافة الدور "' + label + '" بنجاح');
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast('❌ '+e.message); }
 }
 
 async function deleteRole(role) {
-  if (role === 'admin') { alert('لا يمكن حذف دور المدير'); return; }
-  if (!confirm('هل أنت متأكد من حذف دور "' + role + '"؟')) return;
+  if (role === 'admin') { showToast('⚠ لا يمكن حذف دور المدير'); return; }
+  const defaultLabels = { admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
+  openModal('حذف الدور',
+    `<div style="text-align:center;padding:16px"><i class="fas fa-exclamation-triangle" style="font-size:48px;color:#dc3545;opacity:0.6"></i>
+    <p style="margin:12px 0;font-size:15px">هل أنت متأكد من حذف دور "<strong>${defaultLabels[role] || role}</strong>"؟</p>
+    <p style="font-size:12px;color:#999">المستخدمون المرتبطون بهذا الدور سيبقون بدون تغيير</p></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+    <button class="btn btn-danger" onclick="confirmDeleteRole('${role}')"><i class="fas fa-trash"></i> حذف</button>`);
+}
+async function confirmDeleteRole(role) {
+  closeModal();
   try {
     await api('DELETE', '/role-permissions/' + encodeURIComponent(role));
     renderRolePerms();
-    showToast('تم حذف الدور "' + role + '"');
-  } catch(e) { alert(e.message); }
+    showToast('✅ تم حذف الدور بنجاح');
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+function toggleCatPerms(role, catKey, val) {
+  const pages = PERM_PAGES.filter(p => p.cat === catKey);
+  const prefix = `[data-role="${role}"]`;
+  pages.forEach(p => {
+    document.querySelectorAll(`${prefix}[data-page="${p.key}"]`).forEach(cb => {
+      cb.checked = val === 1;
+      const label = cb.parentElement;
+      const action = cb.dataset.action;
+      const aObj = PERM_ACTIONS.find(a => a.key === action);
+      if (aObj) label.className = 'perm-toggle' + (val === 1 ? ' ' + aObj.cls : '');
+    });
+  });
 }
 
 async function saveAllRolePerms() {
@@ -3903,9 +4370,9 @@ async function saveAllRolePerms() {
     for (const [role, permissions] of Object.entries(rolePerms)) {
       await api('PUT', '/role-permissions', { role, permissions });
     }
-    alert('تم حفظ صلاحيات الأدوار بنجاح');
+    showToast('✅ تم حفظ صلاحيات الأدوار بنجاح');
     renderRolePerms();
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast('❌ '+e.message); }
 }
 
 async function renderMonthly() {
@@ -4203,17 +4670,25 @@ async function saveBigIndicator() {
     const editing = window._biEditingRecord;
     const existing = window._biItems || [];
     const dup = existing.find(r => r.hospital_id === hospitalId && r.year === year && r.month === month && (!editing || r.id !== editing.id));
-    if (dup && !confirm('⚠ تم إدخال بيانات هذا الشهر مسبقاً!\n\nهل تريد تعديل البيانات؟')) return;
+    if (dup) {
+      showConfirmModal('⚠ تم إدخال بيانات هذا الشهر مسبقاً!\n\nهل تريد تعديل البيانات؟', async function() {
+        await api('POST', '/monthly-big-indicators', { hospitalId, year, month, data });
+        showToast('✅ تم تعديل البيانات بنجاح');
+        renderBigIndicators();
+      });
+      return;
+    }
     await api('POST', '/monthly-big-indicators', { hospitalId, year, month, data });
-    showToast(dup ? '✅ تم تعديل البيانات بنجاح' : '✅ تم حفظ البيانات بنجاح');
+    showToast('✅ تم حفظ البيانات بنجاح');
     renderBigIndicators();
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 async function deleteBigIndicator(id) {
-  if (!confirm('هل أنت متأكد من حذف هذا السجل؟')) return;
-  try { await api('DELETE', '/monthly-big-indicators/' + id); renderBigIndicators(); }
-  catch (e) { alert(e.message); }
+  showConfirmModal('هل أنت متأكد من حذف هذا السجل؟', async function() {
+    try { await api('DELETE', '/monthly-big-indicators/' + id); renderBigIndicators(); }
+    catch (e) { showToast('❌ '+e.message); }
+  });
 }
 
 async function renderSmallIndicators() {
@@ -4344,17 +4819,25 @@ async function saveSmallIndicator() {
     const editing = window._siEditingRecord;
     const existing = window._siItems || [];
     const dup = existing.find(r => r.hospital_id === hospitalId && r.year === year && r.month === month && (!editing || r.id !== editing.id));
-    if (dup && !confirm('⚠ تم إدخال بيانات هذا الشهر مسبقاً!\n\nهل تريد تعديل البيانات؟')) return;
+    if (dup) {
+      showConfirmModal('⚠ تم إدخال بيانات هذا الشهر مسبقاً!\n\nهل تريد تعديل البيانات؟', async function() {
+        await api('POST', '/monthly-small-indicators', { hospitalId, year, month, data });
+        showToast('✅ تم تعديل البيانات بنجاح');
+        renderSmallIndicators();
+      });
+      return;
+    }
     await api('POST', '/monthly-small-indicators', { hospitalId, year, month, data });
-    showToast(dup ? '✅ تم تعديل البيانات بنجاح' : '✅ تم حفظ البيانات بنجاح');
+    showToast('✅ تم حفظ البيانات بنجاح');
     renderSmallIndicators();
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 async function deleteSmallIndicator(id) {
-  if (!confirm('هل أنت متأكد من حذف هذا السجل؟')) return;
-  try { await api('DELETE', '/monthly-small-indicators/' + id); renderSmallIndicators(); }
-  catch (e) { alert(e.message); }
+  showConfirmModal('هل أنت متأكد من حذف هذا السجل؟', async function() {
+    try { await api('DELETE', '/monthly-small-indicators/' + id); renderSmallIndicators(); }
+    catch (e) { showToast('❌ '+e.message); }
+  });
 }
 
 function indExtractVal(el) {
@@ -4389,6 +4872,7 @@ async function renderMonthlyIndicators(presetType) {
     const hospitals = await api('GET', '/hospitals');
     window._monIndHospitals = hospitals;
     const now = new Date();
+    now.setMonth(now.getMonth() - 1); // Always default to previous month
     const canEdit = hasPerm('monthly_indicators', 'edit');
     const canDelete = hasPerm('monthly_indicators', 'delete');
     const govs = [...new Set(hospitals.map(h => h.governorate))];
@@ -4396,6 +4880,7 @@ async function renderMonthlyIndicators(presetType) {
       <div style="margin-bottom:16px"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
       <div class="page-title"><i class="fas fa-chart-line" style="color:#3f51b5"></i> مؤشرات شهرية</div>
       ${canEdit ? `
+      ${new Date().getDate() >= 25 ? '<div style="background:#fff3cd;color:#856404;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;text-align:center"><i class="fas fa-lock"></i> التعديل مغلق بعد يوم 25 — يتم عرض بيانات الشهر السابق</div>' : ''}
       <div class="card" style="margin-bottom:16px">
         <div class="card-header" style="padding:10px 16px;background:linear-gradient(135deg,#e8eaf6,#f3e5f5)"><strong><i class="fas fa-pen"></i> إدخال مؤشرات الأداء</strong></div>
         <div class="card-body" style="padding:10px 16px">
@@ -4496,12 +4981,13 @@ async function saveMonthlyIndicatorDirect() {
 }
 
 async function archiveAllIndicators() {
-  if (!confirm('هل أنت متأكد من أرشفة جميع مؤشرات الأداء؟')) return;
-  try {
-    const res = await api('POST', '/monthly-indicators/archive');
-    showToast('✅ ' + res.message);
-    renderMonthlyIndicators();
-  } catch (e) { alert(e.message); }
+  showConfirmModal('هل أنت متأكد من أرشفة جميع مؤشرات الأداء؟', async function() {
+    try {
+      const res = await api('POST', '/monthly-indicators/archive');
+      showToast('✅ ' + res.message);
+      renderMonthlyIndicators();
+    } catch (e) { showToast('❌ '+e.message); }
+  });
 }
 
 function safeDiv(a, b) { return (b && b !== 0) ? ((a || 0) / b).toFixed(4) : ''; }
@@ -4904,7 +5390,7 @@ async function saveIndicatorCell(hospitalId, recordId, fieldKey, newValue, isCol
       });
     }
   } catch (e) {
-    alert(e.message);
+    showToast('❌ '+e.message);
   }
 }
 
@@ -4993,7 +5479,7 @@ async function createIndicator(type) {
   const hospitalId = parseInt(document.getElementById('fIndHospital').value);
   const year = parseInt(document.getElementById('fIndYear').value);
   const month = parseInt(document.getElementById('fIndMonth').value);
-  if (!hospitalId) { alert('اختر المستشفى'); return; }
+  if (!hospitalId) { showToast('⚠ اختر المستشفى'); return; }
   const data = {};
   const fields = type === 'child' ? CHILD_FIELDS : INDICATOR_FIELDS;
   fields.forEach(f => {
@@ -5006,7 +5492,7 @@ async function createIndicator(type) {
     await api('POST', '/monthly-indicators', { hospitalId, year, month, data });
     closeModal();
     renderMonthlyIndicators();
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 async function editIndicator(id, type) {
@@ -5044,15 +5530,16 @@ async function updateIndicator(id) {
     await api('PUT', '/monthly-indicators/' + id, { data });
     closeModal();
     renderMonthlyIndicators();
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 async function deleteIndicator(id) {
-  if (!confirm('هل أنت متأكد من حذف هذه المؤشرات؟')) return;
-  try {
-    await api('DELETE', '/monthly-indicators/' + id);
-    renderMonthlyIndicators();
-  } catch (e) { alert(e.message); }
+  showConfirmModal('هل أنت متأكد من حذف هذه المؤشرات؟', async function() {
+    try {
+      await api('DELETE', '/monthly-indicators/' + id);
+      renderMonthlyIndicators();
+    } catch (e) { showToast('❌ '+e.message); }
+  });
 }
 
 // ============== Archive edit/delete for indicators ==============
@@ -5061,10 +5548,10 @@ async function editIndicatorArchiveRecord(archiveId, hospitalId, year, month, pe
   try {
     const items = await api('GET', '/archive');
     const arch = items.find(a => a.id === archiveId);
-    if (!arch) { alert('لم يتم العثور على الأرشيف'); return; }
+    if (!arch) { showToast('⚠ لم يتم العثور على الأرشيف'); return; }
     let dataArr = tryParse(arch.data) || [];
     const record = dataArr.find(r => parseInt(r.hospital_id) === hospitalId && r.year === year && (month > 0 ? r.month === month : true) && (r.period || 'monthly') === (period || 'monthly'));
-    if (!record) { alert('لم يتم العثور على السجل'); return; }
+    if (!record) { showToast('⚠ لم يتم العثور على السجل'); return; }
     const d = typeof record.data === 'string' ? tryParse(record.data) : record.data || {};
 
     const hospitals = await api('GET', '/hospitals');
@@ -5086,7 +5573,7 @@ async function editIndicatorArchiveRecord(archiveId, hospitalId, year, month, pe
     openModal('تعديل بيانات مؤشرات الأداء في الأرشيف', html,
       `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
       <button class="btn btn-primary" onclick="saveEditIndicatorArchive(${archiveId},${hospitalId},${year},${month},'${period}')">حفظ</button>`);
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 async function saveEditIndicatorArchive(archiveId, hospitalId, year, month, period) {
@@ -5107,7 +5594,7 @@ async function saveEditIndicatorArchive(archiveId, hospitalId, year, month, peri
     });
     const items = await api('GET', '/archive');
     const arch = items.find(a => a.id === archiveId);
-    if (!arch) { alert('لم يتم العثور على الأرشيف'); return; }
+    if (!arch) { showToast('⚠ لم يتم العثور على الأرشيف'); return; }
     let dataArr = tryParse(arch.data) || [];
     dataArr = dataArr.map(r => {
       if (parseInt(r.hospital_id) === hospitalId && r.year === year && (month > 0 ? r.month === month : true) && (r.period || 'monthly') === (period || 'monthly')) {
@@ -5119,1281 +5606,2160 @@ async function saveEditIndicatorArchive(archiveId, hospitalId, year, month, peri
     closeModal();
     showToast('✅ تم تعديل البيانات في الأرشيف بنجاح');
     renderArchiveIndicatorsTable();
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast('❌ '+e.message); }
 }
 
 async function deleteIndicatorArchiveRecord(archiveId, hospitalId, year, month, period) {
-  if (!confirm('هل أنت متأكد من حذف هذا السجل من الأرشيف؟')) return;
-  try {
-    const items = await api('GET', '/archive');
-    const arch = items.find(a => a.id === archiveId);
-    if (!arch) { alert('لم يتم العثور على الأرشيف'); return; }
-    let dataArr = tryParse(arch.data) || [];
-    dataArr = dataArr.filter(r => {
-      if (parseInt(r.hospital_id) !== hospitalId) return true;
-      if (r.year !== year) return true;
-      if (month > 0 && r.month !== month) return true;
-      if ((r.period || 'monthly') !== (period || 'monthly')) return true;
-      return false;
-    });
-    if (dataArr.length === 0) {
-      await api('DELETE', '/archive/' + archiveId);
-    } else {
+  showConfirmModal('هل أنت متأكد من حذف هذا السجل من الأرشيف؟', async function() {
+    try {
+      const items = await api('GET', '/archive');
+      const arch = items.find(a => a.id === archiveId);
+      if (!arch) { showToast('⚠ لم يتم العثور على الأرشيف'); return; }
+      let dataArr = tryParse(arch.data) || [];
+      dataArr = dataArr.filter(r => {
+        if (parseInt(r.hospital_id) !== hospitalId) return true;
+        if (r.year !== year) return true;
+        if (month > 0 && r.month !== month) return true;
+        if ((r.period || 'monthly') !== (period || 'monthly')) return true;
+        return false;
+      });
+      if (dataArr.length === 0) {
+        await api('DELETE', '/archive/' + archiveId);
+      } else {
       await api('PUT', '/archive/' + archiveId, { data: dataArr });
     }
-    renderArchiveIndicatorsTable();
-  } catch (e) { alert(e.message); }
+      renderArchiveIndicatorsTable();
+    } catch (e) { showToast('❌ '+e.message); }
+  });
 }
 
-// === Readiness Sheet ===
-// === Readiness Sheet ===
-let _rdn = { occasions: [], hospitals: [], employees: [], reports: [] };
+// ============== Equipment Management (الأجهزة) ==============
+
+const EQ_GOV_COLORS = {
+  'بورسعيد':'#3498db','الإسماعيلية':'#e67e22','السويس':'#2ecc71',
+  'الأقصر':'#9b59b6','جنوب سيناء':'#f39c12','أسوان':'#e74c3c'
+};
+function eqGovSort(a,b){let ia=GOV_ORDER.indexOf(a),ib=GOV_ORDER.indexOf(b);if(ia===-1&&ib===-1)return a.localeCompare(b,'ar');if(ia===-1)return 1;if(ib===-1)return -1;return ia-ib;}
+const GOV_ORDER = ['بورسعيد','الإسماعيلية','السويس','الأقصر','جنوب سيناء','أسوان'];
+function eqStatusColor(s) {
+  if (!s) return '#bbb';
+  if (s==='يعمل'||s.includes('جيد')||s.includes('ممتاز')||s.includes('كفئ')) return '#27ae60';
+  return '#e74c3c';
+}
+
+function eqDeviceDot(eq) {
+  if (!eq || (eq.count == null && !eq.status)) return '<span class="eq-dot" style="background:#eee;border:1px solid #ddd" title="لا توجد بيانات"></span>';
+  const sc = eqStatusColor(eq.status);
+  const cnt = eq.count != null ? eq.count : '?';
+  return `<span class="eq-dot" style="background:${sc}" title="العدد: ${cnt} | الحالة: ${eq.status||'—'}">${cnt}</span>`;
+}
+
+async function renderEquipment() {
+  const el = document.getElementById('mainContent');
+  const canAdd = hasPerm('equipment', 'add');
+  const canEdit = hasPerm('equipment', 'edit');
+  const canExport = hasPerm('equipment', 'export');
+  try {
+    const data = await api('GET', '/equipment');
+    const types = data.types || [];
+    const hospitals = data.hospitals || [];
+    const typeList = types.map(function(t){return t.name;}).sort();
+    // Collect unique device types from actual data
+    let allDeviceNames = [];
+    hospitals.forEach(function(h){Object.keys(h.equipment).forEach(function(tid){const t=types.find(function(tp){return tp.id===parseInt(tid);});if(t&&!allDeviceNames.includes(t.name))allDeviceNames.push(t.name);});});
+    allDeviceNames.sort();
+    const govKeys = [...new Set(hospitals.map(function(h){return h.governorate||'أخرى';}))].sort(eqGovSort);
+    const showCount = localStorage.getItem('eq_showCount')!=='0';
+    const showBrand = localStorage.getItem('eq_showBrand')!=='0';
+    const showStatus = localStorage.getItem('eq_showStatus')!=='0';
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">'+
+      '<button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>'+
+      '<span style="font-size:15px;font-weight:700;color:#2c3e50;margin-left:auto"><i class="fas fa-microchip" style="margin-left:6px;color:#2c3e50"></i>أجهزة بنوك الدم</span>'+
+      (canEdit?'<button class="btn btn-sm btn-primary" onclick="eqManageTypes()" style="padding:4px 10px;font-size:11px"><i class="fas fa-cog"></i> إدارة الأنواع</button>':'')+
+      (canAdd?'<button class="btn btn-sm btn-primary" onclick="eqOpenForm()" style="padding:4px 10px;font-size:11px"><i class="fas fa-plus"></i> إضافة</button>':'')+
+      (canExport?'<button class="btn btn-sm btn-success" onclick="eqExportXlsx()" style="padding:4px 10px;font-size:11px"><i class="fas fa-file-excel"></i> Excel</button>':'')+
+      (canExport?'<button class="btn btn-sm btn-danger" onclick="eqExportPdf()" style="padding:4px 10px;font-size:11px"><i class="fas fa-file-pdf"></i> PDF</button>':'')+
+    '</div>'+
+    // Filters + toggles row
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center;background:#f8f9fa;border-radius:8px;padding:8px 10px">'+
+      '<select id="eqGovFilter" onchange="eqFilterHosp()" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
+        '<option value="">كل المحافظات ('+hospitals.length+')</option>'+
+        govKeys.map(function(g){return '<option value="'+esc(g)+'">'+esc(g)+'</option>';}).join('')+
+      '</select>'+
+      '<select id="eqCatFilter" onchange="eqFilterHosp()" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
+        '<option value="">كل الأنواع</option>'+
+        '<option value="تجميعي">تجميعي</option>'+
+        '<option value="تجميعي وتخزيني">تجميعي وتخزيني</option>'+
+      '</select>'+
+      '<select id="eqStatusFilter" onchange="eqFilterHosp()" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
+        '<option value="">كل الحالات</option>'+
+        '<option value="يعمل">يعمل</option>'+
+        '<option value="لا يعمل">لا يعمل</option>'+
+      '</select>'+
+      '<select id="eqTypeFilter" onchange="eqFilterHosp()" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
+        '<option value="">كل الأجهزة</option>'+
+        allDeviceNames.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join('')+
+      '</select>'+
+      '<select id="eqBrandFilter" onchange="eqFilterHosp()" class="form-control" style="width:auto;font-size:11px;padding:3px 8px;display:none">'+
+        '<option value="">كل الماركات</option>'+
+      '</select>'+
+      '<span style="margin-right:auto"></span>'+
+      (window._user&&(window._user.role==='admin'||window._user.role==='org_supervisor'||window._user.role==='branch_supervisor')?
+        '<label style="display:flex;align-items:center;gap:3px;font-size:10px;color:#555;cursor:pointer"><input type="checkbox" id="eqGroupView" onchange="eqToggleGroup()"'+(localStorage.getItem('eq_groupView')!=='0'?' checked':'')+'> <i class="fas fa-chart-pie" style="font-size:9px;color:#2c3e50"></i> عرض الملخص</label>':'')+
+    '</div>'+
+    // review section rendered inside eqRenderTable
+    '' +
+    '<div id="eqTable"></div>'
+    try { window.__eqData = { types: types, hospitals: hospitals }; } catch(e){}
+    eqRenderTable(types, hospitals);
+    const _eqU = window.me?.user;
+    if (_eqU && _eqU.role === 'hospital' && _eqU.name) {
+      const mh = hospitals.find(function(h){return h.name===_eqU.name;});
+      if (mh) setTimeout(function(){eqOpenForm(mh.name);},300);
+    }
+  } catch (e) { el.innerHTML = '<div class="empty-msg">'+esc(e.message)+'</div>'; }
+}
+
+function eqToggleGroup() {
+  const cb = document.getElementById('eqGroupView');
+  if (cb) localStorage.setItem('eq_groupView', cb.checked?'1':'0');
+  const d = window.__eqData;
+  if (d) eqRenderTable(d.types, d.hospitals);
+}
+
+function eqToggleCol() {
+  const c = document.getElementById('eqToggleCount'); if (c) localStorage.setItem('eq_showCount', c.checked?'1':'0');
+  const s = document.getElementById('eqToggleStatus'); if (s) localStorage.setItem('eq_showStatus', s.checked?'1':'0');
+  const d = window.__eqData;
+  if (d) eqRenderTable(d.types, d.hospitals);
+}
+
+function eqFilterHosp() {
+  const d = window.__eqData;
+  if (d) eqRenderTable(d.types, d.hospitals);
+}
+
+// --- Unified equipment table ---
+function eqRenderTable(allTypes, hospitals) {
+  window.__eqData = { types: allTypes, hospitals: hospitals };
+  const wrap = document.getElementById('eqTable');
+  if (!wrap) return;
+  const govF = document.getElementById('eqGovFilter')?.value || '';
+  const catF = document.getElementById('eqCatFilter')?.value || '';
+  const statusF = document.getElementById('eqStatusFilter')?.value || '';
+  const typeF = document.getElementById('eqTypeFilter')?.value || '';
+  const showCount = document.getElementById('eqToggleCount')?.checked !== false;
+  const showBrand = document.getElementById('eqToggleBrand')?.checked !== false;
+  const showStatus = document.getElementById('eqToggleStatus')?.checked !== false;
+  let rows = [];
+  hospitals.forEach(function(h){
+    if (govF && (h.governorate||'أخرى') !== govF) return;
+    Object.keys(h.equipment).forEach(function(tid){
+      const e = h.equipment[tid];
+      if (!e) return;
+      const t = allTypes.find(function(tp){return tp.id===parseInt(tid);});
+      if (!t) return;
+      if (catF && t.category !== catF) return;
+      if (statusF && e.status !== statusF) return;
+      rows.push({ hospital: h.name, gov: h.governorate||'', type: t.name, cat: t.category||'', count: e.count!=null?e.count:null, brand: e.brand||'', status: e.status||'' });
+    });
+  });
+  if (!rows.length) {
+    // Still render the pivot table structure (with headers only) so export works
+    let h = '';
+    if (reviewHtml || groupHtml) {
+      h += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+
+        (reviewHtml || '') + (groupHtml || '') +
+      '</div>';
+    }
+    h += '<div id="eqPivotTable" style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-top:12px">'+
+      '<div style="background:#1a1a2e;color:#fff;padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:6px">'+
+      '<i class="fas fa-table"></i> <strong>الأجهزة بالمستشفيات</strong></div>'+
+      '<div style="overflow-x:auto"><table class="eq-pivot" style="width:100%;border-collapse:collapse;font-size:10px">'+
+      '<thead><tr style="background:#2c3e50;color:#fff">'+
+      '<th style="padding:5px 6px;border:1px solid #1a252f;color:#fff">المحافظة</th>'+
+      '<th style="padding:5px 6px;border:1px solid #1a252f;color:#fff">المستشفى</th>'+
+      '<th style="padding:5px 6px;border:1px solid #1a252f;color:#fff">لا توجد بيانات</th>'+
+      '</tr></thead><tbody></tbody></table></div></div>';
+    wrap.innerHTML = h;
+    return;
+  }
+  if (typeF) rows = rows.filter(function(r){return r.type===typeF;});
+  // Brand filter
+  let brandsSet = new Set();
+  rows.forEach(function(r){ if (r.brand) brandsSet.add(r.brand); });
+  let brandFilter = document.getElementById('eqBrandFilter');
+  if (brandFilter) {
+    brandFilter.style.display = brandsSet.size ? '' : 'none';
+    while (brandFilter.options.length > 1) brandFilter.remove(1);
+    brandsSet.forEach(function(b){
+      let opt = document.createElement('option');
+      opt.value = b; opt.text = b;
+      brandFilter.appendChild(opt);
+    });
+  }
+  let brandF = brandFilter?.value || '';
+  if (brandF) rows = rows.filter(function(r){return r.brand===brandF;});
+  const groupView = document.getElementById('eqGroupView')?.checked;
+  const _canEdit = hasPerm('equipment', 'edit');
+  const _canExport = hasPerm('equipment', 'export');
+  let typeAgg = {};
+  rows.forEach(function(r){
+    if (!typeAgg[r.type]) typeAgg[r.type] = { total: 0, good: 0, bad: 0 };
+    typeAgg[r.type].total++;
+    if (r.status&&(r.status==='يعمل'||r.status.includes('جيد')||r.status.includes('ممتاز')||r.status.includes('كفئ'))) typeAgg[r.type].good++;
+    else if (r.status&&(r.status==='لا يعمل'||r.status.includes('سيئ')||r.status.includes('عطل')||r.status.includes('غير كفئ'))) typeAgg[r.type].bad++;
+  });
+  let typeNames = Object.keys(typeAgg).sort();
+  // Build review + group summary (side by side)
+  let topHtml = '';
+  let reviewHtml = '';
+  if (_canEdit) {
+    const curMonthCheck = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+    const unreviewed = hospitals.filter(function(hr){ return !hr.reviewed || hr.review_month !== curMonthCheck; });
+    const byGov = {};
+    unreviewed.forEach(function(hr){
+      const g = hr.governorate || 'أخرى';
+      if (!byGov[g]) byGov[g] = [];
+      byGov[g].push(hr);
+    });
+    const rowsHtml = Object.keys(byGov).sort().map(function(g){
+      return byGov[g].map(function(hr){
+        return '<tr onclick="eqOpenForm(\''+esc(hr.name)+'\')" style="cursor:pointer">'+
+          '<td style="padding:2px 6px;font-size:9px">'+esc(g)+'</td>'+
+          '<td style="padding:2px 6px;font-size:9px"><strong>'+esc(hr.name)+'</strong></td>'+
+          '<td style="padding:2px 6px;text-align:center;font-size:9px">'+(hr.equipment?Object.keys(hr.equipment).length:'0')+' جهاز</td>'+
+          '<td style="padding:2px 6px;text-align:center"><button class="btn btn-xs" onclick="event.stopPropagation();eqReviewHospital(\''+esc(hr.name)+'\')" style="color:#fff;background:#1976d2;border:none;padding:2px 8px;border-radius:4px;font-size:9px;cursor:pointer"><i class="fas fa-check"></i></button></td>'+
+        '</tr>';
+      }).join('');
+    }).join('');
+    if (rowsHtml) {
+      reviewHtml = '<div style="flex:1;min-width:280px;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-right:3px solid #1976d2">'+
+        '<div style="background:#e3f2fd;padding:4px 8px;font-size:10px;display:flex;align-items:center;gap:4px">'+
+        '<i class="fas fa-check-double" style="color:#1976d2;font-size:9px"></i> <strong style="color:#1565c0;font-size:10px">مراجعة الأجهزة</strong>'+
+        '<span style="margin-right:auto;font-size:9px;color:#999">'+unreviewed.length+' مستشفى</span></div>'+
+        '<div style="overflow-x:auto;max-height:210px;overflow-y:auto"><table style="width:100%;font-size:9px;border-collapse:collapse">'+
+        '<thead><tr style="background:#f5f5f5;position:sticky;top:0"><th style="padding:2px 6px;text-align:right;font-size:9px">الفرع</th><th style="padding:2px 6px;text-align:right;font-size:9px">بنك الدم</th><th style="padding:2px 6px;text-align:center;font-size:9px">الأجهزة</th><th style="padding:2px 6px;text-align:center;font-size:9px"></th></tr></thead>'+
+        '<tbody>'+rowsHtml+'</tbody></table></div></div>';
+    } else {
+      reviewHtml = '<div style="flex:1;min-width:280px;background:#f0fdf4;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-right:3px solid #2e7d32;display:flex;align-items:center;justify-content:center;padding:8px">'+
+        '<span style="color:#2e7d32;font-size:10px;display:flex;align-items:center;gap:4px"><i class="fas fa-check-circle"></i> تمت المراجعة</span></div>';
+    }
+  }
+  let groupHtml = '';
+  if (groupView) {
+    groupHtml = '<div style="flex:1;min-width:280px;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-right:3px solid #1a1a2e">'+
+      '<div style="background:#1a1a2e;color:#fff;padding:4px 8px;font-size:10px;display:flex;align-items:center;gap:4px">'+
+      '<i class="fas fa-chart-pie" style="font-size:9px"></i> <strong style="font-size:10px">ملخص الأجهزة</strong>'+
+      '<span style="margin-right:auto;font-size:9px;color:rgba(255,255,255,0.5)">'+rows.length+' سجل</span></div>'+
+      '<div style="overflow-x:auto;max-height:210px;overflow-y:auto"><table style="width:100%;font-size:9px;border-collapse:collapse">'+
+      '<thead><tr style="background:#f5f6fa;position:sticky;top:0;z-index:1">'+
+      '<th style="padding:2px 6px;text-align:right;border-bottom:1px solid #ddd;color:#2c3e50;font-size:9px">الجهاز</th>'+
+      '<th style="padding:2px 6px;text-align:center;border-bottom:1px solid #ddd;color:#2c3e50;font-size:9px">النوع</th>'+
+      '<th style="padding:2px 6px;text-align:center;border-bottom:1px solid #ddd;color:#2c3e50;font-size:9px">الإجمالي</th>'+
+      '<th style="padding:2px 6px;text-align:center;border-bottom:1px solid #ddd;color:#27ae60;font-size:9px">يعمل</th>'+
+      '<th style="padding:2px 6px;text-align:center;border-bottom:1px solid #ddd;color:#e74c3c;font-size:9px">لا يعمل</th></tr></thead><tbody>';
+    typeNames.forEach(function(tn){
+      const a = typeAgg[tn];
+      const tObj = allTypes.find(function(tp){return tp.name===tn;});
+      const cat = tObj?tObj.category||'—':'—';
+      const catColor = cat==='تجميعي وتخزيني'?'#8e44ad':(cat==='تخزيني'?'#2980b9':'#27ae60');
+      groupHtml += '<tr style="border-bottom:1px solid #f0f0f0">'+
+        '<td style="padding:2px 6px;font-weight:600;color:#2c3e50;font-size:9px">'+esc(tn)+'</td>'+
+        '<td style="padding:2px 6px;text-align:center;font-size:9px"><span style="display:inline-block;padding:0 6px;border-radius:6px;font-size:8px;color:#fff;background:'+catColor+'">'+esc(cat)+'</span></td>'+
+        '<td style="padding:2px 6px;text-align:center;font-weight:700;font-size:9px">'+a.total+'</td>'+
+        '<td style="padding:2px 6px;text-align:center;color:#27ae60;font-size:9px">'+a.good+'</td>'+
+        '<td style="padding:2px 6px;text-align:center;color:#e74c3c;font-size:9px">'+a.bad+'</td></tr>';
+    });
+    groupHtml += '</tbody></table></div></div>';
+  }
+  // Side-by-side row: review | group summary
+  let h = '';
+  if (reviewHtml || groupHtml) {
+    h += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+
+      (reviewHtml || '') + (groupHtml || '') +
+    '</div>';
+  }
+  // --- Pivot table (one row per hospital, one column per type) ---
+  // Build type list: show all unfiltered types (or filtered if typeF specified)
+  let pivotTypes = allTypes.filter(function(t){
+    if (catF && t.category !== catF) return false;
+    if (typeF && t.name !== typeF) return false;
+    return true;
+  });
+  // Sort types by category then name (collection first, then storage)
+  pivotTypes.sort(function(a,b){
+    let ca = a.category==='تجميعي'?0:(a.category==='تجميعي وتخزيني'?1:2);
+    let cb = b.category==='تجميعي'?0:(b.category==='تجميعي وتخزيني'?1:2);
+    if (ca !== cb) return ca - cb;
+    return a.name.localeCompare(b.name, 'ar');
+  });
+  let pivotCols = 3 + pivotTypes.length + (_canEdit?1:0);
+  // Build hospital rows (one per hospital)
+  let hospMap = {};
+  rows.forEach(function(r){
+    let key = r.hospital + '|' + (r.gov||'');
+    if (!hospMap[key]) hospMap[key] = { hospital: r.hospital, gov: r.gov||'', devByType: {} };
+    hospMap[key].devByType[r.type] = { count: r.count, brand: r.brand, status: r.status };
+  });
+  let hospArr = Object.keys(hospMap).sort().map(function(k){return hospMap[k];});
+  h += '<div id="eqPivotTable" style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin-top:12px">'+
+    '<div style="background:#1a1a2e;color:#fff;padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:6px">'+
+    '<i class="fas fa-table"></i> <strong>الأجهزة بالمستشفيات</strong>'+
+    '<span style="margin-right:auto;font-size:11px;color:rgba(255,255,255,0.55)"><a href="javascript:void(0)" onclick="eqOpenForm()" style="color:rgba(255,255,255,0.7);text-decoration:none"><i class="fas fa-plus-circle"></i> إضافة</a></span>' +
+    '<div style="display:flex;gap:4px">' +
+      (_canExport ? '<button class="btn btn-sm" onclick="eqExportXlsx()" style="background:#10b981;color:#fff;border:none;padding:3px 8px;border-radius:4px;font-size:9px;display:flex;align-items:center;gap:4px"><i class="fas fa-file-excel"></i> تنزيل Excel</button>' : '') +
+      (_canExport ? '<button class="btn btn-sm" onclick="eqExportPdf()" style="background:#ef4444;color:#fff;border:none;padding:3px 8px;border-radius:4px;font-size:9px;display:flex;align-items:center;gap:4px"><i class="fas fa-file-pdf"></i> تنزيل PDF</button>' : '') +
+    '</div>' +
+    '</div>' +
+    '<div style="overflow-x:auto"><table class="eq-pivot" style="width:100%;border-collapse:collapse;font-size:10px">'+
+    '<thead><tr style="background:#2c3e50;position:sticky;top:0;z-index:1;color:#fff">'+
+    '<th rowspan="2" style="padding:5px 6px;text-align:right;border:1px solid #1a252f;color:#fff;min-width:70px">المحافظة</th>'+
+    '<th rowspan="2" style="padding:5px 6px;text-align:right;border:1px solid #1a252f;color:#fff;min-width:100px">المستشفى</th>';
+  pivotTypes.forEach(function(t){
+    h += '<th rowspan="1" style="padding:5px 3px;text-align:center;border:1px solid #1a252f;color:#fff;min-width:70px;font-weight:600;background:#2c3e50;word-break:break-word;white-space:normal;line-height:1.3"><span style="font-size:9px">'+esc(t.name)+'</span></th>';
+  });
+  h += (_canEdit?'<th rowspan="2" style="padding:5px 6px;text-align:center;border:1px solid #1a252f;color:#fff;width:36px"></th>':'')+
+    '</tr><tr style="background:#2c3e50;position:sticky;top:32px;z-index:1;color:#fff">';
+  pivotTypes.forEach(function(t){
+    h += '<th style="padding:3px 2px;text-align:center;border:1px solid #1a252f;color:rgba(255,255,255,0.8);font-size:8px;font-weight:400">عدد</th>';
+  });
+  h += '</tr></thead><tbody>';
+  // Group by governorate with rowspan
+  let hospByGov = {};
+  hospArr.forEach(function(hr){let g=hr.gov||'أخرى';if(!hospByGov[g])hospByGov[g]=[];hospByGov[g].push(hr);});
+  let hGovKeys = Object.keys(hospByGov).sort(eqGovSort);
+  let rowIdx = 0;
+  hGovKeys.forEach(function(gov){
+    const gc = EQ_GOV_COLORS[gov] || '#6c757d';
+    hospByGov[gov].forEach(function(hr, idx){
+      if (idx === 0) {
+        h += '<tr style="border-bottom:1px solid #eee;background:'+ (rowIdx%2===0?'#fff':'#f8f9fa') +'">'+
+          '<td style="padding:4px 6px;color:#888;font-size:9px;border:1px solid #f0f0f0" rowspan="'+hospByGov[gov].length+'"><span style="color:'+gc+';font-weight:600">'+esc(hr.gov)+'</span></td>'+
+          '<td style="padding:4px 6px;font-weight:600;border:1px solid #f0f0f0"><a href="javascript:void(0)" onclick="eqOpenForm(\''+esc(hr.hospital)+'\')" style="color:#2c3e50;text-decoration:none">'+esc(hr.hospital)+'</a></td>';
+      } else {
+        h += '<tr style="border-bottom:1px solid #eee;background:'+ (rowIdx%2===0?'#fff':'#f8f9fa') +'">'+
+          '<td style="padding:4px 6px;font-weight:600;border:1px solid #f0f0f0"><a href="javascript:void(0)" onclick="eqOpenForm(\''+esc(hr.hospital)+'\')" style="color:#2c3e50;text-decoration:none">'+esc(hr.hospital)+'</a></td>';
+      }
+      pivotTypes.forEach(function(t){
+        let d = hr.devByType[t.name];
+        if (d) {
+          let sc = '#bbb';
+          if (d.status==='لا يعمل'||d.status.includes('سيئ')||d.status.includes('عطل')||d.status.includes('غير كفئ')) sc = '#e74c3c';
+          else if (d.status==='يعمل'||d.status.includes('جيد')||d.status.includes('ممتاز')||d.status.includes('كفئ')) sc = '#27ae60';
+          let cnt = d.count!=null?d.count:'—';
+          h += '<td style="padding:3px 4px;text-align:center;border:1px solid #f0f0f0">'+
+            '<span style="font-weight:700;font-size:11px;color:'+sc+'">'+cnt+'</span>'+
+            '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+sc+';margin-right:3px;vertical-align:middle"></span></td>';
+        } else {
+          h += '<td style="padding:3px 4px;text-align:center;border:1px solid #f0f0f0;color:#ddd;font-size:9px">—</td>';
+        }
+      });
+      h += (_canEdit?'<td style="padding:3px 4px;text-align:center;border:1px solid #f0f0f0"><button class="btn btn-xs" onclick="eqOpenForm(\''+esc(hr.hospital)+'\')" style="color:#3498db;background:none;border:none;cursor:pointer;padding:2px" title="تعديل"><i class="fas fa-edit"></i></button></td>':'')+
+        '</tr>';
+      rowIdx++;
+    });
+  });
+  h += '</tbody></table></div></div>';
+  wrap.innerHTML = h;
+}
+
+// --- Modal-based edit form ---
+
+function eqOpenForm(hospName) {
+  const canEdit = hasPerm('equipment', 'edit');
+  if (!canEdit) { showToast('⚠ غير مصرح لك بالتعديل'); return; }
+  (async () => {
+    try {
+      const data = await api('GET', '/equipment');
+      const types = data.types || [];
+      let entry = hospName ? data.hospitals.find(h => h.name === hospName) : null;
+      if (!entry && hospName) {
+        const h = (await api('GET', '/hospitals')).find(hh => hh.name === hospName);
+        entry = { name: hospName, governorate: h ? h.governorate : '', equipment: {} };
+      }
+      let bodyHtml = '';
+      if (!hospName) {
+        bodyHtml = `<div style="padding:10px">
+          <label>اختر المستشفى:</label>
+          <select id="eqNewHospSelect" class="form-input" style="width:100%;margin:8px 0">
+            <option value="">-- اختر --</option>`;
+        (await api('GET', '/hospitals')).forEach(h => {
+          bodyHtml += `<option value="${esc(h.name)}" data-gov="${esc(h.governorate)}">${esc(h.name)} (${esc(h.governorate)})</option>`;
+        });
+        bodyHtml += `</select>
+          <button class="btn btn-primary" onclick="eqCreateNewEntry()" style="width:100%"><i class="fas fa-check"></i> بدء</button>
+        </div>`;
+      } else {
+        const stTypes = types.filter(t => t.category === 'تجميعي وتخزيني' || t.category === 'تخزيني');
+        const ctTypes = types.filter(t => t.category === 'تجميعي');
+        // Collect all brands from all hospitals for the datalist
+        let allBrands = [];
+        data.hospitals.forEach(function(h) { Object.values(h.equipment).forEach(function(e) { if (e && e.brand && !allBrands.includes(e.brand)) allBrands.push(e.brand); }); });
+        allBrands.sort();
+        bodyHtml = `<div style="display:none" id="eqFormData" data-name="${esc(entry.name)}" data-gov="${esc(entry.governorate)}"></div>`;
+        bodyHtml += `<datalist id="eqBrandList">${allBrands.map(function(b) { return '<option value="'+esc(b)+'">'; }).join('')}</datalist>`;
+        function _eqOpt(v, cur) { return `<option value="${v}" ${cur===v?'selected':''}>${v}</option>`; }
+        // Storage
+        bodyHtml += `<div style="margin-bottom:8px;border:1px solid #d4e6f1;border-radius:6px;overflow:hidden">
+          <div style="background:#2980b9;color:#fff;padding:5px 8px;font-size:11px"><i class="fas fa-snowflake"></i> أجهزة تخزينية</div>
+          <div style="overflow-x:auto;padding:4px">
+            <table style="width:100%;font-size:11px;border-collapse:collapse">
+              <thead><tr style="background:#eaf2f8"><th style="text-align:right;padding:4px">الجهاز</th><th style="width:50px;padding:4px">العدد</th><th style="width:100px;padding:4px">الماركة</th><th style="width:100px;padding:4px">الحالة</th></tr></thead>
+              <tbody>`;
+          stTypes.forEach(t => {
+          const eq = entry.equipment[t.id] || {};
+          bodyHtml += `<tr><td style="padding:3px;font-size:10px">${esc(t.name)}</td>
+            <td style="padding:2px"><input type="number" class="form-input eq-count" style="width:50px" data-tid="${t.id}" value="${eq.count != null ? eq.count : ''}" min="0"></td>
+            <td style="padding:2px"><input type="text" class="form-input eq-brand" style="width:100%" data-tid="${t.id}" value="${esc(eq.brand || '')}" list="eqBrandList" autocomplete="off"></td>
+            <td style="padding:2px"><select class="form-input eq-status" style="width:100%" data-tid="${t.id}">${_eqOpt('',eq.status)}${_eqOpt('يعمل',eq.status)}${_eqOpt('لا يعمل',eq.status)}</select></td></tr>`;
+        });
+        bodyHtml += `</tbody></table></div></div>`;
+        // Collection
+        bodyHtml += `<div style="border:1px solid #d5f5e3;border-radius:6px;overflow:hidden">
+          <div style="background:#27ae60;color:#fff;padding:5px 8px;font-size:11px"><i class="fas fa-flask"></i> أجهزة تجميعي</div>
+          <div style="overflow-x:auto;padding:4px">
+            <table style="width:100%;font-size:11px;border-collapse:collapse">
+              <thead><tr style="background:#eafaf1"><th style="text-align:right;padding:4px">الجهاز</th><th style="width:50px;padding:4px">العدد</th><th style="width:100px;padding:4px">الماركة</th><th style="width:100px;padding:4px">الحالة</th></tr></thead>
+              <tbody>`;
+        ctTypes.forEach(t => {
+          const eq = entry.equipment[t.id] || {};
+          bodyHtml += `<tr><td style="padding:3px;font-size:10px">${esc(t.name)}</td>
+            <td style="padding:2px"><input type="number" class="form-input eq-count" style="width:50px" data-tid="${t.id}" value="${eq.count != null ? eq.count : ''}" min="0"></td>
+            <td style="padding:2px"><input type="text" class="form-input eq-brand" style="width:100%" data-tid="${t.id}" value="${esc(eq.brand || '')}" list="eqBrandList" autocomplete="off"></td>
+            <td style="padding:2px"><select class="form-input eq-status" style="width:100%" data-tid="${t.id}">${_eqOpt('',eq.status)}${_eqOpt('يعمل',eq.status)}${_eqOpt('لا يعمل',eq.status)}</select></td></tr>`;
+        });
+        bodyHtml += `</tbody></table></div></div>`;
+        bodyHtml += `<div style="text-align:center;margin-top:10px">
+          <button class="btn btn-primary" onclick="eqSave()" style="padding:6px 24px"><i class="fas fa-save"></i> حفظ</button>
+        </div>`;
+      }
+      openModal(hospName ? esc(entry.name) : 'إضافة أجهزة', bodyHtml,
+        `<button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>`);
+    } catch (e) { showToast('❌ '+e.message); }
+  });
+}
+
+
+async function eqCreateNewEntry() {
+  const sel = document.getElementById('eqNewHospSelect');
+  if (!sel || !sel.value) { showToast('⚠ اختر مستشفى'); return; }
+  closeModal(); eqOpenForm(sel.value);
+}
+
+async function eqReviewHospital(name) {
+  const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+  try {
+    await api('POST', '/equipment/hospitals', { name, reviewed: true, review_month: curMonth });
+    showToast('✅ تمت مراجعة أجهزة ' + name);
+    renderEquipment();
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+
+async function eqSave() {
+  const dataEl = document.getElementById('eqFormData');
+  if (!dataEl) return;
+  const name = dataEl.dataset.name;
+  const governorate = dataEl.dataset.gov;
+  if (!name) { showToast('⚠ اسم المستشفى مطلوب'); return; }
+  const equipment = {};
+  document.querySelectorAll('.eq-count').forEach(inp => {
+    const tid = parseInt(inp.dataset.tid);
+    const brand = document.querySelector(`.eq-brand[data-tid="${tid}"]`)?.value || '';
+    const status = document.querySelector(`.eq-status[data-tid="${tid}"]`)?.value || '';
+    const count = inp.value !== '' ? parseInt(inp.value) : null;
+    if (count != null || brand || status) {
+      equipment[tid] = { count, status, brand, capacity: null };
+    }
+  });
+  try {
+    await api('POST', '/equipment/hospitals', { name, governorate, equipment });
+    showToast('✅ تم حفظ أجهزة ' + name);
+    closeModal();
+    const data = await api('GET', '/equipment');
+    eqRenderTable(data.types || [], data.hospitals || []);
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+
+async function eqDeleteHosp(name) {
+  openModal('حذف الأجهزة',
+    `<div style="text-align:center;padding:10px">
+      <i class="fas fa-exclamation-triangle" style="font-size:42px;color:#e74c3c;margin-bottom:8px"></i>
+      <p style="font-size:13px;color:#666">هل أنت متأكد من حذف أجهزة</p>
+      <p style="font-size:15px;font-weight:700;color:#e74c3c">${esc(name)}</p>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-danger" onclick="eqDoDelete('${esc(name)}')"><i class="fas fa-trash"></i> حذف</button>`);
+}
+
+async function eqDoDelete(name) {
+  try {
+    await api('DELETE', '/equipment/hospitals/' + encodeURIComponent(name));
+    closeModal(); showToast('✅ تم حذف الأجهزة');
+    const d = await api('GET', '/equipment');
+    eqRenderTable(d.types||[], d.hospitals||[]);
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+
+async function eqImport() {
+  showConfirmModal('سيتم استيراد الأجهزة من ملف Excel. هل تريد المتابعة؟', async function() {
+    try {
+      const res = await api('POST', '/equipment/import');
+      showToast(res.message || '✅ تم الاستيراد');
+      const d = await api('GET', '/equipment');
+      eqRenderTable(d.types||[], d.hospitals||[]);
+    } catch (e) { showToast('❌ ' + e.message); }
+  });
+}
+
+async function eqExportXlsx() {
+  let pivotTable = document.querySelector('#eqPivotTable table');
+  if (!pivotTable) { showToast('❌ لا توجد بيانات'); return; }
+  let clone = pivotTable.cloneNode(true);
+  // Remove edit buttons column if present
+  let rows = clone.querySelectorAll('tr');
+  rows.forEach(function(r){
+    let last = r.querySelector('td:last-child, th:last-child');
+    if (last && last.querySelector('button')) last.remove();
+  });
+  // Inline styles for professional look (Excel friendly)
+  let style = '<style>'+
+    '@page { size: auto; margin: 8mm; } ' +
+    'body{font-family:"Arial",Tahoma,sans-serif;font-size:9px;margin:0;padding:0} ' +
+    'table{border-collapse:collapse;width:100%;border:1px solid #ccc} ' +
+    'th{background:#1a1a2e;color:#fff;padding:4px 6px;border:1px solid #333;text-align:center;font-weight:700;font-size:9px} ' +
+    'td{padding:3px 4px;border:1px solid #ddd;text-align:center;font-size:8px} ' +
+    'td:first-child,td:nth-child(2){text-align:right} ' +
+    '.gov-header{font-weight:700;text-align:right;padding:4px 8px;font-size:9px} ' +
+    '.footer{text-align:center;font-size:8px;color:#666;margin-top:6px} ' +
+    '.status-good{font-weight:700;color:#10b981} ' +
+    '.status-bad{font-weight:700;color:#ef4444} ' +
+    '.count{font-weight:700;color:#1f2937} ' +
+    '.brand{color:#6b7280;font-size:7px} ' +
+    'h1{text-align:center;color:#1a1a2e;margin:0 0 8px 0;font-size:12px} ' +
+    '.toolbar{margin:4px 0 8px 0;text-align:left} ' +
+    '.toolbar button{background:#10b981;color:#fff;border:none;padding:4px 10px;border-radius:4px;margin:0 2px;font-size:8px;cursor:pointer} ' +
+    '.toolbar .pdf{background:#ef4444} ' +
+    '.empty{text-align:center;color:#9ca3af;padding:20px;font-size:9px} ' +
+    'tr.bg-success{background-color:#ecfdf5} ' +
+    'tr.bg-danger{background-color:#fef2f2} ' +
+    'span.status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:3px;vertical-align:middle} ' +
+    '.status-good-dot{background:#10b981} ' +
+    '.status-bad-dot{background:#ef4444} ' +
+    '.status-neutral-dot{background:#9ca3af}' +
+  '</style>';
+  let html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">'+style+'</head><body>'+
+    '<h1>أجهزة بنوك الدم</h1>' +
+    '<div class="toolbar">' +
+      '<button onclick="window.print()">طباعة</button>' +
+      '<button class="pdf" onclick="eqExportPdf()">تحميل PDF</button>' +
+    '</div>' +
+    clone.outerHTML +
+    '<div class="footer">إعداد و برمجة محمد ندا 01068880999</div></body></html>';
+  let blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  let a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'اجهزة_بنوك_الدم.xls'; a.click();
+  URL.revokeObjectURL(blob);
+  showToast('✅ تم تحميل ملف Excel');
+}
+
+function eqExportPdf() {
+  let pivotTable = document.querySelector('#eqPivotTable table');
+  if (!pivotTable) { showToast('❌ لا توجد بيانات'); return; }
+  let clone = pivotTable.cloneNode(true);
+  let rows = clone.querySelectorAll('tr');
+  rows.forEach(function(r){
+    let last = r.querySelector('td:last-child, th:last-child');
+    if (last && last.querySelector('button')) last.remove();
+  });
+  let w = window.open('', '_blank');
+  let style = '<style>'+
+    '@page{size:landscape;margin:8mm}'+
+    'body{font-family:Tahoma,Arial,sans-serif;margin:0;padding:8px;font-size:10px}'+
+    'table{width:100%;border-collapse:collapse;border:1px solid #ccc;background:#fff}'+
+    'th{background:#1a1a2e;color:#fff;padding:4px 6px;border:1px solid #333;text-align:center;font-weight:700;font-size:10px}'+
+    'td{padding:3px 4px;border:1px solid #ddd;text-align:center;font-size:9px}'+
+    'td:first-child,td:nth-child(2){text-align:right}'+
+    '.gov-header{font-weight:700;text-align:right;padding:4px 8px;font-size:10px}'+
+    '.count{font-weight:700;color:#1f2937}'+
+    '.brand{color:#6b7280;font-size:8px}'+
+    '.status-good{color:#10b981;font-weight:700}'+
+    '.status-bad{color:#ef4444;font-weight:700}'+
+    '.footer{text-align:center;font-size:10px;color:#666;margin-top:8px}'+
+    '.toolbar{margin:4px 0 8px 0;text-align:left}'+
+    '.toolbar button{background:#10b981;color:#fff;border:none;padding:5px 12px;border-radius:4px;margin:0 2px;font-size:11px;cursor:pointer}'+
+    '.toolbar .pdf{background:#ef4444}'+
+    'h1{text-align:center;color:#1a1a2e;margin:0 0 10px 0;font-size:16px}'+
+    '@media print{body{margin:0;padding:0} .toolbar{display:none}}'+
+  '</style>';
+  w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>أجهزة بنوك الدم</title>'+style+'</head><body>'+
+    '<h1>أجهزة بنوك الدم</h1>' +
+    '<div class="toolbar">' +
+      '<button onclick="window.print();">طباعة</button>' +
+      '<button class="pdf" onclick="eqExportPdf();">تحميل PDF</button>' +
+    '</div>' +
+    clone.outerHTML +
+    '<div class="footer">إعداد و برمجة محمد ندا 01068880999</div>' +
+    '</body></html>');
+  w.document.close();
+  setTimeout(function(){w.focus();w.print();w.close();},500);
+}
+
+// ============== Equipment Type Management ==============
+
+async function eqManageTypes() {
+  try {
+    const types = await api('GET', '/equipment/types');
+    let html = `<div style="text-align:left;margin-bottom:8px">
+      <button class="btn btn-primary btn-sm" onclick="eqAddType()"><i class="fas fa-plus"></i> إضافة جهاز</button>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:#f0f0f0"><th style="padding:6px;text-align:right">الجهاز</th><th style="padding:6px;text-align:right">التصنيف</th><th style="padding:6px;width:80px">إجراءات</th></tr></thead>
+      <tbody>`;
+    types.forEach(t => {
+      html += `<tr style="border-bottom:1px solid #eee">
+        <td style="padding:6px">${esc(t.name)}</td>
+        <td style="padding:6px"><span style="background:${t.category === 'تجميعي وتخزيني' ? '#8e44ad' : '#27ae60'}20;color:${t.category === 'تجميعي وتخزيني' ? '#8e44ad' : '#27ae60'};padding:2px 8px;border-radius:10px;font-size:10px">${esc(t.category||'تجميعي')}</span></td>
+        <td style="padding:6px;text-align:center">
+          <button class="btn btn-xs" onclick="eqEditType(${t.id})" style="color:#3498db" title="تعديل"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-xs" onclick="eqDeleteType(${t.id})" style="color:#e74c3c" title="حذف"><i class="fas fa-trash"></i></button>
+        </td></tr>`;
+    });
+    html += `</tbody></table>`;
+    openModal('إدارة أنواع الأجهزة', html, `<button class="btn btn-secondary" onclick="closeModal();eqFilterHosp()">إغلاق</button>`);
+  } catch (e) { showToast('❌ '+e.message); }
+}
+
+async function eqAddType() {
+  const mb = document.querySelector('.modal-body') || document.getElementById('modalContent');
+  if (!mb) return;
+  mb.innerHTML = `<div style="padding:8px">
+    <label>اسم الجهاز:</label>
+    <input type="text" id="eqTypeName" class="form-input" style="width:100%;margin:6px 0" placeholder="أدخل اسم الجهاز" autofocus>
+    <label>التصنيف:</label>
+    <select id="eqTypeCategory" class="form-input" style="width:100%;margin:6px 0">
+      <option value="تجميعي">تجميعي</option>
+      <option value="تجميعي وتخزيني">تجميعي وتخزيني</option>
+    </select>
+    <div style="text-align:center;margin-top:10px">
+      <button class="btn btn-primary" onclick="eqSaveNewType()"><i class="fas fa-check"></i> حفظ</button>
+      <button class="btn btn-secondary" onclick="eqManageTypes()">إلغاء</button>
+    </div>
+  </div>`;
+}
+
+async function eqSaveNewType() {
+  const name = document.getElementById('eqTypeName')?.value?.trim();
+  if (!name) { showToast('⚠ أدخل اسم الجهاز'); return; }
+  const category = document.getElementById('eqTypeCategory')?.value || 'تجميعي';
+  try {
+    await api('POST', '/equipment/types', { name, category });
+    showToast('✅ تم إضافة الجهاز');
+    eqManageTypes();
+  } catch (e) { showToast('❌ '+e.message); }
+}
+
+async function eqEditType(id) {
+  try {
+    const types = await api('GET', '/equipment/types');
+    const t = types.find(x => x.id === id);
+    if (!t) return;
+    const mb = document.querySelector('.modal-body') || document.getElementById('modalContent');
+    if (!mb) return;
+    mb.innerHTML = `<div style="padding:8px">
+      <label>اسم الجهاز:</label>
+      <input type="text" id="eqTypeName" class="form-input" style="width:100%;margin:6px 0" value="${esc(t.name)}" autofocus>
+      <label>التصنيف:</label>
+      <select id="eqTypeCategory" class="form-input" style="width:100%;margin:6px 0">
+        <option value="تجميعي" ${t.category === 'تجميعي'?'selected':''}>تجميعي</option>
+        <option value="تجميعي وتخزيني" ${t.category === 'تجميعي وتخزيني'?'selected':''}>تجميعي وتخزيني</option>
+      </select>
+      <div style="text-align:center;margin-top:10px">
+        <button class="btn btn-primary" onclick="eqSaveEditType(${id})"><i class="fas fa-check"></i> حفظ</button>
+        <button class="btn btn-secondary" onclick="eqManageTypes()">إلغاء</button>
+      </div>
+    </div>`;
+  } catch (e) { showToast('❌ '+e.message); }
+}
+
+async function eqSaveEditType(id) {
+  const name = document.getElementById('eqTypeName')?.value?.trim();
+  if (!name) { showToast('⚠ أدخل اسم الجهاز'); return; }
+  const category = document.getElementById('eqTypeCategory')?.value || 'تجميعي';
+  try {
+    await api('PUT', '/equipment/types/' + id, { name, category });
+    showToast('✅ تم تعديل الجهاز');
+    eqManageTypes();
+  } catch (e) { showToast('❌ '+e.message); }
+}
+
+async function eqDeleteType(id) {
+  try {
+    const types = await api('GET', '/equipment/types');
+    const t = types.find(x => x.id === id);
+    openModal('حذف جهاز',
+      `<div style="text-align:center;padding:10px">
+        <i class="fas fa-exclamation-triangle" style="font-size:42px;color:#e74c3c;margin-bottom:8px"></i>
+        <p style="font-size:13px;color:#666">هل أنت متأكد من حذف</p>
+        <p style="font-size:15px;font-weight:700;color:#e74c3c">${esc(t ? t.name : '')}</p>
+        <p style="font-size:12px;color:#999">سيتم إزالة الجهاز من جميع المستشفيات</p>
+      </div>`,
+      `<button class="btn btn-secondary" onclick="eqManageTypes()">إلغاء</button>
+       <button class="btn btn-danger" onclick="eqDoDeleteType(${id})"><i class="fas fa-trash"></i> حذف</button>`);
+  } catch (e) { showToast('❌ '+e.message); }
+}
+
+async function eqDoDeleteType(id) {
+  try {
+    await api('DELETE', '/equipment/types/' + id);
+    showToast('✅ تم حذف الجهاز');
+    eqManageTypes();
+  } catch (e) { showToast('❌ '+e.message); }
+}
+
+// ============== Readiness Sheet (شيت الجاهزية) — Excel Template v2 ==============
+
+function rdnDismissNotifAlert(idx) {
+  const a = window._alertsData?.[idx];
+  if (!a?._rdnNotifId) return;
+  api('POST', '/readiness-notifications/dismiss/' + a._rdnNotifId).then(checkAlerts).catch(() => {});
+}
+
+// --- Helpers ---
+function rdnGetDayLabels(occ) {
+  const labels = occ.day_labels || [];
+  const from = new Date(occ.date_from);
+  const to = new Date(occ.date_to);
+  const dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const days = [];
+  let cur = new Date(from);
+  while (cur <= to) {
+    const dStr = cur.toISOString().slice(0,10);
+    const dn = dayNames[cur.getDay()];
+    const label = labels[days.length] || `${dn} ${dStr}`;
+    days.push({ label, date: dStr, dayName: dn });
+    cur.setDate(cur.getDate() + 1);
+  }
+  return days;
+}
+function rdnShiftOpts(val) {
+  const opts = ['12 A','12 P','24 AP','6 L 12 P'];
+  let html = '<option value="">--</option>';
+  opts.forEach(o => { html += `<option value="${o}"${val===o?' selected':''}>${o}</option>`; });
+  html += `<option value="__other__"${val&&!opts.includes(val)?' selected':''}>أخرى</option>`;
+  return html;
+}
+function rdnStockChanged() {
+  const sel = document.querySelector('input[name="rdnStockRadio"]:checked');
+  const wrap = document.getElementById('rdnCorrectionWrap');
+  if (wrap) wrap.style.display = sel && sel.value === 'غير كافي' ? '' : 'none';
+  rdnSyncFormToPrintTable();
+}
+
+function rdnGetStockVal() {
+  const sel = document.querySelector('input[name="rdnStockRadio"]:checked');
+  return sel ? sel.value : '';
+}
+
+function rdnMaintChanged() {
+  const sel = document.querySelector('input[name="rdnMaintRadio"]:checked');
+  const wrap = document.getElementById('rdnMaintReasonWrap');
+  if (wrap) wrap.style.display = sel && sel.value === 'لا تتم' ? '' : 'none';
+  rdnSyncFormToPrintTable();
+}
+function rdnGetMaintVal() {
+  const sel = document.querySelector('input[name="rdnMaintRadio"]:checked');
+  if (!sel) return '';
+  if (sel.value === 'تتم') return 'تتم';
+  const reason = document.getElementById('rdnMaintReason')?.value || '';
+  return reason ? `لا تتم: ${reason}` : 'لا تتم';
+}
+
+function rdnBdChanged() {
+  const sel = document.querySelector('input[name="rdnBdRadio"]:checked');
+  const wrap = document.getElementById('rdnBdWrap');
+  if (wrap) wrap.style.display = sel && sel.value === 'يوجد' ? '' : 'none';
+  rdnSyncFormToPrintTable();
+}
+function rdnGetBdVal() {
+  const sel = document.querySelector('input[name="rdnBdRadio"]:checked');
+  if (!sel) return '';
+  if (sel.value === 'لا يوجد') return 'لا يوجد';
+  const device = document.getElementById('rdnBdDevice')?.value || '';
+  const repl = document.getElementById('rdnBdReplacement')?.value || '';
+  let r = 'يوجد';
+  if (device) r += `: ${device}`;
+  if (repl) r += ` (بديل: ${repl})`;
+  return r;
+}
+
+function rdnConsChanged() {
+  const sel = document.querySelector('input[name="rdnConsRadio"]:checked');
+  const wrap = document.getElementById('rdnConsReasonWrap');
+  if (wrap) wrap.style.display = sel && sel.value === 'غير كافية' ? '' : 'none';
+  rdnSyncFormToPrintTable();
+}
+function rdnGetConsVal() {
+  const sel = document.querySelector('input[name="rdnConsRadio"]:checked');
+  if (!sel) return '';
+  if (sel.value === 'كافية') return 'كافية';
+  const reason = document.getElementById('rdnConsReason')?.value || '';
+  return reason ? `غير كافية: ${reason}` : 'غير كافية';
+}
+
+function rdnShiftChanged(el) {
+  if (el.value === '__other__') {
+    const custom = prompt('أدخل الوردية المطلوبة:');
+    if (custom && custom.trim()) {
+      el.value = custom.trim();
+    } else {
+      el.value = '';
+    }
+  }
+  rdnSyncFormToPrintTable();
+}
 
 async function renderReadinessSheet() {
   const el = document.getElementById('mainContent');
-  el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button>
-     <button class="btn btn-success" onclick="rdnExportXlsx()" style="height:32px"><i class="fas fa-file-excel"></i> تحميل Excel</button>
-     <button class="btn btn-primary" onclick="rdnPrint()" style="height:32px"><i class="fas fa-print"></i> طباعة</button>
-  </div>
-  <div class="page-title"><i class="fas fa-clipboard-check" style="color:#1565c0"></i> شيت الجاهزيه</div>
-  <div id="rdnLoading" style="text-align:center;padding:40px;color:#999"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
-  <div id="rdnContent"></div>`;
+  const canAdd = hasPerm('readiness', 'add');
+  const canDelete = hasPerm('readiness', 'delete');
+  const canExport = hasPerm('readiness', 'export');
   try {
-    const [occasions, hospitals, reports] = await Promise.all([
-      api('GET', '/readiness-occasions'),
-      api('GET', '/hospitals'),
-      api('GET', '/readiness-reports')
-    ]);
-    _rdn = { occasions, hospitals, reports, employees: [] };
-    renderRdnMain();
-  } catch (e) {
-    document.getElementById('rdnLoading').innerHTML = `<span style="color:#dc3545"><i class="fas fa-exclamation-circle"></i> ${e.message}</span>`;
-  }
-}
-
-function rdnFmtDate(d) {
-  if (!d) return '';
-  const parts = d.split('-');
-  if (parts.length !== 3) return d;
-  return parts[2] + '/' + parts[1] + '/' + parts[0];
-}
-
-function renderRdnMain() {
-  const { occasions, hospitals, reports } = _rdn;
-  let html = `<div style="background:#e3f2fd;border:1px solid #1565c0;border-radius:8px;padding:8px 12px;font-size:12px;color:#0d47a1;margin-bottom:10px;display:flex;align-items:center;gap:6px">
-    <i class="fas fa-info-circle"></i> في حال عدم ظهور أسماء العاملين لمستشفى معين، برجاء إضافتهم أولاً في <strong>بيان العاملين</strong> من القائمة الرئيسية
-  </div>
-  <div class="card" style="margin-bottom:12px"><div class="card-body" style="padding:10px 14px">
-    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-      <span style="font-weight:700;font-size:13px"><i class="fas fa-calendar-alt"></i> المناسبة:</span>
-      <select id="rdnOccasionSel" onchange="rdnOccasionChanged()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;min-width:180px">
-        <option value="">-- جميع المناسبات --</option>
-        ${occasions.map(o => `<option value="${o.id}">${o.name} ${o.date_from ? '('+rdnFmtDate(o.date_from)+'→'+rdnFmtDate(o.date_to)+')' : ''}</option>`).join('')}
-      </select>
-      <button class="btn btn-sm btn-info" onclick="rdnShowAddOccasion()" style="font-size:12px"><i class="fas fa-plus"></i> إضافة مناسبة</button>
-      <button class="btn btn-sm btn-secondary" onclick="rdnRefresh()" style="font-size:12px"><i class="fas fa-sync"></i></button>
-    </div>
-  </div></div>
-  <div id="rdnBody"></div>`;
-  document.getElementById('rdnLoading').style.display = 'none';
-  document.getElementById('rdnContent').innerHTML = html;
-  if (occasions.length > 0) {
-    document.getElementById('rdnOccasionSel').value = occasions[0].id;
-    rdnOccasionChanged();
-  }
-}
-
-async function rdnOccasionChanged() {
-  const occId = parseInt(document.getElementById('rdnOccasionSel')?.value);
-  const occ = occId ? _rdn.occasions.find(o => o.id === occId) : null;
-  const occReports = occId ? _rdn.reports.filter(r => r.occasion_id === occId) : _rdn.reports;
-  const days = occ?.day_labels || [];
-  let html = '';
-
-  // Occasion info bar
-  if (occ) {
-    html += `<div class="card" style="margin-bottom:10px;border-right:4px solid #1565c0;background:#e3f2fd">
-      <div class="card-body" style="padding:8px 14px;font-size:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-        <span style="font-weight:700">${occ.name}</span>
-        ${occ.date_from ? `<span class="badge" style="background:#1565c0;color:#fff;padding:2px 8px;border-radius:8px">من ${rdnFmtDate(occ.date_from)}</span>` : ''}
-        ${occ.date_to ? `<span class="badge" style="background:#1565c0;color:#fff;padding:2px 8px;border-radius:8px">إلى ${rdnFmtDate(occ.date_to)}</span>` : ''}
-        ${days.map((d,i) => `<span class="badge" style="background:#fff;border:1px solid #1565c0;padding:2px 8px;border-radius:8px">اليوم ${i+1}: ${d}</span>`).join('')}
-        <button class="btn btn-sm btn-warning" onclick="rdnShowEditOccasion(${occ.id})" style="font-size:11px;margin-right:auto"><i class="fas fa-edit"></i></button>
-        <button class="btn btn-sm btn-danger" onclick="rdnDeleteOccasion(${occ.id})" style="font-size:11px"><i class="fas fa-trash"></i></button>
+    const occasions = await api('GET', '/readiness-occasions');
+    let html = `<div class="page-actions">
+      <button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+      ${canAdd ? `<button class="btn btn-primary" onclick="rdnOpenOccasionModal()"><i class="fas fa-plus"></i> إضافة مناسبة</button>` : ''}
+      ${canExport ? `<button class="btn btn-success" onclick="rdnExportXlsx()"><i class="fas fa-file-excel"></i> تحميل Excel</button><button class="btn btn-danger" onclick="rdnExportPdf()" style="margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>` : ''}
+    </div><div id="rdnContent">
+      <div class="filter-bar" style="flex-wrap:wrap;align-items:center">
+        <label style="font-weight:600">اختر المناسبة:</label>
+        <select id="rdnOccasionSelect" class="form-input" style="width:300px" onchange="rdnOccasionChanged()">
+          <option value="">-- اختر مناسبة --</option>
+          ${occasions.map(o => `<option value="${o.id}">${esc(o.name)} (${o.date_from} → ${o.date_to})</option>`).join('')}
+        </select>
+        ${canAdd ? `<button class="btn btn-sm btn-outline-primary" onclick="rdnOpenOccasionModal()" title="إضافة"><i class="fas fa-plus"></i></button>` : ''}
+        ${canDelete ? `<button class="btn btn-sm btn-outline-danger" onclick="rdnDeleteSelectedOccasion()" title="حذف"><i class="fas fa-trash"></i></button>` : ''}
+        <span id="rdnStatusMsg" style="margin-right:auto;font-size:13px;color:#666"></span>
       </div>
+      <div id="rdnSummaryTable"></div>
+      <div id="rdnFormSection"></div>
     </div>`;
-  }
-
-  // Governorate + Hospital selectors
-  const govs = [...new Set(_rdn.hospitals.map(h => h.governorate).filter(Boolean))].sort((a,b) => a.localeCompare(b,'ar'));
-  html += `<div class="card" style="margin-bottom:10px"><div class="card-body" style="padding:8px 14px">
-    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-      <span style="font-weight:700;font-size:13px"><i class="fas fa-map-marker-alt"></i> المحافظة:</span>
-      <select id="rdnGovSel" onchange="rdnGovChanged()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;min-width:150px">
-        <option value="">-- الكل --</option>
-        ${govs.map(g => `<option value="${g}">${g}</option>`).join('')}
-      </select>
-      <span style="font-weight:700;font-size:13px;margin-right:8px"><i class="fas fa-hospital"></i> المستشفى:</span>
-      <select id="rdnHospSel" onchange="rdnHospChanged()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;min-width:200px;flex:1">
-        <option value="">-- اختر المستشفى --</option>
-        ${_rdn.hospitals.sort((a,b)=>(a.governorate||'').localeCompare(b.governorate||'','ar') || a.name.localeCompare(b.name,'ar')).map(h => {
-          const hasReport = occReports.some(r => r.hospital_id === h.id);
-          return `<option value="${h.id}" data-gov="${h.governorate||''}" style="${hasReport?'background:#e8f5e9':''}">${h.name} ${hasReport?'✓':''}</option>`;
-        }).join('')}
-      </select>
-      <button class="btn btn-sm btn-info" onclick="rdnAddHospitalReport()" style="font-size:12px" id="rdnAddHospBtn" disabled><i class="fas fa-plus"></i> إضافة</button>
-    </div>
-  </div></div>`;
-
-  // Initial filter
-  setTimeout(rdnGovChanged, 50);
-
-  // Full print table of all saved reports
-  if (occReports.length > 0) {
-    const occName = occ ? occ.name : 'جميع المناسبات';
-    html += `<div class="card" id="rdnSummaryTable" style="margin-bottom:10px;border:2px solid #1565c0">
-      <div class="card-header" style="background:#1565c0;color:#fff;padding:8px 14px;font-weight:700;font-size:14px;text-align:center">
-        <i class="fas fa-print"></i> بيان بجاهزية بنوك دم الهيئة بمناسبة ${occName} ${occ ? `من ${occ.date_from||''} إلى ${occ.date_to||''}` : ''} (${occReports.length} مستشفى)
-      </div>
-      <div class="card-body" style="padding:6px 8px;font-size:12px;overflow-x:auto">
-        <table class="rdn-print-table" style="width:100%;border-collapse:collapse;min-width:900px" dir="rtl">
-          <thead><tr style="background:#e3f2fd">
-            <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:70px">المحافظة</th>
-            <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:100px">المستشفى</th>
-            <th style="border:1px solid #999;padding:4px 6px;text-align:center">القوة البشرية</th>
-            <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:160px">الرصيد</th>
-            <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:130px">مراجعة الصيانة</th>
-            <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:160px">الأعطال</th>
-            <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:160px">المستهلكات</th>
-          </tr></thead>
-          <tbody>${occReports.slice().sort((a,b) => (a.governorate||'').localeCompare(b.governorate||'','ar') || (a.hospital_name||'').localeCompare(b.hospital_name||'','ar')).map(r => {
-            const staffData = JSON.parse(r.staff_data || '[]');
-            const bd = (() => { try { return JSON.parse(r.breakdowns || '{}'); } catch { return {}; } })();
-            const stockNeg = r.stock === 'غير كافي';
-            const maintNeg = r.maintenance === 'لم تتم';
-            const bdNeg = bd.has === 'يوجد';
-            const consNeg = r.consumables === 'غير كافية';
-            const dayCount = days.length || 1;
-            return `<tr>
-              <td style="border:1px solid #999;padding:4px 6px;vertical-align:top;text-align:center;font-size:11px">${r.governorate||''}</td>
-              <td style="border:1px solid #999;padding:4px 6px;vertical-align:top;text-align:center;font-size:11px;font-weight:600"><a href="#" onclick="rdnEditReport(${r.id});return false" style="color:#1565c0;text-decoration:none">${r.hospital_name||'?'}</a></td>
-              <td style="border:1px solid #999;padding:3px 4px;vertical-align:top">
-                <table style="width:100%;border-collapse:collapse">
-                  <thead><tr style="background:#f5f5f5">
-                    <th style="border:1px solid #999;padding:1px 3px;font-size:9px">#</th>
-                    <th style="border:1px solid #999;padding:1px 3px;font-size:9px">الاسم</th>
-                    <th style="border:1px solid #999;padding:1px 3px;font-size:9px">التليفون</th>
-                    ${days.map((d,i) => `<th style="border:1px solid #999;padding:2px 4px;font-size:9px">اليوم ${i+1}<br>${d}</th>`).join('')}
-                  </tr></thead>
-                  <tbody>${staffData.length ? staffData.map((s,i) => {
-                    const sc = s.schedule || [];
-                    return `<tr>
-                      <td style="border:1px solid #999;padding:1px 3px;text-align:center;font-size:9px">${i+1}</td>
-                      <td style="border:1px solid #999;padding:1px 3px;font-size:9px">${s.name}</td>
-                      <td style="border:1px solid #999;padding:1px 3px;font-size:9px;direction:ltr">${s.phone}</td>
-                      ${days.map((_,di) => `<td style="border:1px solid #999;padding:1px 2px;text-align:center;font-size:9px">${sc[di]||''}</td>`).join('')}
-                    </tr>`;
-                  }).join('') : '<tr><td colspan="'+(dayCount+3)+'" style="border:1px solid #999;padding:3px 4px;text-align:center;color:#999;font-size:9px">لم يتم إضافة موظفين بعد</td></tr>'}
-                  </tbody>
-                </table>
-              </td>
-              <td style="border:1px solid #999;padding:4px 6px;vertical-align:top">
-                <div style="font-weight:600;font-size:10px;margin-bottom:2px">الحالة:</div>
-                <span style="font-size:12px${stockNeg ? ';color:#d32f2f;font-weight:700' : ''}">${r.stock||'---'}</span>
-                ${stockNeg ? `<div style="font-weight:600;font-size:10px;margin-top:3px">السبب:</div><span style="font-size:11px">${r.stock_reason||'---'}</span>` : ''}
-                <div style="font-weight:600;font-size:10px;margin-top:3px">بيان الرصيد:</div>
-                <span style="font-size:11px;word-break:break-all">${r.stock_details||'---'}</span>
-              </td>
-              <td style="border:1px solid #999;padding:4px 6px;vertical-align:top">
-                <div style="font-weight:600;font-size:10px;margin-bottom:2px">الحالة:</div>
-                <span style="font-size:12px${maintNeg ? ';color:#d32f2f;font-weight:700' : ''}">${r.maintenance||'---'}</span>
-                ${maintNeg ? `<div style="font-weight:600;font-size:10px;margin-top:3px">السبب:</div><span style="font-size:11px">${r.maint_reason||'---'}</span>` : ''}
-              </td>
-              <td style="border:1px solid #999;padding:4px 6px;vertical-align:top">
-                <span style="font-size:12px${bdNeg ? ';color:#d32f2f;font-weight:700' : ''}">${bd.has||'---'}</span>
-                ${bdNeg ? `<div style="margin-top:2px"><div style="font-weight:600;font-size:10px">ذكر العطل:</div><span style="font-size:11px">${bd.desc||'---'}</span><div style="font-weight:600;font-size:10px;margin-top:2px">التأثير:</div><span style="font-size:11px">${bd.impact||'---'}</span></div>` : ''}
-              </td>
-              <td style="border:1px solid #999;padding:4px 6px;vertical-align:top">
-                <span style="font-size:12px${consNeg ? ';color:#d32f2f;font-weight:700' : ''}">${r.consumables||'---'}</span>
-                ${consNeg ? `<div style="margin-top:2px"><div style="font-weight:600;font-size:10px">مدى التأثير:</div><span style="font-size:11px">${r.cons_impact||'---'}</span><div style="font-weight:600;font-size:10px;margin-top:2px">الحذف:</div><span style="font-size:11px">${r.cons_correction||'---'}</span></div>` : ''}
-              </td>
-            </tr>`;
-          }).join('')}</tbody>
-        </table>
-        <div style="font-size:10px;color:#999;text-align:center;margin-top:3px">
-          إعداد وبرمجة / محمد ندا 0106888.0999
-        </div>
-      </div>
-    </div>`;
-  }
-
-  html += '<div id="rdnReportArea"></div>';
-  document.getElementById('rdnBody').innerHTML = html;
-}
-
-function rdnGovChanged() {
-  const gov = document.getElementById('rdnGovSel')?.value || '';
-  const opts = document.querySelectorAll('#rdnHospSel option[data-gov]');
-  opts.forEach(o => {
-    o.style.display = (!gov || o.getAttribute('data-gov') === gov) ? '' : 'none';
-  });
-  const sel = document.getElementById('rdnHospSel');
-  if (gov && sel.value) {
-    const opt = sel.options[sel.selectedIndex];
-    if (opt && opt.getAttribute('data-gov') !== gov) { sel.value = ''; rdnHospChanged(); }
-  }
-}
-
-async function rdnHospChanged() {
-  const hospId = parseInt(document.getElementById('rdnHospSel')?.value);
-  const occId = parseInt(document.getElementById('rdnOccasionSel')?.value);
-  if (!hospId || !occId) { document.getElementById('rdnReportArea').innerHTML = ''; return; }
-  const hosp = _rdn.hospitals.find(h => h.id === hospId);
-  const existing = _rdn.reports.find(r => r.occasion_id === occId && r.hospital_id === hospId);
-  document.getElementById('rdnAddHospBtn').disabled = !!(existing) || window._user?.role === 'branch_supervisor';
-
-  // Load stock data from total stock management
-  _rdn.currentStock = null;
-  try {
-    const stockRes = await api('GET', '/daily-reports?hospital_id=' + hospId);
-    _rdn.currentStock = stockRes[0] || null;
-  } catch (e) { _rdn.currentStock = null; }
-
-  if (existing) {
-    rdnEditReport(existing.id);
-  } else {
-    // Load employees for this hospital
-    try {
-      const empRes = await api('GET', '/employee-statements?hospital_id=' + hospId);
-      _rdn.employees = empRes.rows || [];
-    } catch (e) { _rdn.employees = []; }
-    rdnShowForm(hosp, occId, null);
-  }
-}
-
-function rdnShowForm(hosp, occId, existing) {
-  const occ = _rdn.occasions.find(o => o.id === occId);
-  const days = occ?.day_labels || [];
-  const staffData = existing ? JSON.parse(existing.staff_data || '[]') : [];
-  const html = `
-    <div class="card" style="margin-bottom:10px;border-right:4px solid #1565c0">
-      <div class="card-header" style="background:#e3f2fd;padding:8px 14px;font-weight:700;font-size:13px">
-        <i class="fas fa-users"></i> العاملين — ${hosp.name}
-      </div>
-      <div class="card-body" style="padding:8px 14px">
-        <table class="data-table" style="font-size:12px;white-space:nowrap;min-width:500px;margin-bottom:8px">
-          <thead><tr style="background:#f5f5f5">
-            <th style="width:30px">#</th>
-            <th>الاسم</th>
-            <th>التليفون</th>
-            ${days.map((d,i) => `<th style="font-size:10px">اليوم ${i+1}<br>${d}</th>`).join('')}
-            <th style="width:40px"></th>
-          </tr></thead>
-          <tbody id="rdnStaffBody">
-            ${staffData.map((s, i) => rdnStaffRowHtml(s, i, days.length)).join('')}
-            <tr id="rdnStaffAddRow">
-              <td style="color:#999">${staffData.length+1}</td>
-              <td><select id="rdnEmpSel" onchange="rdnEmpSelected()" style="width:100%;padding:2px 4px;font-size:11px">
-                <option value="">-- اختر --</option>
-                ${(_rdn.employees||[]).map(e => `<option value="${e.id}" data-phone="${e.phone||''}">${e.employee}</option>`).join('')}
-              </select></td>
-              <td><input id="rdnNewPhone" style="width:100%;padding:2px 4px;font-size:11px;direction:ltr" readonly></td>
-              ${days.map(() => `<td class="rdn-day-cell">${rdnDayCellHtml('')}</td>`).join('')}
-              <td><button class="btn btn-sm btn-success" onclick="rdnAddStaff()" style="font-size:10px;padding:2px 6px"><i class="fas fa-plus"></i></button></td>
-            </tr>
-          </tbody>
-        </table>
-        ${(!_rdn.employees || _rdn.employees.length === 0) ? `<div style="background:#fff3e0;border:1px solid #ff9800;border-radius:4px;padding:8px 12px;font-size:12px;color:#e65100;margin-bottom:8px"><i class="fas fa-exclamation-triangle"></i> لم يتم العثور على موظفين لهذا المستشفى — برجاء إضافتهم في <strong>شيت العاملين</strong> أولاً</div>` : ''}
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom:10px"><div class="card-body" style="padding:10px 14px">
-      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
-        <span style="font-weight:700;font-size:13px"><i class="fas fa-tint"></i> الرصيد من إجمالي المخزون</span>
-        ${_rdn.currentStock ? `<span style="font-size:11px;color:#666">آخر تحديث: ${_rdn.currentStock.date||''} ${_rdn.currentStock.time||''}</span>` : '<span style="font-size:11px;color:#999">لا توجد بيانات مخزون متاحة</span>'}
-      </div>
-      ${_rdn.currentStock ? (() => {
-        const bd = _rdn.currentStock.blood_data ? (typeof _rdn.currentStock.blood_data === 'string' ? JSON.parse(_rdn.currentStock.blood_data) : _rdn.currentStock.blood_data) : {};
-        const parts = ['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(bt => {
-          const d = bd[bt] || {};
-          const avail = (d.previous||0) + (d.incoming||0) - (d.outgoing||0) - (d.disposal||0);
-          return `${bt}${avail}`;
-        });
-        return `<div style="margin-bottom:8px;padding:6px 10px;background:#f5f5f5;border-radius:4px;font-size:13px;font-weight:600;direction:ltr;text-align:center;letter-spacing:2px">${parts.join(' - ')}</div>`;
-      })() : ''}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
-        <div><label>حال الرصيد:</label>
-          <select id="rdnStock" onchange="rdnToggleStockReason()" style="padding:2px 4px;border:1px solid #ccc;border-radius:4px;width:100%">
-            <option value="">--</option>
-            <option value="كافي" ${existing?.stock==='كافي'?'selected':''}>كافي</option>
-            <option value="غير كافي" ${existing?.stock==='غير كافي'?'selected':''}>غير كافي</option>
-          </select>
-          <div id="rdnStockReasonRow" style="margin-top:4px;display:${existing?.stock==='غير كافي'?'block':'none'}">
-            <input id="rdnStockReason" style="padding:2px 4px;border:1px solid #ccc;border-radius:4px;width:100%;box-sizing:border-box" placeholder="سبب نقص الرصيد" value="${existing?.stock_reason||''}">
-          </div></div>
-        <div><label>بيان الرصيد:</label>
-          <input id="rdnStockDetails" style="padding:2px 4px;border:1px solid #ccc;border-radius:4px;width:100%" value="${existing?.stock_details || (_rdn.currentStock ? (()=>{const bd=_rdn.currentStock.blood_data?(typeof _rdn.currentStock.blood_data==='string'?JSON.parse(_rdn.currentStock.blood_data):_rdn.currentStock.blood_data):{};return ['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(bt=>{const d=bd[bt]||{};return bt+((d.previous||0)+(d.incoming||0)-(d.outgoing||0)-(d.disposal||0))}).join(' - ')})() : '')}"></div>
-        <div><label>مراجعة الصيانة:</label>
-          <select id="rdnMaintenance" onchange="rdnToggleMaintReason();rdnColorNeg(this)" style="padding:2px 4px;border:1px solid #ccc;border-radius:4px;width:100%">
-            <option value="">--</option>
-            <option value="تم" ${existing?.maintenance==='تم'?'selected':''}>تم</option>
-            <option value="لم تتم" ${existing?.maintenance==='لم تتم'?'selected':''}>لم تتم</option>
-          </select>
-          <div id="rdnMaintReasonRow" style="margin-top:4px;display:${existing?.maintenance==='لم تتم'?'block':'none'}">
-            <input id="rdnMaintReason" style="padding:2px 4px;border:1px solid #ccc;border-radius:4px;width:100%;box-sizing:border-box" placeholder="سبب عدم الصيانة" value="${existing?.maint_reason||''}">
-          </div></div>
-        <div><label>الأعطال:</label>
-          <select id="rdnBdHas" onchange="rdnToggleBd();rdnColorNeg(this)" style="padding:2px 4px;border:1px solid #ccc;border-radius:4px;width:100%;margin-bottom:4px">
-            <option value="">--</option>
-            <option value="لا يوجد" ${(()=>{try{const b=JSON.parse(existing?.breakdowns||'{}');return b.has==='لا يوجد'?'selected':''}catch{return existing?.breakdowns==='لا يوجد'?'selected':''}})()}>لا يوجد</option>
-            <option value="يوجد" ${(()=>{try{const b=JSON.parse(existing?.breakdowns||'{}');return b.has==='يوجد'?'selected':''}catch{return existing?.breakdowns!=='لا يوجد'&&existing?.breakdowns?'selected':''}})()}>يوجد</option>
-          </select>
-          <div id="rdnBdDetails" style="display:${(()=>{try{const b=JSON.parse(existing?.breakdowns||'{}');return b.has==='يوجد'?'block':'none'}catch{return existing?.breakdowns&&existing?.breakdowns!=='لا يوجد'?'block':'none'}})()}">
-            <input id="rdnBdDesc" style="padding:2px 4px;border:1px solid #ccc;border-radius:4px;width:100%;margin-bottom:4px;box-sizing:border-box" placeholder="ذكر العطل" value="${(()=>{try{const b=JSON.parse(existing?.breakdowns||'{}');return b.desc||''}catch{return existing?.breakdowns||''}})()}">
-            <input id="rdnBdImpact" style="padding:2px 4px;border:1px solid #ccc;border-radius:4px;width:100%;box-sizing:border-box" placeholder="تأثيره على العمل" value="${(()=>{try{const b=JSON.parse(existing?.breakdowns||'{}');return b.impact||''}catch{return ''}})()}">
-          </div></div>
-        <div><label>المستهلكات:</label>
-          <select id="rdnConsumables" onchange="rdnToggleConsImpact();rdnColorNeg(this)" style="padding:2px 4px;border:1px solid #ccc;border-radius:4px;width:100%">
-            <option value="">--</option>
-            <option value="كافية" ${existing?.consumables==='كافية'?'selected':''}>كافية</option>
-            <option value="غير كافية" ${existing?.consumables==='غير كافية'?'selected':''}>غير كافية</option>
-          </select>
-          <div id="rdnConsImpactRow" style="margin-top:4px;display:${existing?.consumables==='غير كافية'?'block':'none'}">
-            <input id="rdnConsImpact" style="padding:2px 4px;border:1px solid #ccc;border-radius:4px;width:100%;margin-bottom:4px;box-sizing:border-box" placeholder="مدى التأثير" value="${existing?.cons_impact||''}">
-            <input id="rdnConsCorrection" style="padding:2px 4px;border:1px solid #ccc;border-radius:4px;width:100%;box-sizing:border-box" placeholder="الحذف" value="${existing?.cons_correction||''}">
-          </div></div>
-      </div>
-    </div></div>
-
-    <div style="text-align:left;margin-bottom:12px;display:flex;gap:6px;justify-content:flex-end">
-      ${(()=>{const __role = window._user?.role; return (__role === 'admin' || __role === 'org_supervisor' || __role === 'hospital' || __role === 'branch_supervisor') ? 
-        `<button class="btn btn-success" onclick="rdnSaveReport(${occId}, ${hosp.id}, '${hosp.name.replace(/'/g,"\\'")}', '${(hosp.governorate||'').replace(/'/g,"\\'")}', ${existing?.id||'null'})" style="font-size:13px"><i class="fas fa-save"></i> حفظ</button>` 
-        : ''})()}
-      ${(()=>{const __role = window._user?.role; return (__role === 'admin' || __role === 'org_supervisor' || __role === 'hospital') && existing?.id ? 
-        `<button class="btn btn-danger" onclick="rdnDeleteReport(${existing.id})" style="font-size:13px"><i class="fas fa-trash"></i> حذف التقرير</button>` : ''})()}
-    </div>
-
-    ${rdnRenderPrintTable(existing, hosp, occ, !!existing)}
-    `;
-  document.getElementById('rdnReportArea').innerHTML = html;
-  // Apply role-based field permissions
-  const role = window._user?.role;
-  if (role) {
-    // For branch_supervisor: disable all fields
-    if (role === 'branch_supervisor') {
-      document.querySelectorAll('#rdnReportArea input, #rdnReportArea select').forEach(el => { el.disabled = true; });
-      const saveBtn = document.querySelector('#rdnReportArea button[onclick*="rdnSaveReport"]');
-      if (saveBtn) saveBtn.disabled = false;
+    el.innerHTML = html;
+    // Auto-select latest occasion
+    const sel = document.getElementById('rdnOccasionSelect');
+    if (sel) {
+      const lastId = localStorage.getItem('rdnLastOccasion');
+      if (lastId && [...sel.options].some(o => o.value === lastId)) {
+        sel.value = lastId;
+      } else if (sel.options.length > 1) {
+        sel.value = sel.options[1].value; // first real option (latest)
+      }
+      if (sel.value) rdnOccasionChanged();
     }
-  }
-  // Color existing negative values in form
-  document.querySelectorAll('#rdnStock,#rdnMaintenance,#rdnConsumables,#rdnBdHas').forEach(el => rdnColorNeg(el));
-  // Sync form values to print table initially
-  rdnSyncFormToPrintTable();
-  // Add change listeners for real-time sync
-  document.querySelectorAll('#rdnReportArea input, #rdnReportArea select').forEach(el => {
-    el.addEventListener('change', rdnSyncFormToPrintTable);
-    el.addEventListener('input', rdnSyncFormToPrintTable);
-  });
-  // Override toggle functions to also sync print table
-  const origToggleBd = rdnToggleBd;
-  rdnToggleBd = function() { origToggleBd(); rdnSyncFormToPrintTable(); };
-  const origToggleMaint = rdnToggleMaintReason;
-  rdnToggleMaintReason = function() { origToggleMaint(); rdnSyncFormToPrintTable(); };
-  const origToggleStock = rdnToggleStockReason;
-  rdnToggleStockReason = function() { origToggleStock(); rdnSyncFormToPrintTable(); };
-  const origToggleCons = rdnToggleConsImpact;
-  rdnToggleConsImpact = function() { origToggleCons(); rdnSyncFormToPrintTable(); };
-  // Enter key → save
-  const saveBtn = document.querySelector('#rdnReportArea button[onclick*="rdnSaveReport"]');
-  if (saveBtn) {
-    document.querySelectorAll('#rdnReportArea input:not(textarea), #rdnReportArea select').forEach(el => {
-      el.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !this.disabled) { e.preventDefault(); saveBtn.click(); }
-      });
-    });
-  }
+  } catch (e) { el.innerHTML = `<div class="empty-msg">${esc(e.message)}</div>`; }
 }
 
-function rdnColorNeg(el) {
-  if (!el) return;
-  const v = el.value;
-  const neg = (v === 'غير كافي' || v === 'غير كافية' || v === 'لم تتم' || v === 'يوجد');
-  el.style.color = neg ? '#d32f2f' : '';
-  el.style.fontWeight = neg ? '700' : '';
-}
-function rdnRenderPrintTable(existing, hosp, occ, showActions) {
-  const days = occ?.day_labels || [];
-  const staffData = existing ? JSON.parse(existing.staff_data || '[]') : [];
-  const bd = existing ? (() => { try { return JSON.parse(existing.breakdowns || '{}'); } catch { return {}; } })() : {};
-  const reportId = existing?.id;
-  const stockNeg = existing?.stock === 'غير كافي';
-  const maintNeg = existing?.maintenance === 'لم تتم';
-  const bdNeg = bd.has === 'يوجد';
-  const consNeg = existing?.consumables === 'غير كافية';
-  const hospNameSafe = (hosp.name || '').replace(/'/g, "\\'");
-  return `<div class="card" id="rdnPrintTable" style="margin-bottom:10px;border:2px solid #1565c0">
-  <div class="card-header" style="background:#1565c0;color:#fff;padding:8px 14px;font-weight:700;font-size:14px;text-align:center">
-    <i class="fas fa-print"></i> بيان بجاهزية بنوك دم الهيئة بمناسبة ${occ.name} من ${occ.date_from||''} إلى ${occ.date_to||''}
-    ${showActions && reportId ? `<span style="float:left">
-      <button class="btn btn-sm btn-light" onclick="rdnEditReport(${reportId})" style="font-size:11px;padding:2px 8px;margin-right:6px"><i class="fas fa-edit"></i> تعديل</button>
-      <button class="btn btn-sm btn-light" onclick="rdnDeleteReport(${reportId})" style="font-size:11px;padding:2px 8px"><i class="fas fa-trash"></i> حذف</button>
-    </span>` : ''}
-  </div>
-  <div class="card-body" style="padding:6px 8px;font-size:12px;overflow-x:auto">
-    <table class="rdn-print-table" style="width:100%;border-collapse:collapse;min-width:900px" dir="rtl">
-      <thead><tr style="background:#e3f2fd">
-        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:70px">المحافظة</th>
-        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:100px">المستشفى</th>
-        <th style="border:1px solid #999;padding:4px 6px;text-align:center">القوة البشرية</th>
-        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:160px">الرصيد</th>
-        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:130px">مراجعة الصيانة</th>
-        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:160px">الأعطال</th>
-        <th style="border:1px solid #999;padding:4px 6px;text-align:center;width:160px">المستهلكات</th>
-      </tr></thead>
-      <tbody><tr>
-        <td style="border:1px solid #999;padding:4px 6px;vertical-align:top;text-align:center;font-size:11px">${hosp.governorate||''}</td>
-        <td style="border:1px solid #999;padding:4px 6px;vertical-align:top;text-align:center;font-size:11px;font-weight:600">${hosp.name}</td>
-        <td style="border:1px solid #999;padding:3px 4px;vertical-align:top">
-          <table style="width:100%;border-collapse:collapse">
-            <thead><tr style="background:#f5f5f5">
-              <th style="border:1px solid #999;padding:1px 3px;font-size:9px">#</th>
-              <th style="border:1px solid #999;padding:1px 3px;font-size:9px">الاسم</th>
-              <th style="border:1px solid #999;padding:1px 3px;font-size:9px">التليفون</th>
-              ${days.map((d,i) => `<th style="border:1px solid #999;padding:2px 4px;font-size:9px">اليوم ${i+1}<br>${d}</th>`).join('')}
-            </tr></thead>
-            <tbody id="rdnPtStaffBody">${staffData.length ? staffData.map((s,i) => {
-              const sc = s.schedule || [];
-              return `<tr>
-                <td style="border:1px solid #999;padding:1px 3px;text-align:center;font-size:9px">${i+1}</td>
-                <td style="border:1px solid #999;padding:1px 3px;font-size:9px">${s.name}</td>
-                <td style="border:1px solid #999;padding:1px 3px;font-size:9px;direction:ltr">${s.phone}</td>
-                ${days.map((_,di) => `<td style="border:1px solid #999;padding:1px 2px;text-align:center;font-size:9px">${sc[di]||''}</td>`).join('')}
-              </tr>`;
-            }).join('') : '<tr><td colspan="'+(days.length+3)+'" style="border:1px solid #999;padding:3px 4px;text-align:center;color:#999;font-size:9px">لم يتم إضافة موظفين بعد</td></tr>'}
-            </tbody>
-          </table>
-        </td>
-        <td style="border:1px solid #999;padding:4px 6px;vertical-align:top">
-          <div style="font-weight:600;font-size:10px;margin-bottom:2px">الحالة:</div>
-          <span id="rdnPtStockVal" style="font-size:12px${stockNeg ? ';color:#d32f2f;font-weight:700' : ''}">${existing?.stock||'---'}</span>
-          <div id="rdnPtStockReasonRow" style="${stockNeg ? '' : 'display:none'};margin-top:3px">
-            <div style="font-weight:600;font-size:10px">السبب:</div>
-            <span id="rdnPtStockReasonVal" style="font-size:11px">${existing?.stock_reason||'---'}</span>
-          </div>
-          <div style="font-weight:600;font-size:10px;margin-top:3px">بيان الرصيد:</div>
-          <span id="rdnPtStockDetailsVal" style="font-size:11px;word-break:break-all">${existing?.stock_details||'---'}</span>
-        </td>
-        <td style="border:1px solid #999;padding:4px 6px;vertical-align:top">
-          <div style="font-weight:600;font-size:10px;margin-bottom:2px">الحالة:</div>
-          <span id="rdnPtMaintVal" style="font-size:12px${maintNeg ? ';color:#d32f2f;font-weight:700' : ''}">${existing?.maintenance||'---'}</span>
-          <div id="rdnPtMaintReasonRow" style="${maintNeg ? '' : 'display:none'};margin-top:3px">
-            <div style="font-weight:600;font-size:10px">السبب:</div>
-            <span id="rdnPtMaintReasonVal" style="font-size:11px">${existing?.maint_reason||'---'}</span>
-          </div>
-        </td>
-        <td style="border:1px solid #999;padding:4px 6px;vertical-align:top">
-          <span id="rdnPtBdHasVal" style="font-size:12px${bdNeg ? ';color:#d32f2f;font-weight:700' : ''}">${bd.has||'---'}</span>
-          <div id="rdnPtBdDetails" style="${bdNeg ? '' : 'display:none'};margin-top:2px">
-            <div style="font-weight:600;font-size:10px">ذكر العطل:</div>
-            <span id="rdnPtBdDescVal" style="font-size:11px">${bd.desc||'---'}</span>
-            <div style="font-weight:600;font-size:10px;margin-top:2px">التأثير:</div>
-            <span id="rdnPtBdImpactVal" style="font-size:11px">${bd.impact||'---'}</span>
-          </div>
-        </td>
-        <td style="border:1px solid #999;padding:4px 6px;vertical-align:top">
-          <span id="rdnPtConsVal" style="font-size:12px${consNeg ? ';color:#d32f2f;font-weight:700' : ''}">${existing?.consumables||'---'}</span>
-          <div id="rdnPtConsImpactRow" style="${consNeg ? '' : 'display:none'};margin-top:2px">
-            <div style="font-weight:600;font-size:10px">مدى التأثير:</div>
-            <span id="rdnPtConsImpactVal" style="font-size:11px">${existing?.cons_impact||'---'}</span>
-            <div style="font-weight:600;font-size:10px;margin-top:2px">الحذف:</div>
-            <span id="rdnPtConsCorrectionVal" style="font-size:11px">${existing?.cons_correction||'---'}</span>
-          </div>
-        </td>
-      </tr></tbody>
-    </table>
-    <div style="font-size:10px;color:#999;text-align:center;margin-top:3px">
-      إعداد وبرمجة / محمد ندا 0106888.0999
-    </div>
-  </div></div>`;
-}
-
-function rdnSyncFormToPrintTable() {
-  // Sync field values from form to print table display spans
-  const pairs = [
-    ['rdnStock', 'rdnPtStockVal'],
-    ['rdnStockReason', 'rdnPtStockReasonVal'],
-    ['rdnStockDetails', 'rdnPtStockDetailsVal'],
-    ['rdnMaintenance', 'rdnPtMaintVal'],
-    ['rdnMaintReason', 'rdnPtMaintReasonVal'],
-    ['rdnBdHas', 'rdnPtBdHasVal'],
-    ['rdnBdDesc', 'rdnPtBdDescVal'],
-    ['rdnBdImpact', 'rdnPtBdImpactVal'],
-    ['rdnConsumables', 'rdnPtConsVal'],
-    ['rdnConsImpact', 'rdnPtConsImpactVal'],
-    ['rdnConsCorrection', 'rdnPtConsCorrectionVal']
-  ];
-  pairs.forEach(([fid, pid]) => {
-    const f = document.getElementById(fid);
-    const p = document.getElementById(pid);
-    if (f && p) p.textContent = f.value || '---';
-  });
-  // Toggle visibility of sub-rows
-  const ptStockRow = document.getElementById('rdnPtStockReasonRow');
-  if (ptStockRow) ptStockRow.style.display = (document.getElementById('rdnStock')?.value === 'غير كافي') ? '' : 'none';
-  const ptMaintRow = document.getElementById('rdnPtMaintReasonRow');
-  if (ptMaintRow) ptMaintRow.style.display = (document.getElementById('rdnMaintenance')?.value === 'لم تتم') ? '' : 'none';
-  const ptBdRow = document.getElementById('rdnPtBdDetails');
-  if (ptBdRow) ptBdRow.style.display = (document.getElementById('rdnBdHas')?.value === 'يوجد') ? '' : 'none';
-  const ptConsRow = document.getElementById('rdnPtConsImpactRow');
-  if (ptConsRow) ptConsRow.style.display = (document.getElementById('rdnConsumables')?.value === 'غير كافية') ? '' : 'none';
-  // Sync staff table
-  rdnSyncPtStaff();
-}
-
-function rdnSyncPtStaff() {
-  const ptBody = document.getElementById('rdnPtStaffBody');
-  if (!ptBody) return;
-  const formRows = document.querySelectorAll('#rdnStaffBody tr:not(#rdnStaffAddRow)');
-  const occId = parseInt(document.getElementById('rdnOccasionSel')?.value);
-  const occ = occId ? _rdn.occasions.find(o => o.id === occId) : null;
-  const days = occ?.day_labels || [];
-  if (formRows.length) {
-    ptBody.innerHTML = Array.from(formRows).map((tr, i) => {
-      const inputs = tr.querySelectorAll('input');
-      const name = inputs[0]?.value || '';
-      const phone = inputs[1]?.value || '';
-      const dayCells = tr.querySelectorAll('td.rdn-day-cell');
-      const schedule = Array.from(dayCells).map(td => {
-        const el = td.querySelector('input, select');
-        return el ? el.value : '';
-      });
-      return `<tr>
-        <td style="border:1px solid #999;padding:1px 3px;text-align:center;font-size:9px">${i+1}</td>
-        <td style="border:1px solid #999;padding:1px 3px;font-size:9px">${name}</td>
-        <td style="border:1px solid #999;padding:1px 3px;font-size:9px;direction:ltr">${phone}</td>
-        ${days.map((_,di) => `<td style="border:1px solid #999;padding:1px 2px;text-align:center;font-size:9px">${schedule[di]||''}</td>`).join('')}
-      </tr>`;
-    }).join('');
-  } else {
-    ptBody.innerHTML = '<tr><td colspan="'+(days.length+3)+'" style="border:1px solid #999;padding:3px 4px;text-align:center;color:#999;font-size:9px">لم يتم إضافة موظفين بعد</td></tr>';
-  }
-}
-
-async function rdnDeleteReport(reportId) {
-  if (!confirm('هل أنت متأكد من حذف هذا التقرير؟')) return;
-  try {
-    await api('DELETE', '/readiness-reports/' + reportId);
-    showToast('✅ تم حذف التقرير');
-    rdnRefresh();
-  } catch (e) { showToast('❌ ' + e.message); }
-}
-
-function rdnToggleBd() {
-  const has = document.getElementById('rdnBdHas')?.value;
-  const details = document.getElementById('rdnBdDetails');
-  if (details) details.style.display = has === 'يوجد' ? 'block' : 'none';
-}
-function rdnToggleMaintReason() {
-  const el = document.getElementById('rdnMaintenance');
-  const row = document.getElementById('rdnMaintReasonRow');
-  if (row) row.style.display = el?.value === 'لم تتم' ? 'block' : 'none';
-}
-
-function rdnToggleStockReason() {
-  const el = document.getElementById('rdnStock');
-  const row = document.getElementById('rdnStockReasonRow');
-  if (row) row.style.display = el?.value === 'غير كافي' ? 'block' : 'none';
-}
-
-function rdnToggleConsImpact() {
-  const el = document.getElementById('rdnConsumables');
-  const row = document.getElementById('rdnConsImpactRow');
-  if (row) row.style.display = el?.value === 'غير كافية' ? 'block' : 'none';
-}
-
-const RDN_SHIFT_OPTS = ['12A','12P','24 AP','AB','6L 12P'];
-
-function rdnDayCellHtml(value) {
-  const matched = RDN_SHIFT_OPTS.includes(value);
-  if (value && !matched) {
-    return `<input style="width:55px;padding:2px;font-size:11px;text-align:center" value="${value}" onchange="rdnDayInputChanged(this)" placeholder="أخرى">`;
-  }
-  return `<select style="width:60px;padding:2px;font-size:11px" onchange="rdnDaySelChanged(this)">
-    <option value="">--</option>
-    ${RDN_SHIFT_OPTS.map(o => `<option value="${o}" ${value===o?'selected':''}>${o}</option>`).join('')}
-    <option value="__other__">أخرى</option>
-  </select>`;
-}
-
-function rdnDaySelChanged(sel) {
-  if (sel.value === '__other__') {
-    const td = sel.parentNode;
-    const inp = document.createElement('input');
-    inp.style.cssText = 'width:55px;padding:2px;font-size:11px;text-align:center';
-    inp.placeholder = 'أخرى';
-    inp.onchange = function() { rdnDayInputChanged(this); };
-    td.innerHTML = '';
-    td.appendChild(inp);
-    inp.focus();
-  }
-  rdnSyncPtStaff();
-}
-
-function rdnDayInputChanged(inp) {
-  // Value is stored in the DOM - no extra action needed
-}
-
-function rdnStaffRowHtml(s, i, dayCount) {
-  const schedule = s.schedule || [];
-  return `<tr id="rdnStaffRow${i}">
-    <td style="color:#999">${i+1}</td>
-    <td><input style="width:120px;padding:2px 4px;font-size:11px" value="${s.name}" onchange="rdnUpdateStaff(${i},'name',this.value)"></td>
-    <td><input style="width:100px;padding:2px 4px;font-size:11px;direction:ltr" value="${s.phone}" onchange="rdnUpdateStaff(${i},'phone',this.value)"></td>
-    ${Array.from({length: dayCount}, (_, di) => `<td class="rdn-day-cell">${rdnDayCellHtml(schedule[di]||'')}</td>`).join('')}
-    <td><button class="btn btn-sm btn-danger" onclick="rdnRemoveStaff(${i})" style="font-size:10px;padding:2px 6px"><i class="fas fa-times"></i></button></td>
-  </tr>`;
-}
-
-let _rdnStaff = [];
-
-function rdnEmpSelected() {
-  const sel = document.getElementById('rdnEmpSel');
-  const opt = sel?.selectedOptions?.[0];
-  if (opt) document.getElementById('rdnNewPhone').value = opt.dataset.phone || '';
-}
-
-function rdnAddStaff() {
-  const sel = document.getElementById('rdnEmpSel');
-  const opt = sel?.selectedOptions?.[0];
-  if (!opt || !opt.value) return;
-  const name = opt.text;
-  const phone = opt.dataset.phone || document.getElementById('rdnNewPhone').value;
-  const days = _rdn.occasions.find(o => o.id === parseInt(document.getElementById('rdnOccasionSel')?.value))?.day_labels || [];
-  const dayCells = document.querySelectorAll('#rdnStaffAddRow td.rdn-day-cell');
-  const schedule = Array.from(dayCells).map(td => {
-    const el = td.querySelector('input, select');
-    return el ? el.value : '';
-  });
-  // Add row
-  const staffRows = document.getElementById('rdnStaffBody');
-  const idx = staffRows.children.length - 1; // minus the add row
-  const tr = document.createElement('tr');
-  tr.innerHTML = rdnStaffRowHtml({name, phone, schedule}, idx, days.length);
-  staffRows.insertBefore(tr, staffRows.lastElementChild);
-  // Reset add row
-  sel.value = '';
-  document.getElementById('rdnNewPhone').value = '';
-  dayCells.forEach(td => {
-    const el = td.querySelector('input, select');
-    if (el) el.value = '';
-  });
-  // Update indices
-  rdnRenumberStaff();
-}
-
-function rdnRemoveStaff(idx) {
-  const row = document.getElementById('rdnStaffRow' + idx);
-  if (row) row.remove();
-  rdnRenumberStaff();
-}
-
-async function rdnDismissNotif(notifId, el) {
-  try {
-    await api('PUT', '/readiness-notifications/' + notifId + '/dismiss');
-    const wrapper = el.closest('div') || el.closest('span');
-    if (wrapper) wrapper.style.display = 'none';
-  } catch (e) { showToast('❌ فشل إخفاء التنبيه'); }
-}
-
-function rdnRenumberStaff() {
-  const tbody = document.getElementById('rdnStaffBody');
-  if (!tbody) return;
-  const rows = tbody.querySelectorAll('tr:not(#rdnStaffAddRow)');
-  rows.forEach((tr, i) => {
-    const td = tr.querySelector('td:first-child');
-    if (td) td.textContent = i + 1;
-    tr.id = 'rdnStaffRow' + i;
-  });
-  rdnSyncPtStaff();
-}
-
-function rdnUpdateStaff(idx, field, val) {
-  // handled by onchange on input
-}
-
-async function rdnSaveReport(occId, hospId, hospName, governorate, existingId) {
-  try {
-    // Branch supervisor can only edit existing reports, not create new ones
-    if (window._user?.role === 'branch_supervisor' && !existingId) {
-      showToast('❌ ليس لديك صلاحية إنشاء تقرير جديد');
-      return;
-    }
-    // Validate: require at least some data
-    const stock = document.getElementById('rdnStock')?.value || '';
-    const maintenance = document.getElementById('rdnMaintenance')?.value || '';
-    const bdHas = document.getElementById('rdnBdHas')?.value || '';
-    const consumables = document.getElementById('rdnConsumables')?.value || '';
-    const staffBody = document.getElementById('rdnStaffBody');
-    const hasStaff = staffBody?.querySelectorAll('tr:not(#rdnStaffAddRow) input:first-child').length > 0;
-    if (!stock && !maintenance && !bdHas && !consumables && !hasStaff) {
-      showToast('❌ لم يتم إدخال أي بيانات بعد');
-      return;
-    }
-    // Collect staff
-    const tbody = document.getElementById('rdnStaffBody');
-    const rows = tbody?.querySelectorAll('tr:not(#rdnStaffAddRow)') || [];
-    const staffData = [];
-    rows.forEach(tr => {
-      const inputs = tr.querySelectorAll('input');
-      if (inputs.length < 2) return;
-      const name = inputs[0]?.value?.trim();
-      if (!name) return;
-      const phone = inputs[1]?.value?.trim() || '';
-      const dayCells = tr.querySelectorAll('td.rdn-day-cell');
-      const schedule = Array.from(dayCells).map(td => {
-        const el = td.querySelector('input, select');
-        return el ? el.value : '';
-      });
-      staffData.push({ name, phone, schedule });
-    });
-    const body = {
-      occasion_id: occId,
-      hospital_id: hospId,
-      hospital_name: hospName,
-      governorate,
-      staff_data: JSON.stringify(staffData),
-      stock,
-      stock_details: document.getElementById('rdnStockDetails')?.value || '',
-      stock_reason: document.getElementById('rdnStockReason')?.value || '',
-      maintenance,
-      maint_reason: document.getElementById('rdnMaintReason')?.value || '',
-      breakdowns: JSON.stringify({
-        has: bdHas,
-        desc: document.getElementById('rdnBdDesc')?.value || '',
-        impact: document.getElementById('rdnBdImpact')?.value || ''
-      }),
-      consumables,
-      cons_impact: document.getElementById('rdnConsImpact')?.value || '',
-      cons_correction: document.getElementById('rdnConsCorrection')?.value || ''
-    };
-    let saved;
-    if (existingId) {
-      saved = await api('PUT', '/readiness-reports/' + existingId, body);
-      showToast('✅ تم تحديث البيانات');
-    } else {
-      saved = await api('POST', '/readiness-reports', body);
-      showToast('✅ تم حفظ البيانات');
-    }
-    // Construct saved report object
-    const rep = saved?.report || { id: existingId || Date.now(), occasion_id: occId, hospital_id: hospId, hospital_name: hospName, governorate, staff_data: JSON.stringify(staffData), stock: body.stock, stock_details: body.stock_details, stock_reason: body.stock_reason, maintenance: body.maintenance, maint_reason: body.maint_reason, breakdowns: body.breakdowns, consumables: body.consumables, cons_impact: body.cons_impact, cons_correction: body.cons_correction };
-    if (existingId) {
-      const idx = _rdn.reports.findIndex(r => r.id === existingId);
-      if (idx >= 0) _rdn.reports[idx] = { ..._rdn.reports[idx], ...rep };
-    } else {
-      _rdn.reports.push(rep);
-    }
-    // Rebuild print table with saved data
-    const occ = _rdn.occasions.find(o => o.id === occId);
-    const hosp = _rdn.hospitals.find(h => h.id === hospId);
-    const ptHtml = rdnRenderPrintTable(rep, hosp || { name: hospName, governorate }, occ, true);
-    const oldPt = document.getElementById('rdnPrintTable');
-    if (oldPt) oldPt.outerHTML = ptHtml;
-    // Remove all cards in the report area (keep print table)
-    const formCards = document.querySelectorAll('#rdnReportArea .card');
-    formCards.forEach(c => { if (c.id !== 'rdnPrintTable') c.style.display = 'none'; });
-    // Add success banner
-    const newPt = document.getElementById('rdnPrintTable');
-    if (newPt) {
-      const banner = document.createElement('div');
-      banner.id = 'rdnSavedBanner';
-      banner.style.cssText = 'background:#e8f5e9;border:2px solid #2e7d32;border-radius:8px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between';
-      banner.innerHTML = `<span style="color:#2e7d32;font-weight:700"><i class="fas fa-check-circle"></i> تم حفظ تقرير ${hospName}</span>
-        <button class="btn btn-sm btn-outline-primary" onclick="rdnBackToSummary()"><i class="fas fa-arrow-right"></i> رجوع</button>`;
-      newPt.parentNode.insertBefore(banner, newPt);
-    }
-    // Hide save/delete buttons
-    const btnDiv = document.querySelector('#rdnReportArea > div[style*="text-align"]');
-    if (btnDiv) btnDiv.style.display = 'none';
-    // Scroll to print table
-    if (newPt) newPt.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } catch (e) {
-    showToast('❌ ' + e.message);
-  }
-}
-
-function rdnBackToSummary() {
-  rdnRefresh();
-}
-
-async function rdnAddHospitalReport() {
-  const hospId = parseInt(document.getElementById('rdnHospSel')?.value);
-  const occId = parseInt(document.getElementById('rdnOccasionSel')?.value);
-  const hosp = _rdn.hospitals.find(h => h.id === hospId);
-  if (!hosp || !occId) return;
-  _rdn.currentStock = null;
-  try {
-    const [empRes, stockRes] = await Promise.all([
-      api('GET', '/employee-statements?hospital_id=' + hospId),
-      api('GET', '/daily-reports?hospital_id=' + hospId)
-    ]);
-    _rdn.employees = empRes.rows || [];
-    _rdn.currentStock = stockRes[0] || null;
-  } catch (e) { _rdn.employees = []; }
-  document.getElementById('rdnAddHospBtn').disabled = true;
-  rdnShowForm(hosp, occId, null);
-}
-
-async function rdnEditReport(reportId) {
-  const existing = _rdn.reports.find(r => r.id === reportId);
-  if (!existing) return;
-  const hosp = _rdn.hospitals.find(h => h.id === existing.hospital_id);
-  if (!hosp) return;
-  _rdn.currentStock = null;
-  try {
-    const [empRes, stockRes] = await Promise.all([
-      api('GET', '/employee-statements?hospital_id=' + existing.hospital_id),
-      api('GET', '/daily-reports?hospital_id=' + existing.hospital_id)
-    ]);
-    _rdn.employees = empRes.rows || [];
-    _rdn.currentStock = stockRes[0] || null;
-  } catch (e) { _rdn.employees = []; }
-  rdnShowForm(hosp, existing.occasion_id, existing);
-  // Scroll to form
-  setTimeout(() => {
-    const area = document.getElementById('rdnReportArea');
-    if (area) area.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 300);
-}
-
-// === Occasion modals ===
-function rdnShowAddOccasion() {
-  openModal('إضافة مناسبة جديدة',
-    `<div style="display:grid;gap:8px;max-width:400px">
-      <label style="font-size:12px;color:#666">اسم المناسبة</label>
-      <input id="rdnOccName" class="modal-input" style="width:100%" placeholder="مثال: عيد الأضحى 2026">
-      <label style="font-size:12px;color:#666">من تاريخ</label>
-      <input id="rdnOccFrom" class="modal-input" style="width:100%" type="date" onchange="rdnAutoGenDays()">
-      <label style="font-size:12px;color:#666">إلى تاريخ</label>
-      <input id="rdnOccTo" class="modal-input" style="width:100%" type="date" onchange="rdnAutoGenDays()">
-      <label style="font-size:12px;color:#666">أيام الإجازة (بواصلة)</label>
-      <input id="rdnOccDays" class="modal-input" style="width:100%" placeholder="مثال: الثلاثاء 30-06, الاربعاء 01-07">
-      <div style="font-size:11px;color:#999">يتم تعبئة الأيام تلقائياً عند اختيار التاريخ</div>
+function rdnDeleteSelectedOccasion() {
+  const sel = document.getElementById('rdnOccasionSelect');
+  if (!sel) return;
+  const occId = parseInt(sel.value);
+  if (!occId) { showToast('⚠ اختر مناسبة أولاً'); return; }
+  const occName = sel.selectedOptions[0]?.textContent?.split(' (')[0] || 'المناسبة';
+  openModal('حذف المناسبة',
+    `<div style="text-align:center;padding:10px">
+      <i class="fas fa-exclamation-triangle" style="font-size:48px;color:#e74c3c;margin-bottom:12px"></i>
+      <p style="font-size:15px;color:#333;margin-bottom:8px">هل أنت متأكد من حذف المناسبة؟</p>
+      <p style="font-size:13px;color:#e74c3c;font-weight:600">${esc(occName)}</p>
+      <p style="font-size:12px;color:#999;margin-top:8px">سيتم حذف جميع تقارير الجاهزية والإشعارات المرتبطة بها</p>
     </div>`,
-    `<button class="btn btn-primary" onclick="rdnDoAddOccasion()"><i class="fas fa-save"></i> حفظ</button>`);
-}
-
-async function rdnDoAddOccasion() {
-  const name = document.getElementById('rdnOccName')?.value?.trim();
-  if (!name) { showToast('❌ اسم المناسبة مطلوب'); return; }
-  const date_from = document.getElementById('rdnOccFrom')?.value || '';
-  const date_to = document.getElementById('rdnOccTo')?.value || '';
-  const daysStr = document.getElementById('rdnOccDays')?.value || '';
-  const day_labels = daysStr.split(',').map(s => s.trim()).filter(Boolean);
-  try {
-    await api('POST', '/readiness-occasions', { name, date_from, date_to, day_labels });
-    closeModal();
-    showToast('✅ تم إضافة المناسبة');
-    rdnRefresh();
-  } catch (e) { showToast('❌ ' + e.message); }
-}
-
-const RDN_ARABIC_DAYS = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-function rdnAutoGenDays() {
-  const from = document.getElementById('rdnOccFrom')?.value;
-  const to = document.getElementById('rdnOccTo')?.value;
-  if (!from || !to) return;
-  const d1 = new Date(from + 'T00:00:00');
-  const d2 = new Date(to + 'T00:00:00');
-  if (d1 > d2) return;
-  const labels = [];
-  const cur = new Date(d1);
-  while (cur <= d2) {
-    const dayName = RDN_ARABIC_DAYS[cur.getDay()];
-    const dd = String(cur.getDate()).padStart(2, '0');
-    const mm = String(cur.getMonth() + 1).padStart(2, '0');
-    labels.push(dayName + ' ' + dd + '-' + mm);
-    cur.setDate(cur.getDate() + 1);
-  }
-  document.getElementById('rdnOccDays').value = labels.join(', ');
-}
-
-function rdnShowEditOccasion(id) {
-  const occ = _rdn.occasions.find(o => o.id === id);
-  if (!occ) return;
-  openModal('تعديل المناسبة',
-    `<div style="display:grid;gap:8px;max-width:400px">
-      <label style="font-size:12px;color:#666">اسم المناسبة</label>
-      <input id="rdnOccName" class="modal-input" style="width:100%" value="${occ.name}">
-      <label style="font-size:12px;color:#666">من تاريخ</label>
-      <input id="rdnOccFrom" class="modal-input" style="width:100%" type="date" value="${occ.date_from||''}" onchange="rdnAutoGenDays()">
-      <label style="font-size:12px;color:#666">إلى تاريخ</label>
-      <input id="rdnOccTo" class="modal-input" style="width:100%" type="date" value="${occ.date_to||''}" onchange="rdnAutoGenDays()">
-      <label style="font-size:12px;color:#666">أيام الإجازة (بواصلة)</label>
-      <input id="rdnOccDays" class="modal-input" style="width:100%" value="${(occ.day_labels||[]).join(', ')}">
-      <div style="font-size:11px;color:#999">يتم تعبئة الأيام تلقائياً عند تغيير التاريخ</div>
-    </div>`,
-    `<button class="btn btn-primary" onclick="rdnDoEditOccasion(${id})"><i class="fas fa-save"></i> حفظ</button>`);
-}
-
-async function rdnDoEditOccasion(id) {
-  const name = document.getElementById('rdnOccName')?.value?.trim();
-  if (!name) { showToast('❌ اسم المناسبة مطلوب'); return; }
-  const date_from = document.getElementById('rdnOccFrom')?.value || '';
-  const date_to = document.getElementById('rdnOccTo')?.value || '';
-  const daysStr = document.getElementById('rdnOccDays')?.value || '';
-  const day_labels = daysStr.split(',').map(s => s.trim()).filter(Boolean);
-  try {
-    await api('PUT', '/readiness-occasions/' + id, { name, date_from, date_to, day_labels });
-    closeModal();
-    showToast('✅ تم تعديل المناسبة');
-    rdnRefresh();
-  } catch (e) { showToast('❌ ' + e.message); }
+    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-danger" onclick="rdnDoDeleteOccasion(${occId})"><i class="fas fa-trash"></i> حذف</button>`);
 }
 
 async function rdnDeleteOccasion(id) {
-  if (!confirm('هل أنت متأكد من حذف المناسبة وجميع تقاريرها؟')) return;
+  const sel = document.getElementById('rdnOccasionSelect');
+  const occName = sel && sel.selectedOptions[0]?.textContent?.split(' (')[0] || 'المناسبة';
+  openModal('حذف المناسبة',
+    `<div style="text-align:center;padding:10px">
+      <i class="fas fa-exclamation-triangle" style="font-size:48px;color:#e74c3c;margin-bottom:12px"></i>
+      <p style="font-size:15px;color:#333;margin-bottom:8px">هل أنت متأكد من حذف المناسبة؟</p>
+      <p style="font-size:13px;color:#e74c3c;font-weight:600">${esc(occName)}</p>
+      <p style="font-size:12px;color:#999;margin-top:8px">سيتم حذف جميع تقارير الجاهزية والإشعارات المرتبطة بها</p>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-danger" onclick="rdnDoDeleteOccasion(${id})"><i class="fas fa-trash"></i> حذف</button>`);
+}
+
+async function rdnDoDeleteOccasion(id) {
   try {
     await api('DELETE', '/readiness-occasions/' + id);
-    showToast('✅ تم الحذف');
-    rdnRefresh();
+    closeModal(); showToast('✅ تم حذف المناسبة'); renderReadinessSheet();
   } catch (e) { showToast('❌ ' + e.message); }
 }
 
-async function rdnRefresh() {
+async function rdnOccasionChanged() {
+  const sel = document.getElementById('rdnOccasionSelect');
+  const occId = parseInt(sel.value);
+  const summaryEl = document.getElementById('rdnSummaryTable');
+  const formEl = document.getElementById('rdnFormSection');
+  const statusEl = document.getElementById('rdnStatusMsg');
+  if (!occId) { summaryEl.innerHTML = ''; formEl.innerHTML = ''; statusEl.textContent = ''; return; }
   try {
-    const [occasions, reports] = await Promise.all([
+    const [occasions, allHospitals, dailyData] = await Promise.all([
       api('GET', '/readiness-occasions'),
-      api('GET', '/readiness-reports')
+      api('GET', '/hospitals'),
+      api('GET', '/daily-reports')
     ]);
-    _rdn.occasions = occasions;
-    _rdn.reports = reports;
-    renderRdnMain();
+    const dailyReports = dailyData.rows || dailyData || [];
+    const occ = occasions.find(o => o.id === occId);
+    if (!occ) { summaryEl.innerHTML = '<div class="empty-msg">المناسبة غير موجودة</div>'; return; }
+    const reports = await api('GET', '/readiness-reports?occasion_id=' + occId);
+    const user = window._user || {};
+    const role = user.role || '';
+    const userHospId = user.hospitalId;
+    const userGov = user.governorate || '';
+    // Filter hospitals by role
+    let hospitals = allHospitals;
+    if (role === 'hospital' && userHospId) {
+      hospitals = allHospitals.filter(h => h.id === userHospId);
+    } else if (role === 'branch_supervisor' && userGov) {
+      hospitals = allHospitals.filter(h => h.governorate === userGov);
+    }
+    const isViewOnly = role === 'branch_supervisor';
+    const days = rdnGetDayLabels(occ);
+    window._rdnHospitals = hospitals;
+    // Group hospitals by governorate
+    const govMap = {};
+    hospitals.forEach(h => {
+      const g = h.governorate || 'أخرى';
+      if (!govMap[g]) govMap[g] = [];
+      govMap[g].push(h);
+    });
+    const govKeys = Object.keys(govMap).sort((a, b) => a.localeCompare(b, 'ar'));
+    if (statusEl) statusEl.textContent = `✓ تم إدخال ${reports.length} من ${hospitals.length} مستشفى`;
+    const doneHospitals = hospitals.filter(h => reports.find(rr => rr.hospital_id === h.id));
+    // Build blood data map per hospital
+    const bloodMap = {};
+    hospitals.forEach(h => {
+      const myDaily = dailyReports.filter(dr => dr.hospital_id === h.id).sort((a,b) => (b.id||0)-(a.id||0))[0];
+      if (myDaily) {
+        try { bloodMap[h.id] = JSON.parse(myDaily.blood_data); } catch (e) { bloodMap[h.id] = {}; }
+      } else {
+        bloodMap[h.id] = {};
+      }
+    });
+    const summaryHtml = doneHospitals.length ? rdnRenderSummaryTable(occ, reports, hospitals, bloodMap) : '<div style="padding:10px;color:#999">لا توجد تقارير بعد</div>';
+    summaryEl.innerHTML = `<div class="card"><div class="card-header">
+      <h3>جاهزية بنوك الدم بمناسبة "${esc(occ.name)}" من ${occ.date_from} إلى ${occ.date_to}</h3>
+    </div><div class="card-body">
+      <div class="filter-bar" style="flex-wrap:wrap;row-gap:8px">
+        <label style="font-weight:600">اختر المستشفى:</label>
+        <select id="rdnHospitalSelect" class="form-input" style="width:300px" onchange="rdnHospitalChanged(${occId})">
+          <option value="">-- اختر مستشفى --</option>
+          ${govKeys.map(gov => `<optgroup label="${esc(gov)}">${govMap[gov].map(h => {
+            const r = reports.find(rr => rr.hospital_id === h.id);
+            const done = r ? '✅ ' : '';
+            return `<option value="${h.id}" ${done?'style="color:#2e7d32"':''}>${done}${esc(h.name)}</option>`;
+          }).join('')}</optgroup>`).join('')}
+        </select>
+        <span style="font-size:12px;color:#666">${reports.filter(r => r.staff_data).length} مستشفى مكتمل</span>
+      </div>
+      <div style="margin-top:12px">${summaryHtml}</div>
+    </div></div>`;
+    formEl.innerHTML = '';
+    // Auto-open form for hospital role (only one hospital)
+    if (role === 'hospital' && hospitals.length === 1) {
+      const hospSel = document.getElementById('rdnHospitalSelect');
+      if (hospSel) { hospSel.value = hospitals[0].id; rdnHospitalChanged(occId); }
+    }
+  } catch (e) { summaryEl.innerHTML = `<div class="empty-msg">${esc(e.message)}</div>`; }
+}
+
+function rdnHospitalChanged(occId) {
+  const hospSel = document.getElementById('rdnHospitalSelect');
+  const hospId = parseInt(hospSel.value);
+  if (!hospId) { document.getElementById('rdnFormSection').innerHTML = ''; return; }
+  const hospitals = window._rdnHospitals || [];
+  const hosp = hospitals.find(h => h.id === hospId);
+  const hospName = hosp ? hosp.name : '';
+  const gov = hosp ? hosp.governorate : '';
+  const user = window._user || {};
+  const isViewOnly = user.role === 'branch_supervisor';
+  rdnShowForm(occId, hospId, hospName, gov, isViewOnly);
+}
+
+function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
+  const formContainer = document.getElementById('rdnFormSection');
+  let hospName, govt;
+  if (typeof hospNameOrEl === 'object' && hospNameOrEl) {
+    hospName = hospNameOrEl.dataset.hn || '';
+    govt = hospNameOrEl.dataset.hg || '';
+  } else {
+    hospName = hospNameOrEl || '';
+    govt = gov || '';
+  }
+  const occ = document.getElementById('rdnOccasionSelect');
+  const occId2 = parseInt(occ.value);
+  const isReadOnly = isViewOnly === true;
+  (async () => {
+    try {
+      const occs = await api('GET', '/readiness-occasions');
+      const oc = occs.find(o => o.id === occId2);
+      const days = oc ? rdnGetDayLabels(oc) : [];
+      const dayHtml = days.map(d => {
+        return `<th style="font-size:9px;line-height:1.3">${esc(d.date)}<br>${esc(d.dayName)}</th>`;
+      }).join('');
+      // Load employee list for this hospital
+      try {
+        const empRes = await api('GET', '/employee-statements');
+        const empData = empRes.rows || empRes || [];
+        window._rdnEmpList = empData.filter(e => e.hospital_id === hospId);
+      } catch (e) { window._rdnEmpList = window._rdnEmpList || []; }
+      // Load stock from latest daily report for this hospital
+      let stockHtml = '';
+      try {
+        const dailyRes = await api('GET', '/daily-reports');
+        const dailyRows = dailyRes.rows || dailyRes || [];
+        const myReport = dailyRows.filter(r => r.hospital_id === hospId).sort((a,b) => (b.id||0)-(a.id||0))[0];
+        if (myReport) {
+          const bd = (()=>{try{return JSON.parse(myReport.blood_data);}catch(e){return {};}})();
+          stockHtml = BTYPES.map(t => `<div style="font-size:10px;line-height:1.4"><strong>${t}:</strong> ${calcAvail(bd,t)}</div>`).join('');
+        }
+      } catch (e) { /* ignore */ }
+      if (!stockHtml) stockHtml = '<div style="font-size:10px;color:#999">يوجد رصيد</div>';
+      // Load existing report for this hospital
+      const reports = await api('GET', '/readiness-reports?occasion_id=' + occId2);
+      const existingReport = reports.find(r => r.hospital_id === hospId);
+      if (existingReport) {
+        if (isReadOnly) {
+          // Show read-only view for branch supervisor
+          const staff = (()=>{try{return JSON.parse(existingReport.staff_data);}catch(e){return [];}})();
+          const staffRows = staff.length ? staff.map((s, i) => {
+            const shifts = days.map((_, di) => `<td style="font-size:10px;text-align:center">${s.shifts?.[String(di)]||''}</td>`).join('');
+            return `<tr><td>${i+1}</td><td>${esc(s.name||'')}</td><td>${esc(s.phone||'')}</td>${shifts}</tr>`;
+          }).join('') : '<tr><td colspan="'+(3+days.length)+'" class="empty-msg">يوجد موظفين</td></tr>';
+          formContainer.innerHTML = `
+            <div class="card"><div class="card-header">
+              <h3><i class="fas fa-eye"></i> عرض بيانات الجاهزية — ${esc(hospName)}</h3>
+              <button class="btn btn-sm btn-secondary" onclick="rdnHideForm()"><i class="fas fa-times"></i> إغلاق</button>
+            </div><div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+                <div><strong>المخزون:</strong> ${esc(existingReport.stock||'-')}</div>
+                <div><strong>العجز:</strong> ${esc(existingReport.shortage||'-')}</div>
+                <div><strong>الصيانة:</strong> ${esc(existingReport.maintenance||'-')}</div>
+                <div><strong>الأعطال:</strong> ${esc(existingReport.breakdowns||'-')}</div>
+                <div><strong>المستهلكات:</strong> ${esc(existingReport.consumables||'-')}</div>
+                <div><strong>الاستعاضة:</strong> ${esc(existingReport.correction||'-')}</div>
+              </div>
+              <h4 style="margin:8px 0 4px"><i class="fas fa-users"></i> القوى العاملة</h4>
+              <table class="data-table" style="font-size:11px;width:100%">
+                <thead><tr><th>#</th><th>الاسم</th><th>التليفون</th>${dayHtml}</tr></thead>
+                <tbody>${staffRows}</tbody></table>
+            </div></div>`;
+          window.scrollTo({ top: formContainer.offsetTop - 10, behavior: 'smooth' });
+          return;
+        } else {
+          // Render form pre-filled from existing report for editing
+          const staff = (()=>{try{return JSON.parse(existingReport.staff_data);}catch(e){return [];}})();
+          formContainer.innerHTML = `
+            <div class="card"><div class="card-header">
+              <h3><i class="fas fa-edit"></i> تعديل بيانات الجاهزية — ${esc(hospName)}</h3>
+              <button class="btn btn-sm btn-secondary" onclick="rdnHideForm()"><i class="fas fa-times"></i> إلغاء</button>
+            </div><div class="card-body" id="rdnFormBody">
+              <div style="display:none" id="rdnFormIds" data-occid="${occId}" data-hospid="${hospId}" data-hospname="${esc(hospName)}" data-gov="${esc(govt)}"></div>
+              <div style="display:none" id="rdnReportId">${existingReport.id}</div>
+              <!-- Staff -->
+              <div class="card" style="margin-bottom:8px">
+                <div class="card-header"><h4><i class="fas fa-users"></i> القوى العاملة</h4>
+                </div>
+                <div class="card-body" style="padding:8px;overflow-x:auto">
+                  <table class="data-table" id="rdnStaffTable" style="font-size:11px;width:100%">
+                    <thead><tr><th>#</th><th>الاسم</th><th>رقم التليفون</th>${dayHtml}<th style="width:40px"></th></tr></thead>
+                    <tbody id="rdnStaffBody">${staff.map((s, i) => {
+                      const dayCells = days.map((_, di) =>
+                        `<td><select class="form-input rdnSShift" onchange="rdnShiftChanged(this)">${rdnShiftOpts(s.shifts?.[String(di)]||'')}</select></td>`
+                      ).join('');
+                      return `<tr><td>${i+1}</td>
+                        <td><select class="form-input rdnSName" style="width:100%;min-width:100px" onchange="rdnNameSelected(this)">
+                          <option value="">-- اختر --</option>
+                          ${(window._rdnEmpList||[]).map(e => `<option value="${e.id}" ${e.employee===s.name?'selected':''}>${esc(e.employee)}</option>`).join('')}
+                          <option value="__manual__">${esc(s.name)} (يدوي)</option>
+                        </select></td>
+                        <td><input type="text" class="form-input rdnSPhone" style="width:100px" value="${esc(s.phone||'')}"></td>
+                        ${dayCells}
+                        <td><button class="btn btn-xs btn-success" onclick="rdnAddStaffRow(this)"><i class="fas fa-plus"></i></button>
+                        <button class="btn btn-xs btn-danger" onclick="rdnRemoveStaffRow(this)"><i class="fas fa-times"></i></button></td></tr>`;
+                    }).join('')}</tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="filter-bar" style="flex-wrap:wrap;row-gap:8px">
+                <div style="flex:1;min-width:200px"><label>حالة الرصيد:</label>
+                  <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+                    <label><input type="radio" name="rdnStockRadio" value="كافي" ${existingReport.stock==='كافي'?'checked':''} onchange="rdnStockChanged()"> كافي</label>
+                    <label><input type="radio" name="rdnStockRadio" value="غير كافي" ${existingReport.stock==='غير كافي'?'checked':''} onchange="rdnStockChanged()"> <span style="color:red">غير كافي</span></label>
+                    <div style="font-size:11px;padding:3px 8px;background:#f5f5f5;border-radius:4px">${stockHtml}</div>
+                  </div>
+                </div>
+                <div style="flex:1;min-width:200px"><label>مراجعة الصيانة:</label>
+                  <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+                    <label><input type="radio" name="rdnMaintRadio" value="تتم" ${existingReport.maintenance?.startsWith('تتم')?'checked':''} onchange="rdnMaintChanged()"> تتم</label>
+                    <label><input type="radio" name="rdnMaintRadio" value="لا تتم" ${existingReport.maintenance?.startsWith('لا تتم')?'checked':''} onchange="rdnMaintChanged()"> <span style="color:red">لا تتم</span></label>
+                  </div>
+                  <div id="rdnMaintReasonWrap" style="${existingReport.maintenance?.startsWith('لا تتم')?'':'display:none'};margin-top:4px">
+                    <input type="text" id="rdnMaintReason" class="form-input" placeholder="ذكر السبب" value="${esc(existingReport.maintenance?.replace(/^لا تتم:?\s*/,'')||'')}" oninput="rdnSyncFormToPrintTable()" style="width:100%">
+                  </div>
+                </div>
+                <div style="flex:1;min-width:200px"><label>الأعطال:</label>
+                  <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+                    <label><input type="radio" name="rdnBdRadio" value="لا يوجد" ${existingReport.breakdowns==='لا يوجد'||existingReport.breakdowns===''||!existingReport.breakdowns?'checked':''} onchange="rdnBdChanged()"> لا يوجد</label>
+                    <label><input type="radio" name="rdnBdRadio" value="يوجد" ${existingReport.breakdowns?.startsWith('يوجد')?'checked':''} onchange="rdnBdChanged()"> <span style="color:red">يوجد</span></label>
+                  </div>
+                  <div id="rdnBdWrap" style="${existingReport.breakdowns?.startsWith('يوجد')?'':'display:none'};margin-top:4px">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                      <input type="text" id="rdnBdDevice" class="form-input" placeholder="اذكر الجهاز" value="${esc(existingReport.breakdowns?.replace(/^يوجد:?\s*/,'').replace(/\(.*/,'')||'')}" oninput="rdnSyncFormToPrintTable()" style="flex:1">
+                      <input type="text" id="rdnBdReplacement" class="form-input" placeholder="هل يوجد بديل" value="${esc(existingReport.breakdowns?.match(/بديل:\s*(.+?)\)/)?.[1]||'')}" oninput="rdnSyncFormToPrintTable()" style="flex:1">
+                    </div>
+                  </div>
+                </div>
+                <div style="flex:1;min-width:200px"><label>المستهلكات:</label>
+                  <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+                    <label><input type="radio" name="rdnConsRadio" value="كافية" ${existingReport.consumables==='كافية'||existingReport.consumables===''||!existingReport.consumables?'checked':''} onchange="rdnConsChanged()"> كافية</label>
+                    <label><input type="radio" name="rdnConsRadio" value="غير كافية" ${existingReport.consumables?.startsWith('غير كافية')?'checked':''} onchange="rdnConsChanged()"> <span style="color:red">غير كافية</span></label>
+                  </div>
+                  <div id="rdnConsReasonWrap" style="${existingReport.consumables?.startsWith('غير كافية')?'':'display:none'};margin-top:4px">
+                    <input type="text" id="rdnConsReason" class="form-input" placeholder="ذكر السبب" value="${esc(existingReport.consumables?.replace(/^غير كافية:?\s*/,'')||'')}" oninput="rdnSyncFormToPrintTable()" style="width:100%">
+                  </div>
+                </div>
+              </div>
+              <div id="rdnCorrectionWrap" style="${existingReport.stock==='غير كافي'?'':'display:none'}">
+                <div class="filter-bar" style="flex-wrap:wrap;row-gap:8px;margin-top:8px">
+                  <div style="flex:1;min-width:200px"><label style="color:red;font-weight:700">الاستعاضة:</label>
+                    <input type="text" id="rdnCorrection" class="form-input" value="${esc(existingReport.correction||'')}" oninput="rdnSyncFormToPrintTable()">
+                  </div>
+                </div>
+              </div>
+              <div style="text-align:center;margin-top:12px">
+                <button class="btn btn-primary" onclick="rdnSaveReport()"><i class="fas fa-save"></i> حفظ التقرير</button>
+              </div>
+            </div></div>`;
+          rdnRenumberStaffRows();
+          window.scrollTo({ top: formContainer.offsetTop - 10, behavior: 'smooth' });
+          return;
+        }
+      }
+      if (isReadOnly) {
+        formContainer.innerHTML = `<div class="card"><div class="card-header">
+          <h3>${esc(hospName)}</h3>
+          <button class="btn btn-sm btn-secondary" onclick="rdnHideForm()"><i class="fas fa-times"></i> إغلاق</button>
+        </div><div class="card-body"><div class="empty-msg" style="padding:30px">لم يتم إدخال بيانات الجاهزية لهذا المستشفى بعد</div></div></div>`;
+        return;
+      }
+      formContainer.innerHTML = `
+        <div class="card"><div class="card-header">
+          <h3><i class="fas fa-edit"></i> إدخال بيانات الجاهزية — ${esc(hospName)}</h3>
+          <button class="btn btn-sm btn-secondary" onclick="rdnHideForm()"><i class="fas fa-times"></i> إلغاء</button>
+        </div><div class="card-body" id="rdnFormBody">
+          <div style="display:none" id="rdnFormIds" data-occid="${occId}" data-hospid="${hospId}" data-hospname="${esc(hospName)}" data-gov="${esc(govt)}"></div>
+          <div style="display:none" id="rdnReportId"></div>
+          <!-- Staff -->
+          <div class="card" style="margin-bottom:8px">
+            <div class="card-header"><h4><i class="fas fa-users"></i> القوى العاملة</h4>
+            </div>
+            <div class="card-body" style="padding:8px;overflow-x:auto">
+              <table class="data-table" id="rdnStaffTable" style="font-size:11px;width:100%">
+                <thead><tr><th>#</th><th>الاسم</th><th>رقم التليفون</th>${dayHtml}<th style="width:40px"></th></tr></thead>
+                <tbody id="rdnStaffBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="filter-bar" style="flex-wrap:wrap;row-gap:8px">
+            <div style="flex:1;min-width:200px"><label>حالة الرصيد:</label>
+              <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+                <label><input type="radio" name="rdnStockRadio" value="كافي" onchange="rdnStockChanged()"> كافي</label>
+                <label><input type="radio" name="rdnStockRadio" value="غير كافي" onchange="rdnStockChanged()"> <span style="color:red">غير كافي</span></label>
+                <div style="font-size:11px;padding:3px 8px;background:#f5f5f5;border-radius:4px">${stockHtml}</div>
+              </div>
+              <div id="rdnCorrectionWrap" style="display:none;margin-top:4px">
+                <div style="flex:1;min-width:200px"><label style="color:red;font-weight:700">الاستعاضة:</label>
+                  <input type="text" id="rdnCorrection" class="form-input" oninput="rdnSyncFormToPrintTable()">
+                </div>
+              </div>
+            </div>
+            <div style="flex:1;min-width:200px"><label>مراجعة الصيانة:</label>
+              <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+                <label><input type="radio" name="rdnMaintRadio" value="تتم" onchange="rdnMaintChanged()"> تتم</label>
+                 <label><input type="radio" name="rdnMaintRadio" value="لا تتم" onchange="rdnMaintChanged()"> <span style="color:red">لا تتم</span></label>
+              </div>
+              <div id="rdnMaintReasonWrap" style="display:none;margin-top:4px">
+                <input type="text" id="rdnMaintReason" class="form-input" placeholder="ذكر السبب" oninput="rdnSyncFormToPrintTable()" style="width:100%">
+              </div>
+            </div>
+            <div style="flex:1;min-width:200px"><label>الأعطال:</label>
+              <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+                 <label><input type="radio" name="rdnBdRadio" value="لا يوجد" onchange="rdnBdChanged()"> لا يوجد</label>
+                <label><input type="radio" name="rdnBdRadio" value="يوجد" onchange="rdnBdChanged()"> <span style="color:red">يوجد</span></label>
+              </div>
+              <div id="rdnBdWrap" style="display:none;margin-top:4px">
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <input type="text" id="rdnBdDevice" class="form-input" placeholder="اذكر الجهاز" oninput="rdnSyncFormToPrintTable()" style="flex:1">
+                  <input type="text" id="rdnBdReplacement" class="form-input" placeholder="هل يوجد بديل" oninput="rdnSyncFormToPrintTable()" style="flex:1">
+                </div>
+              </div>
+            </div>
+            <div style="flex:1;min-width:200px"><label>المستهلكات:</label>
+              <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+                <label><input type="radio" name="rdnConsRadio" value="كافية" onchange="rdnConsChanged()"> كافية</label>
+                <label><input type="radio" name="rdnConsRadio" value="غير كافية" onchange="rdnConsChanged()"> <span style="color:red">غير كافية</span></label>
+              </div>
+              <div id="rdnConsReasonWrap" style="display:none;margin-top:4px">
+                <input type="text" id="rdnConsReason" class="form-input" placeholder="ذكر السبب" oninput="rdnSyncFormToPrintTable()" style="width:100%">
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center;margin-top:12px">
+            <button class="btn btn-primary" onclick="rdnSaveReport()"><i class="fas fa-save"></i> حفظ التقرير</button>
+          </div>
+        </div></div>`;
+      rdnAddStaffRow();
+      window.scrollTo({ top: formContainer.offsetTop - 10, behavior: 'smooth' });
+    } catch (e) { formContainer.innerHTML = `<div class="empty-msg">${esc(e.message)}</div>`; }
+  })();
+}
+
+function rdnRenderSummaryTable(occ, reports, hospitals, bloodMap) {
+  const days = rdnGetDayLabels(occ);
+  const bm = bloodMap || {};
+  const dayHeaders = days.map(d => `<th style="line-height:1.3">${esc(d.date)}<br><span style="font-weight:400;font-size:9px">${esc(d.dayName)}</span></th>`).join('');
+  const staffColSpan = 2 + days.length;
+  const rows = reports.map(r => {
+    const hosp = hospitals.find(h => h.id === r.hospital_id);
+    const gov = hosp ? (hosp.governorate || 'أخرى') : (r.governorate || 'أخرى');
+    const name = hosp ? hosp.name : r.hospital_name;
+    const bd = bm[r.hospital_id] || {};
+    const bloodHtml = BTYPES.map(t => `<span style="font-size:9px;margin:0 2px"><strong>${t}:</strong> ${calcAvail(bd,t)}</span>`).join('');
+    const stockVal = esc(r.stock || '—');
+    const maintVal = esc(r.maintenance || '—');
+    const bdVal = esc(r.breakdowns || '—');
+    const consVal = esc(r.consumables || '—');
+    // Parse staff
+    let staffArr = [];
+    try { staffArr = r.staff_data ? JSON.parse(r.staff_data) : []; } catch (e) {}
+    if (!staffArr.length) {
+      return `<tr>
+        <td>${esc(gov)}</td>
+        <td>${esc(name)}</td>
+        <td colspan="${staffColSpan}" style="text-align:center;color:#999">—</td>
+        <td style="font-size:10px">${stockVal}<br>${bloodHtml}</td>
+        <td>${maintVal}</td>
+        <td>${bdVal}</td>
+        <td>${consVal}</td>
+      </tr>`;
+    }
+    return staffArr.map((s, si) => {
+      const dayCells = days.map((_, di) => `<td style="font-size:10px;mso-number-format:'\\@'">${esc(s.shifts && s.shifts[String(di)] ? s.shifts[String(di)] : '')}</td>`).join('');
+      return `<tr>
+        ${si === 0 ? `<td rowspan="${staffArr.length}">${esc(gov)}</td><td rowspan="${staffArr.length}">${esc(name)}</td>` : ''}
+        <td style="font-size:10px">${esc(s.name)}</td>
+        <td style="font-size:10px">${esc(s.phone||'')}</td>
+        ${dayCells}
+        ${si === 0 ? `<td rowspan="${staffArr.length}" style="font-size:10px">${stockVal}<br>${bloodHtml}</td><td rowspan="${staffArr.length}">${maintVal}</td><td rowspan="${staffArr.length}">${bdVal}</td><td rowspan="${staffArr.length}">${consVal}</td>` : ''}
+      </tr>`;
+    }).join('');
+  }).join('');
+  return `<table class="data-table" style="font-size:11px;width:100%">
+    <thead>
+      <tr>
+        <th rowspan="2">المحافظة</th>
+        <th rowspan="2">اسم بنك الدم</th>
+        <th colspan="${staffColSpan}">القوى العاملة</th>
+        <th rowspan="2">حالة الرصيد</th>
+        <th rowspan="2">مراجعة الصيانة</th>
+        <th rowspan="2">الأعطال</th>
+        <th rowspan="2">المستهلكات</th>
+      </tr>
+      <tr>
+        <th>الاسم</th>
+        <th>التليفون</th>
+        ${dayHeaders}
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function rdnSyncFormToPrintTable() {}
+function rdnSyncFormToPrintStaff() {}
+
+function rdnNameSelected(selectEl) {
+  const empId = parseInt(selectEl.value);
+  const phoneInput = selectEl.closest('tr').querySelector('.rdnSPhone');
+  if (empId) {
+    const emp = (window._rdnEmpList||[]).find(e => e.id === empId);
+    if (emp) { phoneInput.value = emp.phone || ''; phoneInput.style.background = '#f5f5f5'; }
+  } else {
+    phoneInput.value = ''; phoneInput.style.background = '';
+  }
+  rdnSyncFormToPrintTable();
+}
+
+function rdnStaffRowHtml(idx, dayCount) {
+  const dayCells = Array.from({length: dayCount}, (_, di) =>
+    `<td><select class="form-input rdnSShift" onchange="rdnShiftChanged(this)">${rdnShiftOpts('')}</select></td>`
+  ).join('');
+  const empOpts = (window._rdnEmpList||[]).map(e => `<option value="${e.id}">${esc(e.employee)}</option>`).join('');
+  return `<tr>
+    <td>${idx + 1}</td>
+    <td><select class="form-input rdnSName" style="width:100%;min-width:100px" onchange="rdnNameSelected(this)">
+      <option value="">-- اختر من العاملين --</option>
+      ${empOpts}
+    </select></td>
+    <td><input type="text" class="form-input rdnSPhone" style="width:100px" placeholder="التليفون" readonly></td>
+    ${dayCells}
+    <td><button class="btn btn-xs btn-success" onclick="rdnAddStaffRow(this)" title="إضافة موظف"><i class="fas fa-plus"></i></button>
+    <button class="btn btn-xs btn-danger" onclick="rdnRemoveStaffRow(this)" title="حذف"><i class="fas fa-times"></i></button></td>
+  </tr>`;
+}
+
+function rdnAddStaffRow() {
+  const tbody = document.querySelector('#rdnStaffTable tbody');
+  if (!tbody) return;
+  // Don't add new row if there's already a completely empty row
+  const existingRows = tbody.querySelectorAll('tr');
+  for (const row of existingRows) {
+    const nameEl = row.querySelector('.rdnSName');
+    let name = '';
+    if (nameEl) {
+      if (nameEl.tagName === 'SELECT') {
+        const sel = nameEl.selectedOptions[0];
+        name = sel && sel.value ? sel.textContent.trim() : '';
+      } else {
+        name = nameEl.value || '';
+      }
+    }
+    const phone = row.querySelector('.rdnSPhone')?.value || '';
+    const shifts = row.querySelectorAll('.rdnSShift');
+    const hasShift = Array.from(shifts).some(inp => inp.value);
+    if (!name && !phone && !hasShift) return; // empty row exists, don't add another
+  }
+  const header = document.querySelector('#rdnStaffTable thead tr');
+  const dayCount = header ? header.querySelectorAll('th').length - 4 : 5; // subtract #, name, phone, action
+  tbody.insertAdjacentHTML('beforeend', rdnStaffRowHtml(tbody.children.length, dayCount));
+  rdnSyncFormToPrintTable();
+}
+
+function rdnRemoveStaffRow(btn) {
+  const tr = btn.closest('tr');
+  if (tr) tr.remove();
+  rdnRenumberStaffRows();
+  rdnSyncFormToPrintTable();
+}
+
+function rdnRenumberStaffRows() {
+  const tbody = document.querySelector('#rdnStaffTable tbody');
+  if (!tbody) return;
+  tbody.querySelectorAll('tr').forEach((row, i) => {
+    const td = row.querySelector('td:first-child');
+    if (td) td.textContent = i + 1;
+  });
+}
+
+async function rdnSaveReport() {
+  const idsEl = document.getElementById('rdnFormIds');
+  if (!idsEl) return;
+  const occId = parseInt(idsEl.dataset.occid);
+  const hospId = parseInt(idsEl.dataset.hospid);
+  const hospName = idsEl.dataset.hospname || '';
+  const gov = idsEl.dataset.gov || '';
+  const reportIdEl = document.getElementById('rdnReportId');
+  const isEdit = reportIdEl?.textContent ? parseInt(reportIdEl.textContent) : 0;
+  // Collect staff data with shifts
+  const header = document.querySelector('#rdnStaffTable thead tr');
+  const dayCount = header ? header.querySelectorAll('th').length - 4 : 0;
+  const staffRows = document.querySelectorAll('#rdnStaffTable tbody tr');
+  const staffData = [];
+  let valid = true;
+  staffRows.forEach(row => {
+    if (!valid) return;
+    const nameEl = row.querySelector('.rdnSName');
+    let name = '';
+    if (nameEl) {
+      if (nameEl.tagName === 'SELECT') {
+        const sel = nameEl.selectedOptions[0];
+        name = sel && sel.value ? sel.textContent.trim() : '';
+      } else {
+        name = nameEl.value || '';
+      }
+    }
+    const phone = row.querySelector('.rdnSPhone')?.value || '';
+    if (!name && !phone && !row.querySelector('.rdnSShift')?.value) return; // skip completely empty rows
+    if (!name) { showToast('⚠ يجب اختيار اسم الموظف'); valid = false; return; }
+    const shifts = {};
+    row.querySelectorAll('.rdnSShift').forEach((inp, di) => {
+      if (inp.value) shifts[String(di)] = inp.value;
+    });
+    if (!Object.keys(shifts).length) { showToast('⚠ يجب اختيار وردية واحدة على الأقل لكل موظف'); valid = false; return; }
+    staffData.push({ name, phone, shifts });
+  });
+  if (!valid) return;
+  const g = id => document.getElementById(id);
+  const stockVal = rdnGetStockVal();
+  const maintVal = rdnGetMaintVal();
+  const bdVal = rdnGetBdVal();
+  const consVal = rdnGetConsVal();
+  if (stockVal === 'غير كافي' && !(g('rdnCorrection')?.value || '').trim()) {
+    showToast('⚠ يجب كتابة مصدر الاستعاضة عند اختيار غير كافي'); return;
+  }
+  if (maintVal === 'لا تتم' && !(g('rdnMaintReason')?.value || '').trim()) {
+    showToast('⚠ يجب ذكر سبب عدم إتمام الصيانة'); return;
+  }
+  if (bdVal.startsWith('يوجد') && !(g('rdnBdDevice')?.value || '').trim()) {
+    showToast('⚠ يجب ذكر اسم الجهاز المعطل'); return;
+  }
+  if (consVal === 'غير كافية' && !(g('rdnConsReason')?.value || '').trim()) {
+    showToast('⚠ يجب ذكر سبب عدم كفاية المستهلكات'); return;
+  }
+  const payload = {
+    occasion_id: occId, hospital_id: hospId, hospital_name: hospName, governorate: gov,
+    staff_data: JSON.stringify(staffData),
+    stock: stockVal,
+    shortage: '',
+    maintenance: maintVal,
+    breakdowns: bdVal,
+    consumables: consVal,
+    correction: g('rdnCorrection')?.value || ''
+  };
+  if (!staffData.length && !payload.stock && !payload.maintenance && !payload.breakdowns && !payload.consumables) {
+    showToast('⚠ يجب إدخال حقل واحد على الأقل'); return;
+  }
+  try {
+    if (isEdit) {
+      await api('PUT', '/readiness-reports/' + isEdit, payload);
+      showToast('✅ تم تحديث التقرير');
+    } else {
+      await api('POST', '/readiness-reports', payload);
+      showToast('✅ تم حفظ التقرير');
+    }
+    rdnHideForm();
+    await rdnOccasionChanged();
+    // Auto-reopen form for the same hospital after save
+    const hospSel = document.getElementById('rdnHospitalSelect');
+    if (hospSel) { hospSel.value = hospId; rdnHospitalChanged(occId); }
   } catch (e) { showToast('❌ ' + e.message); }
 }
 
-// === Print & Export ===
+function rdnHideForm() {
+  const formEl = document.getElementById('rdnFormSection');
+  if (formEl) formEl.innerHTML = '';
+}
+
+async function rdnEditReport(reportId) {
+  try {
+    const reports = await api('GET', '/readiness-reports');
+    const r = reports.find(rr => rr.id === reportId);
+    if (!r) { showToast('❌ التقرير غير موجود'); return; }
+    rdnShowForm(r.occasion_id, r.hospital_id, r.hospital_name, r.governorate);
+    // Wait for form to render, then populate
+    const wait = setInterval(() => {
+      if (document.getElementById('rdnFormIds')?.dataset.occid) {
+        clearInterval(wait);
+        setTimeout(() => {
+          const sf = id => document.getElementById(id);
+          if (r.stock) { const rb = document.querySelector(`input[name="rdnStockRadio"][value="${esc(r.stock)}"]`); if (rb) rb.checked = true; if (r.stock === 'غير كافي') { const wrap = document.getElementById('rdnCorrectionWrap'); if (wrap) wrap.style.display = ''; } }
+          if (r.maintenance) {
+            const rbM = document.querySelector(`input[name="rdnMaintRadio"][value="${r.maintenance.startsWith('لا تتم')?'لا تتم':'تتم'}"]`);
+            if (rbM) rbM.checked = true;
+            if (r.maintenance.startsWith('لا تتم')) {
+              const mWrap = document.getElementById('rdnMaintReasonWrap');
+              if (mWrap) mWrap.style.display = '';
+              const mReason = document.getElementById('rdnMaintReason');
+              if (mReason) mReason.value = r.maintenance.replace(/^لا تتم:?\s*/,'');
+            }
+          }
+          if (r.breakdowns) {
+            const rbBd = document.querySelector(`input[name="rdnBdRadio"][value="${r.breakdowns.startsWith('يوجد')?'يوجد':'لا يوجد'}"]`);
+            if (rbBd) rbBd.checked = true;
+            if (r.breakdowns.startsWith('يوجد')) {
+              const bdWrap = document.getElementById('rdnBdWrap');
+              if (bdWrap) bdWrap.style.display = '';
+            }
+          }
+          if (r.consumables) {
+            const rbC = document.querySelector(`input[name="rdnConsRadio"][value="${r.consumables.startsWith('غير كافية')?'غير كافية':'كافية'}"]`);
+            if (rbC) rbC.checked = true;
+            if (r.consumables.startsWith('غير كافية')) {
+              const cWrap = document.getElementById('rdnConsReasonWrap');
+              if (cWrap) cWrap.style.display = '';
+              const cReason = document.getElementById('rdnConsReason');
+              if (cReason) cReason.value = r.consumables.replace(/^غير كافية:?\s*/,'');
+            }
+          }
+          if (r.correction) sf('rdnCorrection').value = r.correction;
+          if (r.staff_data) {
+            const staff = (()=>{try{return JSON.parse(r.staff_data);}catch(e){return [];}})();
+            const tbody = document.querySelector('#rdnStaffTable tbody');
+            if (tbody) {
+              tbody.innerHTML = '';
+              const header = document.querySelector('#rdnStaffTable thead tr');
+              const dayCount = header ? header.querySelectorAll('th').length - 4 : 0;
+              staff.forEach((s, i) => {
+                const dayCells = Array.from({length: dayCount}, (_, di) =>
+                  `<td><select class="form-input rdnSShift" onchange="rdnShiftChanged(this)">${rdnShiftOpts(s.shifts?.[String(di)]||'')}</select></td>`
+                ).join('');
+                const tr = `<tr><td>${i+1}</td>
+                  <td><input type="text" class="form-input rdnSName" style="width:100%;min-width:100px" value="${esc(s.name||'')}" oninput="rdnSyncFormToPrintTable()"></td>
+                  <td><input type="text" class="form-input rdnSPhone" style="width:100px" value="${esc(s.phone||'')}" oninput="rdnSyncFormToPrintTable()"></td>
+                  ${dayCells}
+                  <td><button class="btn btn-xs btn-danger" onclick="rdnRemoveStaffRow(this)"><i class="fas fa-times"></i></button></td></tr>`;
+                if (tbody) tbody.insertAdjacentHTML('beforeend', tr);
+              });
+            }
+          }
+          sf('rdnReportId').textContent = r.id;
+          rdnSyncFormToPrintTable();
+        }, 100);
+      }
+    }, 50);
+    setTimeout(() => clearInterval(wait), 5000); // safety timeout
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+
+async function rdnDeleteReport(reportId) {
+  openModal('تأكيد الحذف',
+    '<div style="text-align:center;padding:10px"><i class="fas fa-exclamation-triangle" style="font-size:36px;color:#e74c3c"></i><p style="margin:8px 0 0;font-size:14px">هل أنت متأكد من حذف التقرير؟</p></div>',
+    '<button class="btn btn-danger" onclick="(async function(){closeModal();try{await api(\'DELETE\',\'/readiness-reports/'+reportId+'\');showToast(\'✅ تم حذف التقرير\');rdnOccasionChanged();}catch(e){showToast(\'❌ \'+e.message)}})()"><i class="fas fa-trash"></i> حذف</button><button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>');
+  try {
+    await api('DELETE', '/readiness-reports/' + reportId);
+    showToast('✅ تم حذف التقرير');
+    rdnOccasionChanged();
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+
 function rdnPrint() {
-  const content = document.getElementById('rdnContent')?.innerHTML;
-  if (!content) return;
-  const tmp = document.createElement('div');
-  tmp.innerHTML = content;
-  // Prefer summary table (all hospitals), fall back to individual print table
-  let printSource = tmp.querySelector('#rdnSummaryTable') || tmp.querySelector('#rdnPrintTable');
-  if (!printSource) { showToast('❌ لا توجد بيانات للطباعة'); return; }
-  const printContent = printSource.outerHTML;
-  const w = window.open('', '', 'width=1200,height=800');
-  w.document.write('<html dir="rtl"><head><meta charset="utf-8"><title>شيت الجاهزيه</title>');
-  w.document.write('<style>'+
-    '@media print{body{font-size:12px;padding:30px 40px}} '+
-    '.page-actions,.btn,.btn-back,.btn-info,.btn-success,.btn-warning,.btn-danger,.btn-secondary,#rdnAddHospBtn,.rdn-export-bar{display:none!important} '+
-    '.card{border:1px solid #999;margin-bottom:10px;border-radius:6px} '+
-    '.rdn-print-table{border-collapse:collapse;width:100%;font-family:"Traditional Arabic",Arial,sans-serif} '+
-    '.rdn-print-table td,.rdn-print-table th{border:1px solid #666;padding:6px 8px;text-align:right;font-size:12px} '+
-    '.rdn-print-table th{background:#e3f2fd!important;font-weight:700;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact} '+
-    '#rdnPrintTable input,#rdnPrintTable select{background:transparent!important;border:none!important;font-size:12px!important;color:#000!important;-webkit-appearance:none;-moz-appearance:none;appearance:none} '+
-    '.card-header{background:#1565c0!important;color:#fff!important;padding:10px 16px;font-weight:700;font-size:15px;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact} '+
-    '.rdn-footer{text-align:center;margin-top:12px;padding-top:8px;border-top:2px solid #1565c0;font-size:11px;color:#555;font-family:"Traditional Arabic",Arial,sans-serif} '+
-    '.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px}</style>');
-  w.document.write('</head><body>' + printContent + 
-    '<div class="rdn-footer">إعداد وبرمجة / محمد ندا 0106888.0999</div>' +
-    '</body></html>');
+  const sel = document.getElementById('rdnOccasionSelect');
+  if (!sel || !sel.value) { showToast('⚠ اختر مناسبة أولاً'); return; }
+  const occText = sel.selectedOptions[0]?.textContent || 'جاهزية بنوك الدم';
+  const table = document.querySelector('#rdnSummaryTable .data-table');
+  if (!table) { showToast('⚠ لا توجد بيانات للطباعة'); return; }
+  const clone = table.cloneNode(true);
+  clone.style.width = '100%';
+  clone.style.borderCollapse = 'collapse';
+  const w = window.open('', '_blank', 'width=1200,height=800');
+  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>${occText}</title>
+    <style>body{font-family:Tahoma,Arial,sans-serif;margin:20px}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    th,td{border:1px solid #333;padding:4px;text-align:center}
+    th{background:#2c3e50;color:#fff}
+    @media print{body{margin:10px}th{background:#2c3e50!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    </style></head><body>${clone.outerHTML}
+    <p style="text-align:center;color:#95a5a6;font-size:9px;margin-top:14px">إعداد و برمجة محمد ندا 01068880999</p></body></html>`);
   w.document.close();
   setTimeout(() => { w.print(); w.close(); }, 500);
 }
 
 function rdnExportXlsx() {
-  showToast('⏳ جاري تحضير ملف Excel...');
-  fetch('/api/readiness-export/xlsx', { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') } })
-    .then(r => {
-      if (!r.ok) return r.json().then(e => { throw new Error(e.error || 'فشل التحميل'); });
-      return r.blob();
-    })
-    .then(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'شيت_الجاهزيه.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('✅ تم تحميل ملف Excel');
-    })
-    .catch(e => showToast('❌ ' + e.message));
+  const table = document.querySelector('#rdnSummaryTable .data-table');
+  if (!table) { showToast('⚠ لا توجد بيانات للتصدير'); return; }
+  let html = table.outerHTML;
+  html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:10px;"');
+  html = html.replace(/<th(?!\s)/g, '<th style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap"');
+  html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap">`);
+  html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px;mso-number-format:\'\\@\'"');
+  html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px;mso-number-format:'\\@'">`);
+  const sel = document.getElementById('rdnOccasionSelect');
+  const title = sel && sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : 'جاهزية بنوك الدم';
+  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
+    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#2c3e50;border:none">بيان بجاهزية بنوك الدم</td></tr>
+      <tr><td style="text-align:center;font-size:11px;color:#7f8c8d;border:none">${esc(title)}</td></tr></table>
+    ${html}
+    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
+  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'جاهزية_بنوك_الدم.xls'; a.click();
+  URL.revokeObjectURL(url);
 }
 
-// === Sync Dialog (Drive) ===
-async function showSyncDialog() {
-  const cont = document.getElementById('mainContent');
-  cont.innerHTML = '<div class="section-card"><div class="card-body" style="padding:20px"><div id="syncContent"><div style="text-align:center;padding:40px"><i class="fas fa-spinner fa-spin fa-3x"></i><p style="margin-top:12px">جاري تحميل حالة المزامنة...</p></div></div></div></div>';
-  try {
-    const st = await api('GET', '/sync/status');
-    const html = `
-      <h3 style="margin-bottom:16px"><i class="fas fa-cloud-upload-alt"></i> مزامنة مع Google Drive</h3>
-      <div style="background:#f8f9fa;padding:16px;border-radius:8px;margin-bottom:16px">
-        <table style="width:100%;font-size:14px">
-          <tr><td style="padding:4px 8px;color:#666">الجهاز</td><td style="padding:4px 8px">${sanitize(st.device)}</td></tr>
-          <tr><td style="padding:4px 8px;color:#666">المستشفيات</td><td style="padding:4px 8px">${st.hospitals}</td></tr>
-          <tr><td style="padding:4px 8px;color:#666">التقارير</td><td style="padding:4px 8px">${st.reports}</td></tr>
-          <tr><td style="padding:4px 8px;color:#666">المستخدمين</td><td style="padding:4px 8px">${st.users}</td></tr>
-          <tr><td style="padding:4px 8px;color:#666">حجم البيانات</td><td style="padding:4px 8px">${(st.dataSize / 1024).toFixed(1)} KB</td></tr>
-          <tr><td style="padding:4px 8px;color:#666">آخر تعديل</td><td style="padding:4px 8px">${new Date(st.lastModified).toLocaleString('ar-EG')}</td></tr>
-        </table>
+function rdnExportPdf() {
+  const table = document.querySelector('#rdnSummaryTable .data-table');
+  if (!table) { showToast('⚠ لا توجد بيانات للتصدير'); return; }
+  const sel = document.getElementById('rdnOccasionSelect');
+  const occText = sel && sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : 'جاهزية بنوك الدم';
+  const clone = table.cloneNode(true);
+  clone.style.width = '100%';
+  clone.style.borderCollapse = 'collapse';
+  const w = window.open('', '_blank', 'width=1200,height=800');
+  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>${occText}</title>
+    <style>body{font-family:Tahoma,Arial,sans-serif;margin:20px}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    th,td{border:1px solid #333;padding:4px;text-align:center}
+    th{background:#2c3e50;color:#fff}
+    @media print{body{margin:10px}th{background:#2c3e50!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    </style></head><body><h2 style="text-align:center;color:#2c3e50;margin-bottom:12px">بيان بجاهزية بنوك الدم</h2>
+    <p style="text-align:center;color:#7f8c8d;font-size:12px;margin-bottom:16px">${esc(occText)}</p>
+    ${clone.outerHTML}
+    <p style="text-align:center;color:#95a5a6;font-size:9px;margin-top:14px">إعداد و برمجة محمد ندا 01068880999</p></body></html>`);
+  w.document.close();
+  setTimeout(() => { w.print(); w.close(); }, 500);
+}
+
+// --- Occasion CRUD ---
+function rdnOpenOccasionModal(occasion) {
+  const isEdit = !!occasion;
+  const modalHtml = `<div class="card" style="margin:0;border:0;box-shadow:none">
+    <div class="card-body" style="padding:0">
+      <div style="display:grid;grid-template-columns:1fr;gap:12px">
+        <div>
+          <label style="font-weight:600;font-size:13px;color:#2c3e50;display:block;margin-bottom:4px">اسم المناسبة <span style="color:#e74c3c">*</span></label>
+          <input type="text" id="rdnOccName" class="form-input" value="${occasion ? esc(occasion.name) : ''}" placeholder="مثال: عيد الأضحى 2026" style="width:100%">
+        </div>
+        <div>
+          <label style="font-weight:600;font-size:13px;color:#2c3e50;display:block;margin-bottom:4px">تاريخ البداية <span style="color:#e74c3c">*</span></label>
+          <input type="date" id="rdnOccFrom" class="form-input" value="${occasion ? occasion.date_from : ''}" style="width:100%">
+        </div>
+        <div>
+          <label style="font-weight:600;font-size:13px;color:#2c3e50;display:block;margin-bottom:4px">تاريخ النهاية <span style="color:#e74c3c">*</span></label>
+          <input type="date" id="rdnOccTo" class="form-input" value="${occasion ? occasion.date_to : ''}" style="width:100%">
+        </div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="syncExport()"><i class="fas fa-download"></i> تصدير البيانات (JSON)</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('syncImportInput').click()"><i class="fas fa-upload"></i> استيراد بيانات</button>
-        <input type="file" id="syncImportInput" accept=".json" style="display:none" onchange="syncImport(event)">
-      </div>
-      <div id="syncResult" style="margin-top:12px"></div>
-    `;
-    document.getElementById('syncContent').innerHTML = html;
-  } catch (e) {
-    document.getElementById('syncContent').innerHTML = `<div class="alert alert-error">❌ ${sanitize(e.message)}</div>`;
+      <div id="rdnOccError" style="color:#e74c3c;font-size:12px;margin-top:8px;display:none"></div>
+    </div>
+  </div>`;
+  openModal(isEdit ? 'تعديل المناسبة' : 'إضافة مناسبة جديدة', modalHtml,
+    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-primary" onclick="${isEdit ? 'rdnUpdateOccasion('+occasion.id+')' : 'rdnCreateOccasion()'}"><i class="fas ${isEdit ? 'fa-save' : 'fa-plus'}"></i> ${isEdit ? 'تحديث' : 'إضافة'}</button>`);
+  setTimeout(() => document.getElementById('rdnOccName')?.focus(), 100);
+}
+
+async function rdnCreateOccasion() {
+  const name = document.getElementById('rdnOccName')?.value.trim();
+  const date_from = document.getElementById('rdnOccFrom')?.value;
+  const date_to = document.getElementById('rdnOccTo')?.value;
+  const errEl = document.getElementById('rdnOccError');
+  if (!name || !date_from || !date_to) {
+    if (errEl) { errEl.textContent = '⚠ اسم المناسبة وتاريخ البداية والنهاية مطلوبة'; errEl.style.display = 'block'; }
+    return;
   }
+  if (date_from > date_to) {
+    if (errEl) { errEl.textContent = '⚠ تاريخ البداية يجب أن يكون قبل تاريخ النهاية'; errEl.style.display = 'block'; }
+    return;
+  }
+  if (errEl) errEl.style.display = 'none';
+  try {
+    const occ = await api('POST', '/readiness-occasions', { name, date_from, date_to, day_labels: [] });
+    closeModal(); showToast('✅ تم إضافة المناسبة');
+    localStorage.setItem('rdnLastOccasion', occ.id);
+    renderReadinessSheet();
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+
+async function rdnUpdateOccasion(id) {
+  const name = document.getElementById('rdnOccName')?.value.trim();
+  const date_from = document.getElementById('rdnOccFrom')?.value;
+  const date_to = document.getElementById('rdnOccTo')?.value;
+  const errEl = document.getElementById('rdnOccError');
+  if (!name || !date_from || !date_to) {
+    if (errEl) { errEl.textContent = '⚠ اسم المناسبة وتاريخ البداية والنهاية مطلوبة'; errEl.style.display = 'block'; }
+    return;
+  }
+  if (date_from > date_to) {
+    if (errEl) { errEl.textContent = '⚠ تاريخ البداية يجب أن يكون قبل تاريخ النهاية'; errEl.style.display = 'block'; }
+    return;
+  }
+  if (errEl) errEl.style.display = 'none';
+  try {
+    await api('PUT', '/readiness-occasions/' + id, { name, date_from, date_to, day_labels: [] });
+    closeModal(); showToast('✅ تم تحديث المناسبة'); renderReadinessSheet();
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+
+// ============== Sync & Google Drive Module (المزامنة) ==============
+
+function showSyncDialog() {
+  pushNav(showMenu);
+  let html = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button></div>
+    <div class="card"><div class="card-header"><i class="fas fa-cloud-upload-alt"></i> المزامنة مع Google Drive</div>
+    <div class="card-body" id="syncBody">
+      <div style="text-align:center;padding:40px"><i class="fas fa-spinner fa-spin" style="font-size:32px;color:#1a73e8"></i><br>جاري تحميل معلومات المزامنة...</div>
+    </div></div>`;
+  document.getElementById('mainContent').innerHTML = html;
+  loadSyncStatus();
+}
+
+async function loadSyncStatus() {
+  try {
+    const status = await api('GET', '/sync/status');
+    const el = document.getElementById('syncBody');
+    if (!el) return;
+    const sizeKB = (status.fileSize / 1024).toFixed(1);
+    const lastSync = status.fileDate ? new Date(status.fileDate).toLocaleString('ar-EG') : '—';
+    const driveConnected = status.driveConnected;
+    const driveConfigured = status.driveConfigured;
+    const driveIcon = driveConnected ? 'fa-check-circle' : (driveConfigured ? 'fa-exclamation-triangle' : 'fa-times-circle');
+    const driveColor = driveConnected ? '#28a745' : (driveConfigured ? '#ffc107' : '#dc3545');
+    const driveText = driveConnected ? 'متصل' : (driveConfigured ? 'غير متصل (لم يتم المصادقة)' : 'غير مهيأ');
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+        <div class="sync-stat"><i class="fas fa-server"></i> <span>الجهاز:</span> <strong>${esc(status.deviceName)}</strong></div>
+        <div class="sync-stat"><i class="fas fa-database"></i> <span>حجم البيانات:</span> <strong>${esc(sizeKB)} KB</strong></div>
+        <div class="sync-stat"><i class="fas fa-clock"></i> <span>آخر تعديل:</span> <strong>${esc(lastSync)}</strong></div>
+        <div class="sync-stat"><i class="fas ${driveIcon}" style="color:${driveColor}"></i> <span>Google Drive:</span> <strong style="color:${driveColor}">${driveText}</strong></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:20px">
+        <button class="btn btn-primary" onclick="syncExport()" title="تصدير نسخة احتياطية"><i class="fas fa-download"></i> تصدير</button>
+        <button class="btn btn-secondary" onclick="syncImport()" title="استيراد نسخة احتياطية"><i class="fas fa-upload"></i> استيراد</button>
+        ${driveConfigured ? `<button class="btn btn-info" onclick="syncDriveAuth()" title="${driveConnected ? 'إعادة المصادقة' : 'المصادقة مع Google Drive'}"><i class="fas fa-cloud"></i> ${driveConnected ? 'إعادة ربط Drive' : 'ربط Drive'}</button>` : ''}
+        ${driveConnected ? `<button class="btn btn-success" onclick="syncDriveUpload()"><i class="fas fa-cloud-upload-alt"></i> رفع إلى Drive</button>` : ''}
+        ${driveConnected ? `<button class="btn btn-warning" onclick="syncDriveDownload()"><i class="fas fa-cloud-download-alt"></i> تنزيل من Drive</button>` : ''}
+      </div>
+      <div id="syncResult" style="text-align:center;margin-top:8px"></div>
+      <div style="margin-top:20px;padding:16px;background:#f8f9fa;border-radius:8px;font-size:13px;color:#666;text-align:center">
+        <i class="fas fa-info-circle"></i> عند استيراد نسخة سابقة، سيتم استبدال جميع البيانات الحالية. الرجاء أخذ نسخة احتياطية أولاً.
+      </div>`;
+  } catch (e) {
+    const el = document.getElementById('syncBody');
+    if (el) el.innerHTML = `<div class="alert alert-danger">❌ فشل تحميل معلومات المزامنة: ${esc(e.message)}</div>`;
+  }
+}
+
+function syncResultMsg(msg, isError) {
+  const el = document.getElementById('syncResult');
+  if (el) el.innerHTML = `<div style="padding:12px;border-radius:8px;background:${isError ? '#fce4e4' : '#e8f5e9'};color:${isError ? '#c62828' : '#2e7d32'};font-weight:600">${msg}</div>`;
 }
 
 async function syncExport() {
-  showToast('⏳ جاري تصدير البيانات...');
   try {
-    const res = await fetch('/api/sync/export', { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') } });
-    if (!res.ok) throw new Error('فشل التصدير');
-    const j = await res.json();
-    const blob = new Blob([JSON.stringify(j.data, null, 2)], { type: 'application/json' });
+    const result = await api('GET', '/sync/export');
+    const blob = new Blob([JSON.stringify(result.data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'db_backup_' + new Date().toISOString().slice(0, 10) + '.json';
-    document.body.appendChild(a);
-    a.click();
+    a.href = url; a.download = 'blood-bank-backup.json';
+    document.body.appendChild(a); a.click();
     document.body.removeChild(a);
-    showToast('✅ تم تصدير البيانات');
-  } catch (e) {
-    showToast('❌ ' + e.message);
-  }
+    URL.revokeObjectURL(url);
+    syncResultMsg('✅ تم تصدير نسخة احتياطية', false);
+  } catch (e) { syncResultMsg('❌ ' + e.message, true); }
 }
 
-async function syncImport(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  showToast('⏳ جاري استيراد البيانات...');
-  try {
-    const text = await file.text();
-    const data = JSON.parse(text);
-    const res = await fetch('/api/sync/import', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') },
-      body: JSON.stringify({ data })
-    });
-    if (!res.ok) throw new Error('فشل الاستيراد');
-    document.getElementById('syncResult').innerHTML = '<div class="alert alert-success">✅ تم استيراد البيانات بنجاح</div>';
-    showToast('✅ تم استيراد البيانات');
-  } catch (e) {
-    document.getElementById('syncResult').innerHTML = '<div class="alert alert-error">❌ ' + sanitize(e.message) + '</div>';
-  }
-  event.target.value = '';
+async function syncImport() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const result = await api('POST', '/sync/import', { data });
+      syncResultMsg('✅ تم استيراد البيانات بنجاح. سيتم إعادة تحميل الصفحة...', false);
+      setTimeout(() => location.reload(), 2000);
+    } catch (e) { syncResultMsg('❌ فشل الاستيراد: ' + e.message, true); }
+  };
+  input.click();
 }
 
-// === Blood Bank Equipment ===
-async function renderBloodBankEquipment() {
-  const main = document.getElementById('mainContent');
-  main.innerHTML = `<div class="page-header"><h2><i class="fas fa-microscope"></i> أجهزة بنوك الدم</h2></div>
-    <div id="eqToolbar" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;padding:8px 12px;background:var(--card-bg);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1)"></div>
-    <div id="eqStats" style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap"></div>
-    <div id="eqContent" class="loading" style="text-align:center;padding:40px;color:#999">جاري التحميل...</div>`;
+async function syncDriveAuth() {
   try {
-    const data = await api('GET', '/blood-bank-equipment');
-    if (!data || !data.hospitals || !data.hospitals.length) {
-      document.getElementById('eqContent').innerHTML = '<div class="alert alert-info">لا توجد بيانات أجهزة — قم باستيراد ملف Excel</div>';
-      return;
+    const result = await api('GET', '/sync/drive/auth-url');
+    if (result.url) {
+      openModal('ربط Google Drive',
+        `<div style="text-align:center;margin-bottom:16px"><i class="fas fa-cloud" style="font-size:48px;color:#1a73e8"></i></div>
+        <p style="margin-bottom:12px"><strong>الخطوة 1:</strong> افتح الرابط التالي في المتصفح وسجّل الدخول بحساب Google:</p>
+        <div style="background:#f5f5f5;padding:12px;border-radius:8px;direction:ltr;text-align:left;word-break:break-all;margin-bottom:16px;border:1px solid #ddd">
+          <a href="${esc(result.url)}" target="_blank" style="color:#1a73e8;font-size:13px">${esc(result.url)}</a>
+        </div>
+        <p style="margin-bottom:12px"><strong>الخطوة 2:</strong> بعد السماح، انسخ رمز التفويض (code) من المتصفح والصقه هنا:</p>
+        <input class="form-control" id="driveAuthCode" placeholder="الصق رمز التفويض هنا" style="direction:ltr;text-align:left">`,
+        `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+        <button class="btn btn-primary" onclick="syncDriveSubmitCode()"><i class="fas fa-check"></i> تأكيد</button>`);
     }
-    const { types, hospitals } = data;
-    types.sort((a,b) => a.id - b.id);
-    // Compute stats
-    const total = hospitals.length;
-    const eqCounts = {};
-    types.forEach(t => { eqCounts[t.id] = { ok: 0, bad: 0, total: 0 }; });
-    hospitals.forEach(h => {
-      if (!h.equipment) return;
-      Object.entries(h.equipment).forEach(([tid, eq]) => {
-        if (eq.status && eq.status !== 'غير كفئ' && eq.status !== 'غير' && eq.status !== 0) eqCounts[tid].ok++;
-        else if (eq.status) eqCounts[tid].bad++;
-        eqCounts[tid].total++;
-      });
-    });
-    // Stats cards
-    const allOk = Object.values(eqCounts).reduce((s, c) => s + c.ok, 0);
-    const allBad = Object.values(eqCounts).reduce((s, c) => s + c.bad, 0);
-    const allTotal = Object.values(eqCounts).reduce((s, c) => s + c.total, 0);
-    const statsHtml = [
-      { label: 'بنوك الدم', value: total, icon: 'fa-hospital', color: '#17a2b8' },
-      { label: 'أجهزة "كفء"', value: allOk, icon: 'fa-check-circle', color: '#27ae60' },
-      { label: 'أجهزة "غير كفء"', value: allBad, icon: 'fa-exclamation-triangle', color: '#e74c3c' },
-      { label: 'إجمالي الأجهزة', value: allTotal, icon: 'fa-microscope', color: '#6c757d' },
-    ].map(s => `<div style="flex:1;min-width:120px;padding:10px 12px;background:var(--card-bg);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;border-right:3px solid ${s.color}">
-      <div style="font-size:11px;color:#888;margin-bottom:2px"><i class="fas ${s.icon}" style="color:${s.color}"></i> ${s.label}</div>
-      <div style="font-size:20px;font-weight:bold;color:${s.color}">${s.value}</div>
-    </div>`).join('');
-    document.getElementById('eqStats').innerHTML = statsHtml;
-    // Toolbar
-    const govs = [...new Set(hospitals.map(h => h.governorate).filter(Boolean))];
-    const toolbarHtml = [
-      `<span style="font-size:13px;color:var(--text-color)"><i class="fas fa-microscope" style="color:#795548"></i> <strong>أجهزة بنوك الدم</strong></span>`,
-      `<select id="eqGovFilter" onchange="renderEqTable()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px">
-        <option value="">كل المحافظات</option>${govs.map(g => `<option value="${g}">${g}</option>`).join('')}</select>`,
-      `<input id="eqSearch" placeholder="بحث..." oninput="renderEqTable()" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;min-width:150px">`,
-      `<span id="eqResultCount" style="font-size:12px;color:#888"></span>`,
-    ].join(' | ');
-    document.getElementById('eqToolbar').innerHTML = toolbarHtml;
-    // Type filter chips
-    let chipHtml = '<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px">';
-    types.forEach(t => {
-      const c = eqCounts[t.id];
-      const pct = c.total ? Math.round(c.ok / c.total * 100) : 0;
-      chipHtml += `<span class="eq-type-chip" data-id="${t.id}" onclick="toggleEqType(${t.id})" style="cursor:pointer;padding:3px 8px;border-radius:12px;font-size:11px;background:${pct >= 80 ? '#e8f8e8' : pct >= 50 ? '#fff8e1' : '#fde8e8'};color:${pct >= 80 ? '#27ae60' : pct >= 50 ? '#f39c12' : '#e74c3c'};border:1px solid ${pct >= 80 ? '#a3d9a5' : pct >= 50 ? '#f0d58c' : '#f5a3a3'}">
-        ${t.name} <small>(${c.ok}/${c.total})</small>
-      </span>`;
-    });
-    chipHtml += '</div>';
-    document.getElementById('eqToolbar').insertAdjacentHTML('afterend', chipHtml);
-    window._eqData = { types, hospitals, eqCounts, typeFilter: new Set(types.map(t => t.id)) };
-    renderEqTable();
-  } catch (e) {
-    document.getElementById('eqContent').innerHTML = '<div class="alert alert-error">' + sanitize(e.message) + '</div>';
-  }
+  } catch (e) { syncResultMsg('❌ ' + e.message, true); }
 }
 
-function toggleEqType(id) {
-  const d = window._eqData;
-  if (!d) return;
-  if (d.typeFilter.has(id)) d.typeFilter.delete(id);
-  else d.typeFilter.add(id);
-  document.querySelectorAll('.eq-type-chip').forEach(el => {
-    const tid = parseInt(el.dataset.id);
-    el.style.opacity = d.typeFilter.has(tid) ? '1' : '0.4';
-  });
-  renderEqTable();
-}
-
-function renderEqTable() {
-  const { types, hospitals, eqCounts, typeFilter } = window._eqData || {};
-  if (!hospitals) return;
-  const gov = document.getElementById('eqGovFilter')?.value || '';
-  const q = (document.getElementById('eqSearch')?.value || '').trim().toLowerCase();
-  let filtered = hospitals;
-  if (gov) filtered = filtered.filter(h => h.governorate === gov);
-  if (q) filtered = filtered.filter(h => h.name.toLowerCase().includes(q) || (h.governorate || '').toLowerCase().includes(q));
-  document.getElementById('eqResultCount').textContent = filtered.length + '/' + hospitals.length;
-  const visibleTypes = types.filter(t => typeFilter.has(t.id));
-  let html = '<div style="overflow-x:auto;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1)">';
-  html += '<table style="border-collapse:collapse;width:100%;font-size:12px;min-width:' + (visibleTypes.length * 90 + 300) + 'px">';
-  html += '<thead><tr style="background:var(--card-bg);position:sticky;top:0;z-index:2">';
-  html += '<th style="padding:8px 6px;border:1px solid var(--border);text-align:center;min-width:110px">المحافظة</th>';
-  html += '<th style="padding:8px 6px;border:1px solid var(--border);text-align:center;min-width:160px">بنك الدم</th>';
-  html += '<th style="padding:8px 4px;border:1px solid var(--border);text-align:center;width:50px">صلاحية</th>';
-  visibleTypes.forEach(t => {
-    const c = eqCounts[t.id];
-    const pct = c.total ? Math.round(c.ok / c.total * 100) : 0;
-    html += `<th style="padding:6px 4px;border:1px solid var(--border);text-align:center;min-width:80px;font-size:11px;background:${pct >= 80 ? '#e8f8e8' : pct >= 50 ? '#fff8e1' : '#fde8e8'}">${t.name} <small style="color:#999">${c.ok}/${c.total}</small></th>`;
-  });
-  html += '</tr></thead><tbody>';
-  filtered.forEach(h => {
-    const eq = h.equipment || {};
-    const vals = Object.values(eq);
-    const totalEq = vals.length;
-    const badEq = vals.filter(v => v && (v.status === 'غير كفئ' || v.status === 'غير' || v.status === 0 || v.status === 'غير كفء')).length;
-    const goodEq = totalEq - badEq;
-    const pct = totalEq ? Math.round(goodEq / totalEq * 100) : 0;
-    html += '<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="eqEditHospital(\'' + esc(h.name) + '\')">';
-    html += `<td style="padding:6px;border:1px solid var(--border);text-align:center;font-size:11px">${esc(h.governorate || '')}</td>`;
-    html += `<td style="padding:6px 8px;border:1px solid var(--border);text-align:right;font-weight:bold">${esc(h.name)}</td>`;
-    html += `<td style="padding:6px;border:1px solid var(--border);text-align:center"><span style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:bold;color:#fff;background:${pct >= 80 ? '#27ae60' : pct >= 50 ? '#f39c12' : '#e74c3c'}">${goodEq}/${totalEq}</span></td>`;
-    visibleTypes.forEach(t => {
-      const e = eq[t.id];
-      if (!e) {
-        html += '<td style="padding:4px;border:1px solid var(--border);text-align:center;color:#ddd">-</td>';
-      } else {
-        const count = e.count;
-        const status = e.status;
-        const isBad = !status || status === 'غير كفئ' || status === 'غير' || status === 0 || status === 'غير كفء';
-        const isMid = status === 'متوسط';
-        const bg = isBad ? '#fde8e8' : isMid ? '#fff8e1' : '#e8f8e8';
-        const clr = isBad ? '#e74c3c' : isMid ? '#f39c12' : '#27ae60';
-        let info = count != null ? count : '';
-        if (e.brand) info += ' ' + e.brand.substring(0, 12);
-        html += `<td style="padding:3px 4px;border:1px solid var(--border);text-align:center;background:${bg};font-size:11px">
-          <div style="font-weight:bold;color:${clr}">${info || '-'}</div>
-          ${status ? `<div style="font-size:10px;color:${clr}">${status}</div>` : ''}
-        </td>`;
-      }
-    });
-    html += '</tr>';
-  });
-  html += '</tbody></table></div>';
-  html += '<div style="margin-top:8px;text-align:center;font-size:11px;color:#999">انقر على أي مستشفى لعرض وتعديل الأجهزة</div>';
-  document.getElementById('eqContent').innerHTML = html;
-}
-
-function eqEditHospital(name) {
-  const { types, hospitals } = window._eqData || {};
-  const hos = hospitals.find(h => h.name === name);
-  if (!hos) return;
-  const eq = hos.equipment || {};
-  let body = `<div style="max-height:70vh;overflow-y:auto">
-    <div style="margin-bottom:12px;padding:8px 12px;background:#f5f5f5;border-radius:6px">
-      <strong>${esc(hos.name)}</strong>
-      <span style="color:#888;font-size:12px;margin-right:12px">${esc(hos.governorate || '')}</span>
-    </div>
-    <table style="width:100%;border-collapse:collapse;font-size:12px">
-      <thead><tr style="background:#e9ecef">
-        <th style="padding:6px;border:1px solid #ddd;text-align:center">الجهاز</th>
-        <th style="padding:6px;border:1px solid #ddd;text-align:center;width:60px">العدد</th>
-        <th style="padding:6px;border:1px solid #ddd;text-align:center">الماركة</th>
-        <th style="padding:6px;border:1px solid #ddd;text-align:center;width:70px">السعة</th>
-        <th style="padding:6px;border:1px solid #ddd;text-align:center;width:90px">الحالة</th>
-      </tr></thead><tbody>`;
-  types.forEach(t => {
-    const e = eq[t.id] || {};
-    body += `<tr>
-      <td style="padding:6px;border:1px solid #ddd;text-align:right;font-weight:bold">${t.name}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center"><input type="number" id="eq_${t.id}_count" value="${e.count || 0}" min="0" style="width:50px;text-align:center;padding:4px;border:1px solid #ccc;border-radius:4px"></td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center"><input type="text" id="eq_${t.id}_brand" value="${esc(e.brand || '')}" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:4px"></td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center"><input type="text" id="eq_${t.id}_capacity" value="${esc(e.capacity || '')}" style="width:60px;text-align:center;padding:4px;border:1px solid #ccc;border-radius:4px"></td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center">
-        <select id="eq_${t.id}_status" style="padding:4px;border:1px solid #ccc;border-radius:4px">
-          <option value="كفئ" ${e.status === 'كفئ' ? 'selected' : ''}>كفء</option>
-          <option value="متوسط" ${e.status === 'متوسط' ? 'selected' : ''}>متوسط</option>
-          <option value="غير كفئ" ${e.status === 'غير كفئ' || e.status === 'غير كفء' ? 'selected' : ''}>غير كفء</option>
-          <option value="" ${!e.status ? 'selected' : ''}>---</option>
-        </select>
-      </td>
-    </tr>`;
-  });
-  body += '</tbody></table></div>';
-  const footer = `<button class="btn btn-success" onclick="eqSaveHospital('${esc(name)}')"><i class="fas fa-save"></i> حفظ</button>`;
-  openModal('تعديل أجهزة ' + name, body, footer);
-}
-
-async function eqSaveHospital(name) {
-  const { types } = window._eqData || {};
-  const equipment = {};
-  types.forEach(t => {
-    const count = parseInt(document.getElementById('eq_' + t.id + '_count')?.value) || 0;
-    const brand = document.getElementById('eq_' + t.id + '_brand')?.value || '';
-    const capacity = document.getElementById('eq_' + t.id + '_capacity')?.value || '';
-    const status = document.getElementById('eq_' + t.id + '_status')?.value || '';
-    equipment[t.id] = { count, brand, capacity, status };
-  });
+async function syncDriveSubmitCode() {
+  const code = document.getElementById('driveAuthCode').value.trim();
+  if (!code) { showToast('⚠ الرجاء لصق رمز التفويض'); return; }
   try {
-    await api('PUT', '/blood-bank-equipment/hospital', { name, equipment });
+    const cbResult = await api('POST', '/sync/drive/callback', { code });
     closeModal();
-    renderBloodBankEquipment();
-    showToast('✅ تم حفظ التعديلات');
-  } catch (e) {
-    showToast('❌ ' + e.message);
-  }
+    syncResultMsg('✅ ' + cbResult.message, false);
+    loadSyncStatus();
+  } catch (e) { syncResultMsg('❌ ' + e.message, true); }
 }
 
+async function syncDriveUpload() {
+  syncResultMsg('⏳ جاري رفع البيانات إلى Google Drive...', false);
+  try {
+    const result = await api('POST', '/sync/drive/upload');
+    syncResultMsg('✅ ' + result.message, false);
+    loadSyncStatus();
+  } catch (e) { syncResultMsg('❌ ' + e.message, true); }
+}
+
+async function syncDriveDownload() {
+  showConfirmModal('⚠️ سيتم استبدال جميع البيانات الحالية بنسخة Google Drive. هل أنت متأكد؟', async function() {
+    syncResultMsg('⏳ جاري تنزيل البيانات من Google Drive...', false);
+    try {
+      const result = await api('GET', '/sync/drive/download');
+      syncResultMsg('✅ ' + result.message + '. سيتم إعادة تحميل الصفحة...', false);
+      setTimeout(() => location.reload(), 2000);
+    } catch (e) { syncResultMsg('❌ ' + e.message, true); }
+  });
+}
+
+// ============== About / User Guide (حول النظام) ==============
+
+function showAbout() {
+  pushNav(showMenu);
+  const bodyHtml = `<div id="aboutBody" style="font-size:14px;line-height:1.8">
+
+    <div style="text-align:center;margin-bottom:24px">
+      <i class="fas fa-tint" style="font-size:48px;color:#dc3545;opacity:0.8"></i>
+      <h2 style="color:#dc3545;margin:8px 0 4px">نظام إدارة بنوك الدم</h2>
+      <div style="color:#999;font-size:13px">الإصدار 1.0 — هيئة التأمين الصحي الشامل</div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+
+    <h3 style="color:#1565c0;margin-bottom:12px"><i class="fas fa-code"></i> المطور</h3>
+    <table style="width:100%;max-width:400px;border-collapse:collapse;margin-bottom:20px">
+      <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">الاسم</td><td style="padding:6px 12px;border:1px solid #e0e0e0">محمد ندا</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">الهاتف</td><td style="padding:6px 12px;border:1px solid #e0e0e0;direction:ltr;text-align:left">01068880999</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">التخصص</td><td style="padding:6px 12px;border:1px solid #e0e0e0">Full Stack Developer</td></tr>
+    </table>
+
+    <h3 style="color:#17a2b8;margin-bottom:12px"><i class="fas fa-cubes"></i> التقنيات المستخدمة</h3>
+    <table style="width:100%;max-width:500px;border-collapse:collapse;margin-bottom:20px">
+      <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">الخادم</td><td style="padding:6px 12px;border:1px solid #e0e0e0">Node.js + Express</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">قاعدة البيانات</td><td style="padding:6px 12px;border:1px solid #e0e0e0">lowdb (JSON) — محلياً + سحابياً عبر Google Drive</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">الواجهة</td><td style="padding:6px 12px;border:1px solid #e0e0e0">Vanilla JS + CSS + Font Awesome 6.5.0</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">الأمان</td><td style="padding:6px 12px;border:1px solid #e0e0e0">bcryptjs + helmet + express-rate-limit + DOMPurify</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">التصدير</td><td style="padding:6px 12px;border:1px solid #e0e0e0">Excel (xlsx) + PDF (print-to-PDF)</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">المزامنة</td><td style="padding:6px 12px;border:1px solid #e0e0e0">Google Drive API (googleapis) — OAuth 2.0</td></tr>
+    </table>
+
+    <h3 style="color:#28a745;margin-bottom:12px"><i class="fas fa-check-circle"></i> المميزات والقدرات</h3>
+    <ul style="padding-right:20px;margin-bottom:20px">
+      <li>المخزون اليومي — إدارة رصيد الدم اليومي لكل فصيلة</li>
+      <li>إجمالي المخزون — عرض إجمالي المخزون والرصيد الاستراتيجي</li>
+      <li>البيان اليومي وبيان الفرع — تقارير يومية للمستشفيات والفروع</li>
+      <li>المؤشرات الشهرية — مؤشرات تجميعيه وتخزينيه مع معادلات تلقائية</li>
+      <li>منصرف فصائل الدم — تتبع استهلاك الدم شهرياً</li>
+      <li>بيان العاملين — إدارة الموظفين مع المراجعة والبيانات الناقصة</li>
+      <li>شيت الجاهزية — جاهزية بنوك الدم للمناسبات (قوى عاملة، رصيد، صيانة، أعطال، مستهلكات)</li>
+      <li>الأجهزة — إدارة أجهزة بنوك الدم مع الأنواع والفئات</li>
+      <li>أرشيف — أرشيف المؤشرات الشهرية ومنصرف الفصائل</li>
+      <li>نظام الصلاحيات — 6 أدوار، 20 صفحة، 5 صلاحيات لكل صفحة</li>
+      <li>المزامنة مع Google Drive — نسخ احتياطي سحابي آلي</li>
+      <li>وضع ليلي (Dark Mode) — مريح للعين</li>
+      <li>تصدير Excel و PDF — لجميع التقارير</li>
+      <li>توقيت صيفي/شتوي — تبديل تلقائي للتوقيت المحلي</li>
+    </ul>
+
+    <h3 style="color:#dc3545;margin-bottom:12px"><i class="fas fa-shield-alt"></i> الأمان</h3>
+    <ul style="padding-right:20px;margin-bottom:20px">
+      <li>تسجيل الدخول بجلسات (Session) مع httpOnly + SameSite</li>
+      <li>كلمات المرور مشفرة بـ bcrypt</li>
+      <li>تقييد محاولات الدخول (15 محاولة / 15 دقيقة)</li>
+      <li>حماية XSS عبر DOMPurify + HTML entity escaping</li>
+      <li>صلاحيات تفصيلية حسب الدور (عرض، إضافة، تعديل، حذف، تصدير)</li>
+      <li>رؤوس أمان HTTP عبر Helmet</li>
+    </ul>
+
+    <h2 style="color:#7b1fa2;border-bottom:2px solid #7b1fa2;padding-bottom:8px;margin:32px 0 20px"><i class="fas fa-book"></i> دليل المستخدم الشامل</h2>
+
+    <h4 style="color:#e65100;margin-bottom:8px">1. تسجيل الدخول</h4>
+    <p style="margin-bottom:16px">افتح المتصفح على <code>http://localhost:3001</code>. أدخل اسم المستخدم وكلمة المرور في الحقول المخصصة. اضغط على زر "دخول" أو اضغط Enter. الجلسة تبقى نشطة لمدة 24 ساعة — حتى لو حدث Refresh للصفحة، هتكون لسه داخل. في حال نسيان كلمة المرور، تواصل مع مدير النظام.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">2. القائمة الرئيسية (Dashboard)</h4>
+    <p style="margin-bottom:16px">بعد تسجيل الدخول تظهر القائمة الرئيسية مقسمة إلى فئات: <strong>يومي</strong>، <strong>شهري</strong>، <strong>أرشيف</strong>، <strong>أخرى</strong>، <strong>الإدارة</strong>. كل فئة تحتوي على أيقونات الصفحات المتاحة حسب صلاحياتك. في الشريط العلوي تجد: اسم المستخدم، التاريخ والوقت، أزرار التوقيت الصيفي/الشتوي، الوضع الليلي، الملف الشخصي، وتسجيل الخروج.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">3. المخزون اليومي</h4>
+    <p style="margin-bottom:16px">يعرض رصيد الدم لكل فصيلة (A+, A-, B+, B-, O+, O-, AB+, AB-) مع التقسيم إلى مجموعات (تجميعي) وتحت (تخزيني) وإجمالي. يمكن التعديل المباشر (Inline Edit) بالنقر على الخلية. الزر <i class="fas fa-plus"></i> يضيف حركة جديدة (وارد/منصرف) مع التاريخ والوقت. زر <i class="fas fa-file-excel"></i> الأخضر لتصدير Excel. زر <i class="fas fa-undo-alt"></i> للتراجع عن التعديلات.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">4. إجمالي المخزون</h4>
+    <p style="margin-bottom:16px">يعرض إجمالي المخزون لكل المحافظات الست في جدول واحد. يتضمن أزرار تصدير Excel و PDF.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">5. البيان اليومي</h4>
+    <p style="margin-bottom:16px">اختر مستشفى من القائمة المنسدلة، ثم شاهد أو حرر البيان اليومي. البيان يشمل: فصائل الدم (A+, A-, B+, B-, O+, O-, AB+, AB-) مع الرصيد السابق والوارد والمنصرف والتالف. وأيضاً الصفائح الدموية (A, B, AB, O) والبلازما والكريو. زر <i class="fas fa-print"></i> للطباعة.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">6. بيان الفرع</h4>
+    <p style="margin-bottom:16px">اختر محافظة من القائمة، ثم اختر مستشفى لعرض بيان الفرع. يعرض نفس بيانات البيان اليومي ولكن موجهة لمشرفي الفروع. أزرار تصدير Excel و PDF متاحة.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">7. المؤشرات الشهرية — تجميعيه (Big Indicators)</h4>
+    <p style="margin-bottom:16px">يعرض المؤشرات التجميعية لكل المستشفيات. الأعمدة تشمل: إجمالي التجميع، الدم الكامل، فصل البلازما، فصل الصفائح، التبرع العلاجي، الغير مكتمل، المرفوض (دهني/صفراوي)، الفيروسات (C/B/دوالر)، التوزيع (دم/بلازما/صفائح/كريو)، التالف (منصرف/مرتجع/تفاعل/مفتوح/أخرى)، نسبة التالف. اختر الشهر والسنة من القوائم. الخلايا الزرقاء تحسب تلقائياً. الخلايا الحمراء تظهر إذا تجاوزت النسبة المستهدفة. التعديل مباشر (Inline Edit) — انقر على الخلية لتعديل القيمة.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">8. المؤشرات الشهرية — تخزينيه (Small Indicators)</h4>
+    <p style="margin-bottom:16px">يعرض المؤشرات التخزينية: الوارد (دم/بلازما/كريو/مركز/مغسول)، الصادر (دم/بلازما/صفائح/كريو/مركز/مغسول)، المرتجع، التالف (منتهي/مفتوح/تلف/أخرى)،百分比 التالف والمرتجع. نفس نظام التعديل المباشر والمؤشرات الحمراء.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">9. منصرف فصائل الدم (Blood Consumption)</h4>
+    <p style="margin-bottom:16px">يعرض استهلاك الدم شهرياً لكل مستشفى وفصيلة. اختر السنة والشهر من القوائم. زر <i class="fas fa-plus"></i> لإضافة شهر جديد. بعد يوم 25 من الشهر، يتم قفل التعديل تلقائياً ويتم عرض الشهر السابق. يظهر شريط أصفر للتأكيد.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">10. بيان العاملين (Employee Statement)</h4>
+    <p style="margin-bottom:16px">إدارة بيانات الموظفين لكل مستشفى. يشمل:
+    <ul style="margin-bottom:12px">
+      <li><strong>فلترة</strong> — اختر المحافظة أو المستشفى أو الفئة لعرض الموظفين المطابقين</li>
+      <li><strong>التعديل المباشر</strong> — زر "تعديل" يحول الجدول إلى وضع التعديل المباشر (Inline Edit)</li>
+      <li><strong>المراجعة</strong> — زر "مراجعة" لتأكيد صحة بيانات المستشفى. يظهر علامة صح خضراء بعد المراجعة</li>
+      <li><strong>بيانات المشرفين</strong> — قسم منفصل يعرض المشرفين بالفروع مع صلاحياتهم</li>
+      <li><strong>البيانات الناقصة</strong> — قسم يعرض الموظفين الذين لديهم بيانات ناقصة (الرقم القومي، الهاتف، البريد)</li>
+      <li><strong>إضافة موظف</strong> — زر <i class="fas fa-plus"></i> يفتح نافذة لإضافة موظف جديد (الاسم، المحافظة، المستشفى، الفئة، الدرجة، الرقم القومي، الهاتف، البريد)</li>
+      <li><strong>إضافة مشرف فرع</strong> — إضافة مشرف جديد مع تحديد المحافظة والمستشفيات والمستخدم المرتبط</li>
+      <li><strong>طباعة</strong> — فتح نافذة طباعة بالجدول</li>
+      <li><strong>Excel و PDF</strong> — تصدير الجدول إلى Excel أو PDF</li>
+    </ul></p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">11. شيت الجاهزية (Readiness Sheet)</h4>
+    <p style="margin-bottom:16px">إدارة جاهزية بنوك الدم في المناسبات (الأعياد، الطوارئ، إلخ):
+    <ul style="margin-bottom:12px">
+      <li><strong>المناسبات</strong> — اختر مناسبة من القائمة المنسدلة. زر <i class="fas fa-plus"></i> لإضافة مناسبة جديدة (الاسم، تاريخ البداية، تاريخ النهاية). زر <i class="fas fa-trash"></i> لحذف المناسبة الحالية.</li>
+      <li><strong>اختيار المستشفى</strong> — بعد اختيار المناسبة، اختر المستشفى من القائمة المنسدلة لعرض/تعبئة بيانات الجاهزية.</li>
+      <li><strong>القوى العاملة</strong> — جدول الموظفين مع الاسم، الهاتف، وورديات لكل يوم. خيارات الورديات: 12 A (صباحي)، 12 P (مسائي)، 24 AP (24 ساعة)، 6 L 12 P (ليل + مسائي) أو أدخل وردية مخصصة. زر <i class="fas fa-plus"></i> يضيف صف موظف جديد.</li>
+      <li><strong>حالة الرصيد</strong> — اختار <span style="color:#28a745">كافي</span> أو <span style="color:#dc3545">غير كافي</span>. إذا اخترت غير كافي، يظهر حقل "من أين تمت الاستعاضة" ويظهر رصيد الفصائل الحالي.</li>
+      <li><strong>مراجعة الصيانة</strong> — اختار <span style="color:#28a745">تتم</span> أو <span style="color:#dc3545">لا تتم</span>. إذا اخترت لا تتم، اكتب سبب عدم الصيانة.</li>
+      <li><strong>الأعطال</strong> — اختار <span style="color:#28a745">لا يوجد</span> أو <span style="color:#dc3545">يوجد</span>. إذا اخترت يوجد، أدخل اسم الجهاز المعطل والجهاز البديل.</li>
+      <li><strong>المستهلكات</strong> — اختار <span style="color:#28a745">كافية</span> أو <span style="color:#dc3545">غير كافية</span>. إذا اخترت غير كافية، اكتب سبب النقص.</li>
+      <li><strong>الحفظ</strong> — زر <i class="fas fa-save"></i> لحفظ التقرير. يتم التحقق من ملء الحقول المطلوبة قبل الحفظ.</li>
+      <li><strong>الجدول الملخص</strong> — بعد حفظ التقارير، يظهر جدول مكون من 7 أعمدة (المحافظة، اسم بنك الدم، القوى العاملة، حالة الرصيد، مراجعة الصيانة، الأعطال، المستهلكات) يعرض جميع المستشفيات وبياناتها.</li>
+      <li><strong>التعديل</strong> — زر <i class="fas fa-edit"></i> في الجدول الملخص يفتح التقرير للتعديل.</li>
+      <li><strong>الحذف</strong> — زر <i class="fas fa-trash"></i> في الجدول الملخص يحذف التقرير.</li>
+      <li><strong>تصدير Excel</strong> — زر Excel يصدر جميع المناسبات في ملف واحد متعدد الصفحات (كل مناسبة في صفحة منفصلة).</li>
+      <li><strong>PDF / طباعة</strong> — فتح نافذة طباعة بالجدول الملخص.</li>
+      <li><strong>الإشعارات</strong> — عند إنشاء مناسبة جديدة، يتم إنشاء إشعار للمدير بالمستشفيات التي لم تدخل بياناتها بعد. الإشعار يختفي تلقائياً عندما تكمل جميع المستشفيات.</li>
+    </ul></p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">12. الأجهزة (Equipment)</h4>
+    <p style="margin-bottom:16px">إدارة أجهزة بنوك الدم:
+    <ul style="margin-bottom:12px">
+      <li><strong>الجدول المحوري</strong> — يعرض جميع أنواع الأجهزة (22 نوعاً) لكل مستشفى في جدول واحد. الأعمدة: العدد، الحالة، الماركة، السعة لكل جهاز.</li>
+      <li><strong>الفلترة</strong> — فلترة بالمحافظة، الفئة (تجميعي/تخزيني)، الحالة، ونوع الجهاز.</li>
+      <li><strong>عرض المجموعات</strong> — زر لتجميع العرض حسب الفئة أو المحافظة.</li>
+      <li><strong>إضافة/تعديل</strong> — انقر على اسم المستشفى لفتح نافذة التعديل. أدخل العدد، الحالة، الماركة، والسعة لكل جهاز.</li>
+      <li><strong>إدارة الأنواع</strong> — زر الترس <i class="fas fa-cog"></i> يفتح نافذة إدارة أنواع الأجهزة. يمكن إضافة نوع جديد (الاسم + الفئة)، تعديل النوع، حذف النوع (مع مسح بياناته من جميع المستشفيات).</li>
+      <li><strong>استيراد</strong> — استيراد بيانات الأجهزة من ملف Excel.</li>
+      <li><strong>تصدير</strong> — تصدير إلى Excel و PDF.</li>
+    </ul></p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">13. أرشيف المؤشرات الشهرية</h4>
+    <p style="margin-bottom:16px">يعرض المؤشرات الشهرية المؤرشفة (التجميعية والتخزينية) في جدول واحد. فلترة بالسنة والمحافظة. يمكن تعديل الخلايا مباشرة (Inline Edit) أو لصق بيانات من Excel (نسخ من Excel ولصق في الجدول). نسخ/لصق متعدد الخلايا مدعوم. تصدير Excel و PDF.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">14. أرشيف منصرف الفصائل</h4>
+    <p style="margin-bottom:16px">يعرض منصرف الفصائل المؤرشف. فلترة بالسنة والشهر والمحافظة والمستشفى ونوع الفترة (شهرية/ربع سنوية/نصف سنوية/سنوية). أزرار تعديل وحذف لكل سجل. تصدير Excel و PDF.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">15. الرصيد الاستراتيجي</h4>
+    <p style="margin-bottom:16px">يعرض الرصيد الاستراتيجي الحالي لكل محافظة/مستشفى وفصيلة. يمكن حساب الاحتياجات الاستراتيجية بناءً على معادلات محددة. تصدير Excel و PDF.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">16. إدارة المستخدمين</h4>
+    <p style="margin-bottom:16px">إدارة المستخدمين وصلاحياتهم:
+    <ul style="margin-bottom:12px">
+      <li><strong>جدول المستخدمين</strong> — يعرض جميع المستخدمين (اسم المستخدم، الاسم، الدور، المحافظة). البحث والفلترة في الوقت الحقيقي. نسخ إلى الحافظة (Copy). تصدير Excel.</li>
+      <li><strong>إضافة مستخدم</strong> — الاسم، اسم المستخدم، كلمة المرور (مع إظهار/إخفاء)، الدور (مدير، مشرف هيئة، مشرف فرع، مستشفى، زائر)، المحافظة (للمشرفين)، المستشفى (لدور مستشفى)</li>
+      <li><strong>تعديل مستخدم</strong> — تعديل اسم المستخدم، الاسم، الدور، المحافظة. يمكن للمستخدم تعديل اسمه فقط من صفحة الملف الشخصي.</li>
+      <li><strong>حذف مستخدم</strong> — تأكيد بحذف المستخدم مع عرض اسمه.</li>
+      <li><strong>صلاحيات الأدوار</strong> — صفحة منفصلة تعرض جميع الأدوار مع صلاحياتهم لكل صفحة (عرض/إضافة/تعديل/حذف/تصدير). يمكن تعديل الصلاحيات لكل دور وكل صفحة. اختيار الكل/إلغاء الكل لكل فئة. إضافة/حذف أدوار جديدة.</li>
+      <li><strong>تغيير كلمة المرور</strong> — من الملف الشخصي: أدخل كلمة المرور الحالية والجديدة والتأكيد. المدير يمكنه تغيير كلمة مرور أي مستخدم بدون الحالية.</li>
+    </ul></p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">17. إدارة المستشفيات والمحافظات</h4>
+    <p style="margin-bottom:16px">إضافة وتعديل وحذف المستشفيات. لكل مستشفى: الاسم، المحافظة، النوع (تجميعي/تخزيني). إدارة المحافظات (إضافة/حذف). إدارة أنواع المستشفيات (إضافة/حذف).</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">18. بيانات المشرفين</h4>
+    <p style="margin-bottom:16px">عرض بيانات المشرفين والمستخدمين مع فلترة متقدمة (اختيار المحافظات). نسخ البيانات المفلترة إلى الحافظة بتنسيق جدولي.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">19. المخزون (Inventory)</h4>
+    <p style="margin-bottom:16px">عرض وتعديل المخزون الكلي لكل فصيلة. يشمل: الرصيد الحالي (Storage)، إجمالي الوارد، إجمالي المنصرف. التعديل مباشر بالنقر على الخلايا.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">20. المزامنة مع Google Drive (النسخ الاحتياطي السحابي)</h4>
+    <p style="margin-bottom:8px"><strong>الهدف:</strong> عمل نسخ احتياطي سحابي آمن لقاعدة البيانات (<code>db.json</code>) على Google Drive، واستعادتها عند الحاجة — سواء لتثبيت النظام على جهاز جديد أو للرجوع لنسخة سابقة.</p>
+
+    <h5 style="color:#c62828;margin-top:16px;margin-bottom:6px">الخطوة 0: الإعداد المسبق (مرة واحدة — يفعلها مدير النظام)</h5>
+    <p style="margin-bottom:8px">قبل أن يتمكن أي مستخدم من ربط Google Drive، يجب على المدير إنشاء ملف الإعدادات:</p>
+    <ol style="margin-bottom:12px">
+      <li>افتح متصفح الإنترنت واذهب إلى <a href="https://console.cloud.google.com" target="_blank" style="color:#1a73e8">https://console.cloud.google.com</a></li>
+      <li>سجّل الدخول بحساب Google الخاص بك.</li>
+      <li>أنشئ مشروع جديد (أو استخدم مشروع موجود) — سمِّه مثلاً "NADA" أو "Blood Bank".</li>
+      <li>اذهب إلى <strong>APIs & Services → Library</strong>، ابحث عن <strong>Google Drive API</strong> واضغط <strong>Enable</strong>.</li>
+      <li>اذهب إلى <strong>APIs & Services → Credentials</strong>.</li>
+      <li>اضغط <strong>Create Credentials → OAuth client ID</strong>.</li>
+      <li>إذا طلب منك تهيئة شاشة الموافقة (Consent Screen):
+        <ul>
+          <li>User Type: <strong>External</strong></li>
+          <li>App name: أي اسم (مثلاً "NADA")</li>
+          <li>User support email: بريدك الإلكتروني</li>
+          <li>Developer contact: بريدك الإلكتروني</li>
+          <li>اضغط <strong>Save and Continue</strong> في كل الخطوات (مش لازم تضيف Scopes أو Test Users)</li>
+        </ul>
+      </li>
+      <li>Application type: <strong>Desktop app</strong></li>
+      <li>الاسم: أي اسم (مثلاً "Blood Bank")</li>
+      <li>اضغط <strong>Create</strong> — ستظهر نافذة بالـ <strong>Client ID</strong> و <strong>Client Secret</strong></li>
+      <li>انسخ القيمتين وأنشئ ملف <code>data/drive-config.json</code> بالمحتوى التالي (إذا لم يكن موجوداً):</li>
+    </ol>
+    <pre style="background:#f5f5f5;padding:12px;border-radius:8px;direction:ltr;text-align:left;font-size:12px;margin-bottom:16px;border:1px solid #e0e0e0;overflow-x:auto">{
+  "client_id": "387378547551-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com",
+  "client_secret": "GOCSPX-xxxxxxxxxxxxxxxxxxxx",
+  "redirect_uri": "urn:ietf:wg:oauth:2.0:oob"
+}</pre>
+
+    <h5 style="color:#c62828;margin-top:20px;margin-bottom:6px">الخطوة 1: فتح صفحة المزامنة</h5>
+    <ol style="margin-bottom:12px">
+      <li>سجّل الدخول إلى النظام بحساب مدير (admin).</li>
+      <li>من القائمة الرئيسية، اذهب إلى <strong>الإدارة</strong> ثم اختر <strong>المزامنة مع Drive</strong>.</li>
+      <li>ستظهر شاشة المزامنة التي تعرض:
+        <ul>
+          <li>اسم الجهاز (Device Name)</li>
+          <li>حجم قاعدة البيانات الحالية</li>
+          <li>آخر تاريخ تعديل</li>
+          <li>حالة اتصال Google Drive (غير مهيأ/غير متصل/متصل)</li>
+        </ul>
+      </li>
+    </ol>
+
+    <h5 style="color:#c62828;margin-top:20px;margin-bottom:6px">الخطوة 2: ربط Google Drive (مرة واحدة فقط)</h5>
+    <ol style="margin-bottom:12px">
+      <li>تأكد من وجود ملف <code>data/drive-config.json</code> بالإعدادات الصحيحة (انظر الخطوة 0).</li>
+      <li>في شاشة المزامنة، اضغط على زر <strong>ربط Drive</strong>.</li>
+      <li>ستظهر نافذة منبثقة (Modal) تحتوي على:
+        <ul>
+          <li>الخطوة 1: رابط طويل — اضغط عليه (أو انسخه)</li>
+          <li>الخطوة 2: حقل فارغ — ستلصق فيه رمز التفويض لاحقاً</li>
+        </ul>
+      </li>
+      <li>افتح الرابط في المتصفح (نفس المتصفح أو متصفح آخر).</li>
+      <li>سجّل الدخول بحساب Google الذي تريد استخدامه للتخزين السحابي.</li>
+      <li>ستظهر شاشة تفويض تقول "يتطلب تطبيق Blood_Banks الوصول إلى حسابك على Google". اضغط على <strong>متابعة</strong> أو <strong>Allow</strong>.</li>
+      <li>سيظهر رمز طويل (code) — مثلاً: <code>4/1AdkVLPzogdXFCPp0aJ9jS_9rfEmUoyU8J894W1eqqrDS9B5qzz4PBWJeF2M</code></li>
+      <li>انسخ الرمز بالكامل (بما فيه الشرطة والمائل).</li>
+      <li>ارجع إلى نافذة التطبيق (لا تغلقها).</li>
+      <li>الصق الرمز في حقل "الصق رمز التفويض هنا".</li>
+      <li>اضغط <strong>تأكيد</strong>.</li>
+      <li>ستظهر رسالة "✅ تم ربط Google Drive بنجاح".</li>
+      <li>حالة Google Drive في الشاشة ستتغير إلى <span style="color:#28a745"><strong>متصل</strong></span>.</li>
+    </ol>
+
+    <h5 style="color:#c62828;margin-top:20px;margin-bottom:6px">الخطوة 3: رفع البيانات (Backup) إلى Google Drive</h5>
+    <ol style="margin-bottom:12px">
+      <li>في شاشة المزامنة، تأكد أن حالة Google Drive هي <span style="color:#28a745"><strong>متصل</strong></span>.</li>
+      <li>اضغط على زر <strong>رفع إلى Drive</strong> (الزر الأخضر).</li>
+      <li>سيظهر مؤقت "⏳ جاري رفع البيانات إلى Google Drive..."</li>
+      <li>بعد نجاح الرفع، ستظهر رسالة "✅ تم رفع البيانات إلى Google Drive".</li>
+      <li>الملف يُرفع باسم <code>blood-bank-db.json</code> في حساب Google Drive الخاص بك.</li>
+      <li><strong>نصيحة:</strong> ارفع نسخة بعد كل جلسة عمل مهمة، أو في نهاية كل يوم.</li>
+    </ol>
+
+    <h5 style="color:#c62828;margin-top:20px;margin-bottom:6px">الخطوة 4: تنزيل البيانات (Restore) من Google Drive</h5>
+    <p style="margin-bottom:6px">استخدم هذه الخطوة عندما:</p>
+    <ul style="margin-bottom:12px">
+      <li>تريد نقل النظام إلى جهاز جديد.</li>
+      <li>حدث خطأ في قاعدة البيانات وتريد الرجوع لآخر نسخة سليمة.</li>
+      <li>تريد التراجع عن تغييرات غير مرغوب فيها.</li>
+    </ul>
+    <ol style="margin-bottom:12px">
+      <li>في شاشة المزامنة، اضغط على زر <strong>تنزيل من Drive</strong> (الزر الأصفر).</li>
+      <li>سيظهر تأكيد: "⚠️ سيتم استبدال جميع البيانات الحالية بنسخة Google Drive. هل أنت متأكد؟"</li>
+      <li>اضغط OK للمتابعة أو Cancel للإلغاء.</li>
+      <li>سيظهر مؤقت "⏳ جاري تنزيل البيانات من Google Drive..."</li>
+      <li>بعد نجاح التنزيل، ستظهر رسالة "✅ تم تنزيل البيانات من Google Drive. سيتم إعادة تحميل الصفحة..."</li>
+      <li>سيتم إعادة تحميل الصفحة تلقائياً بعد ثانيتين.</li>
+    </ol>
+
+    <h5 style="color:#c62828;margin-top:20px;margin-bottom:6px">الخطوة البديلة: تصدير/استيراد يدوي (بدون Google Drive)</h5>
+    <p style="margin-bottom:6px">إذا لم تقم بربط Google Drive (أو لا تريد استخدام السحابة)، يمكنك عمل نسخ احتياطي يدوي:</p>
+    <ul style="margin-bottom:12px">
+      <li><strong>تصدير (Download)</strong> — اضغط على زر "تصدير". سيتم تحميل ملف <code>blood-bank-backup.json</code> على جهاز الكمبيوتر الخاص بك. يمكنك حفظه على فلاشة، إيميل، أو أي وسيلة تخزين.</li>
+      <li><strong>استيراد (Upload)</strong> — اضغط على زر "استيراد". اختر ملف JSON من جهازك (نفس الملف الذي صدرته سابقاً). سيتم استبدال جميع البيانات الحالية بالبيانات الموجودة في الملف.</li>
+    </ul>
+    <div style="background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:12px;margin-bottom:16px">
+      <strong>⚠️ تنبيه مهم:</strong> عند استيراد نسخة سابقة، يتم استبدال جميع البيانات الحالية بالكامل. تأكد من أخذ نسخة احتياطية (تصدير) قبل الاستيراد.
+    </div>
+
+    <h5 style="color:#c62828;margin-top:16px;margin-bottom:6px">خطوات سريعة — ملخص للمستخدم اليومي</h5>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+      <tr style="background:#f8f9fa"><th style="padding:8px 12px;border:1px solid #e0e0e0;text-align:right">المهمة</th><th style="padding:8px 12px;border:1px solid #e0e0e0;text-align:right">الإجراء</th></tr>
+      <tr><td style="padding:8px 12px;border:1px solid #e0e0e0">الربط الأولي لـ Drive</td><td style="padding:8px 12px;border:1px solid #e0e0e0">الإدارة ← المزامنة ← ربط Drive ← افتح الرابط ← فوض ← الصق الكود</td></tr>
+      <tr><td style="padding:8px 12px;border:1px solid #e0e0e0">نسخ احتياطي يومي</td><td style="padding:8px 12px;border:1px solid #e0e0e0">الإدارة ← المزامنة ← رفع إلى Drive</td></tr>
+      <tr><td style="padding:8px 12px;border:1px solid #e0e0e0">استعادة البيانات</td><td style="padding:8px 12px;border:1px solid #e0e0e0">الإدارة ← المزامنة ← تنزيل من Drive</td></tr>
+      <tr><td style="padding:8px 12px;border:1px solid #e0e0e0">تصدير يدوي</td><td style="padding:8px 12px;border:1px solid #e0e0e0">الإدارة ← المزامنة ← تصدير (يحمل ملف JSON)</td></tr>
+      <tr><td style="padding:8px 12px;border:1px solid #e0e0e0">استيراد يدوي</td><td style="padding:8px 12px;border:1px solid #e0e0e0">الإدارة ← المزامنة ← استيراد ← اختر ملف JSON</td></tr>
+      <tr><td style="padding:8px 12px;border:1px solid #e0e0e0">تغيير حساب Google</td><td style="padding:8px 12px;border:1px solid #e0e0e0">الإدارة ← المزامنة ← إعادة ربط Drive (كرر الخطوات)</td></tr>
+    </table>
+
+    <h4 style="color:#e65100;margin-bottom:8px">21. الوضع الليلي (Dark Mode)</h4>
+    <p style="margin-bottom:16px">اضغط على أيقونة القمر <i class="fas fa-moon"></i> في الشريط العلوي لتفعيل/إلغاء الوضع الليلي. الوضع الليلي يغير ألوان الواجهة إلى ألوان داكنة مريحة للعين في الإضاءة المنخفضة. يتم حفظ التفضيل في المتصفح (localStorage) ويستعيد تلقائياً عند تسجيل الدخول مرة أخرى.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">22. التوقيت الصيفي/الشتوي</h4>
+    <p style="margin-bottom:16px">زر الساعة <i class="fas fa-clock"></i> في الشريط العلوي (يظهر للمدير فقط) يبدّل بين التوقيت الصيفي (+3 ساعات) والتوقيت الشتوي (+2 ساعات). يتم حفظ الإعداد في قاعدة البيانات ويؤثر على جميع المستخدمين.</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">23. الملف الشخصي (My Profile)</h4>
+    <p style="margin-bottom:16px">اضغط على أيقونة المستخدم <i class="fas fa-user-circle"></i> في الشريط العلوي. من هنا يمكنك: تعديل اسمك المعروض، تغيير كلمة المرور (تحتاج إدخال كلمة المرور الحالية أولاً).</p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">24. قفل التعديل بعد يوم 25</h4>
+    <p style="margin-bottom:16px">في المؤشرات الشهرية ومنصرف فصائل الدم، بعد يوم 25 من كل شهر يتم قفل التعديل تلقائياً. يظهر شريط أصفر في أعلى الصفحة للتأكيد. يتم عرض بيانات الشهر السابق تلقائياً. هذا يضمن عدم تعديل البيانات التاريخية بعد إغلاق الشهر.</p>
+
+    <hr style="border:none;border-top:1px solid #ddd;margin:30px 0 20px">
+
+    <div style="text-align:center;color:#999;font-size:13px;margin-bottom:24px">
+      <i class="fas fa-code"></i> إعداد و برمجة محمد ندا 01068880999 | جميع الحقوق محفوظة &copy; 2026
+    </div>
+
+    </div>`;
+
+  document.getElementById('mainContent').innerHTML = `<div class="page-actions">
+    <button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button>
+    <button class="btn btn-danger" onclick="printAboutPdf()" style="float:left"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
+  </div>
+  <div class="card"><div class="card-header"><i class="fas fa-info-circle"></i> حول النظام</div>
+  <div class="card-body">${bodyHtml}</div></div>`;
+}
+
+function printAboutPdf() {
+  const el = document.getElementById('aboutBody');
+  if (!el) return;
+  const html = `<!DOCTYPE html><html lang="ar" dir="rtl"><head>
+    <meta charset="UTF-8"><title>دليل نظام إدارة بنوك الدم</title>
+    <style>
+      @page { size: A4; margin: 2cm }
+      body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; line-height: 1.8; color: #333 }
+      code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 11px; direction: ltr; display: inline-block }
+      pre { background: #f5f5f5; padding: 10px; border-radius: 5px; font-size: 11px; direction: ltr; text-align: left; border: 1px solid #e0e0e0; overflow-x: auto }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 16px }
+      td, th { padding: 5px 10px; border: 1px solid #ddd; text-align: right }
+      th { background: #f0f0f0 }
+      ul, ol { margin-bottom: 12px; padding-right: 20px }
+      li { margin-bottom: 4px }
+      h2 { color: #7b1fa2; border-bottom: 2px solid #7b1fa2; padding-bottom: 6px }
+      h3 { color: #1565c0; margin-top: 24px }
+      h4 { color: #e65100; margin-top: 18px; margin-bottom: 6px }
+      h5 { color: #c62828; margin-top: 14px; margin-bottom: 4px }
+      hr { border: none; border-top: 1px solid #ddd; margin: 20px 0 }
+      .center { text-align: center }
+      .note { background: #fff3e0; border: 1px solid #ffcc80; border-radius: 5px; padding: 10px; margin-bottom: 12px }
+      @media print { .no-print { display: none } }
+    </style>
+  </head><body>${el.innerHTML}</body></html>`;
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => { w.focus(); w.print(); }, 500);
+}
+
+// --- Sync CSS injected once ---
+(function injectSyncStyles() {
+  if (document.getElementById('syncStyles')) return;
+  const style = document.createElement('style');
+  style.id = 'syncStyles';
+  style.textContent = `
+    .sync-stat { background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px 16px;font-size:14px;display:flex;align-items:center;gap:10px }
+    .sync-stat i { font-size:20px;width:24px;text-align:center;color:#1a73e8 }
+    .sync-stat span { color:#666 }
+    .dark-mode .sync-stat { background:#2d2d2d;border-color:#444;color:#eee }
+    .dark-mode .sync-stat span { color:#aaa }
+  `;
+  document.head.appendChild(style);
+})();
+
+// Fetch hospitals once for archive type filter
 let _archHospitals = null;
 async function getArchHospitals() {
   if (!_archHospitals) _archHospitals = await api('GET', '/hospitals');

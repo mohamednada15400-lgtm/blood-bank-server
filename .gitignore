@@ -10,3 +10,9 @@ backup.bat
 serve-zip.js
 start-cloud.ps1
 tunnel.cmd
+data/drive-config.json
+data/drive-config.json.txt
+data/drive-tokens.json
+data/readiness_template.xlsx
+*.log
+server_output.*

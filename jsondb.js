@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','users','hospitals','governorates','inventory','role_perms','readiness','equipment'];
+const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','users','hospitals','governorates','inventory','role_perms','readiness','equipment','time_config'];
 
 function makePerm(v,a,e,d,x) { return {v,a,e,d,x}; }
 
@@ -25,6 +25,7 @@ class JSONDB {
     this.filePath = filePath;
     this.data = null;
     this.idCounters = {};
+    this._saveTimer = null;
   }
 
   init() {
@@ -43,14 +44,14 @@ class JSONDB {
       inventory: [],       daily_stock: [], daily_statements: [], daily_reports: [],
       monthly_storage: [], monthly_aggregate: [], monthly_indicators: [], monthly_consumption: [], monthly_big_indicators: [], monthly_small_indicators: [], consumption: [],
       employee_statements: [],
-      employee_monthly_updates: [],
+      archives: [],
       readiness_occasions: [],
       readiness_reports: [],
       readiness_notifications: [],
-      archives: [],
+      blood_bank_equipment: null,
+      app_config: { time_offset: 3 },
       role_perms: Object.entries(DEF_PERMS).map(([role, perms]) => ({ role, permissions: JSON.parse(JSON.stringify(perms)) })),
-_counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, employee_monthly_updates: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1 },
-      blood_bank_equipment: {}
+      _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1 }
     };
   }
 
@@ -120,7 +121,7 @@ _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_s
       const types = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
       this.data.inventory = types.map((t, i) => ({ id: i + 1, blood_type: t, storage: 0, total_received: 0, total_consumed: 0 }));
       if (!this.data._counters.daily_reports) this.data._counters.daily_reports = this.data.daily_reports ? this.data.daily_reports.length + 1 : 1;
-      this.data._counters = { users: 9, hospitals: 40, governorates: 7, inventory: 9, daily_stock: 1, daily_statements: 1, daily_reports: this.data._counters.daily_reports || 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, employee_statements: 1, employee_monthly_updates: 1, readiness_occasions: 1, readiness_reports: 1 };
+      this.data._counters = { users: 9, hospitals: 40, governorates: 7, inventory: 9, daily_stock: 1, daily_statements: 1, daily_reports: this.data._counters.daily_reports || 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1 };
     }
     // Ensure tables exist even when loading existing db
     if (!this.data.daily_reports) this.data.daily_reports = [];
@@ -140,22 +141,48 @@ _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_s
     if (!this.data.strategic_settings) this.data.strategic_settings = null;
     if (!this.data.employee_statements) this.data.employee_statements = [];
     if (!this.data._counters.employee_statements) this.data._counters.employee_statements = this.data.employee_statements.length + 1 || 1;
-    if (!this.data.employee_monthly_updates) this.data.employee_monthly_updates = [];
-    if (!this.data._counters.employee_monthly_updates) this.data._counters.employee_monthly_updates = 1;
     if (!this.data.readiness_occasions) this.data.readiness_occasions = [];
-    if (!this.data._counters.readiness_occasions) this.data._counters.readiness_occasions = 1;
     if (!this.data.readiness_reports) this.data.readiness_reports = [];
-    if (!this.data._counters.readiness_reports) this.data._counters.readiness_reports = 1;
     if (!this.data.readiness_notifications) this.data.readiness_notifications = [];
-    if (!this.data._counters.readiness_notifications) this.data._counters.readiness_notifications = 1;
-    if (!this.data.blood_bank_equipment) this.data.blood_bank_equipment = {};
+    if (!this.data._counters.readiness_occasions) this.data._counters.readiness_occasions = this.data.readiness_occasions.length + 1 || 1;
+    if (!this.data._counters.readiness_reports) this.data._counters.readiness_reports = this.data.readiness_reports.length + 1 || 1;
+    if (!this.data._counters.readiness_notifications) this.data._counters.readiness_notifications = this.data.readiness_notifications.length + 1 || 1;
+    if (!this.data.blood_bank_equipment || !this.data.blood_bank_equipment.types) {
+      this.data.blood_bank_equipment = {
+        types: [
+          { id: 1, name: 'فريزر بلازما', category: 'تخزيني' }, { id: 2, name: 'ثلاجة دم', category: 'تخزيني' },
+          { id: 3, name: 'ثلاجة مستهلكات', category: 'تخزيني' }, { id: 4, name: 'ثلاجة اعدام', category: 'تخزيني' },
+          { id: 5, name: 'حضان للصفائح الدموية', category: 'تجميعي' }, { id: 6, name: 'جهاز تسييح البلازما', category: 'تجميعي' },
+          { id: 7, name: 'نظام مغلق Close sys', category: 'تجميعي' }, { id: 8, name: 'عاصر انبوب Tube Stripper', category: 'تجميعي' },
+          { id: 9, name: 'التوافق Cm set', category: 'تجميعي' }, { id: 10, name: 'Pipette Fixed 50µ', category: 'تخزيني' },
+          { id: 11, name: 'Pipette Variable 100-1000µ', category: 'تخزيني' }, { id: 12, name: 'Pipette Variable 20-200µ', category: 'تخزيني' },
+          { id: 13, name: 'Pipette Variable 10-100µ', category: 'تخزيني' }, { id: 14, name: 'ميزان ديجيتال Lab Balance', category: 'تخزيني' },
+          { id: 15, name: 'سنترفيوج مبرد', category: 'تخزيني' }, { id: 16, name: 'جهاز فصل يدوي Extractor', category: 'تخزيني' },
+          { id: 17, name: 'سرير متبرع', category: 'تجميعي' }, { id: 18, name: 'جهاز هزاز وميزان قرب الدم', category: 'تجميعي' },
+          { id: 19, name: 'جهاز قياس هيموجلوبين', category: 'تجميعي' }, { id: 20, name: 'Adult Sphygmomanometer', category: 'تجميعي' },
+          { id: 21, name: 'Stethoscope', category: 'تجميعي' }, { id: 22, name: 'ميزان أشخاص', category: 'تجميعي' }
+        ],
+        hospitals: [],
+        lastUpdated: null
+      };
+    }
+    if (!this.data.blood_bank_equipment.hospitals) this.data.blood_bank_equipment.hospitals = [];
+    if (!this.data._counters.equipment) this.data._counters.equipment = 1;
+    // Migrate existing types to have category
+    if (this.data.blood_bank_equipment.types) {
+      const catMap = { 1:'تخزيني',2:'تخزيني',3:'تخزيني',4:'تخزيني',5:'تجميعي',6:'تجميعي',7:'تجميعي',8:'تجميعي',9:'تجميعي',10:'تخزيني',11:'تخزيني',12:'تخزيني',13:'تخزيني',14:'تخزيني',15:'تخزيني',16:'تخزيني',17:'تجميعي',18:'تجميعي',19:'تجميعي',20:'تجميعي',21:'تجميعي',22:'تجميعي' };
+      this.data.blood_bank_equipment.types.forEach(t => { if (!t.category) t.category = catMap[t.id] || 'تجميعي'; });
+      this.data.blood_bank_equipment.types.sort((a, b) => a.id - b.id);
+    }
     if (!this.data.hospital_types || !this.data.hospital_types.length) this.data.hospital_types = [{ id: 1, name: 'تجميعي' }, { id: 2, name: 'تخزيني' }];
     if (!this.data._counters.hospital_types) this.data._counters.hospital_types = this.data.hospital_types.length + 1;
+    if (!this.data.app_config || typeof this.data.app_config.time_offset !== 'number') this.data.app_config = { time_offset: 3 };
     if (!this.data.role_perms || !Array.isArray(this.data.role_perms)) {
       this.data.role_perms = Object.entries(DEF_PERMS).map(([role, perms]) => ({ role, permissions: JSON.parse(JSON.stringify(perms)) }));
     } else {
       // Add missing pages to existing role_perms
       this.data.role_perms.forEach(rp => {
+        if (typeof rp.permissions === 'string') rp.permissions = JSON.parse(rp.permissions);
         const defPerms = DEF_PERMS[rp.role];
         if (defPerms) {
           ALL_PAGES.forEach(k => {
@@ -165,8 +192,25 @@ _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_s
           });
         }
       });
+      // Migration: readiness defaults
+      this.data.role_perms.forEach(rp => {
+        if (typeof rp.permissions === 'string') rp.permissions = JSON.parse(rp.permissions);
+        if (rp.permissions.readiness === undefined) {
+          const base = rp.permissions.daily_stock || { v: 0, a: 0, e: 0, d: 0, x: 0 };
+          rp.permissions.readiness = { ...base };
+        }
+      });
+      // Migration: time_config defaults
+      this.data.role_perms.forEach(rp => {
+        if (typeof rp.permissions === 'string') rp.permissions = JSON.parse(rp.permissions);
+        if (rp.permissions.time_config === undefined) {
+          const base = rp.permissions.daily_stock || { v: 0, a: 0, e: 0, d: 0, x: 0 };
+          rp.permissions.time_config = { ...base };
+        }
+      });
       // Migration: consumption -> employees in role_perms
       this.data.role_perms.forEach(rp => {
+        if (typeof rp.permissions === 'string') rp.permissions = JSON.parse(rp.permissions);
         if (rp.permissions.consumption !== undefined && rp.permissions.employees === undefined) {
           rp.permissions.employees = rp.permissions.consumption;
         }
@@ -177,13 +221,22 @@ _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_s
   }
 
   _save() {
-    this._write();
+    if (this._saveTimer) clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => {
+      this._write();
+    }, 3000);
+    // If first call, write immediately
+    if (!this._saveTimer._pending) {
+      this._saveTimer._pending = true;
+      this._write();
+    }
   }
 
   _write() {
     const dir = path.dirname(this.filePath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf8');
+    if (this._saveTimer) this._saveTimer._pending = false;
   }
 
   _nextId(table) {
@@ -461,10 +514,9 @@ _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_s
         val = val.replace(/'/g, '').trim();
       } else val = parseInt(val);
 
-      if (val == null) return false;
-
       const rowVal = row[col];
       if (rowVal === undefined) return true;
+      if (val == null) return false;
 
       const isDateCol = col === 'date' || cond.includes('date');
       if (isDateCol) {
