@@ -3,7 +3,7 @@
     {
       "id": 45,
       "username": "h37",
-      "password": "$2b$10$fe3NKhWOJEQO2214CkThV.1qmsTDpZYehqG//6jMkZiqkDtxnjaI.",
+      "password": "$2b$10$784/07wQVbgRw4J04R1zSeGtJ2xSWEqdvDvNfs/V2h9EnzWOY8VOe",
       "name": "٣٠ يونيو",
       "role": "hospital",
       "hospital_id": 5,
@@ -353,7 +353,7 @@
     {
       "id": 9,
       "username": "h1",
-      "password": "$2b$10$NsUOc5tTal7k4F2l/7w0B.cABFAK4KDsrv0l63/dGVDQwNKShLsJu",
+      "password": "$2b$10$784/07wQVbgRw4J04R1zSeGtJ2xSWEqdvDvNfs/V2h9EnzWOY8VOe",
       "name": "ابوسمبل الدولي",
       "role": "hospital",
       "hospital_id": 35,
@@ -363,7 +363,7 @@
     {
       "id": 1,
       "username": "admin",
-      "password": "$2b$10$OJzmklmQcEL/pgdxFtCKxOqigdRZERz0Vhdmy5vqvON/rd0wp15Ly",
+      "password": "\\/RSkaduOoTXUBYlu50aYPLMAQ/2g5kgiXv2yR6",
       "name": "المدير العام",
       "role": "admin",
       "hospital_id": null,
