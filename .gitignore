@@ -16,3 +16,4 @@ data/drive-tokens.json
 data/readiness_template.xlsx
 *.log
 server_output.*
+data/db.json.backup_*

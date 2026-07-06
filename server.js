@@ -2133,6 +2133,153 @@ app.get('/api/sync/drive/download', requireAuth(), async (req, res) => {
   }
 });
 
+// === Data Analysis API ===
+app.get('/api/analysis', requireAuth(), requirePerm('data_analysis', 'view'), async (req, res) => {
+  try {
+    const { year, period, governorate } = req.query;
+    const analysisYear = parseInt(year) || new Date().getFullYear();
+    const _period = period || 'yearly';
+
+    // Helper to filter by governorate
+    const govFilter = governorate ? ` AND h.governorate = '${governorate}'` : '';
+
+    // 1. Hospitals summary
+    const hospResult = await query(`SELECT * FROM hospitals WHERE 1=1${govFilter}`);
+    const hospitals = hospResult.rows;
+    const totalHospitals = hospitals.length;
+    const hospByType = {};
+    const hospByGov = {};
+    hospitals.forEach(h => {
+      const t = h.type || 'تخزيني';
+      hospByType[t] = (hospByType[t] || 0) + 1;
+      hospByGov[h.governorate] = (hospByGov[h.governorate] || 0) + 1;
+    });
+
+    // 2. Inventory / Stock
+    const invResult = await query('SELECT * FROM inventory');
+    const totalStock = invResult.rows.reduce((s, r) => s + (r.storage || 0), 0);
+    const stockByType = {};
+    invResult.rows.forEach(r => { stockByType[r.blood_type] = r.storage || 0; });
+
+    // 3. Monthly Indicators aggregated
+    const indResult = await query(`SELECT mi.*, h.name as hospital_name, h.governorate FROM monthly_indicators mi JOIN hospitals h ON h.id = mi.hospital_id WHERE mi.year = ${analysisYear}${govFilter}`);
+    const indicators = indResult.rows;
+    const totalIndicators = indicators.length;
+    const indByMonth = {};
+    for (let m = 1; m <= 12; m++) { indByMonth[m] = { count: 0 }; }
+    indicators.forEach(r => {
+      const m = r.month;
+      if (!indByMonth[m]) indByMonth[m] = { count: 0 };
+      indByMonth[m].count++;
+      if (r.data) {
+        const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+        Object.entries(d).forEach(([k, v]) => {
+          if (typeof v === 'number') indByMonth[m][k] = (indByMonth[m][k] || 0) + v;
+        });
+      }
+    });
+
+    // 4. Employees summary
+    const empResult = await query(`SELECT es.*, h.governorate FROM employee_statements es JOIN hospitals h ON h.id = es.hospital_id WHERE 1=1${govFilter}`);
+    const totalEmployees = empResult.rows.length;
+    const empByCategory = {};
+    const empByGov = {};
+    empResult.rows.forEach(r => {
+      const cat = r.category || 'أخرى';
+      empByCategory[cat] = (empByCategory[cat] || 0) + 1;
+      empByGov[r.governorate] = (empByGov[r.governorate] || 0) + 1;
+    });
+
+    // 5. Equipment summary
+    let equipmentData = null;
+    try {
+      const eqResult = await query('SELECT * FROM blood_bank_equipment');
+      if (eqResult.rows.length > 0) {
+        equipmentData = eqResult.rows[0];
+      }
+    } catch {}
+
+    // Build quarter / half-year aggregates
+    function sumByPeriod(months) {
+      const sums = {};
+      let count = 0;
+      months.forEach(m => {
+        if (indByMonth[m]) {
+          count += indByMonth[m].count;
+          Object.entries(indByMonth[m]).forEach(([k, v]) => {
+            if (k !== 'count' && typeof v === 'number') sums[k] = (sums[k] || 0) + v;
+          });
+        }
+      });
+      return { count, ...sums };
+    }
+
+    const q1 = sumByPeriod([1,2,3]);
+    const q2 = sumByPeriod([4,5,6]);
+    const q3 = sumByPeriod([7,8,9]);
+    const q4 = sumByPeriod([10,11,12]);
+    const h1 = sumByPeriod([1,2,3,4,5,6]);
+    const h2 = sumByPeriod([7,8,9,10,11,12]);
+    const yearly = sumByPeriod([1,2,3,4,5,6,7,8,9,10,11,12]);
+
+    // Monthly consumption data
+    let consumptionByMonth = {};
+    try {
+      const consResult = await query(`SELECT * FROM monthly_consumption WHERE year = ${analysisYear}`);
+      consResult.rows.forEach(r => {
+        const m = r.month || 1;
+        if (!consumptionByMonth[m]) consumptionByMonth[m] = { total: 0 };
+        if (r.data) {
+          const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+          Object.entries(d).forEach(([k, v]) => {
+            if (typeof v === 'number') consumptionByMonth[m][k] = (consumptionByMonth[m][k] || 0) + v;
+            consumptionByMonth[m].total += typeof v === 'number' ? v : 0;
+          });
+        }
+      });
+    } catch {}
+
+    res.json({
+      year: analysisYear,
+      period: _period,
+      governorate: governorate || 'الكل',
+      hospitals: {
+        total: totalHospitals,
+        byType: hospByType,
+        byGovernorate: hospByGov,
+        list: hospitals.map(h => ({ id: h.id, name: h.name, governorate: h.governorate, type: h.type }))
+      },
+      inventory: {
+        total: totalStock,
+        byBloodType: stockByType,
+        items: invResult.rows.map(r => ({ blood_type: r.blood_type, storage: r.storage || 0, received: r.total_received || 0, consumed: r.total_consumed || 0 }))
+      },
+      employees: {
+        total: totalEmployees,
+        byCategory: empByCategory,
+        byGovernorate: empByGov
+      },
+      indicators: {
+        total: totalIndicators,
+        byMonth: indByMonth,
+        quarterly: { q1, q2, q3, q4 },
+        halfYearly: { h1, h2 },
+        yearly
+      },
+      consumption: {
+        byMonth: consumptionByMonth
+      },
+      equipment: equipmentData ? {
+        types: equipmentData.types || [],
+        hospitalsCount: (equipmentData.hospitals || []).length
+      } : null,
+      _note: 'period parameter is advisory — all data is returned for full-year filtering'
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Health check for cloud deployment
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString(), uptime: process.uptime() });

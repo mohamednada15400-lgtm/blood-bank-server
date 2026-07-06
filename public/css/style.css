@@ -281,7 +281,7 @@ body.dark-mode *::-webkit-scrollbar-thumb { background: #2a2a4a; }
 .blood-item.good { border-color: var(--success); } .blood-item.good .qty { color: var(--success); }
 
 /* Table */
-.table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; touch-action: pan-x pan-y pinch-zoom; }
 table { width: 100%; border-collapse: collapse; }
 table th { text-align: right; padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--text-light); border-bottom: 2px solid var(--border); white-space: nowrap; }
 table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
@@ -369,7 +369,7 @@ textarea.form-control { min-height: 80px; resize: vertical; }
 .data-table thead tr:nth-child(2) th { font-size: 10px; }
 .data-table thead tr:nth-child(3) th { font-size: 9px; padding: 4px 6px; font-weight: 700; color: #222; border-top: 2px solid #333; }
 #dailyStockTable { min-width: 5500px; }
-.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y pinch-zoom; }
 
 /* Filter bar */
 .filter-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
@@ -460,7 +460,7 @@ textarea.form-control { min-height: 80px; resize: vertical; }
 .plat-editable[contenteditable="true"], .cryo-editable[contenteditable="true"] { outline: 2px solid #6c757d; background: #fff; }
 
 /* Mobile responsive */
-.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; touch-action: pan-x pan-y pinch-zoom; }
 @media (max-width: 768px) {
   .content { padding: 10px; }
   .card-body { padding: 10px; }
@@ -577,7 +577,7 @@ body.dark-mode .ind-table tbody tr:hover { background: rgba(255,255,255,0.03); }
 .ind-table .gov-col { font-weight: 700; color: var(--text); min-width: 60px; text-align: right; font-size: 11px; }
 .ind-table .hosp-col { font-weight: 600; min-width: 100px; text-align: right; }
 .ind-table .formula-cell { }
-.table-wrap { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+.table-wrap { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y pinch-zoom; }
 .table-wrap::-webkit-scrollbar { height: 6px; }
 .table-wrap::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 3px; }
 .table-wrap::-webkit-scrollbar-thumb { background: #c0c0c0; border-radius: 3px; }
@@ -835,7 +835,7 @@ body.dark-mode .strategic-table .cell-under { background: #3a2a1a; color: #ffb74
   .filter-bar { gap: 4px; }
   .app-footer { padding: 6px; font-size: 10px; }
   .empty-msg { padding: 12px; font-size: 11px; }
-  .table-wrapper { margin: 0 -4px; }
+  .table-wrapper { margin: 0 -4px; touch-action: pan-x pan-y pinch-zoom; }
 }
 
 @media (min-width: 601px) and (max-width: 900px) {
@@ -1026,3 +1026,11 @@ body.dark-mode .stock-table tbody tr:hover { background:#1a1a3e!important; }
 .card-header { padding:12px 16px; font-size:14px; font-weight:700; color:#2c3e50; background:#f8f9fa; border-bottom:1px solid #dee2e6; border-radius:10px 10px 0 0; display:flex; align-items:center; gap:8px; }
 .card-header i { color:#3498db; }
 body.dark-mode .card-header { background:#1a1a3e; color:#ecf0f1; border-color:#2a2a4a; }
+
+/* ====== STOCK Mang Sticky 3-Row Header ====== */
+#dailyStockWrap { max-height: 70vh; overflow-y: auto; overflow-x: auto; }
+#dailyStockTable { border-collapse: separate; border-spacing: 0; }
+#dailyStockTable thead { position: sticky; top: 0; z-index: 10; }
+#dailyStockTable thead tr:nth-child(1) th { position: sticky; top: 0; z-index: 11; background: #2c3e50; color: #fff; }
+#dailyStockTable thead tr:nth-child(2) th { position: sticky; top: 28px; z-index: 10; background: #34495e; color: #fff; }
+#dailyStockTable thead tr:nth-child(3) th { position: sticky; top: 56px; z-index: 10; background: #3b5998; color: #fff; }

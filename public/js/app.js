@@ -1,5 +1,5 @@
 const API_BASE = '/api';
-let _timeOffset = 3;
+let _timeOffset = 2;
 let _clockInterval = null;
 
 function getCairoDate() {
@@ -19,11 +19,11 @@ function fmtCairoDate(fmt) {
 async function loadTimeConfig() {
   try {
     const cfg = await api('GET', '/config/time');
-    _timeOffset = cfg.time_offset || 3;
+    _timeOffset = cfg.time_offset || 2;
     const btn = document.getElementById('timeToggleBtn');
     if (btn) btn.style.display = window._user && window._user.role === 'admin' ? '' : 'none';
     const lbl = document.getElementById('timeOffsetLabel');
-    if (lbl) lbl.textContent = _timeOffset === 3 ? 'صيفي' : 'شتوي';
+    if (lbl) lbl.textContent = _timeOffset === 2 ? 'صيفي' : 'شتوي';
   } catch(e) {}
 }
 function updateClock() {
@@ -35,13 +35,22 @@ async function toggleTime() {
   try {
     await api('POST', '/config/time', { time_offset: _timeOffset });
     const lbl = document.getElementById('timeOffsetLabel');
-    if (lbl) lbl.textContent = _timeOffset === 3 ? 'صيفي' : 'شتوي';
+    if (lbl) lbl.textContent = _timeOffset === 2 ? 'صيفي' : 'شتوي';
     updateClock();
     const dd = document.getElementById('dateDisplay');
     if (dd) dd.textContent = fmtCairoDate('full');
   } catch(e) {
-    _timeOffset = _timeOffset === 3 ? 2 : 3;
+  _timeOffset = _timeOffset === 2 ? 1 : 2;
   }
+}
+
+function startStockClock() {
+  const el = document.getElementById('stockClock');
+  if (!el) return;
+  const tick = () => { el.textContent = fmtCairoDate('time'); };
+  tick();
+  if (_clockInterval) clearInterval(_clockInterval);
+  _clockInterval = setInterval(tick, 1000);
 }
 
 async function api(method, url, data) {
@@ -93,8 +102,8 @@ async function checkSession() {
 document.addEventListener('DOMContentLoaded', () => { applyDarkMode(); checkSession(); });
 
 const PERM_PAGES = [
-  { key: 'daily_stock', label: 'المخزون اليومي', cat: 'daily', icon: 'fa-vial' },
-  { key: 'daily_total', label: 'إجمالي المخزون', cat: 'daily', icon: 'fa-cubes' },
+  { key: 'daily_stock', label: 'STOCK Mang', cat: 'daily', icon: 'fa-vial' },
+  { key: 'daily_total', label: 'TOTAL STOCK Mang', cat: 'daily', icon: 'fa-cubes' },
   { key: 'daily_statement', label: 'البيان اليومي', cat: 'daily', icon: 'fa-file-waveform' },
   { key: 'daily_branch', label: 'بيان الفرع', cat: 'daily', icon: 'fa-code-branch' },
   { key: 'monthly_indicators', label: 'مؤشرات شهرية', cat: 'monthly', icon: 'fa-chart-line' },
@@ -111,7 +120,7 @@ const PERM_PAGES = [
   { key: 'role_perms', label: 'صلاحيات الأدوار', cat: 'admin', icon: 'fa-shield-check' },
   { key: 'hospitals', label: 'المستشفيات', cat: 'admin', icon: 'fa-hospital' },
   { key: 'governorates', label: 'المحافظات', cat: 'admin', icon: 'fa-location-dot' },
-  { key: 'supervisor_data', label: 'بيانات المشرفين', cat: 'admin', icon: 'fa-address-card' },
+
   { key: 'time_config', label: 'التوقيت', cat: 'admin', icon: 'fa-clock' }
 ];
 
@@ -257,8 +266,8 @@ const ITEM_COLORS = {
 const MENU_CATS = [
   { key: 'daily', label: 'يومي', icon: 'fa-calendar-day', color: ['#dc3545','#e74c3c'],
     items: [
-      { key: 'daily_stock', label: 'المخزون اليومي', icon: 'fa-vial', page: 'renderDailyStock' },
-      { key: 'daily_total', label: 'إجمالي المخزون', icon: 'fa-cubes', page: 'renderTotal' },
+      { key: 'daily_stock', label: 'STOCK Mang', icon: 'fa-vial', page: 'renderDailyStock' },
+      { key: 'daily_total', label: 'TOTAL STOCK Mang', icon: 'fa-cubes', page: 'renderTotal' },
       { key: 'daily_statement', label: 'البيان اليومي', icon: 'fa-file-waveform', page: 'renderDailyStatement' },
       { key: 'daily_branch', label: 'بيان الفرع', icon: 'fa-code-branch', page: 'renderBranchStatement' }
     ]
@@ -294,7 +303,6 @@ const MENU_CATS = [
       { key: 'role_perms', label: 'الصلاحيات', icon: 'fa-lock', page: 'renderRolePerms' },
       { key: 'hospitals', label: 'المستشفيات', icon: 'fa-hospital', page: 'renderHospitals' },
       { key: 'governorates', label: 'المحافظات', icon: 'fa-map', page: 'renderGovernorates' },
-      { key: 'supervisor_data', label: 'بيانات المشرفين', icon: 'fa-address-book', page: 'renderSupervisorData' },
       { key: 'sync', label: 'المزامنة مع Drive', icon: 'fa-cloud-upload-alt', page: 'showSyncDialog' },
       { key: 'about', label: 'حول النظام', icon: 'fa-info-circle', page: 'showAbout' }
     ]
@@ -341,18 +349,14 @@ function showMenu() { _navStack = [];
     const bg = Array.isArray(c.color) ? grad(c.color) : c.color;
     const icn = Array.isArray(c.color) ? c.color[0] : c.color;
     const itemsTip = (c.items || []).filter(i => hasPerm(i.key, 'view'));
-    if (c.page && !itemsTip.length) {
-      html += `<div class="main-icon-card" onclick="navigateTo('${c.page}','${c.key}')">
-        <div class="main-icon-circle" style="background:${bg}"><i class="fas ${c.icon}"></i></div>
-        <div class="main-icon-label">${c.label}</div>
-      </div>`;
-    } else {
-      html += `<div class="main-icon-card" onclick="${c.page ? "navigateTo('"+c.page+"','"+c.key+"')" : "showSubMenu('"+c.key+"')"}">
-        <div class="main-icon-circle" style="background:${bg}"><i class="fas ${c.icon}"></i></div>
-        <div class="main-icon-label">${c.label}</div>
-        ${itemsTip.length ? `<div class="main-icon-tip">${itemsTip.map(i => `<span class="tip-item"><i class="fas ${i.icon}"></i> ${i.label}</span>`).join('')}</div>` : ''}
-      </div>`;
-    }
+    const tipContent = itemsTip.length
+      ? itemsTip.map(i => `<span class="tip-item"><i class="fas ${i.icon}"></i> ${i.label}</span>`).join('')
+      : `<span class="tip-item">${c.label}</span>`;
+    html += `<div class="main-icon-card" onclick="${c.page ? "navigateTo('"+c.page+"','"+c.key+"')" : "showSubMenu('"+c.key+"')"}">
+      <div class="main-icon-circle" style="background:${bg}"><i class="fas ${c.icon}"></i></div>
+      <div class="main-icon-label">${c.label}</div>
+      <div class="main-icon-tip">${tipContent}</div>
+    </div>`;
   });
   html += '</div>';
   document.getElementById('mainContent').innerHTML = html;
@@ -511,7 +515,8 @@ function showSubMenu(catKey, subKey) {
       let ic = ITEM_COLORS[item.key];
       if (!ic) ic = Array.isArray(cat.color) ? grad(cat.color) : cat.color;
       else ic = Array.isArray(ic) ? grad(ic) : ic;
-      html += `<div class="sub-icon-card" onclick="showSubMenu('${catKey}','${item.key}')">
+      const subTips = item.subitems.filter(si => hasPerm(si.key, 'view')).map(si => si.label).join(' · ');
+      html += `<div class="sub-icon-card" title="${sanitize(item.label)} — ${sanitize(subTips)}" onclick="showSubMenu('${catKey}','${item.key}')">
         <div class="sub-icon-circle" style="background:${ic}"><i class="fas ${item.icon}"></i></div>
         <div class="sub-icon-label">${item.label}</div>
       </div>`;
@@ -519,7 +524,7 @@ function showSubMenu(catKey, subKey) {
       let ic = ITEM_COLORS[item.key];
       if (!ic) ic = Array.isArray(cat.color) ? grad(cat.color) : cat.color;
       else ic = Array.isArray(ic) ? grad(ic) : ic;
-      html += `<div class="sub-icon-card" onclick="navigateTo('${item.page}','${catKey}'${isNested ? ",'"+subKey+"'" : ''})">
+      html += `<div class="sub-icon-card" title="${sanitize(item.label)}" onclick="navigateTo('${item.page}','${catKey}'${isNested ? ",'"+subKey+"'" : ''})">
         <div class="sub-icon-circle" style="background:${ic}"><i class="fas ${item.icon}"></i></div>
         <div class="sub-icon-label">${item.label}</div>
       </div>`;
@@ -2913,7 +2918,7 @@ async function doAddBranchSupervisor() {
     await api('POST', '/users', { username, password, name, role: 'branch_supervisor', governorate, hospitalId: null, viewPermission: 'governorate', phone, email });
     closeModal();
     showToast('✅ تم إضافة مشرف فرع');
-    renderSupervisorData();
+    renderUsers();
   } catch (e) { showToast('❌ ' + e.message); }
 }
 
@@ -2954,7 +2959,7 @@ async function doEditSupervisorUser(id) {
     await api('PUT', '/users/' + id, { username, password, name, governorate, phone, email });
     closeModal();
     showToast('✅ تم التعديل');
-    renderSupervisorData();
+    renderUsers();
   } catch (e) { showToast('❌ ' + e.message); }
 }
 
@@ -2963,7 +2968,7 @@ async function deleteSupervisorUser(id) {
     try {
       await api('DELETE', '/users/' + id);
       showToast('✅ تم الحذف');
-      renderSupervisorData();
+      renderUsers();
     } catch (e) { showToast('❌ ' + e.message); }
   });
 }
@@ -3821,41 +3826,93 @@ async function renderUsers() {
   try {
     const me = (await api('GET', '/me')).user;
     const isMaster = me.id === 1;
-    const roles = ['admin','hospital','branch_supervisor','org_supervisor','visitor'];
-    const roleLabels = { admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
-    const roleColors = { admin:'#dc3545', hospital:'#17a2b8', branch_supervisor:'#fd7e14', org_supervisor:'#28a745', visitor:'#6c757d' };
+    const roles = ['admin','hospital_manager','hospital','branch_supervisor','org_supervisor','visitor'];
+    const roleLabels = { admin:'مدير عام', hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
+    const roleColors = { admin:'#dc3545', hospital_manager:'#6f42c1', hospital:'#17a2b8', branch_supervisor:'#fd7e14', org_supervisor:'#28a745', visitor:'#6c757d' };
     el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      <div class="search-input-wrap"><input class="search-input" id="userSearchInput" placeholder="بحث بالاسم أو المستخدم أو المحافظة..." oninput="filterUserTable()" style="min-width:200px;max-width:300px"></div>
+      <div class="search-input-wrap" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input class="search-input" id="userSearchName" placeholder="بحث بالاسم..." oninput="filterUserTable()" style="min-width:150px">
+        <input class="search-input" id="userSearchUser" placeholder="اسم المستخدم..." oninput="filterUserTable()" style="min-width:150px">
+        <select class="form-control" id="userFilterRole" onchange="filterUserTable()" style="min-width:150px"><option value="">كل الأدوار</option>${roles.map(r => `<option value="${r}">${roleLabels[r]}</option>`).join('')}</select>
+        <select class="form-control" id="userFilterGov" onchange="filterUserTable()" style="min-width:150px"><option value="">كل المحافظات</option></select>
+        <select class="form-control" id="userFilterHosp" onchange="filterUserTable()" style="min-width:180px"><option value="">كل المستشفيات</option></select>
+      </div>
       ${isMaster ? '<button class="btn btn-primary" onclick="showAddUserModal()"><i class="fas fa-plus"></i> إضافة مستخدم</button>' : ''}
       <button class="btn btn-outline" onclick="copyUsersTable()" title="نسخ الجدول"><i class="fas fa-copy"></i> نسخ</button>
-      <button class="btn btn-outline" onclick="exportUsersExcel()" title="تصدير Excel"><i class="fas fa-file-excel"></i> Excel</button></div>
-      <div class="card"><div class="card-body table-scroll"><table class="data-table" id="userTable"><thead><tr><th>#</th><th>الاسم</th><th>اسم المستخدم</th><th>الدور</th><th>التليفون</th><th>المستشفى</th><th>الفرع</th><th></th></tr></thead><tbody id="usersBody"></tbody></table></div></div>`;
-    const [users, hospitals] = await Promise.all([api('GET', '/users'), api('GET', '/hospitals')]);
+      <button class="btn btn-outline" onclick="exportUsersExcel()" title="تصدير Excel"><i class="fas fa-file-excel"></i> Excel</button>
+      <button class="btn btn-outline" onclick="exportUsersPdf()" title="تصدير PDF"><i class="fas fa-file-pdf"></i> PDF</button>
+      ${isMaster ? '<button class="btn btn-warning" onclick="toggleShowPasswords()" id="togglePassBtn" title="إظهار/إخفاء كلمات المرور"><i class="fas fa-eye"></i> عرض الباسوردات</button>' : ''}</div>
+      <div class="card"><div class="card-body table-scroll"><table class="data-table" id="userTable"><thead><tr><th>#</th><th>الاسم</th><th>اسم المستخدم</th><th>الدور</th><th>التليفون</th><th>البريد</th><th>المستشفى</th><th>الفرع</th><th>كلمة المرور</th><th>إجراءات</th></tr></thead><tbody id="usersBody"></tbody></table></div></div>`;
+    const [users, hospitals, govs] = await Promise.all([api('GET', '/users'), api('GET', '/hospitals'), api('GET', '/governorates')]);
+    window._hospitalsCache = hospitals;
     const hospMap = {};
     hospitals.forEach(h => hospMap[h.id] = h.name);
+    const govNames = (Array.isArray(govs) ? govs : []).map(g => typeof g === 'string' ? g : g.name);
+    govNames.forEach(g => { const opt = document.createElement('option'); opt.value = g; opt.textContent = g; document.getElementById('userFilterGov').appendChild(opt); });
+    hospitals.forEach(h => { const opt = document.createElement('option'); opt.value = h.id; opt.textContent = h.name; document.getElementById('userFilterHosp').appendChild(opt); });
     window._usersData = users;
-    document.getElementById('usersBody').innerHTML = users.map((u, i) => {
-      const canEdit = isMaster || (me.role === 'branch_supervisor' && u.role === 'hospital' && u.governorate === me.governorate);
-      const canEditSelf = me.id === u.id;
-      const showEdit = canEdit || canEditSelf;
-      const showKey = canEdit || canEditSelf || (me.role === 'branch_supervisor' && u.role === 'hospital' && u.governorate === me.governorate);
-      const rc = roleColors[u.role] || '#6c757d';
-      return `<tr data-name="${(u.name||'').toLowerCase()}" data-user="${(u.username||'').toLowerCase()}" data-gov="${(u.governorate||'').toLowerCase()}">
-      <td>${i+1}</td><td><strong>${u.name || ''}</strong></td><td style="direction:ltr">${u.username}</td><td><span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;background:${rc}22;color:${rc};font-weight:600">${roleLabels[u.role] || u.role}</span></td><td style="direction:ltr">${u.phone || '-'}</td><td>${hospMap[u.hospital_id] || u.hospital_id || '-'}</td><td>${u.governorate || '-'}</td>
+    renderUserRows(users, isMaster, me);
+  } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+function renderUserRows(users, isMaster, me) {
+  const roleLabels = { admin:'مدير عام', hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
+  const roleColors = { admin:'#dc3545', hospital_manager:'#6f42c1', hospital:'#17a2b8', branch_supervisor:'#fd7e14', org_supervisor:'#28a745', visitor:'#6c757d' };
+  const hospMap = {}; window._hospitalsCache.forEach(h => hospMap[h.id] = h.name);
+  document.getElementById('usersBody').innerHTML = users.map((u, i) => {
+    const canEdit = isMaster || (me.role === 'branch_supervisor' && u.role === 'hospital' && u.governorate === me.governorate);
+    const canEditSelf = me.id === u.id;
+    const showEdit = canEdit || canEditSelf;
+    const showKey = canEdit || canEditSelf || (me.role === 'branch_supervisor' && u.role === 'hospital' && u.governorate === me.governorate);
+    const rc = roleColors[u.role] || '#6c757d';
+    const passDisplay = window._showPasswords && isMaster ? (u.password || '123') : '••••••';
+    return `<tr data-name="${(u.name||'').toLowerCase()}" data-user="${(u.username||'').toLowerCase()}" data-gov="${(u.governorate||'').toLowerCase()}" data-hosp="${u.hospital_id||''}" data-role="${u.role}">
+      <td>${i+1}</td><td><strong>${u.name || ''}</strong></td><td style="direction:ltr">${u.username}</td><td><span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;background:${rc}22;color:${rc};font-weight:600">${roleLabels[u.role] || u.role}</span></td><td style="direction:ltr">${u.phone || '-'}</td><td style="direction:ltr">${u.email || '-'}</td><td>${hospMap[u.hospital_id] || u.hospital_id || '-'}</td><td>${u.governorate || '-'}</td><td style="direction:ltr;font-family:monospace;font-size:12px" id="pass_${u.id}">${passDisplay}</td>
       <td>${!showEdit && !showKey ? '' :
         `${showEdit ? `<button class="btn btn-sm btn-outline" onclick="editUser(${u.id})" title="تعديل"><i class="fas fa-edit"></i></button>` : ''}
         ${showKey ? `<button class="btn btn-sm btn-outline" onclick="changeUserPassword(${u.id})" title="تغيير كلمة المرور"><i class="fas fa-key"></i></button>` : ''}
-        ${isMaster && u.id !== 1 ? `<button class="btn btn-sm btn-outline" onclick="deleteUser(${u.id})" title="حذف"><i class="fas fa-trash"></i></button>` : ''}`}</td></tr>`;
-    }).join('');
-  } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+        ${isMaster && u.id !== 1 ? `<button class="btn btn-sm btn-outline" onclick="deleteUser(${u.id})" title="حذف"><i class="fas fa-trash"></i></button>` : ''}
+        ${isMaster ? `<button class="btn btn-sm btn-outline" onclick="toggleSinglePassword(${u.id})" title="إظهار/إخفاء"><i class="fas fa-eye"></i></button>` : ''}`}</td></tr>`;
+  }).join('');
+}
+window._showPasswords = false;
+function toggleShowPasswords() {
+  window._showPasswords = !window._showPasswords;
+  const btn = document.getElementById('togglePassBtn');
+  if (btn) btn.innerHTML = `<i class="fas fa-${window._showPasswords ? 'eye-slash' : 'eye'}"></i> ${window._showPasswords ? 'إخفاء' : 'عرض'} الباسوردات`;
+  const users = window._usersData || [];
+  users.forEach(u => {
+    const cell = document.getElementById('pass_' + u.id);
+    if (cell) cell.textContent = window._showPasswords ? (u.password || '123') : '••••••';
+  });
+}
+function toggleSinglePassword(id) {
+  const u = (window._usersData || []).find(x => x.id === id);
+  if (!u) return;
+  const cell = document.getElementById('pass_' + id);
+  if (cell) cell.textContent = cell.textContent === '••••••' ? (u.password || '123') : '••••••';
+}
+function filterUserTable() {
+  const qName = document.getElementById('userSearchName').value.trim().toLowerCase();
+  const qUser = document.getElementById('userSearchUser').value.trim().toLowerCase();
+  const fRole = document.getElementById('userFilterRole').value;
+  const fGov = document.getElementById('userFilterGov').value;
+  const fHosp = document.getElementById('userFilterHosp').value;
+  document.querySelectorAll('#usersBody tr').forEach(tr => {
+    const match = (!qName || tr.dataset.name.includes(qName)) &&
+      (!qUser || tr.dataset.user.includes(qUser)) &&
+      (!fRole || tr.dataset.role === fRole) &&
+      (!fGov || tr.dataset.gov === fGov.toLowerCase()) &&
+      (!fHosp || tr.dataset.hosp == fHosp);
+    tr.style.display = match ? '' : 'none';
+  });
 }
 function copyUsersTable() {
   const rows = []; const headers = [];
-  document.querySelectorAll('#userTable thead th').forEach((th, i) => { if (i < 7) headers.push(th.textContent.trim()); });
+  document.querySelectorAll('#userTable thead th').forEach((th, i) => { if (i < 9) headers.push(th.textContent.trim()); });
   rows.push(headers.join('\t'));
   document.querySelectorAll('#usersBody tr:not([style*="display:none"])').forEach(tr => {
     const cells = [];
-    tr.querySelectorAll('td').forEach((td, i) => { if (i < 7) cells.push(td.textContent.trim()); });
+    tr.querySelectorAll('td').forEach((td, i) => { if (i < 9) cells.push(td.textContent.trim()); });
     rows.push(cells.join('\t'));
   });
   navigator.clipboard.writeText(rows.join('\n')).then(() => showToast('✅ تم نسخ الجدول'));
@@ -3872,18 +3929,26 @@ function exportUsersExcel() {
   const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'users.xls'; a.click();
 }
-function filterUserTable() {
-  const q = document.getElementById('userSearchInput').value.trim().toLowerCase();
-  document.querySelectorAll('#usersBody tr').forEach(tr => {
-    const match = !q || tr.dataset.name.includes(q) || tr.dataset.user.includes(q) || tr.dataset.gov.includes(q);
-    tr.style.display = match ? '' : 'none';
+function exportUsersPdf() {
+  const table = document.getElementById('userTable');
+  if (!table) return;
+  const clone = table.cloneNode(true);
+  clone.querySelectorAll('tr').forEach(tr => {
+    const last = tr.querySelector('td:last-child, th:last-child');
+    if (last) last.remove();
   });
+  const html = `<html dir="rtl"><head><meta charset="utf-8"><style>
+    body{font-family:'Segoe UI',Arial;font-size:10px;padding:10px} table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #ccc;padding:4px 6px;text-align:right} th{background:#333;color:#fff}
+    .role-badge{display:inline-block;padding:1px 6px;border-radius:10px;font-size:9px;font-weight:600}
+  </style></head><body><h2 style="text-align:center">قائمة المستخدمين</h2>${clone.outerHTML}</body></html>`;
+  const win = window.open('', '_blank'); win.document.write(html); win.document.close(); win.print();
 }
 function showAddUserModal() {
   api('GET', '/hospitals').then(hospitals => {
     api('GET', '/governorates').then(govs => {
-      const roles = ['hospital','branch_supervisor','org_supervisor','visitor'];
-      const roleLabels = { hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
+      const roles = ['hospital_manager','hospital','branch_supervisor','org_supervisor','visitor'];
+      const roleLabels = { hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
       openModal('إضافة مستخدم',
         `<div class="form-group"><label>الاسم</label><input class="form-control" id="auName"></div>
         <div class="form-group"><label>اسم المستخدم</label><input class="form-control" id="auUsername"></div>
@@ -3905,7 +3970,7 @@ function showAddUserModal() {
 function toggleUserFields() {
   const r = document.getElementById('auRole').value;
   document.getElementById('auGovGroup').style.display = r === 'branch_supervisor' ? '' : 'none';
-  document.getElementById('auHospGroup').style.display = r === 'hospital' ? '' : 'none';
+  document.getElementById('auHospGroup').style.display = (r === 'hospital' || r === 'hospital_manager') ? '' : 'none';
 }
 async function createUser() {
   const name = document.getElementById('auName').value.trim();
@@ -3941,22 +4006,27 @@ function editUser(id) {
   Promise.all([api('GET', '/me'), api('GET', '/users'), api('GET', '/hospitals'), api('GET', '/governorates')]).then(([me, users, hospitals, govs]) => {
     const u = users.find(x => x.id === id); if (!u) return;
     const isMaster = me.user.id === 1;
-    const roles = ['admin','hospital','branch_supervisor','org_supervisor','visitor'];
-    const roleLabels = { admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
+    const roles = ['admin','hospital_manager','hospital','branch_supervisor','org_supervisor','visitor'];
+    const roleLabels = { admin:'مدير عام', hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
     const govArr = Array.isArray(govs) ? govs : [];
     openModal('تعديل المستخدم - ' + u.name,
-      `<div class="form-group"><label>الاسم</label><input class="form-control" id="euName" value="${String(u.name||'').replace(/"/g,'&quot;')}"></div>
+      `<div class="form-group"><label>الاسم</label><input class="form-control" id="euName" value="${String(u.name||'').replace(/"/g,'"')}"></div>
       ${isMaster ? `<div class="form-group"><label>الدور</label><select class="form-control" id="euRole" onchange="toggleEditUserFields()">
         ${roles.map(r => `<option value="${r}" ${r===u.role?'selected':''}>${roleLabels[r]}</option>`).join('')}</select></div>` : ''}
       <div class="form-group" style="position:relative"><label>كلمة المرور</label><input class="form-control" id="euPassword" value="123" style="padding-left:36px"><span onclick="togglePasswordVisibility('euPassword',this)" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
       ${isMaster ? `<div class="form-group" id="euGovGroup" style="${u.role==='branch_supervisor'?'':'display:none'}"><label>الفرع</label><select class="form-control" id="euGov">${govArr.map(g => `<option value="${g}" ${g===u.governorate?'selected':''}>${g}</option>`).join('')}</select></div>` : ''}
-      ${isMaster ? `<div class="form-group" id="euHospGroup" style="${u.role==='hospital'?'':'display:none'}"><label>المستشفى</label><select class="form-control" id="euHosp">${hospitals.map(h => `<option value="${h.id}" ${h.id===u.hospital_id?'selected':''}>${h.name}</option>`).join('')}</select></div>` : ''}
-      <div class="form-group"><label>التليفون</label><input class="form-control" id="euPhone" value="${String(u.phone||'').replace(/"/g,'&quot;')}" dir="ltr"></div>
-      <div class="form-group"><label>البريد الالكتروني</label><input class="form-control" id="euEmail" value="${String(u.email||'').replace(/"/g,'&quot;')}" dir="ltr"></div>
+      ${isMaster ? `<div class="form-group" id="euHospGroup" style="${(u.role==='hospital' || u.role==='hospital_manager')?'':'display:none'}"><label>المستشفى</label><select class="form-control" id="euHosp">${hospitals.map(h => `<option value="${h.id}" ${h.id===u.hospital_id?'selected':''}>${h.name}</option>`).join('')}</select></div>` : ''}
+      <div class="form-group"><label>التليفون</label><input class="form-control" id="euPhone" value="${String(u.phone||'').replace(/"/g,'"')}" dir="ltr"></div>
+      <div class="form-group"><label>البريد الالكتروني</label><input class="form-control" id="euEmail" value="${String(u.email||'').replace(/"/g,'"')}" dir="ltr"></div>
       ${isMaster ? `<div style="margin-top:8px;padding:8px 10px;background:#e8f5e9;border-radius:8px;font-size:12px;color:#2e7d32"><i class="fas fa-info-circle"></i> الصلاحيات تتحكم فيها من <strong>صلاحيات الأدوار</strong></div>` : ''}`,
       `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
       <button class="btn btn-primary" onclick="saveUser(${id})">حفظ</button>`);
   });
+}
+function toggleEditUserFields() {
+  const r = document.getElementById('euRole').value;
+  document.getElementById('euGovGroup').style.display = r === 'branch_supervisor' ? '' : 'none';
+  document.getElementById('euHospGroup').style.display = (r === 'hospital' || r === 'hospital_manager') ? '' : 'none';
 }
 function toggleEditUserFields() {
   const r = document.getElementById('euRole').value;
@@ -4007,7 +4077,7 @@ async function savePassword(id) {
   const body = { password: pwd };
   const current = document.getElementById('cpCurrentPass');
   if (current) body.currentPassword = current.value;
-  try { await api('PUT', '/users/' + id + '/password', body); alert('تم تغيير كلمة المرور بنجاح'); closeModal(); } catch(e) { showToast('❌ '+e.message); }
+  try { await api('PUT', '/users/' + id + '/password', body); showToast('✅ تم تغيير كلمة المرور بنجاح'); closeModal(); } catch(e) { showToast('❌ '+e.message); }
 }
 
 async function renderHospitals() {
@@ -4138,100 +4208,7 @@ async function deleteGovernorate(name) {
   });
 }
 
-async function renderSupervisorData() {
-  const el = document.getElementById('mainContent');
-  try {
-    const [me, users, hospitals, govs] = await Promise.all([api('GET', '/me'), api('GET', '/users'), api('GET', '/hospitals'), api('GET', '/governorates')]);
-    const isMaster = me.user.id === 1;
-    if (!isMaster) { el.innerHTML = '<div class="empty-msg">غير مصرح</div>'; return; }
-    const govArr = Array.isArray(govs) ? govs : [];
-    const hospMap = {}; hospitals.forEach(h => hospMap[h.id] = h.name);
-    const roleLabels = { admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
-
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      <button class="btn btn-primary" onclick="showAddBranchSupervisor()" style="height:32px"><i class="fas fa-plus"></i> إضافة مشرف فرع</button>
-    </div>
-      <div class="card">
-        <div class="card-body">
-          <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-            <span style="font-weight:600;font-size:13px"><i class="fas fa-filter"></i> اختر المحافظات:</span>
-            <div id="govCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;flex:1"></div>
-            <button class="btn btn-sm btn-primary" onclick="selectAllGovs(true)">اختر الكل</button>
-            <button class="btn btn-sm btn-outline" onclick="selectAllGovs(false)">إلغاء الكل</button>
-            <button class="btn btn-sm btn-success" onclick="copySupervisorData()"><i class="fas fa-copy"></i> نسخ البيانات</button>
-          </div>
-          <div class="table-scroll">
-            <table class="data-table" id="supervisorTable">
-              <thead><tr><th>#</th><th>الاسم</th><th>الدور</th><th>اسم المستخدم</th><th>كلمة المرور</th><th>التليفون</th><th>البريد</th><th>المستشفى</th><th>الفرع</th><th>إجراءات</th></tr></thead>
-              <tbody id="supervisorBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>`;
-
-    const chkDiv = document.getElementById('govCheckboxes');
-    chkDiv.innerHTML = govArr.map(g => `<label style="display:inline-flex;align-items:center;gap:3px;font-size:12px;cursor:pointer;padding:3px 8px;background:#f0f0f0;border-radius:4px">
-      <input type="checkbox" class="govChk" value="${g}" onchange="filterSupervisorData()" checked> ${g}</label>`).join('');
-
-    window._supervisorData = { users, hospitals: hospMap, roleLabels, govArr };
-    filterSupervisorData();
-  } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
-}
-
-function selectAllGovs(sel) {
-  document.querySelectorAll('.govChk').forEach(c => c.checked = sel);
-  filterSupervisorData();
-}
-
-function filterSupervisorData() {
-  const sel = Array.from(document.querySelectorAll('.govChk:checked')).map(c => c.value);
-  const { users, hospitals: hospMap, roleLabels } = window._supervisorData || {};
-  if (!users) return;
-  const filtered = users.filter(u => sel.length === 0 || sel.includes(u.governorate));
-  const tbody = document.getElementById('supervisorBody');
-  if (!tbody) return;
-  tbody.innerHTML = filtered.map((u, i) => `<tr>
-    <td>${i+1}</td>
-    <td>${u.name || ''}</td>
-    <td>${roleLabels[u.role] || u.role}</td>
-    <td style="direction:ltr;text-align:left">${u.username}</td>
-    <td style="direction:ltr;text-align:left;font-family:monospace">${u.password || ''}</td>
-    <td style="direction:ltr">${u.phone || ''}</td>
-    <td style="direction:ltr;font-size:11px">${u.email || ''}</td>
-    <td>${hospMap[u.hospital_id] || u.hospital_id || ''}</td>
-    <td>${u.governorate || ''}</td>
-    <td style="white-space:nowrap">
-      <button class="btn btn-sm btn-outline" onclick="editSupervisorUser(${u.id})" style="color:#1976d2;font-size:10px;margin:1px" title="تعديل"><i class="fas fa-edit"></i></button>
-      <button class="btn btn-sm btn-outline" onclick="deleteSupervisorUser(${u.id})" style="color:#dc3545;font-size:10px;margin:1px" title="حذف"><i class="fas fa-trash"></i></button>
-    </td>
-  </tr>`).join('');
-}
-
-async function copySupervisorData() {
-  const sel = Array.from(document.querySelectorAll('.govChk:checked')).map(c => c.value);
-  const { users, hospitals: hospMap, roleLabels } = window._supervisorData || {};
-  if (!users) return;
-  const filtered = users.filter(u => sel.length === 0 || sel.includes(u.governorate));
-  let text = 'بيانات المشرفين\n';
-  text += '='.repeat(60) + '\n';
-  text += '#\tالاسم\tالدور\tاسم المستخدم\tكلمة المرور\tالتليفون\tالبريد\tالمستشفى\tالفرع\n';
-  filtered.forEach((u, i) => {
-    text += `${i+1}\t${u.name||''}\t${roleLabels[u.role]||u.role}\t${u.username}\t${u.password||''}\t${u.phone||''}\t${u.email||''}\t${hospMap[u.hospital_id]||u.hospital_id||''}\t${u.governorate||''}\n`;
-  });
-  try {
-    await navigator.clipboard.writeText(text);
-    showToast('تم نسخ البيانات (' + filtered.length + ' مستخدم)');
-  } catch {
-    // Fallback
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    ta.remove();
-    showToast('تم نسخ البيانات (' + filtered.length + ' مستخدم)');
-  }
-}
+// supervisor_data page removed — المستخدمين تغني عنه
 
 async function renderInventory() {
   const el = document.getElementById('mainContent');
@@ -7442,7 +7419,7 @@ function showAbout() {
     <h3 style="color:#28a745;margin-bottom:12px"><i class="fas fa-check-circle"></i> المميزات والقدرات</h3>
     <ul style="padding-right:20px;margin-bottom:20px">
       <li>المخزون اليومي — إدارة رصيد الدم اليومي لكل فصيلة</li>
-      <li>إجمالي المخزون — عرض إجمالي المخزون والرصيد الاستراتيجي</li>
+      <li>TOTAL STOCK Mang — عرض إجمالي المخزون والرصيد الاستراتيجي</li>
       <li>البيان اليومي وبيان الفرع — تقارير يومية للمستشفيات والفروع</li>
       <li>المؤشرات الشهرية — مؤشرات تجميعيه وتخزينيه مع معادلات تلقائية</li>
       <li>منصرف فصائل الدم — تتبع استهلاك الدم شهرياً</li>
@@ -7478,7 +7455,7 @@ function showAbout() {
     <h4 style="color:#e65100;margin-bottom:8px">3. المخزون اليومي</h4>
     <p style="margin-bottom:16px">يعرض رصيد الدم لكل فصيلة (A+, A-, B+, B-, O+, O-, AB+, AB-) مع التقسيم إلى مجموعات (تجميعي) وتحت (تخزيني) وإجمالي. يمكن التعديل المباشر (Inline Edit) بالنقر على الخلية. الزر <i class="fas fa-plus"></i> يضيف حركة جديدة (وارد/منصرف) مع التاريخ والوقت. زر <i class="fas fa-file-excel"></i> الأخضر لتصدير Excel. زر <i class="fas fa-undo-alt"></i> للتراجع عن التعديلات.</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">4. إجمالي المخزون</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">4. TOTAL STOCK Mang</h4>
     <p style="margin-bottom:16px">يعرض إجمالي المخزون لكل المحافظات الست في جدول واحد. يتضمن أزرار تصدير Excel و PDF.</p>
 
     <h4 style="color:#e65100;margin-bottom:8px">5. البيان اليومي</h4>
@@ -7758,6 +7735,361 @@ function printAboutPdf() {
   `;
   document.head.appendChild(style);
 })();
+
+// --- Analysis CSS injected once ---
+(function injectAnalysisStyles() {
+  if (document.getElementById('analysisStyles')) return;
+  const style = document.createElement('style');
+  style.id = 'analysisStyles';
+  style.textContent = `
+    .analysis-page { max-width:1200px;margin:0 auto }
+    .analysis-filters { display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:16px }
+    .analysis-filters .form-group { margin:0 }
+    .analysis-filters label { font-size:11px;display:block;margin-bottom:2px;color:#666;white-space:nowrap }
+    .analysis-filters select,.analysis-filters input { height:32px;font-size:12px;border:1px solid #ddd;border-radius:6px;padding:0 8px;background:var(--white);color:var(--text) }
+    .analysis-page .sec-title { font-size:16px;font-weight:700;margin:20px 0 10px;padding-right:10px;border-right:4px solid #9c27b0;color:var(--text) }
+    .dark-mode .analysis-filters select,.dark-mode .analysis-filters input { background:#2d2d2d;border-color:#444;color:#eee }
+    .dark-mode .analysis-filters label { color:#aaa }
+  `;
+  document.head.appendChild(style);
+})();
+
+let _analysisHospitals = null;
+let _analysisIndicatorCache = {};
+
+async function renderDataAnalysis() {
+  const el = document.getElementById('mainContent');
+  const canExport = hasPerm('data_analysis', 'export');
+  try {
+    const hospitals = _analysisHospitals || await api('GET', '/hospitals');
+    _analysisHospitals = hospitals;
+    const govs = [...new Set(hospitals.map(h => h.governorate))];
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const years = [curYear, curYear-1, curYear-2, curYear-3, curYear-4];
+    const months = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
+    const prevMonth = (now.getMonth() + 11) % 12;
+
+    el.innerHTML = `
+      <div style="margin-bottom:12px"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
+      <div class="page-title"><i class="fas fa-chart-pie" style="color:#9c27b0"></i> تحليل بيانات — Data Analysis</div>
+      <div class="analysis-page">
+        <div class="analysis-filters">
+          <div class="form-group"><label>الفترة</label>
+            <select id="apPeriod" onchange="onAnalysisFilterChange()">
+              <option value="month">شهر</option>
+              <option value="two_month">شهرين</option>
+              <option value="quarter">ربع</option>
+              <option value="half">نصف</option>
+              <option value="year" selected>سنة</option>
+            </select></div>
+          <div class="form-group" id="apYearGroup"><label>السنة</label>
+            <select id="apYear" onchange="onAnalysisFilterChange()">${years.map(y => `<option value="${y}" ${y===curYear?'selected':''}>${y}</option>`).join('')}</select></div>
+          <div class="form-group" id="apFromMonthGroup" style="display:none"><label>من شهر</label>
+            <select id="apFromMonth" onchange="onAnalysisFilterChange()">${months.map((m,i) => `<option value="${i+1}" ${i===prevMonth?'selected':''}>${m}</option>`).join('')}</select></div>
+          <div class="form-group" id="apToMonthGroup" style="display:none"><label>إلى شهر</label>
+            <select id="apToMonth" onchange="onAnalysisFilterChange()">${months.map((m,i) => `<option value="${i+1}" ${i===prevMonth?'selected':''}>${m}</option>`).join('')}</select></div>
+          <div class="form-group" id="apQuarterGroup" style="display:none"><label>الربع</label>
+            <select id="apQuarter" onchange="onAnalysisFilterChange()"><option value="1">الربع الأول</option><option value="2">الربع الثاني</option><option value="3">الربع الثالث</option><option value="4">الربع الرابع</option></select></div>
+          <div class="form-group" id="apHalfGroup" style="display:none"><label>النصف</label>
+            <select id="apHalf" onchange="onAnalysisFilterChange()"><option value="1">النصف الأول</option><option value="2">النصف الثاني</option></select></div>
+          <div class="form-group"><label>المحافظة</label>
+            <select id="apGov" onchange="onAnalysisFilterChange()"><option value="">الكل</option>${govs.map(g => `<option value="${g}">${g}</option>`).join('')}</select></div>
+          <div class="form-group"><label>المستشفى</label>
+            <select id="apHosp" onchange="onAnalysisFilterChange()"><option value="">الكل</option>${hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>
+          <div class="form-group"><label>النوع</label>
+            <select id="apType" onchange="onAnalysisFilterChange()"><option value="">الكل</option><option value="تجميعي">تجميعي</option><option value="تخزيني">تخزيني</option></select></div>
+          ${canExport ? '<button class="btn btn-outline" onclick="exportAnalysisPDF()" style="color:#9c27b0;height:32px;font-size:12px"><i class="fas fa-file-pdf"></i> PDF</button>' : ''}
+        </div>
+        <div id="analysisResults"><div style="text-align:center;padding:60px;color:#999"><i class="fas fa-spinner fa-spin" style="font-size:28px"></i><br><br>جاري تحميل البيانات...</div></div>
+      </div>`;
+    onAnalysisFilterChange();
+  } catch (e) {
+    el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`;
+  }
+}
+
+function onAnalysisFilterChange() {
+  const p = document.getElementById('apPeriod').value;
+  document.getElementById('apFromMonthGroup').style.display = (p === 'two_month') ? '' : 'none';
+  document.getElementById('apToMonthGroup').style.display = (p === 'two_month') ? '' : 'none';
+  document.getElementById('apQuarterGroup').style.display = (p === 'quarter') ? '' : 'none';
+  document.getElementById('apHalfGroup').style.display = (p === 'half') ? '' : 'none';
+  document.getElementById('apYearGroup').style.display = (p === 'month' || p === 'two_month') ? 'none' : '';
+  setTimeout(loadAnalysisData, 50);
+}
+
+function getAnalysisMonths() {
+  const p = document.getElementById('apPeriod').value;
+  const year = parseInt(document.getElementById('apYear').value) || new Date().getFullYear();
+  if (p === 'year') return { months: [1,2,3,4,5,6,7,8,9,10,11,12], year, label: 'السنة كاملة ' + year };
+  if (p === 'half') {
+    const h = parseInt(document.getElementById('apHalf').value);
+    const ms = h === 1 ? [1,2,3,4,5,6] : [7,8,9,10,11,12];
+    return { months: ms, year, label: (h === 1 ? 'النصف الأول' : 'النصف الثاني') + ' ' + year };
+  }
+  if (p === 'quarter') {
+    const q = parseInt(document.getElementById('apQuarter').value);
+    const map = { 1:[1,2,3], 2:[4,5,6], 3:[7,8,9], 4:[10,11,12] };
+    const labels = { 1:'الربع الأول', 2:'الربع الثاني', 3:'الربع الثالث', 4:'الربع الرابع' };
+    return { months: map[q], year, label: labels[q] + ' ' + year };
+  }
+  if (p === 'two_month') {
+    const fm = parseInt(document.getElementById('apFromMonth').value);
+    const tm = parseInt(document.getElementById('apToMonth').value);
+    const ms = [];
+    for (let m = Math.min(fm,tm); m <= Math.max(fm,tm); m++) ms.push(m);
+    const monthsAr = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
+    return { months: ms, year, label: monthsAr[ms[0]-1] + ' - ' + monthsAr[ms[ms.length-1]-1] + ' ' + year };
+  }
+  // month
+  const fm = parseInt(document.getElementById('apFromMonth').value) || 1;
+  const monthsAr = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
+  return { months: [fm], year, label: monthsAr[fm-1] + ' ' + year };
+}
+
+let _analysisData = null;
+
+async function loadAnalysisData() {
+  const wrap = document.getElementById('analysisResults');
+  const periodInfo = getAnalysisMonths();
+  const gov = document.getElementById('apGov').value;
+  const hospId = document.getElementById('apHosp').value;
+  const typeFilter = document.getElementById('apType').value;
+  try {
+    // Fetch summary data
+    const summaryParams = new URLSearchParams({ period: document.getElementById('apPeriod').value, year: periodInfo.year });
+    if (gov) summaryParams.set('governorate', gov);
+    const summaryData = await api('GET', '/analysis?' + summaryParams.toString());
+
+    // Fetch indicator data for each month
+    let allIndicators = [];
+    for (const m of periodInfo.months) {
+      const params = new URLSearchParams({ year: periodInfo.year, month: m });
+      if (hospId) params.set('hospitalId', hospId);
+      const monthData = await api('GET', '/monthly-indicators?' + params.toString());
+      allIndicators = allIndicators.concat(monthData);
+    }
+
+    // Aggregate indicator data by hospital
+    const aggrMap = {};
+    allIndicators.forEach(r => {
+      const hid = r.hospital_id;
+      if (!aggrMap[hid]) aggrMap[hid] = { ...r, count: 1, data: {} };
+      else aggrMap[hid].count++;
+      const d = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
+      Object.entries(d).forEach(([k, v]) => {
+        if (typeof v === 'number') aggrMap[hid].data[k] = (aggrMap[hid].data[k] || 0) + v;
+      });
+    });
+
+    // Fetch consumption data
+    let allConsumption = [];
+    for (const m of periodInfo.months) {
+      const consParams = new URLSearchParams({ year: periodInfo.year, month: m });
+      if (hospId) consParams.set('hospitalId', hospId);
+      const consData = await api('GET', '/monthly-consumption?' + consParams.toString());
+      allConsumption = allConsumption.concat(consData);
+    }
+    const consAggr = {};
+    allConsumption.forEach(r => {
+      const d = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
+      Object.entries(d).forEach(([k, v]) => {
+        if (typeof v === 'number') consAggr[k] = (consAggr[k] || 0) + v;
+      });
+    });
+
+    _analysisData = { summaryData, indicators: Object.values(aggrMap), consumption: consAggr, periodInfo, gov, hospId, typeFilter };
+    renderAnalysisResults();
+  } catch (e) {
+    wrap.innerHTML = `<div class="empty-msg">❌ ${sanitize(e.message)}</div>`;
+  }
+}
+
+function renderAnalysisResults() {
+  const wrap = document.getElementById('analysisResults');
+  const d = _analysisData;
+  if (!d) return;
+  const sum = d.summaryData || {};
+  const hosp = sum.hospitals || {};
+  const inv = sum.inventory || {};
+  const emp = sum.employees || {};
+  const eq = sum.equipment;
+  const indRecords = d.indicators || [];
+  const periodInfo = d.periodInfo;
+  const monthCount = periodInfo.months.length;
+  const monthsAr = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
+
+  function fmt(n) { return typeof n === 'number' ? n.toLocaleString('en-US') : n || 0; }
+
+  // ---- Build aggregated data by hospital for indicator tables ----
+  const hospitals = _analysisHospitals || [];
+  const govFilter = d.gov;
+  const hospFilter = d.hospId;
+  const typeFilter = d.typeFilter;
+  let filteredHospitals = hospitals;
+  if (govFilter) filteredHospitals = filteredHospitals.filter(h => h.governorate === govFilter);
+  if (hospFilter) filteredHospitals = filteredHospitals.filter(h => h.id == hospFilter);
+  if (typeFilter) filteredHospitals = filteredHospitals.filter(h => h.type === typeFilter);
+
+  // Build dataMap by hospital id
+  const dataMap = {};
+  indRecords.forEach(r => { dataMap[r.hospital_id] = r; });
+
+  // ---- KPI header ----
+  const totalIndCount = indRecords.length;
+  let kpi = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:16px">
+      <div style="background:var(--white);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text-light)">المستشفيات</div>
+        <div style="font-size:24px;font-weight:800;color:#9c27b0">${fmt(hosp.total)}</div></div>
+      <div style="background:var(--white);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text-light)">إجمالي الرصيد</div>
+        <div style="font-size:24px;font-weight:800;color:#dc3545">${fmt(inv.total)}</div></div>
+      <div style="background:var(--white);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text-light)">المؤشرات (${monthCount} شهر)</div>
+        <div style="font-size:24px;font-weight:800;color:#17a2b8">${fmt(totalIndCount)}</div></div>
+      <div style="background:var(--white);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text-light)">فترة التحليل</div>
+        <div style="font-size:14px;font-weight:700;color:#795548">${periodInfo.label}</div></div>
+    </div>`;
+
+  // ---- Helper to render an indicator table (same as monthly indicators) ----
+  function renderIndTable(colDefs, label, computeFn, type) {
+    let h = `<div class="sec-title">${label}</div>
+      <div class="table-wrap"><table class="ind-table"><thead>${makeGroupHeader(colDefs)}</thead><tbody>`;
+    filteredHospitals.forEach(hosp => {
+      const r = dataMap[hosp.id];
+      const rawData = r ? (typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {})) : {};
+      const f = computeFn(rawData);
+      h += `<tr>`;
+      colDefs.forEach((c, ci) => {
+        let val = '';
+        let cls = c.cls || '';
+        let style = '';
+        if (c.key === 'governorate') val = hosp.governorate || '';
+        else if (c.key === 'hospital_name') val = hosp.name || '';
+        else if (c.formula) val = f[c.key] ?? '';
+        else val = rawData[c.key] ?? '';
+        if (c.formula && val !== '' && val != null) {
+          const n = parseFloat(val);
+          if (!isNaN(n) && (c.key.startsWith('pct_') || c.key.startsWith('child_pct_') || c.key.startsWith('ratio_'))) {
+            val = n + '%';
+            if (n > 0) { cls += ' warn-pct'; style = ' style="color:#e74c3c;font-weight:700;background:#ffeaea"'; }
+          }
+        }
+        h += `<td class="${cls}"${style}>${val}</td>`;
+      });
+      h += `<td style="font-size:10px;color:#999">${r ? r.count+'x' : (r ? '' : 'لا يوجد')}</td>`;
+      h += `</tr>`;
+    });
+    if (!filteredHospitals.length) h += `<tr><td colspan="${colDefs.length+1}" class="empty-msg">لا توجد مستشفيات</td></tr>`;
+    h += '</tbody></table></div>';
+    return h;
+  }
+
+  // ---- Regular tables (hospitals, inventory, employees, equipment) ----
+  function tableHeader(title, id) {
+    return `<div class="sec-title"><span style="cursor:pointer" onclick="toggleAnalysisSection('${id}')"><i class="fas fa-chevron-down" id="${id}Icon"></i> ${title}</span></div><div id="${id}">`;
+  }
+
+  let sections = '';
+
+  // ---- FULL INDICATOR TABLES ----
+  if (!typeFilter || typeFilter === 'تجميعي') {
+    sections += renderIndTable(BIG_COL_DEFS, 'مؤشرات البنوك التجميعية', computeBigFormulas, 'big');
+  }
+  if (!typeFilter || typeFilter === 'تخزيني') {
+    sections += renderIndTable(SMALL_COL_DEFS, 'مؤشرات البنوك التخزينية', computeSmallFormulas, 'child');
+  }
+
+  // ---- Hospitals ----
+  sections += tableHeader('توزيع المستشفيات', 'asHosp');
+  sections += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div><table class="data-table" style="font-size:12px"><thead><tr><th>المحافظة</th><th>العدد</th></tr></thead><tbody>
+      ${Object.entries(hosp.byGovernorate||{}).sort((a,b)=>b[1]-a[1]).map(([g,c]) => `<tr><td>${g}</td><td><strong>${c}</strong></td></tr>`).join('')}
+    </tbody></table></div>
+    <div><table class="data-table" style="font-size:12px"><thead><tr><th>النوع</th><th>العدد</th></tr></thead><tbody>
+      ${Object.entries(hosp.byType||{}).map(([t,c]) => `<tr><td>${t}</td><td><strong>${c}</strong></td></tr>`).join('')}
+    </tbody></table></div>
+  </div></div>`;
+
+  // ---- Inventory ----
+  sections += tableHeader('المخزون', 'asStock');
+  sections += `<div style="overflow-x:auto;margin-bottom:16px"><table class="data-table" style="font-size:12px"><thead><tr><th>فصيلة</th><th>المخزون</th><th>الوارد</th><th>المنصرف</th></tr></thead><tbody>
+    ${(inv.items||[]).map(r => `<tr><td><strong>${r.blood_type}</strong></td><td>${fmt(r.storage)}</td><td>${fmt(r.received)}</td><td>${fmt(r.consumed)}</td></tr>`).join('')}
+    <tr style="font-weight:700;background:#f5f0ff"><td>الإجمالي</td><td>${fmt(inv.total)}</td><td>${fmt((inv.items||[]).reduce((s,r)=>s+(r.received||0),0))}</td><td>${fmt((inv.items||[]).reduce((s,r)=>s+(r.consumed||0),0))}</td></tr>
+  </tbody></table></div></div>`;
+
+  // ---- Consumption ----
+  const cons = d.consumption || {};
+  const consKeys = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+  const hasCons = consKeys.some(k => cons[k] > 0);
+  if (hasCons) {
+    sections += tableHeader('منصرف الدم', 'asCons');
+    sections += `<div style="overflow-x:auto;margin-bottom:16px"><table class="data-table" style="font-size:12px"><thead><tr><th>فصيلة</th><th>الكمية</th></tr></thead><tbody>
+      ${consKeys.map(k => `<tr><td><strong>${k}</strong></td><td>${fmt(cons[k]||0)}</td></tr>`).join('')}
+      <tr style="font-weight:700"><td>الإجمالي</td><td>${fmt(consKeys.reduce((s,k)=>s+(cons[k]||0),0))}</td></tr>
+    </tbody></table></div></div>`;
+  }
+
+  // ---- Employees ----
+  sections += tableHeader('العاملين', 'asEmp');
+  sections += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div><table class="data-table" style="font-size:12px"><thead><tr><th>الفئة</th><th>العدد</th></tr></thead><tbody>
+      ${Object.entries(emp.byCategory||{}).sort((a,b)=>b[1]-a[1]).map(([c,n]) => `<tr><td>${c}</td><td><strong>${n}</strong></td></tr>`).join('')}
+    </tbody></table></div>
+    <div><table class="data-table" style="font-size:12px"><thead><tr><th>المحافظة</th><th>العدد</th></tr></thead><tbody>
+      ${Object.entries(emp.byGovernorate||{}).sort((a,b)=>b[1]-a[1]).map(([g,c]) => `<tr><td>${g}</td><td><strong>${c}</strong></td></tr>`).join('')}
+    </tbody></table></div>
+  </div></div>`;
+
+  // ---- Equipment ----
+  if (eq) {
+    sections += tableHeader('الأجهزة', 'asEq');
+    sections += `<table class="data-table" style="font-size:12px;margin-bottom:16px"><thead><tr><th>البيان</th><th>القيمة</th></tr></thead><tbody>
+      <tr><td>عدد المستشفيات</td><td><strong>${fmt(eq.hospitalsCount)}</strong></td></tr>
+      <tr><td>عدد أنواع الأجهزة</td><td><strong>${fmt((eq.types||[]).length)}</strong></td></tr>
+    </tbody></table></div>`;
+  }
+
+  wrap.innerHTML = kpi + sections +
+    `<div style="margin-top:20px;padding:12px;background:#f5f0ff;border-radius:8px;font-size:11px;color:#666;text-align:center">
+      <i class="fas fa-info-circle"></i> تحليل بيانات ${periodInfo.label} — ${d.gov || 'كل المحافظات'}
+    </div>`;
+}
+
+function toggleAnalysisSection(id) {
+  const el = document.getElementById(id);
+  const icon = document.getElementById(id + 'Icon');
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? '' : 'none';
+  if (icon) icon.className = isHidden ? 'fas fa-chevron-down' : 'fas fa-chevron-left';
+}
+
+async function exportAnalysisPDF() {
+  const d = _analysisData;
+  if (!d) { showToast('⚠️ لا توجد بيانات للتصدير'); return; }
+  const content = document.getElementById('analysisResults').innerHTML;
+  const title = `تحليل بيانات ${d.periodInfo.label}`;
+  const html = `<html dir="rtl"><head><meta charset="utf-8"><style>
+    body{font-family:'Segoe UI',Arial;font-size:11px;padding:20px;direction:rtl}
+    table{border-collapse:collapse;width:100%;margin-bottom:12px}
+    th,td{text-align:right;padding:5px 8px;border:1px solid #ccc;font-size:10px}
+    th{background:#9c27b0;color:#fff;font-weight:600}
+    .formula-cell{background:#f5f5f5;font-style:italic}
+    .warn-pct{color:#e74c3c;font-weight:700}
+    .grp-parent{background:#7b1fa2!important;text-align:center!important}
+    .grp-child{background:#ce93d8!important;color:#333!important;text-align:center!important;font-size:9px!important}
+    .sec-title{font-size:14px;font-weight:700;margin:16px 0 8px;padding-right:8px;border-right:3px solid #9c27b0}
+  </style></head><body>
+    <h1 style="text-align:center;color:#9c27b0;margin-bottom:20px;font-size:18px">${title}</h1>
+    ${content}
+    <div style="margin-top:30px;text-align:center;font-size:9px;color:#999;border-top:1px solid #ddd;padding-top:8px">نظام إدارة بنوك الدم</div>
+  </body></html>`;
+  downloadPdf(html, `analysis_${d.periodInfo.year}.pdf`);
+}
 
 // Fetch hospitals once for archive type filter
 let _archHospitals = null;
