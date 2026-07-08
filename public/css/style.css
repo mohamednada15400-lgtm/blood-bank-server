@@ -1034,3 +1034,15 @@ body.dark-mode .card-header { background:#1a1a3e; color:#ecf0f1; border-color:#2
 #dailyStockTable thead tr:nth-child(1) th { position: sticky; top: 0; z-index: 11; background: #2c3e50; color: #fff; }
 #dailyStockTable thead tr:nth-child(2) th { position: sticky; top: 28px; z-index: 10; background: #34495e; color: #fff; }
 #dailyStockTable thead tr:nth-child(3) th { position: sticky; top: 56px; z-index: 10; background: #3b5998; color: #fff; }
+
+/* ====== Donor Management ====== */
+.blood-badge { display:inline-block; padding:1px 6px; border-radius:3px; color:#fff; font-weight:700; font-size:10px; }
+.screening-badge { display:inline-block; padding:1px 5px; border-radius:3px; font-size:10px; font-weight:600; }
+.screening-badge.eligible { background:#e8f5e9; color:#2e7d32; }
+.screening-badge.perm { background:#ffebee; color:#c62828; }
+.screening-badge.temp { background:#fff3e0; color:#e65100; }
+.status-dot { display:inline-block; width:7px; height:7px; border-radius:50%; vertical-align:middle; margin-left:4px; }
+.status-dot.completed { background:#2e7d32; }
+.status-dot.testing { background:#1565c0; }
+.status-dot.deferred { background:#e65100; }
+.status-dot.sample_pending { background:#999; }

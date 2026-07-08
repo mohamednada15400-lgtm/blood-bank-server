@@ -128,8 +128,17 @@ app.post('/api/logout', (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
 });
 
-app.get('/api/me', (req, res) => {
+app.get('/api/me', async (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: 'غير مصرح' });
+  // Re-fetch permissions from DB so new pages are picked up without re-login
+  try {
+    const rpResult = await query("SELECT * FROM role_perms WHERE role = $1", [req.session.user.role]);
+    if (rpResult.rows.length > 0) {
+      let freshPerms = rpResult.rows[0].permissions;
+      if (typeof freshPerms === 'string') freshPerms = JSON.parse(freshPerms);
+      req.session.user.permissions = freshPerms;
+    }
+  } catch (e) { /* use existing session permissions */ }
   res.json({ user: req.session.user });
 });
 
@@ -2131,6 +2140,168 @@ app.get('/api/sync/drive/download', requireAuth(), async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'فشل تنزيل الملف: ' + e.message });
   }
+});
+
+// === Donors & Donations API ===
+// GET /api/donors/stats — statistics (must be before /api/donors/:id)
+
+app.get('/api/donors/stats', requireAuth(), requirePerm('donors', 'view'), async (req, res) => {
+  try {
+    const userHospId = req.session.user && req.session.user.hospital_id ? parseInt(req.session.user.hospital_id) : null;
+    let donationsSql = 'SELECT * FROM donations';
+    if (userHospId) donationsSql += ' WHERE hospital_id = ' + userHospId;
+    donationsSql += ' ORDER BY id';
+    const donors = await query('SELECT * FROM donors ORDER BY id');
+    const donations = await query(donationsSql);
+    const rows = donations.rows || donations;
+    const donorRows = donors.rows || donors;
+
+    const totalDonors = donorRows.length;
+    const totalDonations = rows.length;
+    let bloodTypes = {};
+    let screeningResults = { eligible: 0, temp_deferred: 0, perm_deferred: 0, pending: 0 };
+    let genderDistribution = { male: 0, female: 0 };
+    let testResults = { positive: 0, negative: 0 };
+
+    donorRows.forEach(d => {
+      if (d.gender === 'ذكر' || d.gender === 'male') genderDistribution.male++;
+      else if (d.gender === 'أنثى' || d.gender === 'female') genderDistribution.female++;
+    });
+
+    rows.forEach(r => {
+      if (r.blood_type) bloodTypes[r.blood_type] = (bloodTypes[r.blood_type] || 0) + 1;
+      if (r.screening_result === 'مؤهل') screeningResults.eligible++;
+      else if (r.screening_result === 'مرفوض مؤقتاً') screeningResults.temp_deferred++;
+      else if (r.screening_result === 'مرفوض نهائياً') screeningResults.perm_deferred++;
+      else screeningResults.pending++;
+      if (r.test_result) {
+        const tr = typeof r.test_result === 'string' ? JSON.parse(r.test_result) : r.test_result;
+        let hasPositive = false;
+        Object.values(tr).forEach(v => { if (v === 'إيجابي' || v === 'موجب') hasPositive = true; });
+        if (hasPositive) testResults.positive++;
+        else testResults.negative++;
+      }
+    });
+
+    res.json({
+      totalDonors, totalDonations,
+      bloodTypes, screeningResults, genderDistribution, testResults
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/donors — list/search donors
+app.get('/api/donors', requireAuth(), requirePerm('donors', 'view'), async (req, res) => {
+  try {
+    const { search } = req.query;
+    let result;
+    if (search) {
+      result = await query(`SELECT * FROM donors WHERE national_id LIKE '%${search}%' OR name LIKE '%${search}%' ORDER BY id DESC`);
+    } else {
+      result = await query('SELECT * FROM donors ORDER BY id DESC');
+    }
+    res.json(result.rows || result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/donors — create donor
+app.post('/api/donors', requireAuth(), requirePerm('donors', 'add'), async (req, res) => {
+  try {
+    const { national_id, name, gender, address, phone, birth_date } = req.body;
+    if (!national_id || !name || !gender) return res.status(400).json({ error: 'الرقم القومي والاسم والجنس إجباري' });
+    const existing = await query(`SELECT id FROM donors WHERE national_id = '${national_id}'`);
+    if ((existing.rows || existing).length > 0) return res.status(400).json({ error: 'هذا الرقم القومي مسجل بالفعل' });
+    const result = await query(`INSERT INTO donors (national_id, name, gender, address, phone, birth_date, created_at) VALUES ('${national_id}', '${name.replace(/'/g, "''")}', '${gender}', '${(address||'').replace(/'/g, "''")}', '${phone||''}', '${birth_date||''}', '${new Date().toISOString()}') RETURNING *`);
+    res.json(result.rows ? result.rows[0] : result[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/donors/:id — update donor
+app.put('/api/donors/:id', requireAuth(), requirePerm('donors', 'edit'), async (req, res) => {
+  try {
+    const { national_id, name, gender, address, phone, birth_date } = req.body;
+    await query(`UPDATE donors SET national_id='${national_id||''}', name='${(name||'').replace(/'/g, "''")}', gender='${gender||''}', address='${(address||'').replace(/'/g, "''")}', phone='${phone||''}', birth_date='${birth_date||''}' WHERE id=${parseInt(req.params.id)}`);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/donations — create donation
+app.post('/api/donations', requireAuth(), requirePerm('donors', 'add'), async (req, res) => {
+  try {
+    const { donor_id, hospital_id, donation_date, weight, screening_responses, screening_result, deferral_reason, notes, next_donation_date } = req.body;
+    if (!donor_id) return res.status(400).json({ error: 'المتبرع مطلوب' });
+    const hospFromSession = req.session.user && req.session.user.hospital_id ? parseInt(req.session.user.hospital_id) : null;
+    const finalHospId = hospital_id || hospFromSession;
+    const nxtDate = next_donation_date || '';
+    const result = await query(`INSERT INTO donations (donor_id, hospital_id, donation_date, weight, screening_responses, screening_result, deferral_reason, status, notes, created_at, next_donation_date)
+      VALUES (${parseInt(donor_id)}, ${finalHospId || 'NULL'}, '${donation_date||''}', ${weight||'NULL'}, '${(screening_responses ? JSON.stringify(screening_responses) : '{}').replace(/'/g, "''")}', '${screening_result||'قيد الفحص'}', '${(deferral_reason||'').replace(/'/g, "''")}', '${screening_result === 'مؤهل' ? 'sample_pending' : 'deferred'}', '${(notes||'').replace(/'/g, "''")}', '${new Date().toISOString()}', '${nxtDate}') RETURNING *`);
+    res.json(result.rows ? result.rows[0] : result[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/donations — list donations
+app.get('/api/donations', requireAuth(), requirePerm('donors', 'view'), async (req, res) => {
+  try {
+    const { donor_id, status, blood_type, date_from, date_to } = req.query;
+    let sql = 'SELECT d.*, dn.name AS donor_name, dn.national_id FROM donations d LEFT JOIN donors dn ON d.donor_id = dn.id';
+    const conds = [];
+    if (donor_id) conds.push(`d.donor_id = ${parseInt(donor_id)}`);
+    if (status) conds.push(`d.status = '${status}'`);
+    if (blood_type) conds.push(`d.blood_type = '${blood_type}'`);
+    if (date_from) conds.push(`d.donation_date >= '${date_from}'`);
+    if (date_to) conds.push(`d.donation_date <= '${date_to}'`);
+    const userHospId = req.session.user && req.session.user.hospital_id ? parseInt(req.session.user.hospital_id) : null;
+    if (userHospId && !donor_id) conds.push(`d.hospital_id = ${userHospId}`);
+    if (conds.length) sql += ' WHERE ' + conds.join(' AND ');
+    sql += ' ORDER BY d.id DESC';
+    const result = await query(sql);
+    // Parse JSON fields
+    const rows = (result.rows || result).map(r => {
+      if (typeof r.screening_responses === 'string') r.screening_responses = JSON.parse(r.screening_responses);
+      if (typeof r.test_result === 'string') r.test_result = JSON.parse(r.test_result);
+      return r;
+    });
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/donations/:id — single donation
+app.get('/api/donations/:id', requireAuth(), requirePerm('donors', 'view'), async (req, res) => {
+  try {
+    const result = await query(`SELECT d.*, dn.name AS donor_name, dn.national_id FROM donations d LEFT JOIN donors dn ON d.donor_id = dn.id WHERE d.id=${parseInt(req.params.id)}`);
+    const row = (result.rows || result)[0];
+    if (!row) return res.status(404).json({ error: 'غير موجود' });
+    if (typeof row.screening_responses === 'string') row.screening_responses = JSON.parse(row.screening_responses);
+    if (typeof row.test_result === 'string') row.test_result = JSON.parse(row.test_result);
+    res.json(row);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/donations/:id — update donation
+app.put('/api/donations/:id', requireAuth(), requirePerm('donors', 'edit'), async (req, res) => {
+  try {
+    const { sample_sent, sample_sent_date, test_result, blood_type, test_result_date, status, next_donation_date, notes } = req.body;
+    const sets = [];
+    if (sample_sent !== undefined) sets.push(`sample_sent=${sample_sent ? 1 : 0}`);
+    if (sample_sent_date) sets.push(`sample_sent_date='${sample_sent_date}'`);
+    if (test_result) sets.push(`test_result='${JSON.stringify(test_result).replace(/'/g, "''")}'`);
+    if (blood_type) sets.push(`blood_type='${blood_type}'`);
+    if (test_result_date) sets.push(`test_result_date='${test_result_date}'`);
+    if (status) sets.push(`status='${status}'`);
+    if (next_donation_date) sets.push(`next_donation_date='${next_donation_date}'`);
+    if (notes !== undefined) sets.push(`notes='${(notes||'').replace(/'/g, "''")}'`);
+    if (!sets.length) return res.status(400).json({ error: 'لا توجد بيانات للتحديث' });
+    await query(`UPDATE donations SET ${sets.join(', ')} WHERE id=${parseInt(req.params.id)}`);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /api/donations/:id
+app.delete('/api/donations/:id', requireAuth(), requirePerm('donors', 'delete'), async (req, res) => {
+  try {
+    await query(`DELETE FROM donations WHERE id=${parseInt(req.params.id)}`);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // === Data Analysis API ===

@@ -115,6 +115,7 @@ const PERM_PAGES = [
   { key: 'equipment', label: 'الأجهزة', cat: 'other', icon: 'fa-tools' },
   { key: 'archive', label: 'أرشيف', cat: 'other', icon: 'fa-folder-open' },
   { key: 'strategic_stock', label: 'الرصيد الاستراتيجي', cat: 'other', icon: 'fa-shield' },
+  { key: 'donors', label: 'إدارة المتبرعين', cat: 'other', icon: 'fa-hand-holding-heart' },
   { key: 'inventory', label: 'المخزون', cat: 'admin', icon: 'fa-boxes-stacked' },
   { key: 'users', label: 'المستخدمين', cat: 'admin', icon: 'fa-users-gear' },
   { key: 'role_perms', label: 'صلاحيات الأدوار', cat: 'admin', icon: 'fa-shield-check' },
@@ -260,7 +261,8 @@ const ITEM_COLORS = {
   consumption: '#ff9800', archive: '#5d4037', strategic_stock: '#1565c0', employees: '#5d4037', readiness: '#7b1fa2', equipment: '#e65100',
   inventory: '#2e7d32', users: '#00695c', role_perms: '#4a148c', hospitals: '#c62828', governorates: '#37474f',
   sync: '#1a73e8',
-  about: '#6c757d'
+  about: '#6c757d',
+  donors: '#e91e63'
 };
 
 const MENU_CATS = [
@@ -272,6 +274,7 @@ const MENU_CATS = [
       { key: 'daily_branch', label: 'بيان الفرع', icon: 'fa-code-branch', page: 'renderBranchStatement' }
     ]
   },
+  { key: 'donors', label: 'المتبرعين', icon: 'fa-hand-holding-heart', color: ['#e91e63','#f06292'], page: 'renderDonors' },
   { key: 'monthly', label: 'شهري', icon: 'fa-calendar-alt', color: ['#0d7377','#17a2b8'],
     items: [
       { key: 'monthly_indicators', label: 'مؤشرات الأداء', icon: 'fa-gauge-high',
@@ -5635,6 +5638,7 @@ async function renderEquipment() {
   const el = document.getElementById('mainContent');
   const canAdd = hasPerm('equipment', 'add');
   const canEdit = hasPerm('equipment', 'edit');
+  const canDelete = hasPerm('equipment', 'delete');
   const canExport = hasPerm('equipment', 'export');
   try {
     const data = await api('GET', '/equipment');
@@ -5654,6 +5658,7 @@ async function renderEquipment() {
       '<span style="font-size:15px;font-weight:700;color:#2c3e50;margin-left:auto"><i class="fas fa-microchip" style="margin-left:6px;color:#2c3e50"></i>أجهزة بنوك الدم</span>'+
       (canEdit?'<button class="btn btn-sm btn-primary" onclick="eqManageTypes()" style="padding:4px 10px;font-size:11px"><i class="fas fa-cog"></i> إدارة الأنواع</button>':'')+
       (canAdd?'<button class="btn btn-sm btn-primary" onclick="eqOpenForm()" style="padding:4px 10px;font-size:11px"><i class="fas fa-plus"></i> إضافة</button>':'')+
+      (canDelete?'<button class="btn btn-sm btn-danger" onclick="eqShowDeleteForm()" style="padding:4px 10px;font-size:11px"><i class="fas fa-trash"></i> حذف</button>':'')+
       (canExport?'<button class="btn btn-sm btn-success" onclick="eqExportXlsx()" style="padding:4px 10px;font-size:11px"><i class="fas fa-file-excel"></i> Excel</button>':'')+
       (canExport?'<button class="btn btn-sm btn-danger" onclick="eqExportPdf()" style="padding:4px 10px;font-size:11px"><i class="fas fa-file-pdf"></i> PDF</button>':'')+
     '</div>'+
@@ -5732,15 +5737,25 @@ function eqRenderTable(allTypes, hospitals) {
   hospitals.forEach(function(h){
     if (govF && (h.governorate||'أخرى') !== govF) return;
     Object.keys(h.equipment).forEach(function(tid){
-      const e = h.equipment[tid];
+      let e = h.equipment[tid];
       if (!e) return;
       const t = allTypes.find(function(tp){return tp.id===parseInt(tid);});
       if (!t) return;
       if (catF && t.category !== catF) return;
-      if (statusF && e.status !== statusF) return;
-      rows.push({ hospital: h.name, gov: h.governorate||'', type: t.name, cat: t.category||'', count: e.count!=null?e.count:null, brand: e.brand||'', status: e.status||'' });
+      // Handle both array (new format) and object (old format)
+      let entries = Array.isArray(e) ? e : [];
+      if (!Array.isArray(e) && typeof e === 'object') {
+        let cnt = e.count || 1;
+        for (let i = 0; i < cnt; i++) entries.push({ brand: e.brand || '', status: e.status || '' });
+      }
+      entries.forEach(function(entry){
+        if (statusF && entry.status !== statusF) return;
+        rows.push({ hospital: h.name, gov: h.governorate||'', type: t.name, cat: t.category||'', count: 1, brand: entry.brand||'', status: entry.status||'' });
+      });
     });
   });
+  let reviewHtml = '';
+  let groupHtml = '';
   if (!rows.length) {
     // Still render the pivot table structure (with headers only) so export works
     let h = '';
@@ -5790,7 +5805,6 @@ function eqRenderTable(allTypes, hospitals) {
   let typeNames = Object.keys(typeAgg).sort();
   // Build review + group summary (side by side)
   let topHtml = '';
-  let reviewHtml = '';
   if (_canEdit) {
     const curMonthCheck = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
     const unreviewed = hospitals.filter(function(hr){ return !hr.reviewed || hr.review_month !== curMonthCheck; });
@@ -5823,7 +5837,6 @@ function eqRenderTable(allTypes, hospitals) {
         '<span style="color:#2e7d32;font-size:10px;display:flex;align-items:center;gap:4px"><i class="fas fa-check-circle"></i> تمت المراجعة</span></div>';
     }
   }
-  let groupHtml = '';
   if (groupView) {
     groupHtml = '<div style="flex:1;min-width:280px;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-right:3px solid #1a1a2e">'+
       '<div style="background:#1a1a2e;color:#fff;padding:4px 8px;font-size:10px;display:flex;align-items:center;gap:4px">'+
@@ -5943,6 +5956,46 @@ function eqRenderTable(allTypes, hospitals) {
 
 // --- Modal-based edit form ---
 
+function eqSyncDeviceRows(tid) {
+  const list = document.getElementById('eqDevList_' + tid);
+  const countInput = document.getElementById('eqCount_' + tid);
+  if (!list || !countInput) return;
+  let target = parseInt(countInput.value) || 0;
+  if (target < 0) target = 0;
+  let current = list.querySelectorAll('.eq-dev-row').length;
+  while (current < target) {
+    const div = document.createElement('div');
+    div.className = 'eq-dev-row';
+    div.dataset.tid = tid;
+    div.style.cssText = 'display:flex;gap:4px;align-items:center;margin-bottom:3px';
+    div.innerHTML = '<input type="text" class="form-input eq-dev-brand" style="flex:1;font-size:10px;padding:2px 4px" list="eqBrandList" autocomplete="off" placeholder="الماركة">' +
+      '<select class="form-input eq-dev-status" style="width:70px;font-size:10px;padding:2px 4px"><option value="">—</option><option value="يعمل">يعمل</option><option value="لا يعمل">لا يعمل</option></select>' +
+      '<button type="button" onclick="eqRemoveSingleRow(' + tid + ',this)" style="background:none;border:none;color:#e74c3c;cursor:pointer;padding:2px;font-size:12px" title="حذف"><i class="fas fa-times"></i></button>';
+    list.appendChild(div);
+    current++;
+  }
+  while (current > target) {
+    const last = list.querySelector('.eq-dev-row:last-child');
+    if (last) last.remove();
+    current--;
+  }
+  const badge = document.getElementById('eqBadge_' + tid);
+  if (badge) badge.textContent = '(' + target + ')';
+}
+
+function eqRemoveSingleRow(tid, btn) {
+  const row = btn.closest('.eq-dev-row');
+  if (row) row.remove();
+  const list = document.getElementById('eqDevList_' + tid);
+  if (list) {
+    const remaining = list.querySelectorAll('.eq-dev-row').length;
+    const countInput = document.getElementById('eqCount_' + tid);
+    if (countInput) countInput.value = remaining;
+    const badge = document.getElementById('eqBadge_' + tid);
+    if (badge) badge.textContent = '(' + remaining + ')';
+  }
+}
+
 function eqOpenForm(hospName) {
   const canEdit = hasPerm('equipment', 'edit');
   if (!canEdit) { showToast('⚠ غير مصرح لك بالتعديل'); return; }
@@ -5952,7 +6005,8 @@ function eqOpenForm(hospName) {
       const types = data.types || [];
       let entry = hospName ? data.hospitals.find(h => h.name === hospName) : null;
       if (!entry && hospName) {
-        const h = (await api('GET', '/hospitals')).find(hh => hh.name === hospName);
+        const allH = await api('GET', '/hospitals');
+        const h = allH.find(hh => hh.name === hospName);
         entry = { name: hospName, governorate: h ? h.governorate : '', equipment: {} };
       }
       let bodyHtml = '';
@@ -5961,7 +6015,8 @@ function eqOpenForm(hospName) {
           <label>اختر المستشفى:</label>
           <select id="eqNewHospSelect" class="form-input" style="width:100%;margin:8px 0">
             <option value="">-- اختر --</option>`;
-        (await api('GET', '/hospitals')).forEach(h => {
+        const allH = await api('GET', '/hospitals');
+        allH.forEach(h => {
           bodyHtml += `<option value="${esc(h.name)}" data-gov="${esc(h.governorate)}">${esc(h.name)} (${esc(h.governorate)})</option>`;
         });
         bodyHtml += `</select>
@@ -5970,43 +6025,54 @@ function eqOpenForm(hospName) {
       } else {
         const stTypes = types.filter(t => t.category === 'تجميعي وتخزيني' || t.category === 'تخزيني');
         const ctTypes = types.filter(t => t.category === 'تجميعي');
-        // Collect all brands from all hospitals for the datalist
         let allBrands = [];
-        data.hospitals.forEach(function(h) { Object.values(h.equipment).forEach(function(e) { if (e && e.brand && !allBrands.includes(e.brand)) allBrands.push(e.brand); }); });
+        data.hospitals.forEach(function(h) { Object.values(h.equipment).forEach(function(e) { if (e) { var arr=Array.isArray(e)?e:[e]; arr.forEach(function(d){if(d.brand&&!allBrands.includes(d.brand))allBrands.push(d.brand);}); } }); });
         allBrands.sort();
         bodyHtml = `<div style="display:none" id="eqFormData" data-name="${esc(entry.name)}" data-gov="${esc(entry.governorate)}"></div>`;
         bodyHtml += `<datalist id="eqBrandList">${allBrands.map(function(b) { return '<option value="'+esc(b)+'">'; }).join('')}</datalist>`;
         function _eqOpt(v, cur) { return `<option value="${v}" ${cur===v?'selected':''}>${v}</option>`; }
-        // Storage
-        bodyHtml += `<div style="margin-bottom:8px;border:1px solid #d4e6f1;border-radius:6px;overflow:hidden">
-          <div style="background:#2980b9;color:#fff;padding:5px 8px;font-size:11px"><i class="fas fa-snowflake"></i> أجهزة تخزينية</div>
-          <div style="overflow-x:auto;padding:4px">
-            <table style="width:100%;font-size:11px;border-collapse:collapse">
-              <thead><tr style="background:#eaf2f8"><th style="text-align:right;padding:4px">الجهاز</th><th style="width:50px;padding:4px">العدد</th><th style="width:100px;padding:4px">الماركة</th><th style="width:100px;padding:4px">الحالة</th></tr></thead>
-              <tbody>`;
-          stTypes.forEach(t => {
-          const eq = entry.equipment[t.id] || {};
-          bodyHtml += `<tr><td style="padding:3px;font-size:10px">${esc(t.name)}</td>
-            <td style="padding:2px"><input type="number" class="form-input eq-count" style="width:50px" data-tid="${t.id}" value="${eq.count != null ? eq.count : ''}" min="0"></td>
-            <td style="padding:2px"><input type="text" class="form-input eq-brand" style="width:100%" data-tid="${t.id}" value="${esc(eq.brand || '')}" list="eqBrandList" autocomplete="off"></td>
-            <td style="padding:2px"><select class="form-input eq-status" style="width:100%" data-tid="${t.id}">${_eqOpt('',eq.status)}${_eqOpt('يعمل',eq.status)}${_eqOpt('لا يعمل',eq.status)}</select></td></tr>`;
-        });
-        bodyHtml += `</tbody></table></div></div>`;
-        // Collection
-        bodyHtml += `<div style="border:1px solid #d5f5e3;border-radius:6px;overflow:hidden">
-          <div style="background:#27ae60;color:#fff;padding:5px 8px;font-size:11px"><i class="fas fa-flask"></i> أجهزة تجميعي</div>
-          <div style="overflow-x:auto;padding:4px">
-            <table style="width:100%;font-size:11px;border-collapse:collapse">
-              <thead><tr style="background:#eafaf1"><th style="text-align:right;padding:4px">الجهاز</th><th style="width:50px;padding:4px">العدد</th><th style="width:100px;padding:4px">الماركة</th><th style="width:100px;padding:4px">الحالة</th></tr></thead>
-              <tbody>`;
-        ctTypes.forEach(t => {
-          const eq = entry.equipment[t.id] || {};
-          bodyHtml += `<tr><td style="padding:3px;font-size:10px">${esc(t.name)}</td>
-            <td style="padding:2px"><input type="number" class="form-input eq-count" style="width:50px" data-tid="${t.id}" value="${eq.count != null ? eq.count : ''}" min="0"></td>
-            <td style="padding:2px"><input type="text" class="form-input eq-brand" style="width:100%" data-tid="${t.id}" value="${esc(eq.brand || '')}" list="eqBrandList" autocomplete="off"></td>
-            <td style="padding:2px"><select class="form-input eq-status" style="width:100%" data-tid="${t.id}">${_eqOpt('',eq.status)}${_eqOpt('يعمل',eq.status)}${_eqOpt('لا يعمل',eq.status)}</select></td></tr>`;
-        });
-        bodyHtml += `</tbody></table></div></div>`;
+        function eqDevicesHtml(tArr, color, label) {
+          let h = `<div style="margin-bottom:8px;border:1px solid ${color};border-radius:6px;overflow:hidden">
+            <div style="background:${color};color:#fff;padding:5px 8px;font-size:11px">${label}</div>
+            <div style="padding:6px">`;
+          tArr.forEach(function(t){
+            let devs = entry.equipment[t.id];
+            if (!devs || !Array.isArray(devs)) {
+              if (devs && typeof devs === 'object') {
+                let cnt = devs.count || 1;
+                let origBrand = devs.brand || '';
+                let origStatus = devs.status || '';
+                devs = [];
+                for (let i = 0; i < cnt; i++) devs.push({ brand: origBrand, status: origStatus });
+              } else {
+                devs = [];
+              }
+            }
+            h += `<div style="background:#f9f9f9;border-radius:4px;margin-bottom:4px;padding:4px 6px">
+              <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">
+                <strong style="font-size:11px">${esc(t.name)}</strong>
+                <span id="eqBadge_${t.id}" style="margin-right:auto;font-size:9px;color:#999">(${devs.length})</span>
+              </div>
+              <div style="margin-bottom:4px">
+                <label style="font-size:10px;color:#555">عدد الأجهزة:</label>
+                <input type="number" id="eqCount_${t.id}" value="${devs.length}" min="0" max="99" style="width:50px;font-size:10px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;text-align:center" oninput="eqSyncDeviceRows(${t.id})">
+              </div>
+              <div id="eqDevList_${t.id}">`;
+            devs.forEach(function(d, di){
+              h += `<div class="eq-dev-row" data-tid="${t.id}" style="display:flex;gap:4px;align-items:center;margin-bottom:3px">
+                <span style="font-size:9px;color:#888;min-width:14px">${di+1}</span>
+                <input type="text" class="form-input eq-dev-brand" style="flex:1;font-size:10px;padding:2px 4px" value="${esc(d.brand || '')}" list="eqBrandList" autocomplete="off" placeholder="الماركة">
+                <select class="form-input eq-dev-status" style="width:70px;font-size:10px;padding:2px 4px">${_eqOpt('',d.status)}${_eqOpt('يعمل',d.status)}${_eqOpt('لا يعمل',d.status)}</select>
+                <button type="button" onclick="eqRemoveSingleRow(${t.id},this)" style="background:none;border:none;color:#e74c3c;cursor:pointer;padding:2px;font-size:12px" title="حذف"><i class="fas fa-times"></i></button>
+              </div>`;
+            });
+            h += `</div></div>`;
+          });
+          h += `</div></div>`;
+          return h;
+        }
+        bodyHtml += eqDevicesHtml(stTypes, '#d4e6f1', '<i class="fas fa-snowflake"></i> أجهزة تخزينية');
+        bodyHtml += eqDevicesHtml(ctTypes, '#d5f5e3', '<i class="fas fa-flask"></i> أجهزة تجميعي');
         bodyHtml += `<div style="text-align:center;margin-top:10px">
           <button class="btn btn-primary" onclick="eqSave()" style="padding:6px 24px"><i class="fas fa-save"></i> حفظ</button>
         </div>`;
@@ -6014,7 +6080,7 @@ function eqOpenForm(hospName) {
       openModal(hospName ? esc(entry.name) : 'إضافة أجهزة', bodyHtml,
         `<button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>`);
     } catch (e) { showToast('❌ '+e.message); }
-  });
+  })();
 }
 
 
@@ -6040,14 +6106,13 @@ async function eqSave() {
   const governorate = dataEl.dataset.gov;
   if (!name) { showToast('⚠ اسم المستشفى مطلوب'); return; }
   const equipment = {};
-  document.querySelectorAll('.eq-count').forEach(inp => {
-    const tid = parseInt(inp.dataset.tid);
-    const brand = document.querySelector(`.eq-brand[data-tid="${tid}"]`)?.value || '';
-    const status = document.querySelector(`.eq-status[data-tid="${tid}"]`)?.value || '';
-    const count = inp.value !== '' ? parseInt(inp.value) : null;
-    if (count != null || brand || status) {
-      equipment[tid] = { count, status, brand, capacity: null };
-    }
+  document.querySelectorAll('.eq-dev-row').forEach(function(row){
+    const tid = parseInt(row.dataset.tid);
+    if (isNaN(tid)) return;
+    if (!equipment[tid]) equipment[tid] = [];
+    const brand = row.querySelector('.eq-dev-brand')?.value || '';
+    const status = row.querySelector('.eq-dev-status')?.value || '';
+    equipment[tid].push({ brand, status });
   });
   try {
     await api('POST', '/equipment/hospitals', { name, governorate, equipment });
@@ -6056,6 +6121,21 @@ async function eqSave() {
     const data = await api('GET', '/equipment');
     eqRenderTable(data.types || [], data.hospitals || []);
   } catch (e) { showToast('❌ ' + e.message); }
+}
+
+async function eqShowDeleteForm() {
+  try {
+    const eq = await api('GET', '/equipment');
+    const h = eq.hospitals || [];
+    if (!h.length) { showToast('⚠ لا توجد مستشفيات'); return; }
+    openModal('حذف أجهزة مستشفى',
+      `<div style="padding:10px">
+        <label>اختر المستشفى:</label>
+        <select id="eqDelHospSelect" class="form-input" style="width:100%;margin:8px 0">${h.map(function(x){return '<option value="'+esc(x.name)+'">'+esc(x.name)+(x.governorate?' ('+esc(x.governorate)+')':'')+'</option>';}).join('')}</select>
+        <div style="text-align:center;margin-top:12px"><button class="btn btn-danger" onclick="eqDeleteHosp(document.getElementById('eqDelHospSelect').value)"><i class="fas fa-trash"></i> حذف</button></div>
+      </div>`,
+      `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>`);
+  } catch(e) { showToast('❌ '+e.message); }
 }
 
 async function eqDeleteHosp(name) {
@@ -7385,6 +7465,858 @@ async function syncDriveDownload() {
   });
 }
 
+// ============== Donor Management (المتبرعين) ==============
+
+async function renderDonors() {
+  pushNav(showMenu);
+  const el = document.getElementById('mainContent');
+  const canView = hasPerm('donors', 'view');
+  if (!canView) { el.innerHTML = '<div class="empty-msg">غير مصرح</div>'; return; }
+
+  el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
+    <div style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="btn ${window._donorTab === 'register' || !window._donorTab ? 'btn-primary' : 'btn-outline'}" onclick="window._donorTab='register';renderDonors()"><i class="fas fa-user-plus"></i> تسجيل متبرع</button>
+      <button class="btn ${window._donorTab === 'list' ? 'btn-primary' : 'btn-outline'}" onclick="window._donorTab='list';renderDonors()"><i class="fas fa-list"></i> سجل التبرعات</button>
+      <button class="btn ${window._donorTab === 'stats' ? 'btn-primary' : 'btn-outline'}" onclick="window._donorTab='stats';renderDonors()"><i class="fas fa-chart-pie"></i> الإحصائيات</button>
+    </div>
+    <div id="donorContent"></div>`;
+
+  if (window._donorTab === 'stats') { renderDonorStats(); return; }
+  if (window._donorTab === 'list') { renderDonationList(); return; }
+  renderDonorRegistration();
+}
+
+// ───── Stats ─────
+
+async function renderDonorStats() {
+  const el = document.getElementById('donorContent'); el.innerHTML = '<div style="text-align:center;padding:40px;color:#999"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+  try {
+    const s = await api('GET', '/donors/stats');
+    let bTypeHtml = '';
+    if (s.bloodTypes) {
+      const allTypes = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
+      allTypes.forEach(t => {
+        const cnt = s.bloodTypes[t] || 0;
+        if (cnt) bTypeHtml += `<div style="background:#f8f9fa;border-radius:8px;padding:10px;text-align:center;border:1px solid #dee2e6"><div style="font-size:18px;font-weight:700;color:#e91e63">${cnt}</div><div style="font-size:11px;color:#666">${t}</div></div>`;
+      });
+    }
+    if (!bTypeHtml) bTypeHtml = '<div style="color:#999;padding:20px">لا توجد بيانات</div>';
+
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px">
+      <div class="stat-card" style="background:linear-gradient(135deg,#e91e63,#f06292);color:#fff;border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:700">${s.totalDonors||0}</div>
+        <div style="font-size:12px;opacity:0.9">إجمالي المتبرعين</div>
+      </div>
+      <div class="stat-card" style="background:linear-gradient(135deg,#1565c0,#42a5f5);color:#fff;border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:700">${s.totalDonations||0}</div>
+        <div style="font-size:12px;opacity:0.9">إجمالي التبرعات</div>
+      </div>
+      <div class="stat-card" style="background:linear-gradient(135deg,#2e7d32,#66bb6a);color:#fff;border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:700">${s.screeningResults?.eligible||0}</div>
+        <div style="font-size:12px;opacity:0.9">مؤهل للتبرع</div>
+      </div>
+      <div class="stat-card" style="background:linear-gradient(135deg,#e65100,#ff9800);color:#fff;border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:700">${s.screeningResults?.temp_deferred||0}</div>
+        <div style="font-size:12px;opacity:0.9">مرفوض مؤقتاً</div>
+      </div>
+      <div class="stat-card" style="background:linear-gradient(135deg,#c62828,#ef5350);color:#fff;border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:700">${s.screeningResults?.perm_deferred||0}</div>
+        <div style="font-size:12px;opacity:0.9">مرفوض نهائياً</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card"><div class="card-body">
+        <h4 style="margin:0 0 12px 0;font-size:14px"><i class="fas fa-tint" style="color:#e91e63"></i> توزيع فصائل الدم</h4>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${bTypeHtml}</div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <h4 style="margin:0 0 12px 0;font-size:14px"><i class="fas fa-venus-mars" style="color:#1565c0"></i> النوع</h4>
+        <div style="display:flex;gap:12px">
+          <div style="flex:1;background:#f8f9fa;border-radius:8px;padding:12px;text-align:center;border:1px solid #dee2e6">
+            <div style="font-size:22px;font-weight:700;color:#1565c0">${s.genderDistribution?.male||0}</div>
+            <div style="font-size:11px;color:#666">ذكور</div>
+          </div>
+          <div style="flex:1;background:#f8f9fa;border-radius:8px;padding:12px;text-align:center;border:1px solid #dee2e6">
+            <div style="font-size:22px;font-weight:700;color:#e91e63">${s.genderDistribution?.female||0}</div>
+            <div style="font-size:11px;color:#666">إناث</div>
+          </div>
+        </div>
+        <h4 style="margin:16px 0 12px 0;font-size:14px"><i class="fas fa-flask" style="color:#2e7d32"></i> نتائج التحاليل</h4>
+        <div style="display:flex;gap:12px">
+          <div style="flex:1;background:#e8f5e9;border-radius:8px;padding:12px;text-align:center;border:1px solid #c8e6c9">
+            <div style="font-size:22px;font-weight:700;color:#2e7d32">${s.testResults?.negative||0}</div>
+            <div style="font-size:11px;color:#666">سليم</div>
+          </div>
+          <div style="flex:1;background:#ffebee;border-radius:8px;padding:12px;text-align:center;border:1px solid #ffcdd2">
+            <div style="font-size:22px;font-weight:700;color:#c62828">${s.testResults?.positive||0}</div>
+            <div style="font-size:11px;color:#666">إيجابي</div>
+          </div>
+        </div>
+      </div></div>
+    </div>`;
+  } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+
+// ───── Registration & Screening ─────
+
+var _lastDonorId = null;
+var _currentUserHospitalId = null;
+
+async function renderDonorRegistration() {
+  const el = document.getElementById('donorContent');
+  el.innerHTML = '<div style="text-align:center;padding:40px;color:#999"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+  try {
+    const user = (await api('GET', '/me')).user;
+    const hospitals = await api('GET', '/hospitals');
+    const userHosp = user.hospital_id ? hospitals.find(h => h.id === user.hospital_id) : null;
+    _currentUserHospitalId = user.hospital_id || null;
+
+    el.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1.5fr;gap:16px">
+      <div class="card"><div class="card-body">
+        <h4 style="margin:0 0 12px 0;font-size:14px;color:#e91e63"><i class="fas fa-user-plus"></i> تسجيل متبرع جديد</h4>
+        <div class="form-group"><label>الرقم القومي <span style="color:red">*</span></label>
+          <input class="form-control" id="dnNationalId" placeholder="14 رقم" maxlength="14" style="direction:ltr" oninput="dnNationalIdInput(this)"></div>
+        <div class="form-group"><label>الاسم رباعي <span style="color:red">*</span></label>
+          <input class="form-control" id="dnName" placeholder="الاسم بالكامل"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="form-group"><label>الجنس <span style="color:red">*</span></label>
+            <select class="form-control" id="dnGender" onchange="dnGenderChanged()"><option value="">--</option><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select></div>
+          <div class="form-group"><label>تاريخ الميلاد</label>
+            <input class="form-control" id="dnBirthDate" type="date"></div>
+        </div>
+        <div class="form-group"><label>العنوان</label>
+          <input class="form-control" id="dnAddress" placeholder="العنوان بالتفصيل"></div>
+        <div class="form-group"><label>التليفون</label>
+          <input class="form-control" id="dnPhone" placeholder="رقم التليفون" dir="ltr"></div>
+        <div id="dnDonorActions" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="saveDonor()" id="dnSaveBtn"><i class="fas fa-save"></i> حفظ المتبرع</button>
+        </div>
+        <div id="dnSavedMsg" style="margin-top:8px;font-size:13px"></div>
+        <div id="dnPastDonations" style="margin-top:12px"></div>
+      </div></div>
+      <div class="card"><div class="card-body" id="screeningPanel">
+        <h4 style="margin:0 0 12px 0;font-size:14px;color:#1565c0"><i class="fas fa-notes-medical"></i> استبيان التبرع</h4>
+        <div style="color:#999;padding:40px 0;text-align:center">سجل المتبرع أولاً ليظهر الاستبيان</div>
+      </div></div>
+    </div>`;
+  } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+
+// Egyptian governorate codes (رقم المحافظة في الرقم القومي)
+const EGY_GOV_CODES = {
+  '01':'القاهرة','02':'الإسكندرية','03':'بورسعيد','04':'السويس','05':'دمياط','06':'البحيرة',
+  '07':'كفر الشيخ','08':'الغربية','09':'المنوفية','10':'القليوبية','11':'الشرقية','12':'الدقهلية',
+  '13':'الإسماعيلية','14':'الجيزة','15':'بني سويف','16':'الفيوم','17':'المنيا','18':'أسيوط',
+  '19':'سوهاج','20':'قنا','21':'أسوان','22':'الأقصر','23':'مطروح','24':'الوادي الجديد',
+  '25':'جنوب سيناء','26':'شمال سيناء','27':'البحر الأحمر','88':'خارج الجمهورية'
+};
+
+function parseNationalId(id) {
+  if (!id || id.length !== 14) return null;
+  const centuryMap = { '2': 1900, '3': 2000 };
+  const century = centuryMap[id[0]] || 1900;
+  const year = parseInt(id.substring(1, 3), 10);
+  const month = parseInt(id.substring(3, 5), 10);
+  const day = parseInt(id.substring(5, 7), 10);
+  const govCode = id.substring(7, 9);
+  const genderDigit = parseInt(id[12], 10); // 13th digit (0-indexed: 12): odd=male, even=female
+  const birthDate = new Date(century + year, month - 1, day);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  const dateStr = `${century + year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  return {
+    birthDate: dateStr,
+    age,
+    gender: genderDigit % 2 === 1 ? 'ذكر' : 'أنثى',
+    govCode,
+    govName: EGY_GOV_CODES[govCode] || 'غير معروفة',
+    valid: month >= 1 && month <= 12 && day >= 1 && day <= 31
+  };
+}
+
+function dnNationalIdInput(el) {
+  const v = el.value;
+  if (v.length === 14) { lookupDonor(v); }
+  else { _lastDonorId = null; document.getElementById('dnSavedMsg').innerHTML = ''; }}/* auto-fill carried in lookupDonor else branch */
+
+function dnGenderChanged() {
+  const femaleOnly = document.getElementById('femaleOnly');
+  if (!femaleOnly) return;
+  femaleOnly.style.display = document.getElementById('dnGender').value === 'أنثى' ? '' : 'none';
+}
+
+async function lookupDonor(nationalId) {
+  try {
+    const donors = await api('GET', '/donors?search=' + nationalId);
+    const match = donors.find(d => d.national_id === nationalId);
+    if (match) {
+      document.getElementById('dnName').value = match.name || '';
+      document.getElementById('dnGender').value = match.gender || '';
+      document.getElementById('dnAddress').value = match.address || '';
+      document.getElementById('dnPhone').value = match.phone || '';
+      document.getElementById('dnBirthDate').value = match.birth_date || '';
+      _lastDonorId = match.id;
+      dnGenderChanged();
+      document.getElementById('dnSavedMsg').innerHTML = '<span style="color:#1565c0">✔ متبرع مسجل مسبقاً</span>';
+      document.getElementById('dnDonorActions').innerHTML = '<div style="text-align:center;padding:8px;color:#999"><i class="fas fa-spinner fa-spin"></i> جاري التحقق من الأهلية...</div>';
+      loadPastDonations(match.id);
+      checkDonorEligibility(match.id, match.gender);
+    } else {
+      _lastDonorId = null;
+      const parsedInfo = parseNationalId(nationalId);
+      if (parsedInfo && parsedInfo.valid) {
+        document.getElementById('dnGender').value = parsedInfo.gender;
+        document.getElementById('dnBirthDate').value = parsedInfo.birthDate;
+        dnGenderChanged();
+      }
+      let infoHtml = '<span style="color:#e65100">متبرع جديد — أكمل بيانات التسجيل</span>';
+      if (parsedInfo && parsedInfo.valid) {
+        infoHtml += `<div style="font-size:11px;color:#555;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap;background:#fff8e1;padding:6px 10px;border-radius:6px;border:1px solid #ffe082">
+          <span><strong>تاريخ الميلاد:</strong> ${parsedInfo.birthDate}</span>
+          <span><strong>العمر:</strong> ${parsedInfo.age} سنة</span>
+          <span><strong>محافظة الميلاد:</strong> ${parsedInfo.govName}</span>
+          <span><strong>الجنس:</strong> ${parsedInfo.gender}</span>
+        </div>`;
+      }
+      document.getElementById('dnSavedMsg').innerHTML = infoHtml;
+      document.getElementById('dnDonorActions').innerHTML = `<button class="btn btn-primary" onclick="saveDonor()"><i class="fas fa-save"></i> حفظ المتبرع</button>`;
+      document.getElementById('dnPastDonations').innerHTML = '';
+      document.getElementById('screeningPanel').innerHTML = '<h4 style="margin:0 0 12px 0;font-size:14px;color:#1565c0"><i class="fas fa-notes-medical"></i> استبيان التبرع</h4><div style="color:#999;padding:40px 0;text-align:center">سجل المتبرع أولاً ليظهر الاستبيان</div>';
+    }
+  } catch (e) { _lastDonorId = null; }
+}
+
+async function loadPastDonations(donorId) {
+  try {
+    const don = await api('GET', '/donations?donor_id=' + donorId);
+    if (don.length) {
+      document.getElementById('dnPastDonations').innerHTML = `<div style="background:#f8f9fa;border-radius:8px;padding:8px;margin-top:8px">
+        <div style="font-size:11px;color:#666;margin-bottom:4px"><i class="fas fa-history"></i> آخر ${Math.min(don.length,3)} تبرعات:</div>
+        ${don.slice(0,3).map(d => `<div style="font-size:11px;display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #eee">
+          <span>${d.donation_date||''}</span>
+          <span>${blood_type_emoji(d.blood_type)}</span>
+          <span style="color:${d.screening_result === 'مرفوض نهائياً' ? '#c62828' : d.status === 'completed' ? '#2e7d32' : '#e65100'}">${statusLabel(d.status)} — ${d.screening_result || ''}</span>
+        </div>`).join('')}
+      </div>`;
+    }
+  } catch (e) { showToast('⚠️ ' + e.message); }
+}
+
+async function checkDonorEligibility(donorId, gender) {
+  try {
+    const don = await api('GET', '/donations?donor_id=' + donorId);
+    const el = document.getElementById('dnDonorActions');
+    if (!el) return;
+    let hasPositive = false, positiveReasons = [];
+    let nextDate = null, lastDonationDate = null, lastStatus = '';
+
+    if (don && don.length) {
+      for (const d of don) {
+        // Track last completed donation date
+        if (d.status === 'completed' && (!lastDonationDate || d.donation_date > lastDonationDate)) {
+          lastDonationDate = d.donation_date;
+          lastStatus = d.status;
+        }
+        // Check next donation date (all statuses — deferred also have this set)
+        if (d.next_donation_date) {
+          if (!nextDate || d.next_donation_date > nextDate) nextDate = d.next_donation_date;
+        }
+        // Check positive tests
+        const tr = d.test_result;
+        if (tr) {
+          const t = typeof tr === 'string' ? JSON.parse(tr) : tr;
+          if (t.hiv === 'إيجابي') { hasPositive = true; if (!positiveReasons.includes('HIV')) positiveReasons.push('HIV'); }
+          if (t.hbv === 'إيجابي') { hasPositive = true; if (!positiveReasons.includes('التهاب كبدي B')) positiveReasons.push('التهاب كبدي B'); }
+          if (t.hcv === 'إيجابي') { hasPositive = true; if (!positiveReasons.includes('التهاب كبدي C')) positiveReasons.push('التهاب كبدي C'); }
+          if (t.syphilis === 'إيجابي') { hasPositive = true; if (!positiveReasons.includes('الزهري')) positiveReasons.push('الزهري'); }
+        }
+      }
+    }
+
+    const now = new Date();
+    const nextDonationDate = nextDate ? new Date(nextDate) : null;
+    const saveBtn = '<button class="btn btn-primary" onclick="saveDonor()"><i class="fas fa-save"></i> حفظ التعديلات</button>';
+
+    // Case 1: Positive test → مرفوض نهائياً
+    if (hasPositive) {
+      el.innerHTML = `<div style="background:#ffebee;border:2px solid #ef5350;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:16px;color:#c62828;font-weight:700"><i class="fas fa-ban"></i> ✖ مرفوض نهائياً</div>
+        <div style="font-size:12px;color:#666;margin-top:4px">نتيجة إيجابية (${positiveReasons.join('، ')}) — لا يمكن التبرع</div>
+      </div>${saveBtn}`;
+      document.getElementById('screeningPanel').innerHTML = '<div style="color:#999;padding:20px;text-align:center;font-size:12px">⛔ متبرع مرفوض نهائياً</div>';
+      return;
+    }
+
+    // Case 1.5: Donation in 'testing' status → resume test results
+    const testingDonation = don && don.find(d => d.status === 'testing');
+    if (testingDonation) {
+      el.innerHTML = `<div style="background:#e3f2fd;border:2px solid #64b5f6;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:14px;color:#1565c0;font-weight:700"><i class="fas fa-flask"></i> تبرع سابق بانتظار نتائج التحليل</div>
+        <div style="font-size:11px;color:#666;margin-top:4px">تم سحب العينة في ${sanitize(testingDonation.sample_sent_date || testingDonation.donation_date || '')} — أدخل نتائج الفيروسات وفصيلة الدم</div>
+        <div style="margin-top:8px"><button class="btn btn-primary" onclick="showExistingSamplePanel(${testingDonation.id})"><i class="fas fa-vial"></i> استكمال نتائج التحليل</button></div>
+      </div>${saveBtn}<button class="btn btn-success" onclick="showScreeningPanel(_lastDonorId,document.getElementById('dnName').value)"><i class="fas fa-hand-holding-heart"></i> تبرع جديد</button>`;
+      return;
+    }
+
+    // Case 1.75: Donation in 'sample_pending' → continue sample collection
+    const pendDonation = don && don.find(d => d.status === 'sample_pending');
+    if (pendDonation) {
+      el.innerHTML = `<div style="background:#e8f5e9;border:2px solid #81c784;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:14px;color:#2e7d32;font-weight:700"><i class="fas fa-syringe"></i> تبرع سابق بانتظار سحب العينة</div>
+        <div style="font-size:11px;color:#666;margin-top:4px">تم التسجيل في ${sanitize(pendDonation.donation_date || '')} — أكمل بسحب العينة وإجراء التحاليل</div>
+        <div style="margin-top:8px"><button class="btn btn-success" onclick="showSamplePanel(${pendDonation.id})"><i class="fas fa-flask"></i> سحب العينة والتحليل</button></div>
+      </div>${saveBtn}`;
+      return;
+    }
+
+    // Case 2: Next donation date in the future → مرفوض مؤقتاً مع التاريخ
+    if (nextDonationDate && nextDonationDate > now) {
+      const diff = Math.ceil((nextDonationDate - now) / (1000*60*60*24));
+      const lastDate = lastDonationDate || 'سابق';
+      const nextFmt = nextDonationDate.toISOString().split('T')[0];
+      el.innerHTML = `<div style="background:#fff3e0;border:2px solid #ffb74d;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:16px;color:#e65100;font-weight:700"><i class="fas fa-clock"></i> ⏳ مرفوض مؤقتاً</div>
+        <div style="font-size:12px;color:#555;margin-top:6px;line-height:1.7">
+          <div>آخر تبرع: <strong>${lastDate}</strong></div>
+          <div>متاح للتبرع بعد: <strong style="color:#1565c0">${nextFmt}</strong> (<strong>${diff}</strong> يوم)</div>
+        </div>
+      </div>${saveBtn}`;
+      document.getElementById('screeningPanel').innerHTML = '<div style="color:#999;padding:20px;text-align:center;font-size:12px">⏳ متاح للتبرع بعد ' + nextFmt + '</div>';
+      return;
+    }
+
+    // Case 3: Eligible → show screening button
+    el.innerHTML = `<button class="btn btn-success" onclick="showScreeningPanel(_lastDonorId,document.getElementById('dnName').value)"><i class="fas fa-hand-holding-heart"></i> تسجيل تبرع جديد</button>
+      ${saveBtn}`;
+  } catch (e) { showToast('❌ ' + e.message);
+    const fallback = document.getElementById('dnDonorActions');
+    if (fallback) fallback.innerHTML = `<button class="btn btn-success" onclick="showScreeningPanel(_lastDonorId,document.getElementById('dnName').value)"><i class="fas fa-hand-holding-heart"></i> تسجيل تبرع جديد</button>
+      <button class="btn btn-primary" onclick="saveDonor()"><i class="fas fa-save"></i> حفظ التعديلات</button>`;
+  }
+}
+
+async function saveDonor() {
+  const id = document.getElementById('dnNationalId')?.value?.trim();
+  const name = document.getElementById('dnName')?.value?.trim();
+  const gender = document.getElementById('dnGender')?.value;
+  const address = document.getElementById('dnAddress')?.value?.trim();
+  const phone = document.getElementById('dnPhone')?.value?.trim();
+  const birth_date = document.getElementById('dnBirthDate')?.value;
+  if (!id || id.length !== 14) { showToast('❌ الرقم القومي يجب أن يكون 14 رقم'); return; }
+  if (!name || name.split(' ').length < 2) { showToast('❌ أدخل الاسم رباعي على الأقل'); return; }
+  if (!gender) { showToast('❌ اختر الجنس'); return; }
+  try {
+    if (_lastDonorId) {
+      await api('PUT', '/donors/' + _lastDonorId, { national_id: id, name, gender, address, phone, birth_date });
+      showToast('✅ تم تحديث بيانات المتبرع');
+    } else {
+      const result = await api('POST', '/donors', { national_id: id, name, gender, address, phone, birth_date });
+      _lastDonorId = result.id;
+      document.getElementById('dnSavedMsg').innerHTML = '<span style="color:#2e7d32">✔ تم تسجيل المتبرع بنجاح</span>';
+      document.getElementById('dnDonorActions').innerHTML = `<button class="btn btn-success" onclick="showScreeningPanel(_lastDonorId,document.getElementById('dnName').value)"><i class="fas fa-hand-holding-heart"></i> تسجيل تبرع جديد</button>
+        <button class="btn btn-primary" onclick="saveDonor()"><i class="fas fa-save"></i> حفظ التعديلات</button>`;
+      showToast('✅ تم تسجيل المتبرع');
+    }
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+
+function showScreeningPanel(donorId, donorName) {
+  _lastDonorId = donorId;
+  const panel = document.getElementById('screeningPanel');
+  if (!panel) return;
+  const isFemale = document.getElementById('dnGender').value === 'أنثى';
+  panel.innerHTML = `<div style="background:linear-gradient(135deg,#e8f5e9 0%,#c8e6c9 100%);border-radius:10px 10px 0 0;padding:10px 14px;display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;background:#2e7d32;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px"><i class="fas fa-notes-medical"></i></div>
+      <div><div style="font-weight:700;font-size:13px;color:#1b5e20">استبيان التبرع</div><div style="font-size:11px;color:#388e3c">${sanitize(donorName)}</div></div>
+    </div>
+    <div style="padding:12px;display:flex;flex-direction:column;gap:10px">
+      <!-- Section 1: القياسات -->
+      <div style="background:#fafafa;border-radius:8px;border:1px solid #e0e0e0;overflow:hidden">
+        <div style="background:#e3f2fd;padding:6px 10px;font-size:11px;font-weight:700;color:#1565c0;display:flex;align-items:center;gap:6px"><i class="fas fa-weight"></i> القياسات الأساسية</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px">
+          <div class="form-group"><label style="font-size:11px;color:#555"><i class="fas fa-weight" style="color:#1565c0;width:14px"></i> الوزن (كجم)</label><input class="form-control" id="scrWeight" type="number" min="40" value="70"></div>
+          <div class="form-group"><label style="font-size:11px;color:#555"><i class="fas fa-tint" style="color:#c62828;width:14px"></i> الهيموجلوبين</label><input class="form-control" id="scrHb" type="number" step="0.1" value="13.0"></div>
+          <div class="form-group"><label style="font-size:11px;color:#555"><i class="fas fa-heartbeat" style="color:#e91e63;width:14px"></i> ضغط الدم</label><select class="form-control" id="scrBp"><option value="طبيعي">طبيعي</option><option value="مرتفع">مرتفع</option><option value="منخفض">منخفض</option></select></div>
+        </div>
+      </div>
+      <!-- Section 2: التاريخ الطبي -->
+      <div style="background:#fafafa;border-radius:8px;border:1px solid #e0e0e0;overflow:hidden">
+        <div style="background:#fff3e0;padding:6px 10px;font-size:11px;font-weight:700;color:#e65100;display:flex;align-items:center;gap:6px"><i class="fas fa-notes-medical"></i> التاريخ الطبي</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px">
+          <div class="form-group"><label style="font-size:11px;color:#555">هل تبرعت من قبل؟</label><select class="form-control" id="scrPrevDonation" onchange="scrPrevDonationChanged()"><option value="لا">لا</option><option value="نعم">نعم</option></select></div>
+          <div class="form-group" id="prevDateGroup" style="display:none"><label style="font-size:11px;color:#555">آخر تبرع</label><input class="form-control" id="scrPrevDate" type="date"></div>
+          <div class="form-group"><label style="font-size:11px;color:#555">أمراض مزمنة؟</label><select class="form-control" id="scrChronic"><option value="لا">لا</option><option value="ضغط">ضغط</option><option value="سكر">سكر</option><option value="قلب">قلب</option><option value="أخرى">أخرى</option></select></div>
+          <div class="form-group"><label style="font-size:11px;color:#555">جراحة منذ 6 أشهر؟</label><select class="form-control" id="scrSurgery"><option value="لا">لا</option><option value="نعم">نعم</option></select></div>
+          <div class="form-group"><label style="font-size:11px;color:#555">تاتو أو ثقب منذ 6 أشهر؟</label><select class="form-control" id="scrTattoo"><option value="لا">لا</option><option value="نعم">نعم</option></select></div>
+          <div class="form-group"><label style="font-size:11px;color:#555">زيارة طبيب أسنان؟</label><select class="form-control" id="scrDental"><option value="لا">لا</option><option value="كشف">كشف/تنظيف</option><option value="خلع">خلع بسيط</option><option value="جراحة">جراحة فم</option></select></div>
+        </div>
+      </div>
+      <!-- Section 3: الأدوية -->
+      <div style="background:#fafafa;border-radius:8px;border:1px solid #e0e0e0;overflow:hidden">
+        <div style="background:#fce4ec;padding:6px 10px;font-size:11px;font-weight:700;color:#c62828;display:flex;align-items:center;gap:6px"><i class="fas fa-prescription-bottle-alt"></i> الأدوية</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px">
+          <div class="form-group"><label style="font-size:11px;color:#555">هل تتناول أدوية؟</label><select class="form-control" id="scrMeds" onchange="scrMedsChanged()"><option value="لا">لا</option><option value="نعم">نعم</option></select></div>
+          <div class="form-group" id="scrMedsRegularGroup" style="display:none"><label style="font-size:11px;color:#555">بانتظام؟</label><select class="form-control" id="scrMedsRegular"><option value="لا">لا</option><option value="نعم">نعم</option></select></div>
+        </div>
+      </div>
+      <!-- Section 4: الأمراض المعدية -->
+      <div style="background:#fafafa;border-radius:8px;border:1px solid #e0e0e0;overflow:hidden">
+        <div style="background:#ffebee;padding:6px 10px;font-size:11px;font-weight:700;color:#b71c1c;display:flex;align-items:center;gap:6px"><i class="fas fa-virus"></i> الأمراض المعدية</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px">
+          <div class="form-group"><label style="font-size:11px;color:#555">التهاب كبدي (فيروسي)؟</label><select class="form-control" id="scrHepatitis"><option value="لا">لا</option><option value="نعم">نعم</option></select></div>
+          <div class="form-group"><label style="font-size:11px;color:#555">الملاريا؟</label><select class="form-control" id="scrMalaria"><option value="لا">لا</option><option value="نعم">نعم</option></select></div>
+        </div>
+      </div>
+      <!-- Section 5: للإناث -->
+      <div id="femaleOnly" style="display:${isFemale ? '' : 'none'};background:#fafafa;border-radius:8px;border:1px solid #e0e0e0;overflow:hidden">
+        <div style="background:#f3e5f5;padding:6px 10px;font-size:11px;font-weight:700;color:#7b1fa2;display:flex;align-items:center;gap:6px"><i class="fas fa-venus"></i> للإناث</div>
+        <div style="padding:10px">
+          <div class="form-group"><label style="font-size:11px;color:#555">هل أنت حامل أو مرضعة؟</label><select class="form-control" id="scrPregnant"><option value="لا">لا</option><option value="حامل">حامل</option><option value="مرضعة">مرضعة</option></select></div>
+        </div>
+      </div>
+      <!-- Result -->
+      <div id="scrResult"></div>
+      <!-- Submit -->
+      <div style="text-align:left">
+        <button class="btn btn-success" onclick="submitScreening()" style="font-size:12px"><i class="fas fa-check-circle"></i> حفظ الاستبيان والنتيجة</button>
+      </div>
+    </div>`;
+}
+
+function scrPrevDonationChanged() {
+  document.getElementById('prevDateGroup').style.display = document.getElementById('scrPrevDonation').value === 'نعم' ? '' : 'none';
+}
+
+function scrMedsChanged() {
+  document.getElementById('scrMedsRegularGroup').style.display = document.getElementById('scrMeds').value === 'نعم' ? '' : 'none';
+}
+
+async function submitScreening() {
+  const scrWeight = document.getElementById('scrWeight');
+  const weight = parseFloat(scrWeight?.value);
+  const prevDonation = document.getElementById('scrPrevDonation')?.value;
+  const chronic = document.getElementById('scrChronic')?.value;
+  const surgery = document.getElementById('scrSurgery')?.value;
+  const tattoo = document.getElementById('scrTattoo')?.value;
+  const meds = document.getElementById('scrMeds')?.value;
+  const hepatitis = document.getElementById('scrHepatitis')?.value;
+  const malaria = document.getElementById('scrMalaria')?.value;
+  const bp = document.getElementById('scrBp')?.value;
+  const hb = parseFloat(document.getElementById('scrHb')?.value);
+  const medsRegular = document.getElementById('scrMedsRegular')?.value;
+  const dental = document.getElementById('scrDental')?.value;
+  const pregnantEl = document.getElementById('scrPregnant');
+  const pregnant = pregnantEl ? pregnantEl.value : '';
+  const gender = document.getElementById('dnGender')?.value;
+
+  if (!_lastDonorId) { showToast('❌ سجل المتبرع أولاً'); return; }
+
+  let deferralReason = [];
+  let result = 'مؤهل';
+  let returnDate = null;
+  const hbCutoff = gender === 'أنثى' ? 12.5 : 13;
+  const today = new Date();
+
+  function addDeferral(reason, days) {
+    deferralReason.push(reason);
+    if (days) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + days);
+      if (!returnDate || d > returnDate) returnDate = d;
+    }
+  }
+
+  // ── القياسات الأساسية ──
+  if (weight < 50) addDeferral('الوزن أقل من 50 كجم — الحد الأدنى للتبرع (WHO)', null);
+
+  if (hb < hbCutoff) {
+    const reason = gender === 'أنثى'
+      ? 'الهيموجلوبين أقل من 12.5 جم/دل — ينصح بتناول مقويات الدم 3 شهور (دورة تجديد كريات الدم الحمر 90 يوماً)'
+      : 'الهيموجلوبين أقل من 13 جم/دل — ينصح بتناول مقويات الدم 3 شهور (دورة تجديد كريات الدم الحمر 90 يوماً)';
+    addDeferral(reason, 90);
+  }
+
+  if (bp === 'مرتفع') addDeferral('ضغط الدم الانقباضي أعلى من 180 مم زئبق — يحتاج ضبط الضغط 4 أسابيع', 28);
+  if (bp === 'منخفض') addDeferral('ضغط الدم الانبساطي أقل من 60 مم زئبق — يحتاج تقييم طبي', 14);
+
+  // ── التاريخ الطبي ──
+  if (chronic === 'قلب') addDeferral('أمراض قلبية مزمنة — مرفوض نهائياً (WHO/FDA)', null);
+  else if (chronic === 'ضغط' && bp !== 'طبيعي') addDeferral('ضغط مزمن غير منتظم — يحتاج متابعة', 28);
+  else if (chronic === 'سكر' && bp !== 'طبيعي') addDeferral('سكري غير منتظم — يحتاج متابعة', 28);
+  else if (chronic === 'أخرى') addDeferral('أمراض مزمنة أخرى — يحتاج تقييم طبي', 30);
+
+  if (surgery === 'نعم') addDeferral('عملية جراحية — مدة النقاهة الكاملة 6 أشهر (WHO)', 180);
+  if (tattoo === 'نعم') addDeferral('تاتو أو ثقب — فترة الأمان 6 أشهر (خطر انتقال العدوى)', 180);
+
+  // ── الأسنان ──
+  if (dental === 'جراحة') addDeferral('جراحة فم — يحتاج 30 يوماً لالتئام الأنسجة', 30);
+  else if (dental === 'خلع') addDeferral('خلع أسنان — يحتاج 7 أيام لالتئام الجرح', 7);
+  else if (dental === 'كشف') addDeferral('كشف/تنظيف أسنان — 24 ساعة كافية لزوال البكتيريا العابرة', 1);
+
+  // ── الأدوية ──
+  if (meds === 'نعم' && medsRegular === 'نعم') addDeferral('أدوية منتظمة — الإيقاف 14 يوماً بعد استشارة الطبيب (حسب عمر النصف للدواء)', 14);
+
+  // ── الأمراض المعدية ──
+  if (hepatitis === 'نعم') addDeferral('التهاب كبدي فيروسي — مرفوض نهائياً (خطر نقل العدوى)', null);
+  if (malaria === 'نعم') addDeferral('ملاريا — 3 سنوات بعد الشفاء (بقاء الطفيل في الدم)', 1095);
+
+  // ── للإناث ──
+  if (gender === 'أنثى') {
+    if (pregnant === 'حامل') addDeferral('حامل — 6 أشهر بعد الولادة (تعويض مخزون الحديد)', 180);
+    else if (pregnant === 'مرضعة') addDeferral('مرضعة — 3 أشهر بعد الفطام (الاحتياجات الغذائية للرضيع)', 90);
+  }
+
+  // ── النتيجة ──
+  if (hepatitis === 'نعم' || chronic === 'قلب') {
+    result = 'مرفوض نهائياً';
+  } else if (deferralReason.length > 0) {
+    result = 'مرفوض مؤقتاً';
+    deferralReason = [...new Set(deferralReason)];
+  }
+
+  const responses = { weight, prevDonation, chronic, surgery, tattoo, meds, meds_regular: medsRegular, hepatitis, malaria, dental, bp, hb, pregnant };
+
+  const resultDiv = document.getElementById('scrResult');
+  resultDiv.innerHTML = '<div style="text-align:center;padding:10px;color:#999"><i class="fas fa-spinner fa-spin"></i> جاري الحفظ...</div>';
+
+  try {
+    const nxtDate = returnDate ? returnDate.toISOString().split('T')[0] : '';
+    const donation = await api('POST', '/donations', {
+      donor_id: _lastDonorId,
+      hospital_id: _currentUserHospitalId,
+      donation_date: fmtCairoDate('date'),
+      weight,
+      screening_responses: responses,
+      screening_result: result,
+      deferral_reason: deferralReason.join(' — '),
+      next_donation_date: nxtDate
+    });
+
+    if (result === 'مؤهل') {
+      resultDiv.innerHTML = `<div style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border:2px solid #4caf50;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:20px;color:#2e7d32;font-weight:700"><i class="fas fa-check-circle"></i> مؤهل للتبرع</div>
+        <div style="font-size:12px;color:#555;margin-top:4px">المتبرع يستوفي جميع الشروط — انتقل إلى سحب العينة</div>
+        <div style="margin-top:10px"><button class="btn btn-success" onclick="showSamplePanel(${donation.id})"><i class="fas fa-flask"></i> سحب العينة والتحليل</button></div>
+      </div>`;
+    } else {
+      const isPerm = result === 'مرفوض نهائياً';
+      const color = isPerm ? '#c62828' : '#e65100';
+      const bg = isPerm ? '#ffebee' : '#fff3e0';
+      const icon = isPerm ? 'fa-ban' : 'fa-clock';
+      const emoji = isPerm ? '✖' : '⏳';
+      const returnHtml = returnDate ? `<div style="font-size:11px;color:#1565c0;margin-top:6px;background:#e3f2fd;display:inline-block;padding:3px 10px;border-radius:4px"><i class="fas fa-calendar-alt"></i> متاح للتبرع بعد: <strong>${returnDate.toISOString().split('T')[0]}</strong></div>` : '';
+      resultDiv.innerHTML = `<div style="background:${bg};border:2px solid ${color};border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:18px;color:${color};font-weight:700"><i class="fas ${icon}"></i> ${emoji} ${result}</div>
+        <div style="font-size:12px;color:#666;margin-top:6px;line-height:1.7">${deferralReason.join(' • ')}</div>
+        ${returnHtml}
+      </div>`;
+    }
+    showToast('✅ تم حفظ الاستبيان');
+  } catch (e) { resultDiv.innerHTML = ''; showToast('❌ ' + e.message); }
+}
+
+// ───── Sample & Test Results ─────
+
+function showSamplePanel(donationId) {
+  const panel = document.getElementById('screeningPanel');
+  if (!panel) return;
+  const today = fmtCairoDate('date');
+  panel.innerHTML += `<div id="samplePanel" style="margin-top:12px;background:#e3f2fd;border-radius:8px;padding:12px;border:1px solid #90caf9">
+    <h4 style="margin:0 0 8px 0;font-size:13px;color:#1565c0"><i class="fas fa-flask"></i> سحب العينة والتحليل</h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-group"><label>تاريخ سحب العينة</label><input class="form-control" id="sampDate" type="date" value="${today}"></div>
+      <div class="form-group"><label>تم السحب</label><select class="form-control" id="sampSent"><option value="yes">نعم</option><option value="no">لا</option></select></div>
+    </div>
+    <div style="margin-top:16px;border-top:1px solid #90caf9;padding-top:12px">
+      <h4 style="margin:0 0 8px 0;font-size:13px;color:#2e7d32"><i class="fas fa-vial"></i> نتائج التحليل</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="form-group"><label>HIV</label><select class="form-control" id="resHiv"><option value="">--</option><option value="سلبي">سلبي</option><option value="إيجابي">إيجابي</option></select></div>
+        <div class="form-group"><label>التهاب كبدي B</label><select class="form-control" id="resHbv"><option value="">--</option><option value="سلبي">سلبي</option><option value="إيجابي">إيجابي</option></select></div>
+        <div class="form-group"><label>التهاب كبدي C</label><select class="form-control" id="resHcv"><option value="">--</option><option value="سلبي">سلبي</option><option value="إيجابي">إيجابي</option></select></div>
+        <div class="form-group"><label>الزهري (Syphilis)</label><select class="form-control" id="resSyph"><option value="">--</option><option value="سلبي">سلبي</option><option value="إيجابي">إيجابي</option></select></div>
+        <div class="form-group"><label>فصيلة الدم</label><select class="form-control" id="resBtype"><option value="">--</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="O+">O+</option><option value="O-">O-</option><option value="AB+">AB+</option><option value="AB-">AB-</option></select></div>
+        <div class="form-group"><label>تاريخ النتيجة</label><input class="form-control" id="resDate" type="date"></div>
+      </div>
+      <div style="margin-top:10px;text-align:left">
+        <button class="btn btn-primary" onclick="saveTestResults(${donationId})"><i class="fas fa-save"></i> حفظ النتائج</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function showExistingSamplePanel(donationId) {
+  try {
+    const d = await api('GET', '/donations/' + donationId);
+    if (!d) return;
+    const panel = document.getElementById('screeningPanel');
+    if (!panel) return;
+    const tr = d.test_result || {};
+    const today = fmtCairoDate('date');
+
+    // Jump to تسجيل متبرع tab
+    const dnTabs = document.querySelectorAll('.donor-tab');
+    dnTabs.forEach(t => t.classList.remove('active'));
+    if (dnTabs[1]) dnTabs[1].classList.add('active');
+    document.getElementById('donorContent').innerHTML = '';
+    await renderDonorRegistration();
+
+    const nationalIdEl = document.getElementById('dnNationalId');
+    if (nationalIdEl) {
+      nationalIdEl.value = d.national_id || '';
+      _lastDonorId = d.donor_id;
+      showScreeningPanel(d.donor_id, d.donor_name || 'متبرع');
+    }
+
+    panel.innerHTML += `<div id="samplePanel" style="margin-top:12px;background:#e3f2fd;border-radius:8px;padding:12px;border:1px solid #90caf9">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="background:#1565c0;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px"><i class="fas fa-flask"></i></span>
+        <span style="font-weight:700;font-size:12px;color:#1565c0">نتائج التحليل — تبرع #${donationId}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="form-group"><label style="font-size:11px;color:#555">تاريخ سحب العينة</label><input class="form-control" id="sampDate" type="date" value="${d.sample_sent_date || today}"></div>
+        <div class="form-group"><label style="font-size:11px;color:#555">تم السحب</label><select class="form-control" id="sampSent"><option value="yes" ${d.sample_sent ? 'selected' : ''}>نعم</option><option value="no" ${d.sample_sent ? '' : 'selected'}>لا</option></select></div>
+      </div>
+      <div style="margin-top:12px;border-top:1px solid #90caf9;padding-top:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="background:#2e7d32;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px"><i class="fas fa-vial"></i></span>
+          <span style="font-weight:700;font-size:12px;color:#2e7d32">نتائج التحاليل</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="form-group"><label style="font-size:11px;color:#555">HIV</label><select class="form-control" id="resHiv"><option value="">--</option><option value="سلبي" ${tr.hiv === 'سلبي' ? 'selected' : ''}>سلبي</option><option value="إيجابي" ${tr.hiv === 'إيجابي' ? 'selected' : ''}>إيجابي</option></select></div>
+          <div class="form-group"><label style="font-size:11px;color:#555">التهاب كبدي B</label><select class="form-control" id="resHbv"><option value="">--</option><option value="سلبي" ${tr.hbv === 'سلبي' ? 'selected' : ''}>سلبي</option><option value="إيجابي" ${tr.hbv === 'إيجابي' ? 'selected' : ''}>إيجابي</option></select></div>
+          <div class="form-group"><label style="font-size:11px;color:#555">التهاب كبدي C</label><select class="form-control" id="resHcv"><option value="">--</option><option value="سلبي" ${tr.hcv === 'سلبي' ? 'selected' : ''}>سلبي</option><option value="إيجابي" ${tr.hcv === 'إيجابي' ? 'selected' : ''}>إيجابي</option></select></div>
+          <div class="form-group"><label style="font-size:11px;color:#555">الزهري (Syphilis)</label><select class="form-control" id="resSyph"><option value="">--</option><option value="سلبي" ${tr.syphilis === 'سلبي' ? 'selected' : ''}>سلبي</option><option value="إيجابي" ${tr.syphilis === 'إيجابي' ? 'selected' : ''}>إيجابي</option></select></div>
+          <div class="form-group"><label style="font-size:11px;color:#555">فصيلة الدم</label><select class="form-control" id="resBtype"><option value="">--</option>${['A+','A-','B+','B-','O+','O-','AB+','AB-'].map(b => `<option value="${b}" ${d.blood_type === b ? 'selected' : ''}>${b}</option>`).join('')}</select></div>
+          <div class="form-group"><label style="font-size:11px;color:#555">تاريخ النتيجة</label><input class="form-control" id="resDate" type="date" value="${d.test_result_date || today}"></div>
+        </div>
+        <div style="margin-top:10px;text-align:left">
+          <button class="btn btn-primary" onclick="saveTestResults(${donationId})"><i class="fas fa-save"></i> حفظ النتائج</button>
+        </div>
+      </div>
+    </div>`;
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+
+async function saveTestResults(donationId) {
+  const test_result = {
+    hiv: document.getElementById('resHiv')?.value || '',
+    hbv: document.getElementById('resHbv')?.value || '',
+    hcv: document.getElementById('resHcv')?.value || '',
+    syphilis: document.getElementById('resSyph')?.value || ''
+  };
+  const blood_type = document.getElementById('resBtype')?.value || '';
+  const test_result_date = document.getElementById('resDate')?.value || '';
+  const sample_sent = document.getElementById('sampSent')?.value === 'yes';
+  const sample_sent_date = document.getElementById('sampDate')?.value || '';
+  const allTestsDone = test_result.hiv && test_result.hbv && test_result.hcv && test_result.syphilis;
+  const status = allTestsDone ? 'completed' : 'testing';
+
+  const gender = document.getElementById('dnGender')?.value;
+  let next_donation_date = '';
+  if (allTestsDone && status === 'completed') {
+    const d = new Date();
+    d.setMonth(d.getMonth() + (gender === 'أنثى' ? 4 : 3));
+    next_donation_date = d.toISOString().split('T')[0];
+  }
+
+  try {
+    await api('PUT', '/donations/' + donationId, {
+      sample_sent, sample_sent_date, test_result, blood_type, test_result_date, status, next_donation_date
+    });
+    const pnl = document.getElementById('samplePanel');
+    if (pnl) {
+      pnl.innerHTML = `<div style="background:#e8f5e9;border-radius:8px;padding:12px;text-align:center;margin-top:8px">
+        <div style="color:#2e7d32;font-size:16px;font-weight:700">✔ تم حفظ النتائج بنجاح</div>
+        ${next_donation_date ? `<div style="color:#1565c0;font-size:12px;margin-top:4px">📅 تاريخ التبرع القادم: ${next_donation_date}</div>` : ''}
+        <div style="margin-top:8px"><span class="blood-badge" style="background:${bloodTypeColor(blood_type)}">${blood_type}</span></div>
+        <div style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="window._donorTab='list';renderDonors()" style="font-size:11px"><i class="fas fa-list"></i> عرض سجل التبرعات</button></div>
+      </div>`;
+    }
+    showToast('✅ تم حفظ نتائج التحليل');
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+
+function bloodTypeColor(bt) {
+  const colors = { 'A+':'#dc3545','A-':'#e91e63','B+':'#1565c0','B-':'#0d47a1','O+':'#2e7d32','O-':'#1b5e20','AB+':'#6a1b9a','AB-':'#4a148c' };
+  return colors[bt] || '#666';
+}
+
+function blood_type_emoji(bt) {
+  if (!bt) return '';
+  return `<span class="blood-badge" style="background:${bloodTypeColor(bt)}">${bt}</span>`;
+}
+
+function statusLabel(s) {
+  const labels = { 'sample_pending':'بانتظار العينة', 'deferred':'مرفوض', 'testing':'تحليل', 'completed':'مكتمل' };
+  return labels[s] || s || '';
+}
+
+// ───── Donation List ─────
+
+async function renderDonationList() {
+  const el = document.getElementById('donorContent');
+  el.innerHTML = '<div style="text-align:center;padding:40px;color:#999"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+  const canExport = hasPerm('donors', 'export');
+  const canView = hasPerm('donors', 'view');
+
+  el.innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+    <select class="form-control" id="dlFilterStatus" style="width:120px" onchange="renderDonationTable()">
+      <option value="">كل الحالات</option>
+      <option value="sample_pending">بانتظار العينة</option>
+      <option value="deferred">مرفوض</option>
+      <option value="testing">تحليل</option>
+      <option value="completed">مكتمل</option>
+    </select>
+    <select class="form-control" id="dlFilterBtype" style="width:100px" onchange="renderDonationTable()">
+      <option value="">كل الفصائل</option>
+      <option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option>
+      <option value="O+">O+</option><option value="O-">O-</option><option value="AB+">AB+</option><option value="AB-">AB-</option>
+    </select>
+    <input class="form-control" id="dlFilterFrom" type="date" style="width:130px" onchange="renderDonationTable()" title="من تاريخ">
+    <input class="form-control" id="dlFilterTo" type="date" style="width:130px" onchange="renderDonationTable()" title="إلى تاريخ">
+    <input class="form-control" id="dlSearch" placeholder="🔍 ابحث بالاسم أو الرقم القومي" style="flex:1;min-width:150px" oninput="renderDonationTable()">
+    ${canExport ? `<button class="btn btn-success" onclick="exportDonationsExcel()" style="font-size:12px"><i class="fas fa-file-excel"></i> Excel</button>
+    <button class="btn btn-danger" onclick="exportDonationsPdf()" style="font-size:12px"><i class="fas fa-file-pdf"></i> PDF</button>` : ''}
+  </div>
+  <div id="donationTableWrap" class="table-scroll"></div>`;
+  renderDonationTable();
+}
+
+async function renderDonationTable() {
+  const wrap = document.getElementById('donationTableWrap');
+  if (!wrap) return;
+  const status = document.getElementById('dlFilterStatus')?.value || '';
+  const blood_type = document.getElementById('dlFilterBtype')?.value || '';
+  const date_from = document.getElementById('dlFilterFrom')?.value || '';
+  const date_to = document.getElementById('dlFilterTo')?.value || '';
+  const search = document.getElementById('dlSearch')?.value?.trim() || '';
+  const canEdit = hasPerm('donors', 'edit');
+
+  wrap.innerHTML = '<div style="text-align:center;padding:20px;color:#999"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+  try {
+    let url = '/donations?';
+    if (status) url += 'status=' + status + '&';
+    if (blood_type) url += 'blood_type=' + blood_type + '&';
+    if (date_from) url += 'date_from=' + date_from + '&';
+    if (date_to) url += 'date_to=' + date_to + '&';
+    const donations = await api('GET', url);
+    const filtered = search ? donations.filter(d => (d.donor_name && d.donor_name.includes(search)) || (d.national_id && d.national_id.includes(search))) : donations;
+
+    wrap.innerHTML = `<table class="data-table" id="donationTable"><thead>
+      <tr><th>#</th><th>المتبرع</th><th>الرقم القومي</th><th>تاريخ التبرع</th><th>الفحص</th><th>الفصيلة</th><th>الحالة</th><th>تاريخ التبرع القادم</th>${canEdit ? '<th></th>' : ''}</tr>
+    </thead><tbody>
+      ${filtered.length === 0 ? '<tr><td colspan="9" class="empty-msg">لا توجد تبرعات</td></tr>' :
+      filtered.map((d, i) => `<tr>
+        <td>${i+1}</td>
+        <td>${sanitize(d.donor_name || '')}</td>
+        <td style="direction:ltr;font-size:11px">${d.national_id || ''}</td>
+        <td style="font-size:11px">${d.donation_date || ''}</td>
+        <td><span class="screening-badge ${d.screening_result === 'مؤهل' ? 'eligible' : d.screening_result === 'مرفوض نهائياً' ? 'perm' : 'temp'}">${d.screening_result || 'قيد الفحص'}</span></td>
+        <td>${blood_type_emoji(d.blood_type)}</td>
+        <td><span class="status-dot ${d.status}"></span> ${statusLabel(d.status)}</td>
+        <td style="font-size:11px;color:${d.next_donation_date ? '#1565c0' : '#999'}">${d.next_donation_date || '—'}</td>
+        ${canEdit ? `<td><button class="btn btn-xs" onclick="showDonationDetail(${d.id})" style="color:#1565c0;background:none;border:none;cursor:pointer;font-size:12px" title="تفاصيل"><i class="fas fa-eye"></i></button></td>` : ''}
+      </tr>`).join('')}
+    </tbody></table>`;
+  } catch (e) { wrap.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+
+function exportDonationsExcel() {
+  const table = document.getElementById('donationTable');
+  if (!table) return;
+  exportTableToExcel(table, 'تبرعات_بنوك_الدم');
+}
+
+function exportDonationsPdf() {
+  const table = document.getElementById('donationTable');
+  if (!table) return;
+  exportTableToPdf(table, 'تبرعات_بنوك_الدم');
+}
+
+// ───── Donation Detail ─────
+
+async function showDonationDetail(id) {
+  try {
+    const d = await api('GET', '/donations/' + id);
+    let testHtml = '';
+    if (d.test_result) {
+      const tr = d.test_result;
+      const items = [];
+      if (tr.hiv) items.push({ label: 'HIV', val: tr.hiv });
+      if (tr.hbv) items.push({ label: 'التهاب كبدي B', val: tr.hbv });
+      if (tr.hcv) items.push({ label: 'التهاب كبدي C', val: tr.hcv });
+      if (tr.syphilis) items.push({ label: 'الزهري', val: tr.syphilis });
+      if (items.length) {
+        testHtml = `<div style="margin-top:8px;padding:8px;background:#f8f9fa;border-radius:6px">
+          <strong style="font-size:12px">نتائج التحاليل:</strong>
+          ${items.map(i => `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px">
+            <span>${i.label}</span>
+            <span style="color:${i.val === 'إيجابي' ? '#c62828' : '#2e7d32'};font-weight:600">${i.val}</span>
+          </div>`).join('')}
+        </div>`;
+      }
+    }
+    const deferralHtml = d.deferral_reason ? `<div style="padding:4px 0;color:#e65100;font-size:12px">سبب الرفض: ${d.deferral_reason}</div>` : '';
+    const nextDateHtml = d.next_donation_date ? `<div style="padding:4px 0;color:#1565c0;font-size:12px">📅 التبرع القادم: ${d.next_donation_date}</div>` : '';
+
+    const screening = d.screening_responses || {};
+    const screeningDetails = screening.hb ? `
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">الهيموجلوبين</td><td style="padding:4px 8px;border:1px solid #eee">${screening.hb} جم/دل</td></tr>
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">ضغط الدم</td><td style="padding:4px 8px;border:1px solid #eee">${screening.bp || ''}</td></tr>
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">أمراض مزمنة</td><td style="padding:4px 8px;border:1px solid #eee">${screening.chronic || ''}</td></tr>
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">جراحة</td><td style="padding:4px 8px;border:1px solid #eee">${screening.surgery || ''}</td></tr>
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">تاتو/ثقب</td><td style="padding:4px 8px;border:1px solid #eee">${screening.tattoo || ''}</td></tr>
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">أسنان</td><td style="padding:4px 8px;border:1px solid #eee">${screening.dental || ''}</td></tr>
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">أدوية</td><td style="padding:4px 8px;border:1px solid #eee">${screening.meds || ''}${screening.meds_regular === 'نعم' ? ' (بانتظام)' : ''}</td></tr>` : '';
+    openModal(`تبرع #${d.id}`,
+      `<div style="font-size:13px;line-height:1.8">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee;width:40%">المتبرع</td><td style="padding:4px 8px;border:1px solid #eee">${sanitize(d.donor_name || '')}</td></tr>
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">الرقم القومي</td><td style="padding:4px 8px;border:1px solid #eee;direction:ltr">${d.national_id || ''}</td></tr>
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">تاريخ التبرع</td><td style="padding:4px 8px;border:1px solid #eee">${d.donation_date || ''}</td></tr>
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">الوزن</td><td style="padding:4px 8px;border:1px solid #eee">${d.weight || ''} كجم</td></tr>
+          ${screeningDetails}
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">الفحص</td><td style="padding:4px 8px;border:1px solid #eee"><span class="screening-badge ${d.screening_result === 'مؤهل' ? 'eligible' : d.screening_result === 'مرفوض نهائياً' ? 'perm' : 'temp'}">${d.screening_result || 'قيد الفحص'}</span>${deferralHtml}</td></tr>
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">الفصيلة</td><td style="padding:4px 8px;border:1px solid #eee">${blood_type_emoji(d.blood_type)}</td></tr>
+          <tr><td style="padding:4px 8px;font-weight:600;background:#f8f9fa;border:1px solid #eee">الحالة</td><td style="padding:4px 8px;border:1px solid #eee"><span class="status-dot ${d.status}"></span> ${statusLabel(d.status)}${nextDateHtml}</td></tr>
+        </table>
+        ${testHtml}
+      </div>`,
+      `<button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>${d.status === 'testing' ? `<button class="btn btn-primary" onclick="closeModal();showExistingSamplePanel(${d.id})" style="margin-right:8px"><i class="fas fa-vial"></i> استكمال التحليل</button>` : ''}${d.status === 'sample_pending' ? `<button class="btn btn-success" onclick="closeModal();showSamplePanel(${d.id})" style="margin-right:8px"><i class="fas fa-syringe"></i> سحب العينة</button>` : ''}`
+    );
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+
+// Helper: export table to Excel
+function exportTableToExcel(table, filename) {
+  let html = '<table>' + table.outerHTML.match(/<thead>[\s\S]*<\/thead>/)[0] + '<tbody>' + table.outerHTML.match(/<tbody>[\s\S]*<\/tbody>/)[0] + '</tbody></table>';
+  html = html.replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '').replace(/<button[^>]*>[\s\S]*?<\/button>/g, '');
+  const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename + '.xls';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('✅ تم تصدير Excel');
+}
+
+// Helper: export table to PDF (via print)
+function exportTableToPdf(table, filename) {
+  const clone = table.cloneNode(true);
+  clone.querySelectorAll('button, .btn, .btn-xs').forEach(b => b.remove());
+  const style = document.querySelector('style')?.innerHTML || '';
+  const win = window.open('', '_blank');
+  win.document.write(`<html dir="rtl"><head><meta charset="UTF-8"><title>${filename}</title>
+    <style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #ddd;padding:4px 6px;text-align:right}th{background:#f5f5f5}.blood-badge{display:inline-block;padding:1px 5px;border-radius:3px;color:#fff;font-weight:700;font-size:10px}.screening-badge{display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600}.screening-badge.eligible{background:#e8f5e9;color:#2e7d32}.screening-badge.perm{background:#ffebee;color:#c62828}.screening-badge.temp{background:#fff3e0;color:#e65100}.status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;vertical-align:middle}.status-dot.completed{background:#2e7d32}.status-dot.testing{background:#1565c0}.status-dot.deferred{background:#e65100}.status-dot.sample_pending{background:#999}</style></head><body>
+    <h3 style="text-align:center;color:#e91e63">${filename}</h3>
+    ${clone.outerHTML}
+    <p style="text-align:center;color:#999;font-size:10px;margin-top:20px">نظام إدارة بنوك الدم — ${new Date().toLocaleDateString('ar-EG')}</p>
+  </body></html>`);
+  win.document.close();
+  setTimeout(() => { win.print(); win.close(); }, 500);
+  showToast('✅ تم فتح PDF للطباعة');
+}
+
 // ============== About / User Guide (حول النظام) ==============
 
 function showAbout() {
@@ -7426,8 +8358,9 @@ function showAbout() {
       <li>بيان العاملين — إدارة الموظفين مع المراجعة والبيانات الناقصة</li>
       <li>شيت الجاهزية — جاهزية بنوك الدم للمناسبات (قوى عاملة، رصيد، صيانة، أعطال، مستهلكات)</li>
       <li>الأجهزة — إدارة أجهزة بنوك الدم مع الأنواع والفئات</li>
+      <li>المتبرعين — تسجيل المتبرعين، استبيان التبرع، سحب العينات، تحاليل (HIV/HBV/HCV/Syphilis)</li>
       <li>أرشيف — أرشيف المؤشرات الشهرية ومنصرف الفصائل</li>
-      <li>نظام الصلاحيات — 6 أدوار، 20 صفحة، 5 صلاحيات لكل صفحة</li>
+      <li>نظام الصلاحيات — 6 أدوار، 22 صفحة، 5 صلاحيات لكل صفحة</li>
       <li>المزامنة مع Google Drive — نسخ احتياطي سحابي آلي</li>
       <li>وضع ليلي (Dark Mode) — مريح للعين</li>
       <li>تصدير Excel و PDF — لجميع التقارير</li>
@@ -7544,10 +8477,21 @@ function showAbout() {
     <h4 style="color:#e65100;margin-bottom:8px">18. بيانات المشرفين</h4>
     <p style="margin-bottom:16px">عرض بيانات المشرفين والمستخدمين مع فلترة متقدمة (اختيار المحافظات). نسخ البيانات المفلترة إلى الحافظة بتنسيق جدولي.</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">19. المخزون (Inventory)</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">19. إدارة المتبرعين (Donors)</h4>
+    <p style="margin-bottom:16px">إدارة المتبرعين بنوك الدم — دورة كاملة من التسجيل حتى التحليل:
+    <ul style="margin-bottom:12px">
+      <li><strong>تسجيل متبرع</strong> — إدخال الرقم القومي (14 رقم)، الاسم رباعي، الجنس، العنوان، التليفون، تاريخ الميلاد. إذا كان المتبرع مسجل مسبقاً، يتم تعبئة البيانات تلقائياً.</li>
+      <li><strong>استبيان التبرع</strong> — استبيان صحي كامل: الوزن، الأمراض المزمنة، العمليات الجراحية، التاتو، الأدوية، الالتهاب الكبدي، الملاريا، ضغط الدم، الهيموجلوبين، الحمل (للإناث). يتم تحديد النتيجة تلقائياً (مؤهل / مرفوض مؤقتاً / مرفوض نهائياً) بناءً على معايير منظمة الصحة العالمية.</li>
+      <li><strong>سحب العينة</strong> — تسجيل تاريخ سحب العينة وإرسالها للمعمل.</li>
+      <li><strong>نتائج التحاليل</strong> — إدخال نتائج HIV, HBV, HCV, Syphilis وفصيلة الدم.</li>
+      <li><strong>سجل التبرعات</strong> — جدول يعرض جميع التبرعات مع إمكانية عرض التفاصيل الكاملة لكل تبرعة.</li>
+      <li><strong>الإحصائيات</strong> — لوحة إحصائيات: إجمالي المتبرعين، إجمالي التبرعات، المؤهلين والمرفوضين، توزيع فصائل الدم، النوع (ذكور/إناث)، نتائج التحاليل.</li>
+    </ul></p>
+
+    <h4 style="color:#e65100;margin-bottom:8px">20. المخزون (Inventory)</h4>
     <p style="margin-bottom:16px">عرض وتعديل المخزون الكلي لكل فصيلة. يشمل: الرصيد الحالي (Storage)، إجمالي الوارد، إجمالي المنصرف. التعديل مباشر بالنقر على الخلايا.</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">20. المزامنة مع Google Drive (النسخ الاحتياطي السحابي)</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">21. المزامنة مع Google Drive (النسخ الاحتياطي السحابي)</h4>
     <p style="margin-bottom:8px"><strong>الهدف:</strong> عمل نسخ احتياطي سحابي آمن لقاعدة البيانات (<code>db.json</code>) على Google Drive، واستعادتها عند الحاجة — سواء لتثبيت النظام على جهاز جديد أو للرجوع لنسخة سابقة.</p>
 
     <h5 style="color:#c62828;margin-top:16px;margin-bottom:6px">الخطوة 0: الإعداد المسبق (مرة واحدة — يفعلها مدير النظام)</h5>
@@ -7662,16 +8606,16 @@ function showAbout() {
       <tr><td style="padding:8px 12px;border:1px solid #e0e0e0">تغيير حساب Google</td><td style="padding:8px 12px;border:1px solid #e0e0e0">الإدارة ← المزامنة ← إعادة ربط Drive (كرر الخطوات)</td></tr>
     </table>
 
-    <h4 style="color:#e65100;margin-bottom:8px">21. الوضع الليلي (Dark Mode)</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">22. الوضع الليلي (Dark Mode)</h4>
     <p style="margin-bottom:16px">اضغط على أيقونة القمر <i class="fas fa-moon"></i> في الشريط العلوي لتفعيل/إلغاء الوضع الليلي. الوضع الليلي يغير ألوان الواجهة إلى ألوان داكنة مريحة للعين في الإضاءة المنخفضة. يتم حفظ التفضيل في المتصفح (localStorage) ويستعيد تلقائياً عند تسجيل الدخول مرة أخرى.</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">22. التوقيت الصيفي/الشتوي</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">23. التوقيت الصيفي/الشتوي</h4>
     <p style="margin-bottom:16px">زر الساعة <i class="fas fa-clock"></i> في الشريط العلوي (يظهر للمدير فقط) يبدّل بين التوقيت الصيفي (+3 ساعات) والتوقيت الشتوي (+2 ساعات). يتم حفظ الإعداد في قاعدة البيانات ويؤثر على جميع المستخدمين.</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">23. الملف الشخصي (My Profile)</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">24. الملف الشخصي (My Profile)</h4>
     <p style="margin-bottom:16px">اضغط على أيقونة المستخدم <i class="fas fa-user-circle"></i> في الشريط العلوي. من هنا يمكنك: تعديل اسمك المعروض، تغيير كلمة المرور (تحتاج إدخال كلمة المرور الحالية أولاً).</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">24. قفل التعديل بعد يوم 25</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">25. قفل التعديل بعد يوم 25</h4>
     <p style="margin-bottom:16px">في المؤشرات الشهرية ومنصرف فصائل الدم، بعد يوم 25 من كل شهر يتم قفل التعديل تلقائياً. يظهر شريط أصفر في أعلى الصفحة للتأكيد. يتم عرض بيانات الشهر السابق تلقائياً. هذا يضمن عدم تعديل البيانات التاريخية بعد إغلاق الشهر.</p>
 
     <hr style="border:none;border-top:1px solid #ddd;margin:30px 0 20px">

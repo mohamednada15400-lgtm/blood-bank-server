@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','users','hospitals','governorates','inventory','role_perms','readiness','equipment','time_config'];
+const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','users','hospitals','governorates','inventory','role_perms','readiness','equipment','time_config','donors'];
 
 function makePerm(v,a,e,d,x) { return {v,a,e,d,x}; }
 
@@ -121,7 +121,7 @@ class JSONDB {
       const types = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
       this.data.inventory = types.map((t, i) => ({ id: i + 1, blood_type: t, storage: 0, total_received: 0, total_consumed: 0 }));
       if (!this.data._counters.daily_reports) this.data._counters.daily_reports = this.data.daily_reports ? this.data.daily_reports.length + 1 : 1;
-      this.data._counters = { users: 9, hospitals: 40, governorates: 7, inventory: 9, daily_stock: 1, daily_statements: 1, daily_reports: this.data._counters.daily_reports || 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1 };
+      this.data._counters = { users: 9, hospitals: 40, governorates: 7, inventory: 9, daily_stock: 1, daily_statements: 1, daily_reports: this.data._counters.daily_reports || 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1, donors: 1, donations: 1 };
     }
     // Ensure tables exist even when loading existing db
     if (!this.data.daily_reports) this.data.daily_reports = [];
@@ -147,6 +147,10 @@ class JSONDB {
     if (!this.data._counters.readiness_occasions) this.data._counters.readiness_occasions = this.data.readiness_occasions.length + 1 || 1;
     if (!this.data._counters.readiness_reports) this.data._counters.readiness_reports = this.data.readiness_reports.length + 1 || 1;
     if (!this.data._counters.readiness_notifications) this.data._counters.readiness_notifications = this.data.readiness_notifications.length + 1 || 1;
+    if (!this.data.donors) this.data.donors = [];
+    if (!this.data.donations) this.data.donations = [];
+    if (!this.data._counters.donors) this.data._counters.donors = this.data.donors.length + 1 || 1;
+    if (!this.data._counters.donations) this.data._counters.donations = this.data.donations.length + 1 || 1;
     if (!this.data.blood_bank_equipment || !this.data.blood_bank_equipment.types) {
       this.data.blood_bank_equipment = {
         types: [
@@ -263,6 +267,40 @@ class JSONDB {
     return result;
   }
 
+  _splitCSV(str) {
+    const result = [];
+    let current = '';
+    let inQuote = false;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i];
+      if (inQuote) {
+        if (ch === "'") {
+          if (i + 1 < str.length && str[i + 1] === "'") {
+            current += "''";
+            i++;
+          } else {
+            inQuote = false;
+            current += ch;
+          }
+        } else {
+          current += ch;
+        }
+      } else {
+        if (ch === "'") {
+          inQuote = true;
+          current += ch;
+        } else if (ch === ',') {
+          result.push(current);
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+    }
+    result.push(current);
+    return result;
+  }
+
   async query(text, params) {
     const sql = text.trim();
     const table = this._getTable(sql);
@@ -286,9 +324,10 @@ class JSONDB {
           const joinAlias = joinMatch[2];
           const onClause = joinMatch[3];
           if (this.data[joinTable]) {
+            const isLeftJoin = /LEFT\s+JOIN/i.test(sql);
             rows = rows.map(row => {
               const joinRow = this.data[joinTable].find(jr => this._evalOn(row, jr, onClause, joinAlias));
-              if (!joinRow) return null;
+              if (!joinRow) return isLeftJoin ? { ...row } : null;
               const joined = { ...row };
               for (const [k, v] of Object.entries(joinRow)) {
                 joined[`${joinAlias}_${k}`] = v;
@@ -330,7 +369,7 @@ class JSONDB {
         const orders = orderMatch[1].split(',').map(o => o.trim());
         orders.forEach(order => {
           const parts = order.split(/\s+/);
-          const col = parts[0].replace(/^ds\.|^h\.|^c\.|^ms\.|^ma\.|^mi\.|^mc\./i, '');
+          const col = parts[0].replace(/^ds\.|^h\.|^c\.|^ms\.|^ma\.|^mi\.|^mc\.|^d\.|^dn\./i, '');
           const dir = parts[1] && parts[1].toUpperCase() === 'DESC' ? -1 : 1;
           rows.sort((a, b) => {
             if ((a[col] || '') < (b[col] || '')) return -1 * dir;
@@ -377,7 +416,7 @@ class JSONDB {
       if (m) {
         const id = this._nextId(table);
         const newRow = { id };
-        const vals = m[1].split(',').map(v => v.trim());
+        const vals = this._splitCSV(m[1]).map(v => v.trim());
         const colMatch = sql.match(/\((.*?)\)\s*VALUES/i);
         if (colMatch) {
           const cols = colMatch[1].split(',').map(c => c.trim().replace(/"/g, ''));
@@ -390,6 +429,8 @@ class JSONDB {
               val = val.replace(/'/g, '').trim();
             } else if (val === 'NOW()') {
               val = new Date().toISOString();
+            } else if (/^null$/i.test(val)) {
+              val = null;
             } else {
               try { val = JSON.parse(val); } catch { }
             }
@@ -420,7 +461,7 @@ class JSONDB {
       const setMatch = sql.match(/SET\s+(.+?)(?:WHERE|$)/is);
       const whereMatch = sql.match(/WHERE\s+(.+?)$/is);
       if (setMatch && whereMatch) {
-        const sets = setMatch[1].split(',').map(s => s.trim());
+        const sets = this._splitCSV(setMatch[1]).map(s => s.trim());
         let updatedRows = [...this.data[table]];
         updatedRows = updatedRows.filter(row => this._evalWhere(row, whereMatch[1], params));
         updatedRows.forEach(row => {
@@ -455,6 +496,8 @@ class JSONDB {
                   if (addVal.startsWith('$')) addVal = params[parseInt(addVal.substring(1)) - 1];
                   val = (row[colName] || 0) + parseInt(addVal);
                 }
+              } else if (/^null$/i.test(val)) {
+                val = null;
               } else {
                 val = parseInt(val);
               }
