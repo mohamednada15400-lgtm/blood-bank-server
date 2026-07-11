@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -6,12 +6,14 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: data:; font-src 'self' https: http: data:; img-src 'self' data:;">
   <title>بنك الدم — نظام إدارة بنوك الدم</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="css/style.css?v=20260706">
+  <link rel="stylesheet" href="css/style.css?v=20260711-4">
   <link rel="icon" href="img/logo.jpg">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
   <div id="loginPage" class="login-page">
+    <div class="login-decoration-1"></div>
+    <div class="login-decoration-2"></div>
     <div class="login-box">
       <img src="img/logo.jpg" class="login-logo" alt="Nada">
       <div class="login-icon"><i class="fas fa-tint"></i></div>
@@ -25,6 +27,7 @@
         <div class="form-group">
           <label for="loginPass">كلمة المرور</label>
           <input type="password" id="loginPass" class="form-control" placeholder="كلمة المرور" autocomplete="off">
+          <button type="button" onclick="togglePasswordVisibility('loginPass',this)" style="background:none;border:none;position:absolute;left:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#999;padding:4px"><i class="fas fa-eye"></i></button>
         </div>
         <div id="loginError" class="login-error"></div>
         <button class="btn btn-primary btn-block" onclick="doLogin()" id="loginBtn"><i class="fas fa-sign-in-alt"></i> دخول</button>
@@ -46,9 +49,8 @@
         <span class="credit-text"><i class="fas fa-code"></i> محمد ندا 01068880999</span>
         <span class="date-display" id="dateDisplay"></span>
         <span class="clock-display" id="clockDisplay"></span>
-        <button onclick="toggleTime()" id="timeToggleBtn" style="display:none" class="header-icon-btn" title="تغيير التوقيت"><i class="fas fa-clock"></i> <span id="timeOffsetLabel">صيفي</span></button>
         <button onclick="toggleDarkMode()" id="darkModeBtn" class="header-icon-btn" title="الوضع الليلي"><i class="fas fa-moon"></i></button>
-        <button onclick="doLogout()" class="header-icon-btn" title="تسجيل الخروج"><i class="fas fa-sign-out-alt"></i></button>
+        <button onclick="doLogout()" class="header-icon-btn logout-btn" title="تسجيل الخروج"><i class="fas fa-sign-out-alt"></i></button>
       </div>
     </header>
     <div class="dashboard-bar" id="dashboardBar"></div>
@@ -67,6 +69,7 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=20260706"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/app.js?v=20260711-7"></script>
 </body>
 </html>

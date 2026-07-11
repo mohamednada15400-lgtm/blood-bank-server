@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','users','hospitals','governorates','inventory','role_perms','readiness','equipment','time_config','donors'];
+const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','users','hospitals','governorates','inventory','role_perms','readiness','equipment','time_config','emp_accounts','audit_log'];
 
 function makePerm(v,a,e,d,x) { return {v,a,e,d,x}; }
 
@@ -45,6 +45,7 @@ class JSONDB {
       monthly_storage: [], monthly_aggregate: [], monthly_indicators: [], monthly_consumption: [], monthly_big_indicators: [], monthly_small_indicators: [], consumption: [],
       employee_statements: [],
       archives: [],
+
       readiness_occasions: [],
       readiness_reports: [],
       readiness_notifications: [],
@@ -121,7 +122,7 @@ class JSONDB {
       const types = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
       this.data.inventory = types.map((t, i) => ({ id: i + 1, blood_type: t, storage: 0, total_received: 0, total_consumed: 0 }));
       if (!this.data._counters.daily_reports) this.data._counters.daily_reports = this.data.daily_reports ? this.data.daily_reports.length + 1 : 1;
-      this.data._counters = { users: 9, hospitals: 40, governorates: 7, inventory: 9, daily_stock: 1, daily_statements: 1, daily_reports: this.data._counters.daily_reports || 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1, donors: 1, donations: 1 };
+      this.data._counters = { users: 9, hospitals: 40, governorates: 7, inventory: 9, daily_stock: 1, daily_statements: 1, daily_reports: this.data._counters.daily_reports || 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1, audit_log: 1 };
     }
     // Ensure tables exist even when loading existing db
     if (!this.data.daily_reports) this.data.daily_reports = [];
@@ -147,10 +148,9 @@ class JSONDB {
     if (!this.data._counters.readiness_occasions) this.data._counters.readiness_occasions = this.data.readiness_occasions.length + 1 || 1;
     if (!this.data._counters.readiness_reports) this.data._counters.readiness_reports = this.data.readiness_reports.length + 1 || 1;
     if (!this.data._counters.readiness_notifications) this.data._counters.readiness_notifications = this.data.readiness_notifications.length + 1 || 1;
-    if (!this.data.donors) this.data.donors = [];
-    if (!this.data.donations) this.data.donations = [];
-    if (!this.data._counters.donors) this.data._counters.donors = this.data.donors.length + 1 || 1;
-    if (!this.data._counters.donations) this.data._counters.donations = this.data.donations.length + 1 || 1;
+    if (!this.data.audit_log) this.data.audit_log = [];
+    if (!this.data._counters.audit_log) this.data._counters.audit_log = this.data.audit_log.length + 1 || 1;
+
     if (!this.data.blood_bank_equipment || !this.data.blood_bank_equipment.types) {
       this.data.blood_bank_equipment = {
         types: [
@@ -220,6 +220,23 @@ class JSONDB {
         }
         delete rp.permissions.consumption;
       });
+      // Migration: emp_accounts defaults
+      this.data.role_perms.forEach(rp => {
+        if (typeof rp.permissions === 'string') rp.permissions = JSON.parse(rp.permissions);
+        if (rp.permissions.emp_accounts === undefined) {
+          const base = rp.permissions.daily_stock || { v: 0, a: 0, e: 0, d: 0, x: 0 };
+          rp.permissions.emp_accounts = { ...base };
+        }
+      });
+      // Migration: audit_log defaults (view only for admin, hidden for others)
+      this.data.role_perms.forEach(rp => {
+        if (typeof rp.permissions === 'string') rp.permissions = JSON.parse(rp.permissions);
+        if (rp.permissions.audit_log === undefined) {
+          if (rp.role === 'admin') rp.permissions.audit_log = { v:1, a:0, e:0, d:0, x:0 };
+          else rp.permissions.audit_log = { v:0, a:0, e:0, d:0, x:0 };
+        }
+      });
+
     }
     this._save();
   }

@@ -1,6 +1,54 @@
 {
   "users": [
     {
+      "id": 54,
+      "username": "h8_4",
+      "password": "123",
+      "name": "محمد محمد مسعد",
+      "role": "hospital",
+      "hospital_id": 8,
+      "governorate": "الإسماعيلية",
+      "view_permission": "own",
+      "phone": "1099569696",
+      "email": ""
+    },
+    {
+      "id": 53,
+      "username": "h8_3",
+      "password": "123",
+      "name": "آيه عدلو عبدالحميد",
+      "role": "hospital",
+      "hospital_id": 8,
+      "governorate": "الإسماعيلية",
+      "view_permission": "own",
+      "phone": "1022883289",
+      "email": ""
+    },
+    {
+      "id": 52,
+      "username": "h8_2",
+      "password": "123",
+      "name": "محمد الامين السيد",
+      "role": "hospital",
+      "hospital_id": 8,
+      "governorate": "الإسماعيلية",
+      "view_permission": "own",
+      "phone": "1097673941",
+      "email": ""
+    },
+    {
+      "id": 51,
+      "username": "h8_1",
+      "password": "123",
+      "name": "محمد عبدالمنعم حسن",
+      "role": "hospital",
+      "hospital_id": 8,
+      "governorate": "الإسماعيلية",
+      "view_permission": "own",
+      "phone": "1068880999",
+      "email": ""
+    },
+    {
       "id": 1,
       "username": "admin",
       "password": "$2b$10$BL6Qu7tPOzTxhUQ50XKafekzHk4OhW9ZwIzEEhwN9038QD53Smii6",
@@ -314,58 +362,6 @@
       "name": "مستخدم مركز 30 يونيو",
       "role": "hospital",
       "hospital_id": 9,
-      "governorate": "الإسماعيلية",
-      "view_permission": "own",
-      "national_id": "",
-      "phone": "",
-      "email": ""
-    },
-    {
-      "id": 55,
-      "username": "mgr10",
-      "password": "$2b$10$0naKHAGy7ISG86RObQS0f.uCGPv5MetmsmuxNaWjsAg133okdZGaS",
-      "name": "مدير فايد التخصصي",
-      "role": "hospital_manager",
-      "hospital_id": 10,
-      "governorate": "الإسماعيلية",
-      "view_permission": "own",
-      "national_id": "",
-      "phone": "",
-      "email": ""
-    },
-    {
-      "id": 55,
-      "username": "emp10",
-      "password": "$2b$10$0naKHAGy7ISG86RObQS0f.uCGPv5MetmsmuxNaWjsAg133okdZGaS",
-      "name": "مستخدم فايد التخصصي",
-      "role": "hospital",
-      "hospital_id": 10,
-      "governorate": "الإسماعيلية",
-      "view_permission": "own",
-      "national_id": "",
-      "phone": "",
-      "email": ""
-    },
-    {
-      "id": 56,
-      "username": "mgr11",
-      "password": "$2b$10$0naKHAGy7ISG86RObQS0f.uCGPv5MetmsmuxNaWjsAg133okdZGaS",
-      "name": "مدير القصاصين التخصصي",
-      "role": "hospital_manager",
-      "hospital_id": 11,
-      "governorate": "الإسماعيلية",
-      "view_permission": "own",
-      "national_id": "",
-      "phone": "",
-      "email": ""
-    },
-    {
-      "id": 56,
-      "username": "emp11",
-      "password": "$2b$10$0naKHAGy7ISG86RObQS0f.uCGPv5MetmsmuxNaWjsAg133okdZGaS",
-      "name": "مستخدم القصاصين التخصصي",
-      "role": "hospital",
-      "hospital_id": 11,
       "governorate": "الإسماعيلية",
       "view_permission": "own",
       "national_id": "",
@@ -1335,9 +1331,9 @@
     {
       "id": 37,
       "hospital_id": 5,
-      "date": "2026-07-06",
-      "time": "15:41",
-      "under_inspection": 44,
+      "date": "2026-07-11",
+      "time": "09:37",
+      "under_inspection": 10,
       "blood_data": "{\"A+\":{\"previous\":27,\"incoming\":12,\"outgoing\":5,\"disposal\":3,\"available\":31},\"A-\":{\"previous\":5,\"incoming\":0,\"outgoing\":2,\"disposal\":0,\"available\":3},\"B+\":{\"previous\":15,\"incoming\":11,\"outgoing\":5,\"disposal\":1,\"available\":20},\"B-\":{\"previous\":6,\"incoming\":3,\"outgoing\":2,\"disposal\":0,\"available\":7},\"O+\":{\"previous\":35,\"incoming\":18,\"outgoing\":7,\"disposal\":2,\"available\":44},\"O-\":{\"previous\":7,\"incoming\":6,\"outgoing\":3,\"disposal\":0,\"available\":10},\"AB+\":{\"previous\":12,\"incoming\":0,\"outgoing\":1,\"disposal\":0,\"available\":11},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
       "plasma_data": "{\"A\":{\"previous\":17,\"incoming\":5,\"outgoing\":7,\"disposal\":0,\"available\":15},\"B\":{\"previous\":19,\"incoming\":6,\"outgoing\":5,\"disposal\":0,\"available\":20},\"AB\":{\"previous\":29,\"incoming\":3,\"outgoing\":2,\"disposal\":0,\"available\":30},\"O\":{\"previous\":39,\"incoming\":12,\"outgoing\":8,\"disposal\":0,\"available\":43}}",
       "platelets": 142,
@@ -1448,8 +1444,8 @@
     {
       "id": 29,
       "hospital_id": 8,
-      "date": "2026-07-06",
-      "time": "15:41",
+      "date": "2026-07-11",
+      "time": "09:38",
       "under_inspection": 88,
       "blood_data": "{\"A+\":{\"previous\":17,\"incoming\":6,\"outgoing\":8,\"disposal\":1,\"available\":14},\"A-\":{\"previous\":10,\"incoming\":2,\"outgoing\":2,\"disposal\":1,\"available\":9},\"B+\":{\"previous\":5,\"incoming\":11,\"outgoing\":0,\"disposal\":1,\"available\":15},\"B-\":{\"previous\":5,\"incoming\":2,\"outgoing\":1,\"disposal\":0,\"available\":6},\"O+\":{\"previous\":8,\"incoming\":2,\"outgoing\":4,\"disposal\":0,\"available\":6},\"O-\":{\"previous\":3,\"incoming\":4,\"outgoing\":3,\"disposal\":0,\"available\":4},\"AB+\":{\"previous\":5,\"incoming\":4,\"outgoing\":2,\"disposal\":0,\"available\":7},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
       "plasma_data": "{\"A\":{\"previous\":24,\"incoming\":10,\"outgoing\":1,\"disposal\":0,\"available\":33},\"B\":{\"previous\":27,\"incoming\":5,\"outgoing\":2,\"disposal\":0,\"available\":30},\"AB\":{\"previous\":15,\"incoming\":4,\"outgoing\":4,\"disposal\":0,\"available\":15},\"O\":{\"previous\":32,\"incoming\":11,\"outgoing\":8,\"disposal\":0,\"available\":35}}",
@@ -13274,6 +13270,34 @@
           "e": 1,
           "d": 1,
           "x": 1
+        },
+        "emp_accounts": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "audit_log": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "data_analysis": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "donation_ismailia": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
         }
       }
     },
@@ -13428,6 +13452,34 @@
           "x": 1
         },
         "donors": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "emp_accounts": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "audit_log": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "data_analysis": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "donation_ismailia": {
           "v": 1,
           "a": 1,
           "e": 1,
@@ -13592,6 +13644,34 @@
           "e": 1,
           "d": 1,
           "x": 1
+        },
+        "emp_accounts": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "audit_log": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "data_analysis": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "donation_ismailia": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
         }
       }
     },
@@ -13746,6 +13826,34 @@
           "x": 1
         },
         "donors": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "emp_accounts": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "audit_log": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "data_analysis": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "donation_ismailia": {
           "v": 1,
           "a": 1,
           "e": 1,
@@ -13910,6 +14018,34 @@
           "e": 0,
           "d": 0,
           "x": 1
+        },
+        "emp_accounts": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 1
+        },
+        "audit_log": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 1
+        },
+        "data_analysis": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 1
+        },
+        "donation_ismailia": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 1
         }
       }
     },
@@ -14069,12 +14205,40 @@
           "e": 0,
           "d": 0,
           "x": 0
+        },
+        "emp_accounts": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "audit_log": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "data_analysis": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "donation_ismailia": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
         }
       }
     }
   ],
   "_counters": {
-    "users": 51,
+    "users": 57,
     "hospitals": 43,
     "governorates": 8,
     "inventory": 9,
@@ -14090,15 +14254,17 @@
     "monthly_indicators": 2,
     "monthly_big_indicators": 38,
     "monthly_small_indicators": 76,
-    "employee_statements": 347,
+    "employee_statements": 349,
     "consumption": 1,
     "strategic_reserves": 1,
     "readiness_occasions": 15,
     "readiness_reports": 13,
     "readiness_notifications": 15,
     "equipment": 1,
-    "donors": 3,
-    "donations": 17
+    "audit_log": 44,
+    "donation_ismailia_donations": 4,
+    "donation_ismailia_weeks": 3,
+    "donation_ismailia_consumptions": 2
   },
   "monthly_consumption": [
     {
@@ -40258,88 +40424,583 @@
   "app_config": {
     "time_offset": 2
   },
-  "donors": [
+  "audit_log": [
     {
-      "id": 2,
-      "national_id": "28601012803922",
-      "name": "فاطمة سيد",
-      "gender": "أنثى",
-      "address": "اسوان",
-      "phone": "2154464646",
-      "birth_date": "1986-01-01",
-      "created_at": "2026-07-06T14:04:26.578Z"
+      "id": 43,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T08:53:01.916Z"
     },
     {
-      "id": 1,
-      "national_id": "29109151312552",
-      "name": "تنخ باؤ باءقثب قغاثق",
-      "gender": "ذكر",
-      "address": "لؤت بقاي فت",
-      "phone": "2544776867876745",
-      "birth_date": "1991-09-15",
-      "created_at": "2026-07-06T09:52:11.325Z"
-    }
-  ],
-  "donations": [
+      "id": 42,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T08:35:56.442Z"
+    },
+    {
+      "id": 41,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T08:33:22.516Z"
+    },
+    {
+      "id": 40,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T08:31:50.455Z"
+    },
+    {
+      "id": 39,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T08:06:38.416Z"
+    },
+    {
+      "id": 38,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T08:02:49.956Z"
+    },
+    {
+      "id": 37,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T08:02:02.719Z"
+    },
+    {
+      "id": 36,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T08:01:42.083Z"
+    },
+    {
+      "id": 35,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T08:01:07.546Z"
+    },
+    {
+      "id": 34,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:59:41.926Z"
+    },
+    {
+      "id": 33,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:57:52.834Z"
+    },
+    {
+      "id": 32,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:57:41.818Z"
+    },
+    {
+      "id": 31,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:57:28.702Z"
+    },
+    {
+      "id": 30,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:48:29.169Z"
+    },
+    {
+      "id": 29,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:47:13.727Z"
+    },
+    {
+      "id": 28,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:45:01.802Z"
+    },
+    {
+      "id": 27,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:44:07.235Z"
+    },
+    {
+      "id": 26,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:43:34.932Z"
+    },
+    {
+      "id": 25,
+      "action": "حساب أسبوع تبرع الإسماعيلية",
+      "details": "الأسبوع 27 (2026-07-08 - 2026-07-15)",
+      "createdAt": "2026-07-11T07:41:53.944Z"
+    },
+    {
+      "id": 24,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:41:37.212Z"
+    },
+    {
+      "id": 23,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:40:16.693Z"
+    },
+    {
+      "id": 22,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:37:46.996Z"
+    },
+    {
+      "id": 21,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:37:02.453Z"
+    },
+    {
+      "id": 20,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:35:34.721Z"
+    },
+    {
+      "id": 19,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:34:16.734Z"
+    },
+    {
+      "id": 18,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:34:14.946Z"
+    },
+    {
+      "id": 17,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:33:08.345Z"
+    },
     {
       "id": 16,
-      "donor_id": 2,
-      "hospital_id": null,
-      "donation_date": "2026-07-06",
-      "weight": 70,
-      "screening_responses": "{\"weight\":70,\"prevDonation\":\"لا\",\"chronic\":\"لا\",\"surgery\":\"لا\",\"tattoo\":\"لا\",\"meds\":\"لا\",\"meds_regular\":\"لا\",\"hepatitis\":\"لا\",\"malaria\":\"لا\",\"dental\":\"جراحة\",\"bp\":\"طبيعي\",\"hb\":13,\"pregnant\":\"لا\"}",
-      "screening_result": "مرفوض مؤقتاً",
-      "deferral_reason": "جراحة فم — يحتاج 30 يوماً لالتئام الأنسجة",
-      "status": "deferred",
-      "notes": "",
-      "created_at": "2026-07-06T14:06:17.267Z",
-      "next_donation_date": "2026-08-05"
+      "action": "حساب أسبوع تبرع الإسماعيلية",
+      "details": "الأسبوع 27 (2026-07-08 - 2026-07-15)",
+      "createdAt": "2026-07-11T07:32:23.441Z"
     },
     {
       "id": 15,
-      "donor_id": 2,
-      "hospital_id": null,
-      "donation_date": "2026-07-06",
-      "weight": 70,
-      "screening_responses": "{\"weight\":70,\"prevDonation\":\"لا\",\"chronic\":\"لا\",\"surgery\":\"لا\",\"tattoo\":\"لا\",\"meds\":\"لا\",\"meds_regular\":\"لا\",\"hepatitis\":\"لا\",\"malaria\":\"لا\",\"dental\":\"لا\",\"bp\":\"طبيعي\",\"hb\":13,\"pregnant\":\"لا\"}",
-      "screening_result": "مؤهل",
-      "deferral_reason": "",
-      "status": "sample_pending",
-      "notes": "",
-      "created_at": "2026-07-06T14:06:14.385Z",
-      "next_donation_date": ""
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:32:23.003Z"
     },
     {
       "id": 14,
-      "donor_id": 1,
-      "hospital_id": null,
-      "donation_date": "2026-07-06",
-      "weight": 75,
-      "screening_responses": "{\"weight\":75,\"prevDonation\":\"??\",\"chronic\":\"??\",\"surgery\":\"??\",\"tattoo\":\"??\",\"meds\":\"??\",\"meds_regular\":\"??\",\"hepatitis\":\"??\",\"malaria\":\"??\",\"dental\":\"??\",\"bp\":\"?????\",\"hb\":14}",
-      "screening_result": "????",
-      "deferral_reason": "",
-      "status": "completed",
-      "notes": "",
-      "created_at": "2026-07-06T11:21:52.412Z",
-      "next_donation_date": "2026-10-06",
-      "test_result": "{\"hiv\":\"????\",\"hbv\":\"????\",\"hcv\":\"????\",\"syphilis\":\"????\"}",
-      "blood_type": "B+"
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:32:10.711Z"
     },
     {
       "id": 13,
-      "donor_id": 1,
-      "hospital_id": null,
-      "donation_date": "2026-07-06",
-      "weight": 70,
-      "screening_responses": "{\"weight\":70,\"prevDonation\":\"??\",\"chronic\":\"??\",\"surgery\":\"??\",\"tattoo\":\"??\",\"meds\":\"??\",\"meds_regular\":\"??\",\"hepatitis\":\"??\",\"malaria\":\"??\",\"dental\":\"??\",\"bp\":\"?????\",\"hb\":14}",
-      "screening_result": "????",
-      "deferral_reason": "",
-      "status": "completed",
-      "notes": "",
-      "created_at": "2026-07-06T11:20:32.462Z",
-      "next_donation_date": "2026-10-06",
-      "test_result": "{\"hiv\":\"????\",\"hbv\":\"????\",\"hcv\":\"????\",\"syphilis\":\"????\"}",
-      "blood_type": "A+"
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:32:01.170Z"
+    },
+    {
+      "id": 12,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:23:54.800Z"
+    },
+    {
+      "id": 11,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:19:57.196Z"
+    },
+    {
+      "id": 10,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:18:00.056Z"
+    },
+    {
+      "id": 9,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:16:15.505Z"
+    },
+    {
+      "id": 8,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:16:07.593Z"
+    },
+    {
+      "id": 7,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:14:40.493Z"
+    },
+    {
+      "id": 6,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:12:46.043Z"
+    },
+    {
+      "id": 5,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T07:04:03.407Z"
+    },
+    {
+      "id": 4,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-11T06:50:20.539Z"
+    },
+    {
+      "id": 3,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-09T21:09:12.313Z"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-09T21:02:10.008Z"
+    },
+    {
+      "id": 1,
+      "userId": 1,
+      "username": "admin",
+      "action": "تسجيل دخول",
+      "details": "مشرف المشروع دخل إلى النظام",
+      "createdAt": "2026-07-09T20:55:20.434Z"
+    }
+  ],
+  "donation_ismailia_donations": [
+    {
+      "id": 1,
+      "hospital": "ابوخليفة",
+      "date": "2026-07-11",
+      "blood_types": [
+        10,
+        5,
+        8,
+        3,
+        6,
+        2,
+        4,
+        1
+      ],
+      "created_at": "2026-07-11T07:41:37.788Z"
+    },
+    {
+      "id": 2,
+      "hospital": "ابوخليفة",
+      "date": "2026-07-04",
+      "blood_types": [
+        10,
+        5,
+        8,
+        3,
+        6,
+        2,
+        4,
+        1
+      ],
+      "created_at": "2026-07-11T07:41:53.324Z"
+    },
+    {
+      "id": 3,
+      "hospital": "ابوخليفة",
+      "date": "2026-07-11",
+      "blood_types": [
+        2,
+        1,
+        3,
+        0,
+        1,
+        0,
+        2,
+        0
+      ],
+      "created_at": "2026-07-11T07:41:53.641Z"
+    }
+  ],
+  "donation_ismailia_weeks": [
+    {
+      "id": 2,
+      "week_number": 27,
+      "year": 2026,
+      "start_date": "2026-07-08",
+      "end_date": "2026-07-15",
+      "hospitals": [
+        {
+          "name": "ابوخليفة",
+          "collected": [
+            10,
+            5,
+            8,
+            3,
+            6,
+            2,
+            4,
+            1
+          ],
+          "entitlement": [
+            8,
+            5,
+            6,
+            3,
+            5,
+            2,
+            3,
+            1
+          ]
+        },
+        {
+          "name": "مركز 30 يونيو",
+          "collected": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "entitlement": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "فايد",
+          "collected": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "entitlement": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "القصاصين",
+          "collected": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "entitlement": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "القنطرة غرب",
+          "collected": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "entitlement": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "القنطرة شرق",
+          "collected": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "entitlement": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "التل الكبير",
+          "collected": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "entitlement": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "created_at": "2026-07-11T07:41:53.908Z"
+    }
+  ],
+  "donation_ismailia_consumptions": [
+    {
+      "id": 1,
+      "week_id": 2,
+      "date": "2026-07-11",
+      "hospital": "ابوخليفة",
+      "original_hospital": null,
+      "blood_type": "O+",
+      "amount": 1,
+      "borrowed": false,
+      "borrowed_detail": null,
+      "created_at": "2026-07-11T08:07:11.405Z"
     }
   ]
 }

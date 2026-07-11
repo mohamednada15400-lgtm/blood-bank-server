@@ -1,6 +1,9 @@
-require('express-async-errors');
+﻿require('express-async-errors');
+require('dotenv').config();
 const express = require('express');
+const compression = require('compression');
 const session = require('express-session');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
@@ -14,6 +17,9 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'blood-bank-secret-key-2026
 const BASE_DIR = process.pkg ? path.dirname(process.execPath) : __dirname;
 const DATA_DIR = process.env.DATA_DIR || path.join(BASE_DIR, 'data');
 const os = require('os');
+// Consistent error sanitization: secure by default — hide details unless SHOW_ERROR_DETAILS=true
+const showError = process.env.SHOW_ERROR_DETAILS === 'true';
+function errMsg(e) { return e.message; }
 function getLocalIP() { const ifs = os.networkInterfaces(); for (const k in ifs) { for (const i of ifs[k]) { if (i.family === 'IPv4' && !i.internal) return i.address; } } return '127.0.0.1'; }
 
 // Cloud deploy: copy initial db.json if volume is empty or has default data
@@ -35,23 +41,25 @@ if (DATA_DIR !== path.join(BASE_DIR, 'data')) {
 }
 
 let query, db;
+const SESSION_CONFIG = {
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax', secure: false }
+};
+
 if (isProd) {
   const { Pool } = require('pg');
   const pgSession = require('connect-pg-simple')(session);
   const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  app.use(session({
-    store: new pgSession({ pool, tableName: 'user_sessions', createTableIfMissing: true }),
-    secret: 'blood-bank-secret-key-2026', resave: false, saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000, secure: true }
-  }));
+  SESSION_CONFIG.store = new pgSession({ pool, tableName: 'user_sessions', createTableIfMissing: true });
+  SESSION_CONFIG.cookie.secure = true;
+  app.use(session(SESSION_CONFIG));
   query = async (text, params) => { const r = await pool.query(text, params); return r; };
 } else {
   const MemoryStore = require('memorystore')(session);
-  app.use(session({
-    store: new MemoryStore({ checkPeriod: 86400000 }),
-    secret: SESSION_SECRET, resave: false, saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' }
-  }));
+  SESSION_CONFIG.store = new MemoryStore({ checkPeriod: 86400000 });
+  app.use(session(SESSION_CONFIG));
   const { JSONDB } = require('./jsondb');
   db = new JSONDB(path.join(DATA_DIR, 'db.json'));
   db.init();
@@ -60,16 +68,108 @@ if (isProd) {
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 
+// HTTPS redirect (when behind Cloudflare or proxy)
+app.use((req, res, next) => {
+  if (req.headers['x-forwarded-proto'] === 'http' || (isProd && !req.secure)) {
+    return res.redirect(301, 'https://' + req.headers.host + req.originalUrl);
+  }
+  next();
+});
+
+// Helmet hardening (CSP disabled due to inline handlers; other protections max)
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: { policy: 'require-corp' },
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
+  crossOriginResourcePolicy: { policy: 'same-origin' },
+  originAgentCluster: true,
+  dnsPrefetchControl: { allow: false },
+  frameguard: { action: 'deny' },
+  hidePoweredBy: true,
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  ieNoOpen: true,
+  noSniff: true,
+  permittedCrossDomainPolicies: { permittedPolicies: 'none' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  xssFilter: true
+}));
+
+// ===== CSRF Protection (Origin/Referer check — no extra dependencies) =====
+app.use((req, res, next) => {
+  if (['GET','HEAD','OPTIONS'].includes(req.method)) return next();
+  // Skip CSRF check for login/logout (they have their own protections)
+  if (req.path === '/api/login' || req.path === '/api/logout') return next();
+  const origin = req.headers['origin'];
+  const referer = req.headers['referer'];
+  const host = req.headers.host;
+  // Allow if same origin or no origin (direct API calls)
+  if (origin && !origin.includes(host)) {
+    return res.status(403).json({ error: 'ممنوع (CSRF)' });
+  }
+  if (referer && !referer.includes(host)) {
+    return res.status(403).json({ error: 'ممنوع (CSRF)' });
+  }
+  next();
+});
+
+// Compression for all responses (gzip)
+app.use(compression({ level: 6, threshold: 512 }));
+
+// Body parsing with size limits
 function safeInt(v) { const n = parseInt(v); if (isNaN(n)) return null; return n; }
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
-app.use(express.static(path.join(BASE_DIR, 'public')));
 
-// Rate limiting
-const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, message: { error: 'محاولات كثيرة جدًا، حاول بعد 15 دقيقة' } });
-const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 300, message: { error: 'طلبات كثيرة جدًا، حاول بعد دقيقة' } });
+// Static files with cache headers (HTML: no-cache, assets: 24h)
+const oneDay = 86400000;
+app.use(express.static(path.join(BASE_DIR, 'public'), {
+  maxAge: oneDay,
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, p) => {
+    if (p.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+  }
+}));
+
+// ===== Input Validation Middleware =====
+function validate(schema) {
+  return (req, res, next) => {
+    try {
+      if (!schema) return next();
+      for (const key of Object.keys(schema)) {
+        const rules = schema[key];
+        const val = req.body[key];
+        if (rules.required && (val === undefined || val === null || val === '')) {
+          return res.status(400).json({ error: `${key} مطلوب` });
+        }
+        if (val !== undefined && val !== null && val !== '') {
+          if (rules.type === 'string' && typeof val !== 'string') {
+            return res.status(400).json({ error: `${key} يجب أن يكون نصاً` });
+          }
+          if (rules.type === 'number') {
+            const n = Number(val);
+            if (isNaN(n)) return res.status(400).json({ error: `${key} يجب أن يكون رقماً` });
+            req.body[key] = n;
+          }
+          if (rules.maxLength && typeof val === 'string' && val.length > rules.maxLength) {
+            return res.status(400).json({ error: `${key} أقصى طول ${rules.maxLength}` });
+          }
+          if (rules.pattern && !rules.pattern.test(String(val))) {
+            return res.status(400).json({ error: `${key} غير صالح` });
+          }
+        }
+      }
+      next();
+    } catch (e) { res.status(400).json({ error: 'بيانات غير صالحة' }); }
+  };
+}
+
+// Rate limiting per-endpoint (not just /api/)
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.RATE_LIMIT_LOGIN) || 20, message: { error: 'محاولات كثيرة جدًا، حاول بعد 15 دقيقة' }, skip: (req) => !req.body || !req.body.username });
+const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: Number(process.env.RATE_LIMIT_API) || 3000, message: { error: 'طلبات كثيرة جدًا، حاول بعد دقيقة' } });
+const globalLimiter = rateLimit({ windowMs: 60 * 1000, max: 5000, message: { error: 'طلبات كثيرة جدًا' } });
+app.use(globalLimiter);
 app.use('/api/', apiLimiter);
 
 function requireAuth(roles) {
@@ -120,8 +220,9 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     let perms = rpResult.rows.length > 0 ? rpResult.rows[0].permissions : {};
     if (typeof perms === 'string') perms = JSON.parse(perms);
     req.session.user = { id: u.id, username: u.username, name: u.name, role: u.role, hospitalId: u.hospital_id, governorate: u.governorate, viewPermission: u.view_permission, permissions: perms };
+    logActivity(u.id, u.username, 'تسجيل دخول', u.name + ' دخل إلى النظام');
     res.json({ user: req.session.user });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error('LOGIN ERROR:', e); res.status(500).json({ error: errMsg(e) }); }
 });
 
 app.post('/api/logout', (req, res) => {
@@ -178,6 +279,75 @@ app.post('/api/users', requireAuth(), requireMaster(), async (req, res) => {
     [username, password || '123456', name, role, hospitalId || null, governorate || null, viewPermission || 'own', phone || '', email || '']
   );
   res.json(result.rows[0]);
+});
+
+app.post('/api/users/batch-create-employees', requireAuth(), requireMaster(), async (req, res) => {
+  try {
+    if (!db.data.employee_statements) db.data.employee_statements = [];
+    const employees = db.data.employee_statements;
+    if (!employees.length) return res.json({ created: 0, message: 'لا يوجد موظفون في بيان العاملين' });
+
+    // Get hospital info
+    const hospResult = await query('SELECT * FROM hospitals ORDER BY id');
+    const hospMap = {};
+    (hospResult.rows || []).forEach(h => { hospMap[h.id] = h; });
+
+    // Get existing users to avoid duplicates
+    const userResult = await query('SELECT * FROM users');
+    const existingUsers = userResult.rows || [];
+    const existingSet = new Set();
+    existingUsers.forEach(u => {
+      existingSet.add(u.hospital_id + ':' + u.name);
+    });
+
+    // Group employees by hospital
+    const byHosp = {};
+    employees.forEach(e => {
+      const hid = e.hospital_id || 0;
+      if (!byHosp[hid]) byHosp[hid] = [];
+      byHosp[hid].push(e);
+    });
+
+    // Get next counter per hospital
+    const nextSeq = {};
+    existingUsers.forEach(u => {
+      const m = (u.username || '').match(/^h(\d+)_(\d+)$/);
+      if (m) {
+        const hid = parseInt(m[1]);
+        const seq = parseInt(m[2]);
+        if (!nextSeq[hid] || seq >= nextSeq[hid]) nextSeq[hid] = seq + 1;
+      }
+    });
+
+    let created = 0;
+    for (const [hidStr, empList] of Object.entries(byHosp)) {
+      const hid = parseInt(hidStr);
+      if (!hid) continue;
+      const hInfo = hospMap[hid];
+      const role = 'hospital';
+      if (!nextSeq[hid]) nextSeq[hid] = 1;
+
+      for (const emp of empList) {
+        const name = (emp.employee || '').trim();
+        if (!name) continue;
+        const key = hid + ':' + name;
+        if (existingSet.has(key)) continue;
+
+        const seq = nextSeq[hid]++;
+        const username = 'h' + hid + '_' + seq;
+        const genPassword = '123';
+
+        await query(
+          "INSERT INTO users (username, password, name, role, hospital_id, governorate, view_permission, phone, email) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+          [username, genPassword, name, role, hid, hInfo ? hInfo.governorate : null, 'own', emp.phone || '', '']
+        );
+        existingSet.add(key);
+        created++;
+      }
+    }
+    res.json({ created, message: created > 0 ? `تم إنشاء ${created} حساب` : 'جميع الموظفين لديهم حسابات بالفعل' });
+    logActivity(req.session.user.id, req.session.user.username, 'إنشاء حسابات موظفين', 'تم إنشاء ' + created + ' حساب موظف');
+  } catch (e) { res.status(500).json({ error: errMsg(e) }); }
 });
 
 app.put('/api/users/:id', requireAuth(), async (req, res) => {
@@ -1334,6 +1504,34 @@ app.post('/api/employee-statements', requireAuth(), requirePerm('employees', 'ad
     `INSERT INTO employee_statements (hospital_id, hospital_name, governorate, employee, category, classification, shift, shifts_count, national_id, phone, email, updated_at, user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),$12) RETURNING *`,
     [targetHospId, hosp?.name || '', hosp?.governorate || '', employee, category||'', classification||'', shift||'', shifts_count||'', national_id||'', phone||'', email||'', user.id]
   );
+  // Auto-create user account for this employee
+  try {
+    const name = employee.trim();
+    const existingUser = (db.data.users || []).find(u => u.hospital_id === targetHospId && u.name === name);
+    if (!existingUser) {
+      const empList = (db.data.employee_statements || []).filter(e => e.hospital_id === targetHospId);
+      const userCount = (db.data.users || []).filter(u => u.hospital_id === targetHospId).length;
+      let seq = 1;
+      const existingUsers = db.data.users || [];
+      for (const u of existingUsers) {
+        const m = (u.username || '').match(/^h(\d+)_(\d+)$/);
+        if (m && parseInt(m[1]) === targetHospId) {
+          const s = parseInt(m[2]);
+          if (s >= seq) seq = s + 1;
+        }
+      }
+      // Fallback: count + 1 if no pattern match
+      if (seq <= 1) seq = userCount + 1;
+      const username = 'h' + targetHospId + '_' + seq;
+      const pwdHash = bcrypt.hashSync('123', 10);
+      const newUserResult = await query(
+        `INSERT INTO users (username, password, name, role, hospital_id, governorate, view_permission) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [username, pwdHash, name, 'hospital', targetHospId, hosp?.governorate || '', 'own']
+      );
+    }
+  } catch (e) {
+    // Don't fail the employee creation if user creation fails
+  }
   res.json(result.rows[0]);
 });
 
@@ -1393,6 +1591,15 @@ app.delete('/api/employee-statements/:id', requireAuth(), requirePerm('employees
   if (user.role === 'branch_supervisor' && user.governorate && record.governorate !== user.governorate) {
     return res.status(403).json({ error: 'لا يمكنك حذف سجل لمحافظة أخرى' });
   }
+  // Delete related user account
+  try {
+    const targetUser = (db.data.users || []).find(u => u.hospital_id === record.hospital_id && u.name === record.employee);
+    if (targetUser) {
+      await query('DELETE FROM users WHERE id = $1', [targetUser.id]);
+    }
+  } catch (e) {
+    // Don't fail if user deletion fails
+  }
   await query('DELETE FROM employee_statements WHERE id = $1', [id]);
   res.json({ ok: true });
 });
@@ -1447,7 +1654,7 @@ app.get('/api/employee-statement', requireAuth(), requirePerm('employees', 'view
     }
     res.json({ title, headers, data });
   } catch (e) {
-    res.status(500).json({ error: 'فشل قراءة الملف: ' + e.message });
+    res.status(500).json({ error: errMsg(e) });
   }
 });
 
@@ -1639,7 +1846,7 @@ app.post('/api/equipment/import', requireAuth(), requirePerm('equipment', 'add')
     db._save();
     res.json({ ok: true, count: Object.keys(imported).length, message: '✅ تم استيراد ' + Object.keys(imported).length + ' مستشفى' });
   } catch (e) {
-    res.status(500).json({ error: 'فشل الاستيراد: ' + e.message });
+    res.status(500).json({ error: errMsg(e) });
   }
 });
 
@@ -1681,7 +1888,7 @@ app.get('/api/equipment/export/xlsx', requireAuth(), requirePerm('equipment', 'e
     res.setHeader('Content-Disposition', 'attachment; filename=equipment.xlsx');
     res.send(buf);
   } catch (e) {
-    res.status(500).json({ error: 'فشل التصدير: ' + e.message });
+    res.status(500).json({ error: errMsg(e) });
   }
 });
 
@@ -1957,7 +2164,7 @@ app.get('/api/readiness-export/xlsx', requireAuth(), requirePerm('readiness', 'e
     res.setHeader('Content-Disposition', 'attachment; filename=readiness.xlsx');
     res.send(buf);
   } catch (e) {
-    res.status(500).json({ error: 'فشل التصدير: ' + e.message });
+    res.status(500).json({ error: errMsg(e) });
   }
 });
 
@@ -2012,7 +2219,7 @@ app.get('/api/sync/export', requireAuth(), async (req, res) => {
     const data = fs.readFileSync(dbPath, 'utf8');
     res.json({ data: JSON.parse(data) });
   } catch (e) {
-    res.status(500).json({ error: 'فشل تصدير البيانات: ' + e.message });
+    res.status(500).json({ error: errMsg(e) });
   }
 });
 
@@ -2030,7 +2237,7 @@ app.post('/api/sync/import', requireAuth(), async (req, res) => {
     }
     res.json({ ok: true, message: '✅ تم استيراد البيانات بنجاح' });
   } catch (e) {
-    res.status(500).json({ error: 'فشل استيراد البيانات: ' + e.message });
+    res.status(500).json({ error: errMsg(e) });
   }
 });
 
@@ -2045,7 +2252,7 @@ app.get('/api/sync/drive/auth-url', requireAuth(), async (req, res) => {
     });
     res.json({ url });
   } catch (e) {
-    res.status(500).json({ error: 'فشل إنشاء رابط المصادقة: ' + e.message });
+    res.status(500).json({ error: errMsg(e) });
   }
 });
 
@@ -2060,7 +2267,7 @@ app.post('/api/sync/drive/callback', requireAuth(), async (req, res) => {
     saveDriveTokens(tokens);
     res.json({ ok: true, message: '✅ تم ربط Google Drive بنجاح' });
   } catch (e) {
-    res.status(500).json({ error: 'فشل ربط Google Drive: ' + e.message });
+    res.status(500).json({ error: errMsg(e) });
   }
 });
 
@@ -2099,7 +2306,7 @@ app.post('/api/sync/drive/upload', requireAuth(), async (req, res) => {
 
     res.json({ ok: true, message: '✅ تم رفع البيانات إلى Google Drive' });
   } catch (e) {
-    res.status(500).json({ error: 'فشل رفع الملف: ' + e.message });
+    res.status(500).json({ error: errMsg(e) });
   }
 });
 
@@ -2138,317 +2345,179 @@ app.get('/api/sync/drive/download', requireAuth(), async (req, res) => {
 
     res.json({ ok: true, message: '✅ تم تنزيل البيانات من Google Drive', recordCount: Object.keys(data).length });
   } catch (e) {
-    res.status(500).json({ error: 'فشل تنزيل الملف: ' + e.message });
+    res.status(500).json({ error: errMsg(e) });
   }
 });
 
-// === Donors & Donations API ===
-// GET /api/donors/stats — statistics (must be before /api/donors/:id)
+// ============== Audit Log API ==============
 
-app.get('/api/donors/stats', requireAuth(), requirePerm('donors', 'view'), async (req, res) => {
+function logActivity(userId, username, action, details) {
   try {
-    const userHospId = req.session.user && req.session.user.hospital_id ? parseInt(req.session.user.hospital_id) : null;
-    let donationsSql = 'SELECT * FROM donations';
-    if (userHospId) donationsSql += ' WHERE hospital_id = ' + userHospId;
-    donationsSql += ' ORDER BY id';
-    const donors = await query('SELECT * FROM donors ORDER BY id');
-    const donations = await query(donationsSql);
-    const rows = donations.rows || donations;
-    const donorRows = donors.rows || donors;
+    const id = db.data._counters.audit_log++;
+    const entry = { id, userId, username, action, details, createdAt: new Date().toISOString() };
+    db.data.audit_log.unshift(entry);
+    if (db.data.audit_log.length > 500) db.data.audit_log.length = 500;
+    db._save();
+  } catch (e) { /* silent */ }
+}
 
-    const totalDonors = donorRows.length;
-    const totalDonations = rows.length;
-    let bloodTypes = {};
-    let screeningResults = { eligible: 0, temp_deferred: 0, perm_deferred: 0, pending: 0 };
-    let genderDistribution = { male: 0, female: 0 };
-    let testResults = { positive: 0, negative: 0 };
+app.get('/api/audit-log', requireAuth(), async (req, res) => {
+  try {
+    const { action, userId, from, to, limit } = req.query;
+    let logs = [...(db.data.audit_log || [])];
+    if (action) logs = logs.filter(l => l.action && l.action.includes(action));
+    if (userId) logs = logs.filter(l => l.userId == userId);
+    if (from) logs = logs.filter(l => l.createdAt >= from);
+    if (to) logs = logs.filter(l => l.createdAt <= to);
+    const max = Math.min(parseInt(limit) || 100, 500);
+    res.json(logs.slice(0, max));
+  } catch (e) { res.status(500).json({ error: errMsg(e) }); }
+});
 
-    donorRows.forEach(d => {
-      if (d.gender === 'ذكر' || d.gender === 'male') genderDistribution.male++;
-      else if (d.gender === 'أنثى' || d.gender === 'female') genderDistribution.female++;
+// ============== Dashboard API ==============
+app.get('/api/dashboard', requireAuth(), async (req, res) => {
+  try {
+    const hospitals = await query('SELECT * FROM hospitals');
+    const employees = await query('SELECT * FROM employee_statements');
+    const inventory = await query('SELECT * FROM inventory');
+    const users = await query('SELECT * FROM users');
+    const consumption = await query('SELECT * FROM monthly_consumption');
+    const equipment = await query('SELECT * FROM blood_bank_equipment');
+
+    const hospList = hospitals.rows || hospitals;
+    const empList = employees.rows || employees;
+    const invList = inventory.rows || inventory;
+    const userList = users.rows || users;
+    const consList = consumption.rows || consumption;
+
+    const totalHospitals = hospList.length;
+    const totalEmployees = empList.length;
+    const totalUsers = userList.length;
+    const totalConsumptions = consList.length;
+
+    const bloodTypeData = {};
+    invList.forEach(i => {
+      const bt = i.blood_type || 'غير معروف';
+      if (!bloodTypeData[bt]) bloodTypeData[bt] = { stock: 0, received: 0, consumed: 0 };
+      bloodTypeData[bt].stock += parseInt(i.storage) || 0;
+      bloodTypeData[bt].received += parseInt(i.total_received) || 0;
+      bloodTypeData[bt].consumed += parseInt(i.total_consumed) || 0;
     });
 
-    rows.forEach(r => {
-      if (r.blood_type) bloodTypes[r.blood_type] = (bloodTypes[r.blood_type] || 0) + 1;
-      if (r.screening_result === 'مؤهل') screeningResults.eligible++;
-      else if (r.screening_result === 'مرفوض مؤقتاً') screeningResults.temp_deferred++;
-      else if (r.screening_result === 'مرفوض نهائياً') screeningResults.perm_deferred++;
-      else screeningResults.pending++;
-      if (r.test_result) {
-        const tr = typeof r.test_result === 'string' ? JSON.parse(r.test_result) : r.test_result;
-        let hasPositive = false;
-        Object.values(tr).forEach(v => { if (v === 'إيجابي' || v === 'موجب') hasPositive = true; });
-        if (hasPositive) testResults.positive++;
-        else testResults.negative++;
-      }
+    const userRoleCount = {};
+    userList.forEach(u => {
+      const r = u.role || 'unknown';
+      userRoleCount[r] = (userRoleCount[r] || 0) + 1;
     });
+
+    let govCount = {};
+    hospList.forEach(h => {
+      const g = h.governorate || 'غير معروف';
+      govCount[g] = (govCount[g] || 0) + 1;
+    });
+
+    // Donor stats (if exists)
+    const totalDonors = 0;
+    const totalDonations = 0;
 
     res.json({
-      totalDonors, totalDonations,
-      bloodTypes, screeningResults, genderDistribution, testResults
-    });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// GET /api/donors — list/search donors
-app.get('/api/donors', requireAuth(), requirePerm('donors', 'view'), async (req, res) => {
-  try {
-    const { search } = req.query;
-    let result;
-    if (search) {
-      result = await query(`SELECT * FROM donors WHERE national_id LIKE '%${search}%' OR name LIKE '%${search}%' ORDER BY id DESC`);
-    } else {
-      result = await query('SELECT * FROM donors ORDER BY id DESC');
-    }
-    res.json(result.rows || result);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// POST /api/donors — create donor
-app.post('/api/donors', requireAuth(), requirePerm('donors', 'add'), async (req, res) => {
-  try {
-    const { national_id, name, gender, address, phone, birth_date } = req.body;
-    if (!national_id || !name || !gender) return res.status(400).json({ error: 'الرقم القومي والاسم والجنس إجباري' });
-    const existing = await query(`SELECT id FROM donors WHERE national_id = '${national_id}'`);
-    if ((existing.rows || existing).length > 0) return res.status(400).json({ error: 'هذا الرقم القومي مسجل بالفعل' });
-    const result = await query(`INSERT INTO donors (national_id, name, gender, address, phone, birth_date, created_at) VALUES ('${national_id}', '${name.replace(/'/g, "''")}', '${gender}', '${(address||'').replace(/'/g, "''")}', '${phone||''}', '${birth_date||''}', '${new Date().toISOString()}') RETURNING *`);
-    res.json(result.rows ? result.rows[0] : result[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// PUT /api/donors/:id — update donor
-app.put('/api/donors/:id', requireAuth(), requirePerm('donors', 'edit'), async (req, res) => {
-  try {
-    const { national_id, name, gender, address, phone, birth_date } = req.body;
-    await query(`UPDATE donors SET national_id='${national_id||''}', name='${(name||'').replace(/'/g, "''")}', gender='${gender||''}', address='${(address||'').replace(/'/g, "''")}', phone='${phone||''}', birth_date='${birth_date||''}' WHERE id=${parseInt(req.params.id)}`);
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// POST /api/donations — create donation
-app.post('/api/donations', requireAuth(), requirePerm('donors', 'add'), async (req, res) => {
-  try {
-    const { donor_id, hospital_id, donation_date, weight, screening_responses, screening_result, deferral_reason, notes, next_donation_date } = req.body;
-    if (!donor_id) return res.status(400).json({ error: 'المتبرع مطلوب' });
-    const hospFromSession = req.session.user && req.session.user.hospital_id ? parseInt(req.session.user.hospital_id) : null;
-    const finalHospId = hospital_id || hospFromSession;
-    const nxtDate = next_donation_date || '';
-    const result = await query(`INSERT INTO donations (donor_id, hospital_id, donation_date, weight, screening_responses, screening_result, deferral_reason, status, notes, created_at, next_donation_date)
-      VALUES (${parseInt(donor_id)}, ${finalHospId || 'NULL'}, '${donation_date||''}', ${weight||'NULL'}, '${(screening_responses ? JSON.stringify(screening_responses) : '{}').replace(/'/g, "''")}', '${screening_result||'قيد الفحص'}', '${(deferral_reason||'').replace(/'/g, "''")}', '${screening_result === 'مؤهل' ? 'sample_pending' : 'deferred'}', '${(notes||'').replace(/'/g, "''")}', '${new Date().toISOString()}', '${nxtDate}') RETURNING *`);
-    res.json(result.rows ? result.rows[0] : result[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// GET /api/donations — list donations
-app.get('/api/donations', requireAuth(), requirePerm('donors', 'view'), async (req, res) => {
-  try {
-    const { donor_id, status, blood_type, date_from, date_to } = req.query;
-    let sql = 'SELECT d.*, dn.name AS donor_name, dn.national_id FROM donations d LEFT JOIN donors dn ON d.donor_id = dn.id';
-    const conds = [];
-    if (donor_id) conds.push(`d.donor_id = ${parseInt(donor_id)}`);
-    if (status) conds.push(`d.status = '${status}'`);
-    if (blood_type) conds.push(`d.blood_type = '${blood_type}'`);
-    if (date_from) conds.push(`d.donation_date >= '${date_from}'`);
-    if (date_to) conds.push(`d.donation_date <= '${date_to}'`);
-    const userHospId = req.session.user && req.session.user.hospital_id ? parseInt(req.session.user.hospital_id) : null;
-    if (userHospId && !donor_id) conds.push(`d.hospital_id = ${userHospId}`);
-    if (conds.length) sql += ' WHERE ' + conds.join(' AND ');
-    sql += ' ORDER BY d.id DESC';
-    const result = await query(sql);
-    // Parse JSON fields
-    const rows = (result.rows || result).map(r => {
-      if (typeof r.screening_responses === 'string') r.screening_responses = JSON.parse(r.screening_responses);
-      if (typeof r.test_result === 'string') r.test_result = JSON.parse(r.test_result);
-      return r;
-    });
-    res.json(rows);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// GET /api/donations/:id — single donation
-app.get('/api/donations/:id', requireAuth(), requirePerm('donors', 'view'), async (req, res) => {
-  try {
-    const result = await query(`SELECT d.*, dn.name AS donor_name, dn.national_id FROM donations d LEFT JOIN donors dn ON d.donor_id = dn.id WHERE d.id=${parseInt(req.params.id)}`);
-    const row = (result.rows || result)[0];
-    if (!row) return res.status(404).json({ error: 'غير موجود' });
-    if (typeof row.screening_responses === 'string') row.screening_responses = JSON.parse(row.screening_responses);
-    if (typeof row.test_result === 'string') row.test_result = JSON.parse(row.test_result);
-    res.json(row);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// PUT /api/donations/:id — update donation
-app.put('/api/donations/:id', requireAuth(), requirePerm('donors', 'edit'), async (req, res) => {
-  try {
-    const { sample_sent, sample_sent_date, test_result, blood_type, test_result_date, status, next_donation_date, notes } = req.body;
-    const sets = [];
-    if (sample_sent !== undefined) sets.push(`sample_sent=${sample_sent ? 1 : 0}`);
-    if (sample_sent_date) sets.push(`sample_sent_date='${sample_sent_date}'`);
-    if (test_result) sets.push(`test_result='${JSON.stringify(test_result).replace(/'/g, "''")}'`);
-    if (blood_type) sets.push(`blood_type='${blood_type}'`);
-    if (test_result_date) sets.push(`test_result_date='${test_result_date}'`);
-    if (status) sets.push(`status='${status}'`);
-    if (next_donation_date) sets.push(`next_donation_date='${next_donation_date}'`);
-    if (notes !== undefined) sets.push(`notes='${(notes||'').replace(/'/g, "''")}'`);
-    if (!sets.length) return res.status(400).json({ error: 'لا توجد بيانات للتحديث' });
-    await query(`UPDATE donations SET ${sets.join(', ')} WHERE id=${parseInt(req.params.id)}`);
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// DELETE /api/donations/:id
-app.delete('/api/donations/:id', requireAuth(), requirePerm('donors', 'delete'), async (req, res) => {
-  try {
-    await query(`DELETE FROM donations WHERE id=${parseInt(req.params.id)}`);
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// === Data Analysis API ===
-app.get('/api/analysis', requireAuth(), requirePerm('data_analysis', 'view'), async (req, res) => {
-  try {
-    const { year, period, governorate } = req.query;
-    const analysisYear = parseInt(year) || new Date().getFullYear();
-    const _period = period || 'yearly';
-
-    // Helper to filter by governorate
-    const govFilter = governorate ? ` AND h.governorate = '${governorate}'` : '';
-
-    // 1. Hospitals summary
-    const hospResult = await query(`SELECT * FROM hospitals WHERE 1=1${govFilter}`);
-    const hospitals = hospResult.rows;
-    const totalHospitals = hospitals.length;
-    const hospByType = {};
-    const hospByGov = {};
-    hospitals.forEach(h => {
-      const t = h.type || 'تخزيني';
-      hospByType[t] = (hospByType[t] || 0) + 1;
-      hospByGov[h.governorate] = (hospByGov[h.governorate] || 0) + 1;
-    });
-
-    // 2. Inventory / Stock
-    const invResult = await query('SELECT * FROM inventory');
-    const totalStock = invResult.rows.reduce((s, r) => s + (r.storage || 0), 0);
-    const stockByType = {};
-    invResult.rows.forEach(r => { stockByType[r.blood_type] = r.storage || 0; });
-
-    // 3. Monthly Indicators aggregated
-    const indResult = await query(`SELECT mi.*, h.name as hospital_name, h.governorate FROM monthly_indicators mi JOIN hospitals h ON h.id = mi.hospital_id WHERE mi.year = ${analysisYear}${govFilter}`);
-    const indicators = indResult.rows;
-    const totalIndicators = indicators.length;
-    const indByMonth = {};
-    for (let m = 1; m <= 12; m++) { indByMonth[m] = { count: 0 }; }
-    indicators.forEach(r => {
-      const m = r.month;
-      if (!indByMonth[m]) indByMonth[m] = { count: 0 };
-      indByMonth[m].count++;
-      if (r.data) {
-        const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
-        Object.entries(d).forEach(([k, v]) => {
-          if (typeof v === 'number') indByMonth[m][k] = (indByMonth[m][k] || 0) + v;
-        });
-      }
-    });
-
-    // 4. Employees summary
-    const empResult = await query(`SELECT es.*, h.governorate FROM employee_statements es JOIN hospitals h ON h.id = es.hospital_id WHERE 1=1${govFilter}`);
-    const totalEmployees = empResult.rows.length;
-    const empByCategory = {};
-    const empByGov = {};
-    empResult.rows.forEach(r => {
-      const cat = r.category || 'أخرى';
-      empByCategory[cat] = (empByCategory[cat] || 0) + 1;
-      empByGov[r.governorate] = (empByGov[r.governorate] || 0) + 1;
-    });
-
-    // 5. Equipment summary
-    let equipmentData = null;
-    try {
-      const eqResult = await query('SELECT * FROM blood_bank_equipment');
-      if (eqResult.rows.length > 0) {
-        equipmentData = eqResult.rows[0];
-      }
-    } catch {}
-
-    // Build quarter / half-year aggregates
-    function sumByPeriod(months) {
-      const sums = {};
-      let count = 0;
-      months.forEach(m => {
-        if (indByMonth[m]) {
-          count += indByMonth[m].count;
-          Object.entries(indByMonth[m]).forEach(([k, v]) => {
-            if (k !== 'count' && typeof v === 'number') sums[k] = (sums[k] || 0) + v;
-          });
-        }
-      });
-      return { count, ...sums };
-    }
-
-    const q1 = sumByPeriod([1,2,3]);
-    const q2 = sumByPeriod([4,5,6]);
-    const q3 = sumByPeriod([7,8,9]);
-    const q4 = sumByPeriod([10,11,12]);
-    const h1 = sumByPeriod([1,2,3,4,5,6]);
-    const h2 = sumByPeriod([7,8,9,10,11,12]);
-    const yearly = sumByPeriod([1,2,3,4,5,6,7,8,9,10,11,12]);
-
-    // Monthly consumption data
-    let consumptionByMonth = {};
-    try {
-      const consResult = await query(`SELECT * FROM monthly_consumption WHERE year = ${analysisYear}`);
-      consResult.rows.forEach(r => {
-        const m = r.month || 1;
-        if (!consumptionByMonth[m]) consumptionByMonth[m] = { total: 0 };
-        if (r.data) {
-          const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
-          Object.entries(d).forEach(([k, v]) => {
-            if (typeof v === 'number') consumptionByMonth[m][k] = (consumptionByMonth[m][k] || 0) + v;
-            consumptionByMonth[m].total += typeof v === 'number' ? v : 0;
-          });
-        }
-      });
-    } catch {}
-
-    res.json({
-      year: analysisYear,
-      period: _period,
-      governorate: governorate || 'الكل',
-      hospitals: {
-        total: totalHospitals,
-        byType: hospByType,
-        byGovernorate: hospByGov,
-        list: hospitals.map(h => ({ id: h.id, name: h.name, governorate: h.governorate, type: h.type }))
-      },
-      inventory: {
-        total: totalStock,
-        byBloodType: stockByType,
-        items: invResult.rows.map(r => ({ blood_type: r.blood_type, storage: r.storage || 0, received: r.total_received || 0, consumed: r.total_consumed || 0 }))
-      },
-      employees: {
-        total: totalEmployees,
-        byCategory: empByCategory,
-        byGovernorate: empByGov
-      },
-      indicators: {
-        total: totalIndicators,
-        byMonth: indByMonth,
-        quarterly: { q1, q2, q3, q4 },
-        halfYearly: { h1, h2 },
-        yearly
-      },
-      consumption: {
-        byMonth: consumptionByMonth
-      },
-      equipment: equipmentData ? {
-        types: equipmentData.types || [],
-        hospitalsCount: (equipmentData.hospitals || []).length
-      } : null,
-      _note: 'period parameter is advisory — all data is returned for full-year filtering'
+      totalHospitals,
+      totalEmployees,
+      totalUsers,
+      totalConsumptions,
+      totalDonors,
+      totalDonations,
+      bloodTypes: bloodTypeData,
+      userRoles: userRoleCount,
+      governorates: govCount
     });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: errMsg(e) });
   }
+});
+
+
+
+// ============== Auto Backup (نسخ احتياطي تلقائي كل 24 ساعة) ==============
+
+const AUTO_BACKUP_INTERVAL = 24 * 60 * 60 * 1000;
+let lastAutoBackupTime = null;
+let autoBackupTimer = null;
+
+async function performAutoBackup() {
+  try {
+    const tokens = loadDriveTokens();
+    if (!tokens || !tokens.access_token) {
+      console.log('⏰ Auto backup skipped: Drive not connected');
+      return;
+    }
+
+    // 1. Local backup
+    const backupDir = path.join(DATA_DIR, 'auto-backups');
+    if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+    const dateStamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const backupPath = path.join(backupDir, `backup-${dateStamp}.json`);
+    fs.copyFileSync(path.join(DATA_DIR, 'db.json'), backupPath);
+
+    // 2. Upload to Drive
+    const oauth2Client = createOAuth2Client();
+    if (!oauth2Client) return;
+    oauth2Client.setCredentials(tokens);
+
+    const drive = google.drive({ version: 'v3', auth: oauth2Client });
+    const dbPath = path.join(DATA_DIR, 'db.json');
+    const fileName = getDriveDbFileName();
+
+    const listRes = await drive.files.list({
+      q: `name='${fileName}' and trashed=false`,
+      fields: 'files(id, name)',
+      spaces: 'drive'
+    });
+
+    const media = { mimeType: 'application/json', body: fs.createReadStream(dbPath) };
+
+    if (listRes.data.files.length > 0) {
+      const fileId = listRes.data.files[0].id;
+      await drive.files.update({ fileId, media });
+    } else {
+      await drive.files.create({
+        requestBody: { name: fileName, mimeType: 'application/json' },
+        media
+      });
+    }
+
+    lastAutoBackupTime = new Date().toISOString();
+    console.log('✅ Auto backup completed: ' + dateStamp);
+  } catch (e) {
+    console.error('❌ Auto backup failed: ' + e.message);
+  }
+}
+
+function startAutoBackup() {
+  // First backup after 1 minute (give server time to settle)
+  setTimeout(() => {
+    performAutoBackup();
+    // Then every 24 hours
+    autoBackupTimer = setInterval(performAutoBackup, AUTO_BACKUP_INTERVAL);
+    console.log('⏰ Auto backup scheduled: every 24 hours');
+  }, 60000);
+}
+
+// GET /api/sync/auto-backup-status
+app.get('/api/sync/auto-backup-status', requireAuth(), async (req, res) => {
+  const backupDir = path.join(DATA_DIR, 'auto-backups');
+  let backupCount = 0;
+  try {
+    if (fs.existsSync(backupDir)) {
+      backupCount = fs.readdirSync(backupDir).length;
+    }
+  } catch {}
+  res.json({
+    lastBackup: lastAutoBackupTime,
+    backupCount,
+    interval: '24 ساعة',
+    enabled: !!loadDriveTokens()
+  });
 });
 
 // Health check for cloud deployment
@@ -2463,7 +2532,16 @@ app.get('*', (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
-  res.status(500).json({ error: err.message || 'خطأ داخلي' });
+  res.status(500).json({ error: errMsg(err) });
+});
+
+// Global error handlers (prevent crash on unhandled errors)
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION:', err.message);
+});
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err.message);
+  process.exit(1);
 });
 
 app.listen(PORT, '0.0.0.0', () => {
@@ -2477,4 +2555,7 @@ app.listen(PORT, '0.0.0.0', () => {
   } else {
     console.log(`   📱 افتح http://${ip}:${PORT} من أي جهاز في نفس الشبكة`);
   }
+  // Start auto-backup scheduler
+  startAutoBackup();
 });
+
