@@ -26,7 +26,7 @@ goto MENU
 
 :START
 echo Starting server...
-start /B /MIN "" node server.js
+start /B /MIN "" node --max-old-space-size=384 server.js
 echo Server started on http://localhost:3001
 timeout /t 3 /nobreak >nul
 goto MENU
@@ -46,7 +46,7 @@ for /f "tokens=2 delims=," %%p in ('tasklist /fi "imagename eq node.exe" /fo csv
     taskkill /f /pid %%~p >nul 2>&1
 )
 timeout /t 1 /nobreak >nul
-start /B /MIN "" node server.js
+start /B /MIN "" node --max-old-space-size=384 server.js
 echo Server restarted.
 timeout /t 3 /nobreak >nul
 goto MENU

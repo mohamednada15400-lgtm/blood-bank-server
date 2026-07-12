@@ -7,7 +7,7 @@ services:
     region: frankfurt
     healthCheckPath: /health
     buildCommand: npm install
-    startCommand: node server.js
+    startCommand: node --max-old-space-size=128 server.js
     envVars:
       - key: DATA_DIR
         value: /var/data

@@ -2,6 +2,49 @@
 let _timeOffset = 2;
 let _clockInterval = null;
 
+/* event delegation for CSP compliance */
+(function(){var H={},E={click:1,change:1,input:1,focusin:1,paste:1,focusout:1,keydown:1,mouseover:1,mouseout:1};window._dh=function(n,f){H[n]=f;};for(var K in E){if(E.hasOwnProperty(K)){(function(et){document.addEventListener(et,function(e){try{var attr='data-'+et;if(et==='focusin')attr='data-focus';if(et==='focusout')attr='data-blur';if(et==='keydown')attr='data-keydown';var el=e.target.closest('['+attr+']');if(!el)return;var n=el.getAttribute(attr);if(!n)return;var fn=H[n];if(typeof fn!=='function')fn=window[n];if(typeof fn!=='function')return;var args=el.getAttribute('data-args');var parsed=[];if(args){var parts=args.split(',');for(var i=0;i<parts.length;i++){var a=parts[i].trim();if(a==='null'){parsed.push(null);continue;}if(a==='undefined'){parsed.push(undefined);continue;}if(a==='true'){parsed.push(true);continue;}if(a==='false'){parsed.push(false);continue;}var num=Number(a);if(!isNaN(num)&&a.length>0){parsed.push(num);continue;}var s=a;if((s[0]==='"'&&s[s.length-1]==='"')||(s[0]==="'"&&s[s.length-1]==="'"))s=s.slice(1,-1);parsed.push(s);}}fn.apply(el,parsed);}catch(ex){console.error('[delegation]',et,n,ex.message);}});})(K);}}})();
+/* registered handlers for complex inline conversions */
+_dh('viewAllStrategic',function(){strategicViewMode='all';renderStrategicStock();});
+_dh('viewGovStrategic',function(){strategicViewMode='gov';renderStrategicStock();});
+_dh('viewGovTotalsStrategic',function(){strategicViewMode='govtotals';renderStrategicStock();});
+_dh('viewGrandStrategic',function(){strategicViewMode='grand';renderStrategicStock();});
+_dh('viewHospStrategic',function(){strategicViewMode='hospital';renderStrategicStock();});
+_dh('setNameFromEmp',function(n,f){setNameFromEmp(n,f);});
+_dh('toggleCatPerms',function(r,c,v){toggleCatPerms(r,c,v);});
+_dh('rdnDismissNotifAlert',function(i){rdnDismissNotifAlert(i);});
+_dh('rdnDeleteReport',function(id){closeModal();api('DELETE','/readiness-reports/'+id).then(function(){showToast(' تم حذف التقرير');rdnOccasionChanged();}).catch(function(e){showToast(' '+e.message);});});
+_dh('renderArchive',function(){renderArchive();});
+_dh('editArchiveRecord',function(aid,hid,y,m,p){editArchiveRecord(aid,hid,y,m,p);});
+_dh('deleteArchiveRecord',function(aid,hid,y,m,p){deleteArchiveRecord(aid,hid,y,m,p);});
+_dh('saveEditArchiveRecord',function(aid,hid,y,m,p){saveEditArchiveRecord(aid,hid,y,m,p);});
+_dh('confirmDeleteArchiveGroup',function(l){var rest=Array.prototype.slice.call(arguments,1);confirmDeleteArchiveGroup(l,rest);});
+_dh('editIndicatorArchiveRecord',function(aid,hid,y,m,p){editIndicatorArchiveRecord(aid,hid,y,m,p);});
+_dh('deleteIndicatorArchiveRecord',function(aid,hid,y,m,p){deleteIndicatorArchiveRecord(aid,hid,y,m,p);});
+_dh('saveEditIndicatorArchive',function(aid,hid,y,m,p){saveEditIndicatorArchive(aid,hid,y,m,p);});
+_dh('showAddIndModal',function(hid,t){showAddIndModal(hid,t);});
+_dh('eqOpenForm',function(n){eqOpenForm(n);});
+_dh('eqReviewHospital',function(n){eqReviewHospital(n);});
+_dh('eqRemoveSingleRow',function(tid){eqRemoveSingleRow(tid,this);});
+_dh('eqDeleteHosp',function(){eqDeleteHosp(document.getElementById('eqDelHospSelect').value);});
+_dh('windowPrint',function(){window.print();});
+_dh('hoverOn',function(){this.style.background=this.getAttribute('data-hover-bg');});
+_dh('hoverOff',function(){this.style.background=this.getAttribute('data-hover-off');});
+_dh('permToggleChanged',function(){/* checkbox state handled by browser accent-color */});
+_dh('filterPermPages',function(){filterPermPages(this);});
+function filterPermPages(inp){var q=inp.value.trim().toLowerCase();var card=inp.closest('.card');if(!card)return;card.querySelectorAll('div[style*="padding:3px 0"]').forEach(function(row){var label=row.querySelector('span:first-child');if(!label||!label.textContent)return;row.style.display=(!q||label.textContent.toLowerCase().indexOf(q)!==-1)?'':'none';});
+var header=card.querySelector('div[style*="padding:2px 0"]');if(header){var has=Array.from(card.querySelectorAll('div[style*="padding:3px 0"]')).some(function(r){return r.style.display!=='none';});header.style.display=has?'':'none';}}
+_dh('closeModalAndFilter',function(){closeModal();eqFilterHosp();});
+_dh('occFormAction',function(){var a=this.getAttribute('data-args').split(',');if(a[0]==='edit')rdnUpdateOccasion(parseInt(a[1]));else rdnCreateOccasion();});
+_dh('syncImport2',function(){showToast('جاري التحميل...');syncImport();});
+_dh('strategicGovChanged',function(){strategicViewGov=this.value;strategicViewMode='gov';renderStrategicStock();});
+_dh('strategicHospChanged',function(){strategicViewHosp=this.value;renderStrategicStock();});
+_dh('empGovChangedAdd',function(){empGovChanged('add');});
+_dh('archiveCellEnter',function(e){if(e.key==='Enter'){e.preventDefault();this.blur();}});
+_dh('autoFillEmpNameEdit',function(){autoFillEmpName('euName','euHosp');});
+_dh('archiveCellFocus',function(el){if(typeof el==='undefined'||el===null)el=this;archiveCellFocus(el);});
+_dh('saveArchiveCell',function(el){if(typeof el==='undefined'||el===null)el=this;saveArchiveCell(el);});
+
 function getCairoDate() {
   const now = new Date();
   return new Date(now.getTime() + _timeOffset * 3600000);
@@ -27,15 +70,16 @@ function updateClock() {
   if (el) el.textContent = fmtCairoDate('time');
 }
 async function toggleTime() {
-  _timeOffset = _timeOffset === 3 ? 2 : 3;
+  const prev = _timeOffset;
+  _timeOffset = _timeOffset === 2 ? 1 : 2;
   try {
     await api('POST', '/config/time', { time_offset: _timeOffset });
     updateClock();
     const dd = document.getElementById('dateDisplay');
     if (dd) dd.textContent = fmtCairoDate('full');
-    showToast('✅ تم تغيير التوقيت إلى ' + (_timeOffset === 3 ? 'صيفي' : 'شتوي'));
+    showToast('✅ تم تغيير التوقيت إلى ' + (_timeOffset === 1 ? 'شتوي' : 'صيفي'));
   } catch(e) {
-    _timeOffset = _timeOffset === 2 ? 1 : 2;
+    _timeOffset = prev;
     showToast('❌ فشل تغيير التوقيت');
   }
 }
@@ -44,22 +88,22 @@ function renderTimeConfig() {
   const m = document.getElementById('mainContent');
   if (!m) return;
   m.innerHTML = '<div class="page-loading"><i class="fas fa-spinner fa-spin"></i> جاري تحميل إعدادات التوقيت...</div>';
-  api('GET', '/config/time').then(res => {
+api('GET', '/config/time').then(res => {
     const offset = res.time_offset;
     m.innerHTML = `
-      <div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
+      <div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
       <div class="page-header"><h2><i class="fas fa-clock"></i> ضبط التوقيت</h2></div>
       <div class="card" style="max-width:500px;margin:20px auto">
         <div style="text-align:center;padding:24px">
           <div style="font-size:64px;color:var(--primary);margin-bottom:16px"><i class="fas fa-clock"></i></div>
-          <h3 style="margin-bottom:12px">التوقيت الحالي: <strong>${offset === 3 ? 'صيفي (+3)' : 'شتوي (+2)'}</strong></h3>
+          <h3 style="margin-bottom:12px">التوقيت الحالي: <strong>${offset === 1 ? 'شتوي (+1)' : 'صيفي (+2)'}</strong></h3>
           <p style="color:#999;margin-bottom:20px">اختر التوقيت المناسب (صيفي / شتوي)</p>
           <div style="display:flex;gap:12px;justify-content:center">
-            <button class="btn ${offset === 3 ? 'btn-primary' : 'btn-outline'}" onclick="setTimeConfig(3)">
-              <i class="fas fa-sun"></i> توقيت صيفي (+3)
+            <button class="btn ${offset === 2 ? 'btn-primary' : 'btn-outline'}" data-click="setTimeConfig" data-args="2">
+              <i class="fas fa-sun"></i> توقيت صيفي (+2)
             </button>
-            <button class="btn ${offset === 2 ? 'btn-primary' : 'btn-outline'}" onclick="setTimeConfig(2)">
-              <i class="fas fa-moon"></i> توقيت شتوي (+2)
+            <button class="btn ${offset === 1 ? 'btn-primary' : 'btn-outline'}" data-click="setTimeConfig" data-args="1">
+              <i class="fas fa-moon"></i> توقيت شتوي (+1)
             </button>
           </div>
           <div style="margin-top:24px;padding:12px;background:var(--bg-card);border-radius:8px">
@@ -87,7 +131,7 @@ async function setTimeConfig(newOffset) {
     renderTimeConfig();
     updateClock();
     document.getElementById('dateDisplay').textContent = fmtCairoDate('full');
-    showToast('✅ تم تغيير التوقيت إلى ' + (newOffset === 3 ? 'صيفي' : 'شتوي'));
+    showToast('✅ تم تغيير التوقيت إلى ' + (newOffset === 1 ? 'شتوي' : 'صيفي'));
   } catch(e) {
     showToast('❌ فشل تغيير التوقيت');
   }
@@ -126,7 +170,8 @@ function togglePasswordVisibility(fieldId, el) {
   if (!inp) return;
   const isPass = inp.type === 'password';
   inp.type = isPass ? 'text' : 'password';
-  if (el) el.innerHTML = isPass ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  var btn = el || (typeof this !== 'undefined' && this && this.nodeType ? this : null);
+  if (btn) btn.innerHTML = isPass ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
 }
 
 function toggleDarkMode() {
@@ -164,7 +209,6 @@ const PERM_PAGES = [
   { key: 'equipment', label: 'الأجهزة', cat: 'other', icon: 'fa-tools' },
   { key: 'archive', label: 'أرشيف', cat: 'other', icon: 'fa-folder-open' },
   { key: 'strategic_stock', label: 'الرصيد الاستراتيجي', cat: 'other', icon: 'fa-shield' },
-  { key: 'inventory', label: 'المخزون', cat: 'admin', icon: 'fa-boxes-stacked' },
   { key: 'users', label: 'المستخدمين', cat: 'admin', icon: 'fa-users-gear' },
   { key: 'role_perms', label: 'صلاحيات الأدوار', cat: 'admin', icon: 'fa-shield-check' },
   { key: 'hospitals', label: 'المستشفيات', cat: 'admin', icon: 'fa-hospital' },
@@ -172,7 +216,6 @@ const PERM_PAGES = [
 
   { key: 'emp_accounts', label: 'حسابات الموظفين', cat: 'admin', icon: 'fa-user-plus' },
   { key: 'time_config', label: 'التوقيت', cat: 'admin', icon: 'fa-clock' },
-  { key: 'audit_log', label: 'سجل النشاطات', cat: 'admin', icon: 'fa-history' }
 ];
 
 const PERM_ACTIONS = [
@@ -221,8 +264,8 @@ function showConfirmModal(msg, onConfirm) {
   document.getElementById('modalTitle').textContent = 'تأكيد';
   document.getElementById('modalBody').innerHTML = `<div style="font-size:15px;padding:8px 0">${sanitize(msg)}</div>`;
   document.getElementById('modalFooter').innerHTML = `
-    <button class="btn btn-secondary" onclick="closeModal()" style="margin-left:8px"><i class="fas fa-times"></i> إلغاء</button>
-    <button class="btn btn-danger" onclick="doConfirm()"><i class="fas fa-check"></i> تأكيد</button>`;
+    <button class="btn btn-secondary" data-click="closeModal" style="margin-left:8px"><i class="fas fa-times"></i> إلغاء</button>
+    <button class="btn btn-danger" data-click="doConfirm"><i class="fas fa-check"></i> تأكيد</button>`;
   document.getElementById('modalOverlay').classList.add('active');
 }
 
@@ -273,10 +316,10 @@ function showMyProfile() {
     <div class="form-group"><label>اسم المستخدم</label><input class="form-control" value="${esc(u.username)}" readonly style="background:#f5f5f5;direction:ltr"></div>
     <div class="form-group"><label>الاسم</label><input class="form-control" id="mpName" value="${esc(u.name || '')}"></div>
     <div class="form-group" style="border-top:1px solid #eee;padding-top:12px;margin-top:12px">
-      <button class="btn btn-primary" style="width:100%" onclick="changeUserPassword(${u.id})"><i class="fas fa-key"></i> تغيير كلمة المرور</button>
+      <button class="btn btn-primary" style="width:100%" data-click="changeUserPassword" data-args="${u.id}"><i class="fas fa-key"></i> تغيير كلمة المرور</button>
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>
-    <button class="btn btn-primary" onclick="saveMyProfile()">حفظ التغييرات</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إغلاق</button>
+    <button class="btn btn-primary" data-click="saveMyProfile">حفظ التغييرات</button>`);
 }
 async function saveMyProfile() {
   const name = document.getElementById('mpName').value.trim();
@@ -309,10 +352,10 @@ const ITEM_COLORS = {
   daily_stock: '#dc3545', daily_total: '#c0392b', daily_statement: '#e91e63', daily_branch: '#e67e22',
   monthly_storage: '#2196f3', monthly_aggregate: '#00bcd4', monthly_indicators: '#0d7377', monthly_consumption: '#e91e63', monthly_big: '#dc3545', monthly_small: '#795548',
   consumption: '#ff9800', archive: '#5d4037', strategic_stock: '#1565c0', employees: '#5d4037', readiness: '#7b1fa2', equipment: '#e65100',
-  inventory: '#2e7d32', users: '#00695c', role_perms: '#4a148c', hospitals: '#c62828', governorates: '#37474f',
+  users: '#00695c', role_perms: '#4a148c', hospitals: '#c62828', governorates: '#37474f',
   sync: '#1a73e8', emp_accounts: '#28a745', time_config: '#f39c12',
   about: '#6c757d',
-  audit_log: '#795548'
+
 };
 
 const MENU_CATS = [
@@ -358,7 +401,6 @@ const MENU_CATS = [
       { key: 'sync', label: 'المزامنة مع Drive', icon: 'fa-cloud-upload-alt', page: 'showSyncDialog' },
       { key: 'emp_accounts', label: 'حسابات الموظفين', icon: 'fa-user-plus', page: 'renderEmployeeAccounts' },
       { key: 'time_config', label: 'ضبط التوقيت', icon: 'fa-clock', page: 'renderTimeConfig' },
-      { key: 'audit_log', label: 'سجل النشاطات', icon: 'fa-history', page: 'renderAuditLog' },
       { key: 'about', label: 'حول النظام', icon: 'fa-info-circle', page: 'showAbout' }
     ]
   }
@@ -414,76 +456,16 @@ function grad(arr) { return `linear-gradient(135deg,${arr[0]},${arr[1]})`; }
 
 function showMenu() { _navStack = [];
   const m = document.getElementById('mainContent');
-  const menuHtml = '<div id="alertArea" style="overflow-x:auto;overflow-y:hidden;white-space:nowrap;height:26px;line-height:26px;margin-bottom:4px;scrollbar-width:thin"></div><div id="dashKpis"></div><div id="dashCharts" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px"></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
+  const menuHtml = '<div id="alertArea" style="overflow-x:auto;overflow-y:hidden;white-space:nowrap;height:26px;line-height:26px;margin-bottom:4px;scrollbar-width:thin"></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
     const bg = Array.isArray(c.color) ? grad(c.color) : c.color;
     const itemsTip = (c.items || []).filter(i => hasPerm(i.key, 'view'));
+    const catHasView = (c.page ? hasPerm(c.key, 'view') : false) || itemsTip.length > 0;
+    if (!catHasView) return '';
     const tipContent = itemsTip.length ? itemsTip.map(i => `<span class="tip-item"><i class="fas ${i.icon}"></i> ${i.label}</span>`).join('') : `<span class="tip-item">${c.label}</span>`;
-    return `<div class="main-icon-card" onclick="${c.page ? "navigateTo('"+c.page+"','"+c.key+"')" : "showSubMenu('"+c.key+"')"}"><div class="main-icon-circle" style="background:${bg}"><i class="fas ${c.icon}"></i></div><div class="main-icon-label">${c.label}</div><div class="main-icon-tip">${tipContent}</div></div>`;
+    return `<div class="main-icon-card" data-click="${c.page ? 'navigateTo' : 'showSubMenu'}" data-args="${c.page ? c.page+','+c.key : c.key}"><div class="main-icon-circle" style="background:${bg}"><i class="fas ${c.icon}"></i></div><div class="main-icon-label">${c.label}</div><div class="main-icon-tip">${tipContent}</div></div>`;
   }).join('') + '</div>';
   m.innerHTML = menuHtml;
-  renderDashboard();
   checkAlerts();
-}
-
-async function renderDashboard() {
-  try {
-    const d = await api('GET', '/dashboard');
-    const kpiHtml = `<div class="dashboard-bar">${[
-      {icon:'fa-hospital',label:'المستشفيات',val:d.totalHospitals,color:'var(--primary)'},
-      {icon:'fa-user-tie',label:'العاملين',val:d.totalEmployees,color:'#5d4037'},
-      {icon:'fa-users-gear',label:'المستخدمين',val:d.totalUsers,color:'#00695c'},
-      {icon:'fa-hand-holding-heart',label:'المتبرعين',val:d.totalDonors,color:'#e91e63'},
-      {icon:'fa-tint',label:'فصائل الدم',val:Object.keys(d.bloodTypes).length,color:'#dc3545'},
-      {icon:'fa-box',label:'المحافظات',val:Object.keys(d.governorates).length,color:'#37474f'}
-    ].map(s => `<div class="stat-card"><div class="stat-icon" style="background:${s.color}20;color:${s.color}"><i class="fas ${s.icon}"></i></div><div><div class="stat-value">${s.val}</div><div class="stat-label">${s.label}</div></div></div>`).join('')}</div>`;
-    document.getElementById('dashKpis').innerHTML = kpiHtml;
-
-    const canvasId = 'dashBloodChart';
-    const chartHtml = `<div class="card"><div class="card-header"><i class="fas fa-chart-pie"></i> توزيع فصائل الدم</div><div class="card-body" style="padding:12px"><canvas id="${canvasId}" style="max-height:220px"></canvas></div></div>`;
-    const recentHtml = `<div class="card"><div class="card-header"><i class="fas fa-tint"></i> المخزون حسب الفصيلة</div><div class="card-body" style="padding:12px;font-size:13px"><table class="data-table" style="margin:0"><thead><tr><th>الفصيلة</th><th>المخزون</th><th>الوارد</th><th>المنصرف</th></tr></thead><tbody>${Object.entries(d.bloodTypes).map(([bt, v]) => `<tr><td><strong>${bt}</strong></td><td>${v.stock}</td><td>${v.received}</td><td>${v.consumed}</td></tr>`).join('')}</tbody></table></div></div>`;
-    document.getElementById('dashCharts').innerHTML = chartHtml + recentHtml;
-
-    // Create Chart.js pie chart
-    const labels = Object.keys(d.bloodTypes);
-    const data = labels.map(k => d.bloodTypes[k].stock);
-    if (typeof Chart !== 'undefined') {
-      new Chart(document.getElementById(canvasId), {
-        type: 'doughnut',
-        data: { labels, datasets: [{ data, backgroundColor: ['#dc3545','#e74c3c','#c0392b','#e91e63','#9b59b6','#3498db','#2ecc71','#f39c12'] }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
-      });
-    }
-  } catch (e) { /* dashboard charts non-critical */ }
-}
-
-async function renderAuditLog() {
-  pushNav(showMenu);
-  const el = document.getElementById('mainContent');
-  if (!el) return;
-  el.innerHTML = '<div class="page-loading"><i class="fas fa-spinner fa-spin"></i> جاري تحميل سجل النشاطات...</div>';
-  try {
-    const logs = await api('GET', '/audit-log?limit=200');
-    el.innerHTML = `
-      <div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-        <button class="btn btn-secondary" onclick="renderAuditLog()" style="font-size:12px"><i class="fas fa-sync"></i> تحديث</button>
-      </div>
-      <div class="page-header"><h2><i class="fas fa-history" style="color:#795548"></i> سجل النشاطات</h2></div>
-      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
-        <table class="data-table" style="margin:0">
-          <thead><tr><th>#</th><th>المستخدم</th><th>الإجراء</th><th>التفاصيل</th><th>التاريخ</th></tr></thead>
-          <tbody>${(logs||[]).map(l => `<tr>
-            <td style="color:#999">${l.id}</td>
-            <td><strong>${esc(l.username)}</strong></td>
-            <td><span class="status-dot" style="background:${l.action==='تسجيل دخول'?'#17a2b8':l.action.includes('إنشاء')?'#28a745':l.action.includes('حذف')?'#dc3545':'#795548'}"></span> ${esc(l.action)}</td>
-            <td style="font-size:12px;color:#666;max-width:250px;white-space:normal">${esc(l.details||'')}</td>
-            <td style="direction:ltr;font-size:11px;color:#999;font-family:monospace">${new Date(l.createdAt).toLocaleString('ar-EG')}</td>
-          </tr>`).join('')||'<tr><td colspan="5" class="empty-msg"><i class="fas fa-info-circle"></i> لا توجد نشاطات بعد</td></tr>'}
-          </tbody>
-        </table>
-      </div></div>`;
-  } catch (e) {
-    el.innerHTML = `<div class="alert alert-danger">❌ فشل تحميل سجل النشاطات: ${esc(e.message)}</div>`;
-  }
 }
 
 async function checkAlerts() {
@@ -597,10 +579,10 @@ async function checkAlerts() {
       });
     } catch (e) { /* ignore */ }
     window._alertsData = alerts;
-    const al = alerts.map((a, i) => `<span onclick="showAlertList(${i})" style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;background:#fff3e0;border-right:3px solid ${a.color};border-radius:4px;padding:2px 6px;margin-left:4px;font-size:10px;white-space:nowrap;transition:0.15s" onmouseover="this.style.background='#ffe0b2'" onmouseout="this.style.background='#fff3e0'">
+    const al = alerts.map((a, i) => `<span data-click="showAlertList" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="#ffe0b2" data-hover-off="#fff3e0" style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;background:#fff3e0;border-right:3px solid ${a.color};border-radius:4px;padding:2px 6px;margin-left:4px;font-size:10px;white-space:nowrap;transition:0.15s">
       <i class="fas ${a.icon}" style="color:${a.color};font-size:9px"></i>
       <span style="color:#c62828;font-weight:600">${a.title}</span>
-      ${a._rdnNotifDismiss ? `<i class="fas fa-times" onclick="event.stopPropagation();rdnDismissNotifAlert(${i})" style="color:#999;font-size:8px;padding:2px;margin-right:2px;cursor:pointer"></i>` : ''}
+      ${a._rdnNotifDismiss ? `<i class="fas fa-times" data-click="rdnDismissNotifAlert" data-args="${i}" style="color:#999;font-size:8px;padding:2px;margin-right:2px;cursor:pointer"></i>` : ''}
     </span>`).join('');
     el.innerHTML = alerts.length === 0
       ? '<span style="background:#e8f5e9;border-radius:4px;padding:2px 8px;font-size:10px;color:#2e7d32;display:inline-flex;align-items:center;gap:3px"><i class="fas fa-check-circle" style="font-size:9px"></i> كل البيانات محدثة ✓</span>'
@@ -613,7 +595,7 @@ function showAlertList(idx) {
   if (!a || !a.all || a.all.length === 0) return;
   openModal(a.title,
     `<div style="max-height:400px;overflow-y:auto;direction:ltr"><ol style="direction:rtl;text-align:right;font-size:13px;padding-right:20px;margin:0">${a.all.map(n => `<li style="padding:4px 0">${n}</li>`).join('')}</ol></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إغلاق</button>`);
 }
 
 function showSubMenu(catKey, subKey) {
@@ -630,7 +612,7 @@ function showSubMenu(catKey, subKey) {
   }
   if (isNested) pushNav(() => showSubMenu(catKey));
   else pushNav(showMenu);
-  let html = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button></div>
+  let html = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> رجوع</button></div>
     <div class="sub-icons-grid">`;
   items.forEach(item => {
     if (item.subitems) {
@@ -639,7 +621,7 @@ function showSubMenu(catKey, subKey) {
       if (!ic) ic = Array.isArray(cat.color) ? grad(cat.color) : cat.color;
       else ic = Array.isArray(ic) ? grad(ic) : ic;
       const subTips = item.subitems.filter(si => hasPerm(si.key, 'view')).map(si => si.label).join(' · ');
-      html += `<div class="sub-icon-card" title="${sanitize(item.label)} — ${sanitize(subTips)}" onclick="showSubMenu('${catKey}','${item.key}')">
+      html += `<div class="sub-icon-card" title="${sanitize(item.label)} — ${sanitize(subTips)}" data-click="showSubMenu" data-args="'${catKey}','${item.key}'">
         <div class="sub-icon-circle" style="background:${ic}"><i class="fas ${item.icon}"></i></div>
         <div class="sub-icon-label">${item.label}</div>
       </div>`;
@@ -647,7 +629,7 @@ function showSubMenu(catKey, subKey) {
       let ic = ITEM_COLORS[item.key];
       if (!ic) ic = Array.isArray(cat.color) ? grad(cat.color) : cat.color;
       else ic = Array.isArray(ic) ? grad(ic) : ic;
-      html += `<div class="sub-icon-card" title="${sanitize(item.label)}" onclick="navigateTo('${item.page}','${catKey}'${isNested ? ",'"+subKey+"'" : ''})">
+      html += `<div class="sub-icon-card" title="${sanitize(item.label)}" data-click="navigateTo" data-args="'${item.page}','${catKey}'${isNested ? ",'"+subKey+"'" : ''}">
         <div class="sub-icon-circle" style="background:${ic}"><i class="fas ${item.icon}"></i></div>
         <div class="sub-icon-label">${item.label}</div>
       </div>`;
@@ -679,9 +661,9 @@ async function renderDailyStock() {
     const canAdd = hasPerm('daily_stock', 'add');
     const canEdit = hasPerm('daily_stock', 'edit');
     const canExport = hasPerm('daily_stock', 'export');
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      ${canAdd ? '<button class="btn btn-primary" onclick="showAddDailyModal()"><i class="fas fa-plus"></i> إضافة</button>' : ''}
-      ${canExport ? '<button class="btn btn-success" onclick="exportStockExcel()"><i class="fas fa-file-excel"></i> تحميل Excel</button>' : ''}</div>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+      ${canAdd ? '<button class="btn btn-primary" data-click="showAddDailyModal"><i class="fas fa-plus"></i> إضافة</button>' : ''}
+      ${canExport ? '<button class="btn btn-success" data-click="exportStockExcel"><i class="fas fa-file-excel"></i> تحميل Excel</button>' : ''}</div>
       <div class="card-body table-scroll" id="dailyStockWrap"></div>`;
     const reports = await api('GET', '/daily-reports');
     const SUB = ['رصيد سابق', 'وارد', 'منصرف', 'اعدام', 'رصيد متاح'];
@@ -894,7 +876,7 @@ async function showAddDailyModal() {
     <div class="form-group"><label>التاريخ</label><input type="date" class="form-control" id="addDailyDate" value="${d}"></div>
     <div class="form-group"><label>الوقت</label><input type="text" class="form-control" id="addDailyTime" value="${t}"></div>`;
   openModal('إضافة تقرير يومي', html,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn btn-primary" onclick="createDailyReport()">حفظ</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button><button class="btn btn-primary" data-click="createDailyReport">حفظ</button>`);
 }
 
 async function createDailyReport() {
@@ -1075,6 +1057,14 @@ async function renderStrategicStock() {
       </tr>`;
     }
 
+    const ssUser = window._user;
+    const ssRole = ssUser?.role || '';
+    const ssGov = ssUser?.governorate || '';
+    const ssRestricted = ssRole && ssRole !== 'admin' && ssRole !== 'org_supervisor' && ssGov;
+    if (ssRestricted) {
+      strategicViewMode = 'gov';
+      strategicViewGov = ssGov;
+    }
     const viewMode = strategicViewMode || 'all';
     const viewGov = strategicViewGov || '';
     const viewHosp = strategicViewHosp || '';
@@ -1154,19 +1144,20 @@ async function renderStrategicStock() {
     const dateHead = showDates ? `<th rowspan="2">اسم بنك الدم</th><th colspan="2">اخر تحديث</th>` : '';
     const dateSub = showDates ? `<th>اليوم</th><th>الوقت</th>` : '';
 
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      ${canExport ? '<button class="btn btn-success" onclick="exportStrategicExcel()"><i class="fas fa-file-excel"></i> تحميل Excel</button><button class="btn btn-danger" onclick="exportStrategicPDF()" style="margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>' : ''}</div>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+      ${canExport ? '<button class="btn btn-success" data-click="exportStrategicExcel"><i class="fas fa-file-excel"></i> تحميل Excel</button><button class="btn btn-danger" data-click="exportStrategicPDF" style="margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>' : ''}</div>
       <div class="page-title"><i class="fas fa-shield" style="color:#2e7d32"></i> الرصيد الاستراتيجي</div>
       <div class="card"><div class="card-body">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
-          <button class="btn ${viewMode === 'all' ? 'btn-primary' : 'btn-outline'}" onclick="strategicViewMode='all';renderStrategicStock()">كل المحافظات</button>
-          <button class="btn ${viewMode === 'gov' ? 'btn-primary' : 'btn-outline'}" onclick="strategicViewMode='gov';renderStrategicStock()">فرع</button>
-          <button class="btn ${viewMode === 'govtotals' ? 'btn-primary' : 'btn-outline'}" onclick="strategicViewMode='govtotals';renderStrategicStock()">إجمالي المحافظات</button>
-          <button class="btn ${viewMode === 'grand' ? 'btn-primary' : 'btn-outline'}" onclick="strategicViewMode='grand';renderStrategicStock()">إجمالي الهيئة</button>
-          <button class="btn ${viewMode === 'hospital' ? 'btn-primary' : 'btn-outline'}" onclick="strategicViewMode='hospital';renderStrategicStock()">مستشفى</button>
-          ${viewMode === 'gov' ? `<select class="form-control" style="width:auto;display:inline-block" onchange="strategicViewGov=this.value;strategicViewMode='gov';renderStrategicStock()"><option value="">اختر الفرع</option>${sortedGovs.map(g => `<option value="${g}" ${viewGov === g ? 'selected' : ''}>${g}</option>`).join('')}</select>` : ''}
-          ${viewMode === 'hospital' ? `<select class="form-control" style="width:auto;display:inline-block" onchange="strategicViewHosp=this.value;renderStrategicStock()"><option value="">اختر المستشفى</option>${hospitals.filter(h => !viewGov || h.governorate === viewGov).map(h => `<option value="${h.id}" ${viewHosp == h.id ? 'selected' : ''}>${h.name}</option>`).join('')}</select>` : ''}
-          ${hasPerm('strategic_stock', 'edit') ? `<button class="btn btn-primary" style="margin-right:auto" onclick="showStrategicCalcModal()"><i class="fas fa-calculator"></i> حساب الرصيد الاستراتيجي</button>` : ''}
+          ${ssRestricted ? `<span style="font-weight:700;color:#2e7d32;padding:4px 8px;background:#e8f5e9;border-radius:6px"><i class="fas fa-location-dot"></i> ${esc(ssGov)}</span>` :
+          `<button class="btn ${viewMode === 'all' ? 'btn-primary' : 'btn-outline'}" data-click="viewAllStrategic">كل المحافظات</button>`}
+          <button class="btn ${viewMode === 'gov' ? 'btn-primary' : 'btn-outline'}" data-click="viewGovStrategic">فرع</button>
+          <button class="btn ${viewMode === 'govtotals' ? 'btn-primary' : 'btn-outline'}" data-click="viewGovTotalsStrategic">إجمالي المحافظات</button>
+          <button class="btn ${viewMode === 'grand' ? 'btn-primary' : 'btn-outline'}" data-click="viewGrandStrategic">إجمالي الهيئة</button>
+          <button class="btn ${viewMode === 'hospital' ? 'btn-primary' : 'btn-outline'}" data-click="viewHospStrategic">مستشفى</button>
+          ${viewMode === 'gov' ? `<select class="form-control" style="width:auto;display:inline-block" data-change="strategicGovChanged"><option value="">اختر الفرع</option>${(ssRestricted ? [ssGov] : sortedGovs).map(g => `<option value="${g}" ${viewGov === g ? 'selected' : ''}>${g}</option>`).join('')}</select>` : ''}
+          ${viewMode === 'hospital' ? `<select class="form-control" style="width:auto;display:inline-block" data-change="strategicHospChanged"><option value="">اختر المستشفى</option>${hospitals.filter(h => (!viewGov || h.governorate === viewGov) && (!ssRestricted || h.governorate === ssGov)).map(h => `<option value="${h.id}" ${viewHosp == h.id ? 'selected' : ''}>${h.name}</option>`).join('')}</select>` : ''}
+          ${hasPerm('strategic_stock', 'edit') ? `<button class="btn btn-primary" style="margin-right:auto" data-click="showStrategicCalcModal"><i class="fas fa-calculator"></i> حساب الرصيد الاستراتيجي</button>` : ''}
         </div>
         ${strategicSettings ? `<div style="font-size:12px;color:#666;margin-bottom:8px;text-align:center">آخر حساب: الربع ${strategicSettings.quarter || ''} — تاريخ: ${strategicSettings.calculated_at ? new Date(strategicSettings.calculated_at).toLocaleDateString('ar-EG') : ''}</div>` : ''}
         <div class="table-scroll"><div id="strategicTableWrap"><table class="strategic-table" id="strategicTable"><thead>
@@ -1195,7 +1186,7 @@ async function showStrategicCalcModal() {
       <div style="font-size:12px;color:#666;margin-top:8px">سيتم حساب الرصيد الاستراتيجي لكل مستشفى بناءً على متوسط الاستهلاك اليومي لآخر ربع سنوي</div>
     </div>`;
     openModal('حساب الرصيد الاستراتيجي', html,
-      `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn btn-primary" onclick="doStrategicCalc()">حساب وحفظ</button>`);
+      `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button><button class="btn btn-primary" data-click="doStrategicCalc">حساب وحفظ</button>`);
   } catch (e) { showToast('❌ '+e.message); }
 }
 
@@ -1274,9 +1265,9 @@ async function renderTotal() {
   const el = document.getElementById('mainContent');
   const canExport = hasPerm('daily_total', 'export');
   try {
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      ${canExport ? '<button class="btn btn-success" onclick="exportTotalExcel()"><i class="fas fa-file-excel"></i> تحميل Excel</button>' : ''}
-      ${canExport ? '<button class="btn btn-danger" onclick="exportTotalPDF()"><i class="fas fa-file-pdf"></i> تحميل PDF</button>' : ''}</div>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+      ${canExport ? '<button class="btn btn-success" data-click="exportTotalExcel"><i class="fas fa-file-excel"></i> تحميل Excel</button>' : ''}
+      ${canExport ? '<button class="btn btn-danger" data-click="exportTotalPDF"><i class="fas fa-file-pdf"></i> تحميل PDF</button>' : ''}</div>
       <div class="card"><div class="card-body table-scroll"><table id="totalTable"><thead id="totalThead"></thead><tbody id="totalTbody"></tbody></table></div></div>`;
     const data = await api('GET', '/daily-reports');
     renderTotalTable(data);
@@ -1382,10 +1373,10 @@ async function renderDailyStatement() {
       api('GET', '/daily-reports')
     ]);
     el.innerHTML = `
-      <div style="margin-bottom:16px"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-        ${canExport ? '<button class="btn btn-danger" onclick="printStatement()"><i class="fas fa-print"></i> طباعة</button>' : ''}</div>
+      <div style="margin-bottom:16px"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+        ${canExport ? '<button class="btn btn-danger" data-click="printStatement"><i class="fas fa-print"></i> طباعة</button>' : ''}</div>
       <div class="page-actions">
-        <select class="search-input" id="stmtHospital" onchange="renderDailyStatement()">
+        <select class="search-input" id="stmtHospital" data-change="renderDailyStatement">
           ${hospitals.map(h => `<option value="${h.id}" ${String(h.id) === prevId ? 'selected' : ''}>${h.name}</option>`).join('')}
         </select>
       </div>
@@ -1572,19 +1563,19 @@ async function renderBranchStatement() {
 
     // Check if dropdown already exists (master switching governorates)
     const existingSel = document.getElementById('branchGovSelect');
-    const exportBtns = canExport ? `<button class="btn btn-sm btn-success" onclick="branchExportExcel()" style="margin-right:6px;height:32px"><i class="fas fa-file-excel"></i> تحميل Excel</button><button class="btn btn-sm btn-danger" onclick="branchExportPdf()" style="margin-right:4px;height:32px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>` : '';
+    const exportBtns = canExport ? `<button class="btn btn-sm btn-success" data-click="branchExportExcel" style="margin-right:6px;height:32px"><i class="fas fa-file-excel"></i> تحميل Excel</button><button class="btn btn-sm btn-danger" data-click="branchExportPdf" style="margin-right:4px;height:32px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>` : '';
     if (existingSel) { gov = existingSel.value; }
     else if (!gov && isMaster) {
       const govs = await api('GET', '/governorates');
       const arr = Array.isArray(govs) ? govs : [];
-      if (!arr.length) { el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div><div class="empty-msg">لا توجد محافظات</div>`; return; }
+      if (!arr.length) { el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button></div><div class="empty-msg">لا توجد محافظات</div>`; return; }
       gov = arr[0];
-      el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+      el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
         ${exportBtns}
-        <div style="display:inline-block;margin-right:10px"><select class="form-control" id="branchGovSelect" style="display:inline-block;width:auto" onchange="renderBranchStatement()">${arr.map(g => `<option value="${g}" ${g===gov?'selected':''}>${g}</option>`).join('')}</select></div></div>
+        <div style="display:inline-block;margin-right:10px"><select class="form-control" id="branchGovSelect" style="display:inline-block;width:auto" data-change="renderBranchStatement">${arr.map(g => `<option value="${g}" ${g===gov?'selected':''}>${g}</option>`).join('')}</select></div></div>
         <div class="branch-stmt-report" id="branchStmtReport"></div>`;
     } else if (!existingSel) {
-      el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+      el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
         ${exportBtns}</div>
         <div class="branch-stmt-report" id="branchStmtReport"></div>`;
     }
@@ -1715,7 +1706,7 @@ function branchExportPdf() {
 async function renderMonthlyStorage() {
   const el = document.getElementById('mainContent');
   try {
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
       <div class="card"><div class="card-body table-scroll"><table class="data-table"><thead><tr><th>#</th><th>المستشفى</th><th>السنة</th><th>الشهر</th></tr></thead><tbody id="msBody"></tbody></table></div></div>`;
     const items = await api('GET', '/monthly-storage');
     document.getElementById('msBody').innerHTML = items.map((r, i) => `<tr><td>${i+1}</td><td>${r.hospital_name || ''}</td><td>${r.year}</td><td>${r.month}</td></tr>`).join('');
@@ -1725,7 +1716,7 @@ async function renderMonthlyStorage() {
 async function renderMonthlyAggregate() {
   const el = document.getElementById('mainContent');
   try {
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
       <div class="card"><div class="card-body table-scroll"><table class="data-table"><thead><tr><th>#</th><th>المستشفى</th><th>السنة</th><th>الشهر</th></tr></thead><tbody id="maBody"></tbody></table></div></div>`;
     const items = await api('GET', '/monthly-aggregate');
     document.getElementById('maBody').innerHTML = items.map((r, i) => `<tr><td>${i+1}</td><td>${r.hospital_name || ''}</td><td>${r.year}</td><td>${r.month}</td></tr>`).join('');
@@ -1735,7 +1726,7 @@ async function renderMonthlyAggregate() {
 async function renderConsumption() {
   const el = document.getElementById('mainContent');
   try {
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
       <div class="card"><div class="card-body table-scroll"><table class="data-table"><thead><tr><th>#</th><th>المستشفى</th><th>السنة</th><th>الشهر</th><th>فصيلة</th><th>الكمية</th></tr></thead><tbody id="consBody"></tbody></table></div></div>`;
     const items = await api('GET', '/consumption');
     document.getElementById('consBody').innerHTML = items.map((r, i) => `<tr><td>${i+1}</td><td>${r.hospital_name || ''}</td><td>${r.year}</td><td>${r.month}</td><td>${r.blood_type}</td><td>${r.quantity}</td></tr>`).join('');
@@ -1760,15 +1751,11 @@ async function renderBloodConsumption() {
 
     const now = new Date();
     const isLocked = now.getDate() >= 25;
-    // Always default to previous month
-    let prevYear = now.getFullYear();
-    let prevMonth = now.getMonth() + 1; // 1-indexed (e.g. 7 for July)
-    prevMonth--; // 6 for July → 6 (June)
-    if (prevMonth === 0) { prevMonth = 12; prevYear--; }
-    const year = prevYear;
-    const monthVal = prevMonth;
+    // Default to current month
+    const year = now.getFullYear();
+    const monthVal = now.getMonth() + 1; // 1-indexed
 
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
     </div>`;
 
     if (canEdit) {
@@ -1780,19 +1767,19 @@ async function renderBloodConsumption() {
         <div class="card-body" style="padding:10px 16px">
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
             <div class="form-group"><label>السنة</label>
-              <select class="form-control" id="bcYear" style="width:100px" onchange="loadExistingConsumption()">${[2026,2025,2024,2023,2022].map(y => `<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('')}</select></div>
+              <select class="form-control" id="bcYear" style="width:100px" data-change="loadExistingConsumption">${[2026,2025,2024,2023,2022].map(y => `<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('')}</select></div>
             <div class="form-group"><label>الشهر</label>
-              <select class="form-control" id="bcMonth" style="width:120px" onchange="loadExistingConsumption()">${months.map((m,i) => `<option value="${i+1}" ${i+1===monthVal?'selected':''}>${m}</option>`).join('')}</select></div>
+              <select class="form-control" id="bcMonth" style="width:120px" data-change="loadExistingConsumption">${months.map((m,i) => `<option value="${i+1}" ${i+1===monthVal?'selected':''}>${m}</option>`).join('')}</select></div>
             ${isHospital 
               ? `<div class="form-group" style="min-width:200px"><label>بنك الدم</label><div style="padding:6px 0;font-weight:600">${user.name}</div></div>`
               : `<div class="form-group" style="flex:1;min-width:200px"><label>بنك الدم</label>
-                  <select class="form-control" id="bcHosp" onchange="loadExistingConsumption()">${filteredHospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>`
+                  <select class="form-control" id="bcHosp" data-change="loadExistingConsumption">${filteredHospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>`
             }
             ${['A+','A-','B+','B-','O+','O-','AB+','AB-'].map(t => 
               `<div style="width:65px"><label style="font-size:11px;font-weight:600">${t}</label>
               <input class="form-control bc-inp" id="bc${t.replace('+','P').replace('-','N')}" type="number" style="height:32px;font-size:12px;text-align:center"></div>`
             ).join('')}
-            <button class="btn btn-primary" onclick="saveBloodConsumption()" style="height:32px"><i class="fas fa-save"></i> حفظ</button>
+            <button class="btn btn-primary" data-click="saveBloodConsumption" style="height:32px"><i class="fas fa-save"></i> حفظ</button>
           </div>
         </div>
       </div>`;
@@ -1800,10 +1787,10 @@ async function renderBloodConsumption() {
 
     el.innerHTML += `<div class="card"><div class="card-body table-scroll">
       <table class="data-table consumption-table"><thead>
-        <tr><th colspan="14" style="text-align:center;background:#e91e63;color:#fff;font-size:14px">معدل إستهلاك الفصائل ببنوك دم هيئة الرعاية الصحية</th></tr>
+        <tr><th colspan="15" style="text-align:center;background:#e91e63;color:#fff;font-size:14px">معدل إستهلاك الفصائل ببنوك دم هيئة الرعاية الصحية</th></tr>
         <tr><th>الفرع</th><th>اسم بنك الدم</th><th>الشهر</th>
           ${['A+','A-','B+','B-','O+','O-','AB+','AB-'].map(t => `<th>${t}</th>`).join('')}
-          <th>المجموع</th>${canDelete ? '<th></th>' : ''}</tr>
+          <th>المجموع</th><th>المدخل</th>${canDelete ? '<th></th>' : ''}</tr>
       </thead><tbody id="bcBody"></tbody></table>
     </div></div>`;
 
@@ -1815,7 +1802,7 @@ async function renderBloodConsumption() {
     setTimeout(loadExistingConsumption, 50);
     const body = document.getElementById('bcBody');
     if (items.length === 0) {
-      body.innerHTML = '<tr><td colspan="' + (canDelete ? 14 : 13) + '" class="empty-msg">لا توجد بيانات</td></tr>';
+      body.innerHTML = '<tr><td colspan="' + (canDelete ? 15 : 14) + '" class="empty-msg">لا توجد بيانات</td></tr>';
     } else {
       body.innerHTML = items.map(r => {
         const bt = (typeof r.blood_types === 'string' ? tryParse(r.blood_types) : r.blood_types) || {};
@@ -1826,7 +1813,8 @@ async function renderBloodConsumption() {
           <td>${months[(r.month||1)-1]} ${r.year||''}</td>
           ${['A+','A-','B+','B-','O+','O-','AB+','AB-'].map(t => `<td style="text-align:center">${bt[t] || 0}</td>`).join('')}
           <td style="text-align:center;font-weight:bold">${total}</td>
-          ${canDelete ? `<td><button class="btn btn-sm btn-outline" onclick="deleteBloodConsumption(${r.id})" style="color:#dc3545"><i class="fas fa-trash"></i></button></td>` : ''}
+          <td style="text-align:center;font-size:12px">${r.entered_by || ''}</td>
+          ${canDelete ? `<td><button class="btn btn-sm btn-outline" data-click="deleteBloodConsumption" data-args="${r.id}" style="color:#dc3545"><i class="fas fa-trash"></i></button></td>` : ''}
         </tr>`;
       }).join('');
     }
@@ -1865,7 +1853,7 @@ function loadExistingConsumption() {
     if (el) el.value = bt[t] || 0;
   });
   // Update save button to reflect edit mode
-  const saveBtn = document.querySelector('button[onclick="saveBloodConsumption()"]');
+  const saveBtn = document.querySelector('button[data-click="saveBloodConsumption"]');
   if (saveBtn) {
     if (record) {
       saveBtn.innerHTML = '<i class="fas fa-edit"></i> تعديل';
@@ -1937,11 +1925,11 @@ async function renderEmployeeStatement() {
   const canAdd = hasPerm('employees', 'add');
   const canEdit = hasPerm('employees', 'edit');
   const canDelete = hasPerm('employees', 'delete');
-  el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button>
-    ${canAdd ? `<button class="btn btn-info" onclick="empShowAddModal()" style="height:32px"><i class="fas fa-plus"></i> إضافة موظف</button>` : ''}
-    ${window._user?.role === 'admin' ? `<button class="btn btn-warning" onclick="toggleEmpInlineEdit()" id="empInlineEditBtn" style="height:32px"><i class="fas fa-pen"></i> فتح التعديل</button><button class="btn btn-success" onclick="empInlineSave()" id="empInlineSaveBtn" style="height:32px;display:none"><i class="fas fa-save"></i> حفظ التعديلات</button>` : ''}
-    <button class="btn btn-danger" onclick="exportEmployeePDF()" style="height:32px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
-    <button class="btn btn-success" onclick="exportEmployeeExcel()" style="height:32px"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+  el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> رجوع</button>
+    ${canAdd ? `<button class="btn btn-info" data-click="empShowAddModal" style="height:32px"><i class="fas fa-plus"></i> إضافة موظف</button>` : ''}
+    ${window._user?.role === 'admin' ? `<button class="btn btn-warning" data-click="toggleEmpInlineEdit" id="empInlineEditBtn" style="height:32px"><i class="fas fa-pen"></i> فتح التعديل</button><button class="btn btn-success" data-click="empInlineSave" id="empInlineSaveBtn" style="height:32px;display:none"><i class="fas fa-save"></i> حفظ التعديلات</button>` : ''}
+    <button class="btn btn-danger" data-click="exportEmployeePDF" style="height:32px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
+    <button class="btn btn-success" data-click="exportEmployeeExcel" style="height:32px"><i class="fas fa-file-excel"></i> تحميل Excel</button>
   </div>
   <div class="page-title"><i class="fas fa-users" style="color:#795548"></i> بيان العاملين</div>
   <div id="empLoading" style="text-align:center;padding:40px;color:#999"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
@@ -1950,15 +1938,16 @@ async function renderEmployeeStatement() {
     const res = await api('GET', '/employee-statements');
     let { rows: data, hospitalStatus } = res;
     const userHospitalId = window.me?.user?.hospitalId;
-    // If hospital role, filter to their own hospital
-    if (window.me?.user?.role === 'hospital') {
+    const userGovEmp = window.me?.user?.governorate;
+    const userRoleEmp = window.me?.user?.role;
+    // If hospital or hospital_manager role, filter to their own hospital
+    if ((userRoleEmp === 'hospital' || userRoleEmp === 'hospital_manager') && userHospitalId) {
       data = data.filter(d => d.hospital_id === userHospitalId);
       hospitalStatus = hospitalStatus.filter(h => h.id === userHospitalId);
     }
-    if (window.me?.user?.role === 'branch_supervisor' && window.me?.user?.governorate) {
-      const gov = window.me.user.governorate;
-      data = data.filter(d => d.governorate === gov);
-      hospitalStatus = hospitalStatus.filter(h => h.governorate === gov);
+    if ((userRoleEmp === 'branch_supervisor' || userRoleEmp === 'visitor') && userGovEmp) {
+      data = data.filter(d => d.governorate === userGovEmp);
+      hospitalStatus = hospitalStatus.filter(h => h.governorate === userGovEmp);
     }
     // Check monthly updates
     const now = new Date();
@@ -2011,7 +2000,7 @@ const branchSupMissingRecords = branchSupHasMissingData ? branchSupervisors.filt
       const allFields = ['governorate','hospital_name','employee','category','classification','national_id','phone','email'];
       const fieldLabels = ['الفرع','بنك الدم','الاسم','الفئه','التصنيف','الرقم القومي','التليفون','البريد'];
       html += `<div class="card" style="margin-bottom:12px;border-right:4px solid #ff9800">
-        <div class="card-body" style="padding:10px 14px;font-size:13px;color:#e65100;cursor:pointer" onclick="toggleMissingData()">
+        <div class="card-body" style="padding:10px 14px;font-size:13px;color:#e65100;cursor:pointer" data-click="toggleMissingData">
           <i class="fas fa-exclamation-circle"></i> <strong>بيانات ناقصة:</strong> ${totalMissing} حقل فارغ — ${lines}
           <span style="float:left;font-size:11px"><i class="fas fa-chevron-down" id="missingDataIcon"></i> <span id="missingDataLabel">اضغط للعرض</span></span>
         </div>
@@ -2062,7 +2051,7 @@ const branchSupMissingRecords = branchSupHasMissingData ? branchSupervisors.filt
               <td><strong>${h.name||''}</strong></td>
               <td style="text-align:center">${total}</td>
               <td style="text-align:center;color:#dc3545">${reviewed}/${total}</td>
-              ${canEdit ? `<td><button class="btn btn-sm btn-outline" onclick="empReviewHospital(${id})" style="color:#1976d2;font-size:10px"><i class="fas fa-check-double"></i> مراجعة الكل</button></td>` : ''}
+              ${canEdit ? `<td><button class="btn btn-sm btn-outline" data-click="empReviewHospital" data-args="${id}" style="color:#1976d2;font-size:10px"><i class="fas fa-check-double"></i> مراجعة الكل</button></td>` : ''}
             </tr>`;
           }).filter(r => r).join('');
           return hospRows ? `<table class="data-table" style="font-size:12px">
@@ -2076,21 +2065,21 @@ const branchSupMissingRecords = branchSupHasMissingData ? branchSupervisors.filt
     </div>
     <!-- Branch Supervisor Table -->
     <div class="card" style="margin-bottom:12px">
-      <div class="card-header" style="padding:10px 16px;background:#e8f5e9;cursor:pointer" onclick="toggleSupSection()">
+      <div class="card-header" style="padding:10px 16px;background:#e8f5e9;cursor:pointer" data-click="toggleSupSection">
         <strong><i class="fas fa-user-shield"></i> بيانات مشرفي الفروع <span id="supSectionIcon" style="font-size:11px;margin-right:8px"><i class="fas fa-chevron-up"></i></span></strong>
       </div>
       <div id="supSectionBody" class="card-body" style="padding:8px 12px">
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
-          <input id="supSearch" type="text" placeholder="🔍 بحث بالاسم..." oninput="applySupFilter()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;flex:1;min-width:120px">
-          <select id="supFilterGov" onchange="applySupFilter()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px">
+          <input id="supSearch" type="text" placeholder="🔍 بحث بالاسم..." data-input="applySupFilter" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;flex:1;min-width:120px">
+          <select id="supFilterGov" data-change="applySupFilter" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px">
             <option value="">كل الفروع</option>
             ${govs.map(g => `<option value="${g}">${g}</option>`).join('')}
           </select>
-          ${canAdd ? `<button class="btn btn-info" onclick="showAddSupInEmpPage()" style="height:32px"><i class="fas fa-plus"></i> إضافة مشرف فرع</button>` : ''}
+          ${canAdd ? `<button class="btn btn-info" data-click="showAddSupInEmpPage" style="height:32px"><i class="fas fa-plus"></i> إضافة مشرف فرع</button>` : ''}
         </div>
         ${branchSupMissingData ? `
         <div class="card" style="margin-bottom:8px;border-right:4px solid #ff9800;background:#fff8e1">
-          <div class="card-body" style="padding:8px 12px;font-size:12px;color:#e65100;cursor:pointer" onclick="toggleSupMissingData()">
+          <div class="card-body" style="padding:8px 12px;font-size:12px;color:#e65100;cursor:pointer" data-click="toggleSupMissingData">
             <i class="fas fa-exclamation-circle"></i> <strong>بيانات ناقصة:</strong> ${Object.entries(branchSupMissingFields).filter(([,c]) => c > 0).map(([f,c]) => `${f}: ${c}`).join(' | ')}
             <span style="float:left;font-size:11px"><i class="fas fa-chevron-down" id="supMissingIcon"></i> <span id="supMissingLabel">اضغط للعرض</span></span>
           </div>
@@ -2115,11 +2104,11 @@ const branchSupMissingRecords = branchSupHasMissingData ? branchSupervisors.filt
     <div class="card" style="margin-bottom:12px">
       <div class="card-body" style="padding:8px 12px">
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-          <select id="empFilterGov" onchange="empFilterGovChanged()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px"><option value="">كل الفروع</option>${govs.map(g => `<option value="${g}">${g}</option>`).join('')}</select>
-          <select id="empFilterHosp" onchange="applyEmpFilter()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px"><option value="">كل بنوك الدم</option>${hospNames.map(h => `<option value="${h}">${h}</option>`).join('')}</select>
-          <select id="empFilterCat" onchange="applyEmpFilter()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px"><option value="">كل الفئات</option>${allCats.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
-          <select id="empFilterClass" onchange="applyEmpFilter()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px"><option value="">كل التصنيفات</option>${allClasses.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
-          <input type="text" id="empSearch" placeholder="بحث بالاسم أو الرقم القومي..." oninput="applyEmpFilter()" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;flex:1;min-width:150px">
+          <select id="empFilterGov" data-change="empFilterGovChanged" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px"><option value="">كل الفروع</option>${govs.map(g => `<option value="${g}">${g}</option>`).join('')}</select>
+          <select id="empFilterHosp" data-change="applyEmpFilter" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px"><option value="">كل بنوك الدم</option>${hospNames.map(h => `<option value="${h}">${h}</option>`).join('')}</select>
+          <select id="empFilterCat" data-change="applyEmpFilter" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px"><option value="">كل الفئات</option>${allCats.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+          <select id="empFilterClass" data-change="applyEmpFilter" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px"><option value="">كل التصنيفات</option>${allClasses.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+          <input type="text" id="empSearch" placeholder="بحث بالاسم أو الرقم القومي..." data-input="applyEmpFilter" style="padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;flex:1;min-width:150px">
         </div>
       </div>
     </div>
@@ -2188,7 +2177,7 @@ async function showAddSupInEmpPage() {
     openModal('إضافة مشرف فرع',
     `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:450px">
       <div style="grid-column:1/-1"><label style="font-size:12px;color:#666">الفرع</label>
-        <select id="supAddGov" class="modal-input" style="width:100%" onchange="supGovChanged()">
+        <select id="supAddGov" class="modal-input" style="width:100%" data-change="supGovChanged">
           <option value="">-- اختر الفرع --</option>
           ${govOptions}
         </select></div>
@@ -2200,7 +2189,7 @@ async function showAddSupInEmpPage() {
       <div><label style="font-size:12px;color:#666">البريد الالكتروني</label><input id="supAddEmail" class="modal-input" style="width:100%"></div>
     </div>
     <div style="margin-top:12px;text-align:left">
-      <button class="btn btn-primary" onclick="doAddSupInEmpPage()"><i class="fas fa-save"></i> حفظ</button>
+      <button class="btn btn-primary" data-click="doAddSupInEmpPage"><i class="fas fa-save"></i> حفظ</button>
     </div>`,
     () => {}
   );
@@ -2257,7 +2246,7 @@ async function showEditSupInEmpPage(id) {
   openModal('تعديل مشرف فرع',
     `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:450px">
       <div style="grid-column:1/-1"><label style="font-size:12px;color:#666">الفرع</label>
-        <select id="supEditGov" class="modal-input" style="width:100%" onchange="supEditGovChanged()">
+        <select id="supEditGov" class="modal-input" style="width:100%" data-change="supEditGovChanged">
           <option value="">-- اختر الفرع --</option>
           ${govOptions}
         </select></div>
@@ -2269,7 +2258,7 @@ async function showEditSupInEmpPage(id) {
       <div><label style="font-size:12px;color:#666">البريد الالكتروني</label><input id="supEditEmail" class="modal-input" style="width:100%" value="${String(rec.email||'').replace(/"/g,'&quot;')}"></div>
     </div>
     <div style="margin-top:12px;text-align:left">
-      <button class="btn btn-primary" onclick="doEditSupInEmpPage(${id})"><i class="fas fa-save"></i> حفظ</button>
+      <button class="btn btn-primary" data-click="doEditSupInEmpPage" data-args="${id}"><i class="fas fa-save"></i> حفظ</button>
     </div>`,
     () => {}
   );
@@ -2336,8 +2325,8 @@ function applySupFilter() {
     <td style="direction:ltr">${s.phone||''}</td>
     <td style="direction:ltr;font-size:11px">${s.email||''}</td>
     ${canEditDel ? `<td style="white-space:nowrap">
-      <button class="btn btn-sm btn-outline" onclick="showEditSupInEmpPage(${s.id})" style="color:#1976d2;font-size:10px;margin:1px" title="تعديل"><i class="fas fa-edit"></i></button>
-      <button class="btn btn-sm btn-outline" onclick="showDeleteSupInEmpPage(${s.id})" style="color:#dc3545;font-size:10px;margin:1px" title="حذف"><i class="fas fa-trash"></i></button>
+      <button class="btn btn-sm btn-outline" data-click="showEditSupInEmpPage" data-args="${s.id}" style="color:#1976d2;font-size:10px;margin:1px" title="تعديل"><i class="fas fa-edit"></i></button>
+      <button class="btn btn-sm btn-outline" data-click="showDeleteSupInEmpPage" data-args="${s.id}" style="color:#dc3545;font-size:10px;margin:1px" title="حذف"><i class="fas fa-trash"></i></button>
     </td>` : ''}
   </tr>`).join('');
 }
@@ -2379,8 +2368,8 @@ function applyEmpFilter() {
     <td style="direction:ltr">${d.phone||''}</td>
     <td style="direction:ltr;font-size:11px">${d.email||''}</td>
     ${canEdit||canDelete ? `<td style="white-space:nowrap">
-      ${canEdit ? `<button class="btn btn-sm btn-outline" onclick="empShowEditModal(${d.id})" style="color:#1976d2;font-size:10px;margin:1px"><i class="fas fa-edit"></i></button>` : ''}
-      ${canDelete ? `<button class="btn btn-sm btn-outline" onclick="empDeleteRecord(${d.id})" style="color:#dc3545;font-size:10px;margin:1px"><i class="fas fa-trash"></i></button>` : ''}
+      ${canEdit ? `<button class="btn btn-sm btn-outline" data-click="empShowEditModal" data-args="${d.id}" style="color:#1976d2;font-size:10px;margin:1px"><i class="fas fa-edit"></i></button>` : ''}
+      ${canDelete ? `<button class="btn btn-sm btn-outline" data-click="empDeleteRecord" data-args="${d.id}" style="color:#dc3545;font-size:10px;margin:1px"><i class="fas fa-trash"></i></button>` : ''}
     </td>` : ''}
   </tr>`).join('');
 }
@@ -2517,10 +2506,10 @@ async function printEmployeeTable() {
   </table>
   <div style="text-align:center;margin-top:15px;font-size:10px;color:#888">إعداد و برمجة محمد ندا 01068880999</div>
   <div class="no-print" style="margin-top:20px;text-align:center">
-    <button onclick="window.print()" style="padding:10px 20px;background:#795548;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px">
+    <button data-click="windowPrint" style="padding:10px 20px;background:#795548;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px">
       <i class="fas fa-print"></i> طباعة / حفظ PDF
     </button>
-    <button onclick="downloadExcel()" style="padding:10px 20px;background:#28a745;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;margin-right:10px">
+    <button data-click="downloadExcel" style="padding:10px 20px;background:#28a745;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;margin-right:10px">
       <i class="fas fa-file-excel"></i> تحميل Excel
     </button>
   </div>
@@ -2669,7 +2658,7 @@ async function empShowAddModal(defaultCategory) {
   openModal('إضافة موظف',
     `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:500px">
       <div style="grid-column:1/-1"><label style="font-size:12px;color:#666">الفرع</label>
-        <select id="empAddGov" class="modal-input" style="width:100%" onchange="empGovChanged('add')" ${isHospital ? 'disabled' : ''}>
+        <select id="empAddGov" class="modal-input" style="width:100%" data-change="empGovChangedAdd" ${isHospital ? 'disabled' : ''}>
           <option value="">-- اختر الفرع --</option>
           ${govOptions}
         </select></div>
@@ -2685,7 +2674,7 @@ async function empShowAddModal(defaultCategory) {
       <div><label style="font-size:12px;color:#666">البريد الالكتروني</label><input id="empAddEmail" class="modal-input" style="width:100%"></div>
     </div>
     <div style="margin-top:12px;text-align:left">
-      <button class="btn btn-primary" onclick="empDoAdd()"><i class="fas fa-save"></i> حفظ</button>
+      <button class="btn btn-primary" data-click="empDoAdd"><i class="fas fa-save"></i> حفظ</button>
     </div>`,
     () => {}
   );
@@ -2755,7 +2744,7 @@ async function empShowEditModal(id) {
   openModal('تعديل بيانات الموظف',
     `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:500px">
       <div style="grid-column:1/-1"><label style="font-size:12px;color:#666">الفرع</label>
-        <select id="empEditGov" class="modal-input" style="width:100%" onchange="empGovChangedEdit()">
+        <select id="empEditGov" class="modal-input" style="width:100%" data-change="empGovChangedEdit">
           <option value="">-- اختر الفرع --</option>
           ${govOptions}
         </select></div>
@@ -2772,7 +2761,7 @@ async function empShowEditModal(id) {
       <div><label style="font-size:12px;color:#666">البريد الالكتروني</label><input id="empEditEmail" class="modal-input" style="width:100%" value="${String(rec.email||'').replace(/"/g,'&quot;')}"></div>
     </div>
     <div style="margin-top:12px;text-align:left">
-      <button class="btn btn-primary" onclick="empDoEdit(${id})"><i class="fas fa-save"></i> حفظ</button>
+      <button class="btn btn-primary" data-click="empDoEdit" data-args="${id}"><i class="fas fa-save"></i> حفظ</button>
     </div>`,
     () => {}
   );
@@ -3017,7 +3006,7 @@ function showAddBranchSupervisor() {
         <div><label style="font-size:12px;color:#666">البريد الالكتروني</label><input id="bsEmail" class="modal-input" style="width:100%"></div>
       </div>
       <div style="margin-top:12px;text-align:left">
-        <button class="btn btn-primary" onclick="doAddBranchSupervisor()"><i class="fas fa-save"></i> حفظ</button>
+        <button class="btn btn-primary" data-click="doAddBranchSupervisor"><i class="fas fa-save"></i> حفظ</button>
       </div>`,
       () => {}
     );
@@ -3061,7 +3050,7 @@ async function editSupervisorUser(id) {
       <div><label style="font-size:12px;color:#666">البريد</label><input id="euEmail" class="modal-input" style="width:100%" value="${String(u.email||'').replace(/"/g,'&quot;')}"></div>
     </div>
     <div style="margin-top:12px;text-align:left">
-      <button class="btn btn-primary" onclick="doEditSupervisorUser(${id})"><i class="fas fa-save"></i> حفظ</button>
+      <button class="btn btn-primary" data-click="doEditSupervisorUser" data-args="${id}"><i class="fas fa-save"></i> حفظ</button>
     </div>`,
     () => {}
   );
@@ -3103,19 +3092,19 @@ async function renderArchive() {
     const items = await api('GET', '/archive');
     const countCons = items.filter(r => r.type === 'منصرف فصائل الدم').length;
 
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
       <div class="page-title"><i class="fas fa-archive" style="color:#607d8b"></i> الأرشيف</div>
       <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;justify-content:center">
-      <div class="menu-item" onclick="showArchiveConsumption()" style="width:140px;height:120px;cursor:pointer">
+      <div class="menu-item" data-click="showArchiveConsumption" style="width:140px;height:120px;cursor:pointer">
         <div class="menu-icon"><i class="fas fa-droplet" style="color:#e91e63;font-size:32px"></i></div>
         <div class="menu-label">أرشيف منصرف الفصائل</div>
         <div style="font-size:11px;color:#999">${countCons} أرشيف</div>
       </div>
-      <div class="menu-item" onclick="showArchiveIndicators()" style="width:140px;height:120px;cursor:pointer">
-        <div class="menu-icon"><i class="fas fa-chart-line" style="color:#3f51b5;font-size:32px"></i></div>
-        <div class="menu-label">أرشيف مؤشرات الأداء</div>
-        <div style="font-size:11px;color:#999">${items.filter(r => r.type === 'مؤشرات الأداء' || r.type === 'مؤشرات تجميعيه' || r.type === 'مؤشرات تخزينيه').length} أرشيف</div>
-      </div>
+<div class="menu-item" data-click="showArchiveIndicators" style="width:140px;height:120px;cursor:pointer">
+         <div class="menu-icon"><i class="fas fa-chart-line" style="color:#3f51b5;font-size:32px"></i></div>
+         <div class="menu-label">أرشيف مؤشرات الأداء</div>
+         <div style="font-size:11px;color:#999">${items.filter(r => r.type === 'مؤشرات تجميعيه' || r.type === 'مؤشرات تخزينيه').length} أرشيف</div>
+       </div>
     </div>`;
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
 }
@@ -3127,10 +3116,11 @@ async function showArchiveConsumption() {
     const items = await api('GET', '/archive');
     const consumptionArchives = items.filter(r => r.type === 'منصرف فصائل الدم').reverse();
     const isAdmin = me.user.id === 1;
-    window._isArchiveAdmin = isAdmin;
+    const canSeeAll = me.user.role === 'admin' || me.user.role === 'org_supervisor';
+    window._isArchiveAdmin = canSeeAll;
 
     el.innerHTML = `<div class="page-actions">
-      <button class="btn-back" onclick="renderArchive()"><i class="fas fa-arrow-right"></i> الأرشيف</button>
+      <button class="btn-back" data-click="renderArchive"><i class="fas fa-arrow-right"></i> الأرشيف</button>
     </div>
     <div class="page-title"><i class="fas fa-droplet" style="color:#e91e63"></i> أرشيف منصرف فصائل الدم</div>
     ${isAdmin ? `
@@ -3141,7 +3131,7 @@ async function showArchiveConsumption() {
           <div class="form-group"><label>السنة</label>
             <select class="form-control" id="addArchYear" style="width:100px">${[2026,2025,2024,2023,2022].map(y => `<option value="${y}">${y}</option>`).join('')}</select></div>
           <div class="form-group"><label>الفترة</label>
-            <select class="form-control" id="addArchPeriod" onchange="toggleAddArchMonth()" style="width:120px">
+            <select class="form-control" id="addArchPeriod" data-change="toggleAddArchMonth" style="width:120px">
               <option value="monthly">شهري</option>
               <option value="h1">نصف سنوي أول</option>
               <option value="h2">نصف سنوي ثاني</option>
@@ -3155,7 +3145,7 @@ async function showArchiveConsumption() {
             `<div style="width:65px"><label style="font-size:11px;font-weight:600">${t}</label>
             <input class="form-control" id="addArch${t.replace('+','P').replace('-','N')}" type="number" value="0" style="height:32px;font-size:12px;text-align:center"></div>`
           ).join('')}
-          <button class="btn btn-primary" onclick="saveArchiveConsumption()" style="height:32px"><i class="fas fa-save"></i> حفظ في الأرشيف</button>
+          <button class="btn btn-primary" data-click="saveArchiveConsumption" style="height:32px"><i class="fas fa-save"></i> حفظ في الأرشيف</button>
         </div>
       </div>
     </div>` : ''}
@@ -3164,14 +3154,14 @@ async function showArchiveConsumption() {
       <div class="card-body" style="padding:10px 16px">
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
           <div class="form-group"><label>الفرع</label>
-            <select class="form-control" id="filterGov" onchange="onArchiveFilterChange()" style="width:150px"><option value="">الكل</option></select></div>
+            <select class="form-control" id="filterGov" data-change="onArchiveFilterChange" style="width:150px">${canSeeAll ? '<option value="">الكل</option>' : ''}</select></div>
           <div class="form-group"><label>السنة</label>
-            <select class="form-control" id="filterYear" onchange="onArchiveFilterChange()" style="width:100px"><option value="">الكل</option></select></div>
+            <select class="form-control" id="filterYear" data-change="onArchiveFilterChange" style="width:100px"><option value="">الكل</option></select></div>
           <div class="form-group"><label>الشهر</label>
-            <select class="form-control" id="filterMonth" onchange="onArchiveFilterChange()" style="width:120px"><option value="">الكل</option>
+            <select class="form-control" id="filterMonth" data-change="onArchiveFilterChange" style="width:120px"><option value="">الكل</option>
               ${MONTHS_AR.map((m,i) => `<option value="${i+1}">${m}</option>`).join('')}</select></div>
           <div class="form-group"><label>الفترة</label>
-            <select class="form-control" id="filterPeriod" onchange="onArchiveFilterChange()" style="width:120px">
+            <select class="form-control" id="filterPeriod" data-change="onArchiveFilterChange" style="width:120px">
               <option value="all">الكل</option>
               <option value="">شهري</option>
               <option value="q1">الربع الأول</option>
@@ -3183,7 +3173,7 @@ async function showArchiveConsumption() {
               <option value="year">سنوي</option>
             </select></div>
           <div class="form-group" style="flex:1;min-width:200px"><label>بنك الدم</label>
-            <select class="form-control" id="filterHosp" onchange="onArchiveFilterChange()"><option value="">الكل</option></select></div>
+            <select class="form-control" id="filterHosp" data-change="onArchiveFilterChange">${canSeeAll ? '<option value="">الكل</option>' : ''}</select></div>
         </div>
       </div>
     </div>
@@ -3195,14 +3185,30 @@ async function showArchiveConsumption() {
     }
 
     // Populate filter dropdowns
-    const govs = [...new Set((await api('GET', '/hospitals')).map(h => h.governorate))];
+    const allHospitals = await api('GET', '/hospitals');
+    const govs = [...new Set(allHospitals.map(h => h.governorate))];
     const govEl = document.getElementById('filterGov');
-    govs.forEach(g => { govEl.innerHTML += `<option value="${g}">${g}</option>`; });
+    if (canSeeAll) {
+      govs.forEach(g => { govEl.innerHTML += `<option value="${g}">${g}</option>`; });
+    } else if (me.user.governorate) {
+      govEl.innerHTML = `<option value="${me.user.governorate}" selected>${me.user.governorate}</option>`;
+    }
     [2026,2025,2024,2023,2022].forEach(y => { document.getElementById('filterYear').innerHTML += `<option value="${y}">${y}</option>`; });
 
     // Populate hospital filter (all initially)
-    const hospEl = document.getElementById('filterHosp');
-    (await api('GET', '/hospitals')).forEach(h => { hospEl.innerHTML += `<option value="${h.id}">${h.name}</option>`; });
+const hospEl = document.getElementById('filterHosp');
+    if (canSeeAll) {
+      allHospitals.forEach(h => { hospEl.innerHTML += `<option value="${h.id}">${h.name}</option>`; });
+    }
+
+    // Auto-select governorate for non-admin, non-org_supervisor users
+    if (me.user.role !== 'admin' && me.user.role !== 'org_supervisor') {
+      document.getElementById('filterGov').value = me.user.governorate || '';
+      if (me.user.role === 'hospital' && me.user.hospitalId) {
+        document.getElementById('filterHosp').value = me.user.hospitalId;
+      }
+      onArchiveFilterChange();
+    }
 
     renderArchiveConsumptionTable();
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
@@ -3220,7 +3226,7 @@ function onArchiveFilterChange() {
   api('GET', '/hospitals').then(hospitals => {
     const filtered = gov ? hospitals.filter(h => h.governorate === gov) : hospitals;
     const el = document.getElementById('filterHosp');
-    el.innerHTML = '<option value="">الكل</option>';
+    el.innerHTML = window._isArchiveAdmin ? '<option value="">الكل</option>' : '';
     filtered.forEach(h => {
       el.innerHTML += `<option value="${h.id}" ${h.id == savedHosp && filtered.some(f=>f.id==savedHosp) ? 'selected' : ''}>${h.name}</option>`;
     });
@@ -3303,8 +3309,8 @@ async function renderArchiveConsumptionTable() {
       `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:13px;color:#666">إجمالي السجلات: ${filtered.length}</span>
         <div>
-          <button class="btn btn-sm btn-outline" onclick="exportExcel()" style="color:#2e7d32"><i class="fas fa-file-excel"></i> تحميل Excel</button>
-          <button class="btn btn-sm btn-outline" onclick="exportPDF()" style="color:#c62828;margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
+          <button class="btn btn-sm btn-outline" data-click="exportExcel" style="color:#2e7d32"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+          <button class="btn btn-sm btn-outline" data-click="exportPDF" style="color:#c62828;margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
         </div>
       </div>
       <div class="table-scroll" id="exportTable"><table class="data-table consumption-table"><thead><tr>
@@ -3320,7 +3326,7 @@ async function renderArchiveConsumptionTable() {
           <td>${r._displayPeriod || periodLabel(r)}</td>
           ${BP.map(t => `<td style="text-align:center">${bt[t] || 0}</td>`).join('')}
           <td style="text-align:center;font-weight:bold">${total}</td>
-          <td>${r._archiveId && r.hospital_id && window._isArchiveAdmin ? `<button class="btn btn-sm btn-outline" onclick="editArchiveRecord(${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${(r.period||'monthly')}')" style="color:#1976d2;font-size:10px;margin-left:4px"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline" onclick="deleteArchiveRecord(${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${(r.period||'monthly')}')" style="color:#dc3545;font-size:10px"><i class="fas fa-trash"></i></button>` : ''}</td>
+          <td>${r._archiveId && r.hospital_id && window._isArchiveAdmin ? `<button class="btn btn-sm btn-outline" data-click="editArchiveRecord" data-args="${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${r.period||'monthly'}'" style="color:#1976d2;font-size:10px;margin-left:4px"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline" data-click="deleteArchiveRecord" data-args="${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${r.period||'monthly'}'" style="color:#dc3545;font-size:10px"><i class="fas fa-trash"></i></button>` : ''}</td>
         </tr>`;
       }).join('')}
       </tbody></table></div>`;
@@ -3344,8 +3350,8 @@ async function editArchiveRecord(archiveId, hospitalId, year, month, period) {
         ${BP.map(t => `<div style="width:65px"><label style="font-size:11px;font-weight:600">${t}</label>
         <input class="form-control edArcInp" id="edArc${t.replace('+','P').replace('-','N')}" type="number" value="${bt[t]||0}" style="height:32px;font-size:12px;text-align:center"></div>`).join('')}
       </div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveEditArchiveRecord(${archiveId},${hospitalId},${year},${month},'${period}')">حفظ</button>`);
+      `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+      <button class="btn btn-primary" data-click="saveEditArchiveRecord" data-args="${archiveId},${hospitalId},${year},${month},'${period}'">حفظ</button>`);
   } catch (e) { showToast('❌ '+e.message); }
 }
 
@@ -3423,12 +3429,13 @@ async function showArchiveIndicators() {
   const el = document.getElementById('mainContent');
   try {
     const me = await api('GET', '/me');
-    const isAdmin = me.user.id === 1;
-    window._isArchiveAdmin = isAdmin;
+const isAdmin = me.user.id === 1;
+    const canSeeAll = me.user.role === 'admin' || me.user.role === 'org_supervisor';
+    window._isArchiveAdmin = canSeeAll;
     if (window._archiveEditLocked === undefined) window._archiveEditLocked = true;
 
     el.innerHTML = `<div class="page-actions">
-      <button class="btn-back" onclick="renderArchive()"><i class="fas fa-arrow-right"></i> الأرشيف</button>
+      <button class="btn-back" data-click="renderArchive"><i class="fas fa-arrow-right"></i> الأرشيف</button>
     </div>
     <div class="page-title"><i class="fas fa-chart-line" style="color:#3f51b5"></i> أرشيف مؤشرات الأداء</div>
     <div class="card" style="margin-bottom:16px">
@@ -3436,14 +3443,14 @@ async function showArchiveIndicators() {
       <div class="card-body" style="padding:10px 16px">
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
           <div class="form-group"><label>الفرع</label>
-            <select class="form-control" id="filterIndGov" onchange="onIndicatorsArchiveFilterChange()" style="width:150px"><option value="">الكل</option></select></div>
+            <select class="form-control" id="filterIndGov" data-change="onIndicatorsArchiveFilterChange" style="width:150px">${canSeeAll ? '<option value="">الكل</option>' : ''}</select></div>
           <div class="form-group"><label>السنة</label>
-            <select class="form-control" id="filterIndYear" onchange="onIndicatorsArchiveFilterChange()" style="width:100px"><option value="">الكل</option></select></div>
+            <select class="form-control" id="filterIndYear" data-change="onIndicatorsArchiveFilterChange" style="width:100px"><option value="">الكل</option></select></div>
           <div class="form-group"><label>الشهر</label>
-            <select class="form-control" id="filterIndMonth" onchange="onIndicatorsArchiveFilterChange()" style="width:120px"><option value="">الكل</option>
+            <select class="form-control" id="filterIndMonth" data-change="onIndicatorsArchiveFilterChange" style="width:120px"><option value="">الكل</option>
               ${MONTHS_AR.map((m,i) => `<option value="${i+1}">${m}</option>`).join('')}</select></div>
           <div class="form-group"><label>الفترة</label>
-            <select class="form-control" id="filterIndPeriod" onchange="onIndicatorsArchiveFilterChange()" style="width:120px">
+            <select class="form-control" id="filterIndPeriod" data-change="onIndicatorsArchiveFilterChange" style="width:120px">
               <option value="all">الكل</option>
               <option value="">شهري</option>
               <option value="q1">الربع الأول</option>
@@ -3455,21 +3462,21 @@ async function showArchiveIndicators() {
               <option value="year">سنوي</option>
             </select></div>
           <div class="form-group"><label>النوع</label>
-            <select class="form-control" id="filterIndType" onchange="onIndicatorsArchiveFilterChange()" style="width:120px">
+            <select class="form-control" id="filterIndType" data-change="onIndicatorsArchiveFilterChange" style="width:120px">
               <option value="">الكل</option>
               <option value="تجميعي">تجميعي</option>
               <option value="تخزيني">تخزيني</option>
             </select></div>
           <div class="form-group" style="flex:1;min-width:200px"><label>بنك الدم</label>
-            <select class="form-control" id="filterIndHosp" onchange="onIndicatorsArchiveFilterChange()"><option value="">الكل</option></select></div>
+            <select class="form-control" id="filterIndHosp" data-change="onIndicatorsArchiveFilterChange">${canSeeAll ? '<option value="">الكل</option>' : ''}</select></div>
           <div class="form-group" style="display:flex;align-items:end;padding-bottom:4px">
             <label style="display:flex;align-items:center;gap:4px;font-weight:400;cursor:pointer;font-size:13px">
-              <input type="checkbox" id="filterIndGovAgg" onchange="renderArchiveIndicatorsTable()"> إجمالي الفرع
+              <input type="checkbox" id="filterIndGovAgg" data-change="renderArchiveIndicatorsTable"> إجمالي الفرع
             </label>
           </div>
           ${isAdmin ? `
           <div class="form-group" style="display:flex;align-items:end;padding-bottom:4px">
-            <button id="lockToggleBtn" class="btn btn-sm ${window._archiveEditLocked ? 'btn-secondary' : 'btn-warning'}" onclick="toggleArchiveEditLock()" style="font-size:11px">
+            <button id="lockToggleBtn" class="btn btn-sm ${window._archiveEditLocked ? 'btn-secondary' : 'btn-warning'}" data-click="toggleArchiveEditLock" style="font-size:11px">
               <i class="fas ${window._archiveEditLocked ? 'fa-lock' : 'fa-lock-open'}"></i> ${window._archiveEditLocked ? 'قفل التعديل' : 'فتح التعديل'}
             </button>
           </div>` : ''}
@@ -3479,13 +3486,29 @@ async function showArchiveIndicators() {
     ${new Date().getDate() >= 25 ? '<div style="background:#fff3cd;color:#856404;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;text-align:center"><i class="fas fa-lock"></i> التعديل مغلق بعد يوم 25 — يتم عرض بيانات الشهر السابق</div>' : ''}
     <div id="archIndTable"></div>`;
 
-    const govs = [...new Set((await api('GET', '/hospitals')).map(h => h.governorate))];
+    const allHospitals = await api('GET', '/hospitals');
+    const govs = [...new Set(allHospitals.map(h => h.governorate))];
     const govEl = document.getElementById('filterIndGov');
-    govs.forEach(g => { govEl.innerHTML += `<option value="${g}">${g}</option>`; });
-    [2026,2025,2024,2023,2022].forEach(y => { document.getElementById('filterIndYear').innerHTML += `<option value="${y}">${y}</option>`; });
+    if (canSeeAll) {
+      govs.forEach(g => { govEl.innerHTML += `<option value="${g}">${g}</option>`; });
+    } else if (me.user.governorate) {
+      govEl.innerHTML = `<option value="${me.user.governorate}" selected>${me.user.governorate}</option>`;
+    }
+[2026,2025,2024,2023,2022].forEach(y => { document.getElementById('filterIndYear').innerHTML += `<option value="${y}">${y}</option>`; });
 
-    const hospEl = document.getElementById('filterIndHosp');
-    (await api('GET', '/hospitals')).forEach(h => { hospEl.innerHTML += `<option value="${h.id}">${h.name}</option>`; });
+const hospEl = document.getElementById('filterIndHosp');
+    if (canSeeAll) {
+      allHospitals.forEach(h => { hospEl.innerHTML += `<option value="${h.id}">${h.name}</option>`; });
+    }
+
+    // Auto-select governorate for non-admin, non-org_supervisor users
+    if (me.user.role !== 'admin' && me.user.role !== 'org_supervisor') {
+      document.getElementById('filterIndGov').value = me.user.governorate || '';
+      if (me.user.role === 'hospital' && me.user.hospitalId) {
+        document.getElementById('filterIndHosp').value = me.user.hospitalId;
+      }
+      onIndicatorsArchiveFilterChange();
+    }
 
     renderArchiveIndicatorsTable();
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
@@ -3497,7 +3520,7 @@ function onIndicatorsArchiveFilterChange() {
   api('GET', '/hospitals').then(hospitals => {
     const filtered = gov ? hospitals.filter(h => h.governorate === gov) : hospitals;
     const el = document.getElementById('filterIndHosp');
-    el.innerHTML = '<option value="">الكل</option>';
+    el.innerHTML = window._isArchiveAdmin ? '<option value="">الكل</option>' : '';
     filtered.forEach(h => {
       el.innerHTML += `<option value="${h.id}" ${h.id == savedHosp && filtered.some(f=>f.id==savedHosp) ? 'selected' : ''}>${h.name}</option>`;
     });
@@ -3650,16 +3673,16 @@ function renderArchiveIndicatorsTable() {
             }
             let cls = c.formula ? 'class="formula-cell"' : '';
             const isEditable = !c.formula && !isAgg && c.key !== 'governorate' && c.key !== 'hospital_name' && !window._archiveEditLocked && window._isArchiveAdmin;
-            const contentEdit = isEditable ? ' contenteditable="true" directinput="true" onfocus="archiveCellFocus(this)" onblur="saveArchiveCell(this)" onpaste="handleArchivePaste(event)" onkeydown="if(event.key==\'Enter\'){event.preventDefault();this.blur()}"' : '';
+            const contentEdit = isEditable ? ' contenteditable="true" directinput="true" data-focus="archiveCellFocus" data-blur="saveArchiveCell" data-paste="handleArchivePaste" data-keydown="archiveCellEnter"' : '';
             const edCls = isEditable ? ' class="editable-cell"' : '';
             let td = `<td style="text-align:center;${c.key === 'governorate' || c.key === 'hospital_name' ? 'text-align:right;font-weight:600' : ''}" ${cls}${style}${contentEdit}${edCls} data-key="${c.key}">${display}</td>`;
             if (ci === 1) td += `<td style="white-space:nowrap;font-size:11px;color:#5A7A9A;font-weight:600">${m}</td>`;
             return td;
           }).join('')}
           ${canEditDel && isAgg && r._childArchiveIds && r._childArchiveIds.length
-            ? `<td style="text-align:center"><button class="btn btn-sm btn-outline" onclick="confirmDeleteArchiveGroup('${PERIODS[fPeriod]?.label || 'الفترة'}',[${r._childArchiveIds.join(',')}])" style="color:#dc3545;font-size:10px"><i class="fas fa-trash"></i> حذف المجموعة</button></td>`
+            ? `<td style="text-align:center"><button class="btn btn-sm btn-outline" data-click="confirmDeleteArchiveGroup" data-args="'${PERIODS[fPeriod]?.label || 'الفترة'}',${r._childArchiveIds.join(',')}" style="color:#dc3545;font-size:10px"><i class="fas fa-trash"></i> حذف المجموعة</button></td>`
             : (canEditDel && r._archiveId && !isAgg
-              ? `<td><button class="btn btn-sm btn-outline" onclick="editIndicatorArchiveRecord(${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${(r.period||'monthly')}')" style="color:#1976d2;font-size:10px;margin-left:4px"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline" onclick="deleteIndicatorArchiveRecord(${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${(r.period||'monthly')}')" style="color:#dc3545;font-size:10px"><i class="fas fa-trash"></i></button></td>`
+              ? `<td><button class="btn btn-sm btn-outline" data-click="editIndicatorArchiveRecord" data-args="${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${r.period||'monthly'}'" style="color:#1976d2;font-size:10px;margin-left:4px"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline" data-click="deleteIndicatorArchiveRecord" data-args="${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${r.period||'monthly'}'" style="color:#dc3545;font-size:10px"><i class="fas fa-trash"></i></button></td>`
               : '<td></td>')}
         </tr>`;
       }).join('');
@@ -3670,8 +3693,8 @@ function renderArchiveIndicatorsTable() {
     let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <span style="font-size:13px;color:#666">إجمالي السجلات: ${totalCount}</span>
       <div>
-        <button class="btn btn-success btn-sm" onclick="exportArchiveIndicatorsExcel()" style="font-size:11px"><i class="fas fa-file-excel"></i> تحميل Excel</button>
-        <button class="btn btn-danger btn-sm" onclick="exportArchiveIndicatorsPdf()" style="font-size:11px;margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
+        <button class="btn btn-success btn-sm" data-click="exportArchiveIndicatorsExcel" style="font-size:11px"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+        <button class="btn btn-danger btn-sm" data-click="exportArchiveIndicatorsPdf" style="font-size:11px;margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
       </div>
     </div>`;
     if (!fType || fType === 'تجميعي') html += renderGroup(filteredBig, BIG_COL_DEFS, computeBigFormulas, 'مؤشرات أداء البنوك التجميعية');
@@ -3952,19 +3975,19 @@ async function renderUsers() {
     const roles = ['admin','hospital_manager','hospital','branch_supervisor','org_supervisor','visitor'];
     const roleLabels = { admin:'مدير عام', hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
     const roleColors = { admin:'#dc3545', hospital_manager:'#6f42c1', hospital:'#17a2b8', branch_supervisor:'#fd7e14', org_supervisor:'#28a745', visitor:'#6c757d' };
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
       <div class="search-input-wrap" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <input class="search-input" id="userSearchName" placeholder="بحث بالاسم..." oninput="filterUserTable()" style="min-width:150px">
-        <input class="search-input" id="userSearchUser" placeholder="اسم المستخدم..." oninput="filterUserTable()" style="min-width:150px">
-        <select class="form-control" id="userFilterRole" onchange="filterUserTable()" style="min-width:150px"><option value="">كل الأدوار</option>${roles.map(r => `<option value="${r}">${roleLabels[r]}</option>`).join('')}</select>
-        <select class="form-control" id="userFilterGov" onchange="filterUserTable()" style="min-width:150px"><option value="">كل المحافظات</option></select>
-        <select class="form-control" id="userFilterHosp" onchange="filterUserTable()" style="min-width:180px"><option value="">كل المستشفيات</option></select>
+        <input class="search-input" id="userSearchName" placeholder="بحث بالاسم..." data-input="filterUserTable" style="min-width:150px">
+        <input class="search-input" id="userSearchUser" placeholder="اسم المستخدم..." data-input="filterUserTable" style="min-width:150px">
+        <select class="form-control" id="userFilterRole" data-change="filterUserTable" style="min-width:150px"><option value="">كل الأدوار</option>${roles.map(r => `<option value="${r}">${roleLabels[r]}</option>`).join('')}</select>
+        <select class="form-control" id="userFilterGov" data-change="filterUserTable" style="min-width:150px"><option value="">كل المحافظات</option></select>
+        <select class="form-control" id="userFilterHosp" data-change="filterUserTable" style="min-width:180px"><option value="">كل المستشفيات</option></select>
       </div>
-      ${isMaster ? '<button class="btn btn-primary" onclick="showAddUserModal()"><i class="fas fa-plus"></i> إضافة مستخدم</button>' : ''}
-      <button class="btn btn-outline" onclick="copyUsersTable()" title="نسخ الجدول"><i class="fas fa-copy"></i> نسخ</button>
-      <button class="btn btn-outline" onclick="exportUsersExcel()" title="تصدير Excel"><i class="fas fa-file-excel"></i> Excel</button>
-      <button class="btn btn-outline" onclick="exportUsersPdf()" title="تصدير PDF"><i class="fas fa-file-pdf"></i> PDF</button>
-      ${isMaster ? '<button class="btn btn-warning" onclick="toggleShowPasswords()" id="togglePassBtn" title="إظهار/إخفاء كلمات المرور"><i class="fas fa-eye"></i> عرض الباسوردات</button>' : ''}</div>
+      ${isMaster ? '<button class="btn btn-primary" data-click="showAddUserModal"><i class="fas fa-plus"></i> إضافة مستخدم</button>' : ''}
+      <button class="btn btn-outline" data-click="copyUsersTable" title="نسخ الجدول"><i class="fas fa-copy"></i> نسخ</button>
+      <button class="btn btn-outline" data-click="exportUsersExcel" title="تصدير Excel"><i class="fas fa-file-excel"></i> Excel</button>
+      <button class="btn btn-outline" data-click="exportUsersPdf" title="تصدير PDF"><i class="fas fa-file-pdf"></i> PDF</button>
+      ${isMaster ? '<button class="btn btn-warning" data-click="toggleShowPasswords" id="togglePassBtn" title="إظهار/إخفاء كلمات المرور"><i class="fas fa-eye"></i> عرض الباسوردات</button>' : ''}</div>
       <div class="card"><div class="card-body table-scroll"><table class="data-table" id="userTable"><thead><tr><th>#</th><th>الاسم</th><th>اسم المستخدم</th><th>الدور</th><th>التليفون</th><th>البريد</th><th>المستشفى</th><th>الفرع</th><th>كلمة المرور</th><th>إجراءات</th></tr></thead><tbody id="usersBody"></tbody></table></div></div>`;
     const [users, hospitals, govs] = await Promise.all([api('GET', '/users'), api('GET', '/hospitals'), api('GET', '/governorates')]);
     window._hospitalsCache = hospitals;
@@ -3993,10 +4016,10 @@ function renderUserRows(users, isMaster, me) {
     return `<tr data-name="${(u.name||'').toLowerCase()}" data-user="${(u.username||'').toLowerCase()}" data-gov="${(u.governorate||'').toLowerCase()}" data-hosp="${u.hospital_id||''}" data-role="${u.role}">
       <td>${i+1}</td><td><strong>${nameDisplay}</strong></td><td style="direction:ltr">${u.username}</td><td><span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;background:${rc}22;color:${rc};font-weight:600">${roleLabels[u.role] || u.role}</span></td><td style="direction:ltr">${u.phone || '-'}</td><td style="direction:ltr">${u.email || '-'}</td><td>${hospMap[u.hospital_id] || u.hospital_id || '-'}</td><td>${u.governorate || '-'}</td><td style="direction:ltr;font-family:monospace;font-size:12px" id="pass_${u.id}">${passDisplay}</td>
       <td>${!showEdit && !showKey ? '' :
-        `${showEdit ? `<button class="btn btn-sm btn-outline" onclick="editUser(${u.id})" title="تعديل"><i class="fas fa-edit"></i></button>` : ''}
-        ${showKey ? `<button class="btn btn-sm btn-outline" onclick="changeUserPassword(${u.id})" title="تغيير كلمة المرور"><i class="fas fa-key"></i></button>` : ''}
-        ${isMaster && u.id !== 1 ? `<button class="btn btn-sm btn-outline" onclick="deleteUser(${u.id})" title="حذف"><i class="fas fa-trash"></i></button>` : ''}
-        ${isMaster ? `<button class="btn btn-sm btn-outline" onclick="toggleSinglePassword(${u.id})" title="إظهار/إخفاء"><i class="fas fa-eye"></i></button>` : ''}`}</td></tr>`;
+        `${showEdit ? `<button class="btn btn-sm btn-outline" data-click="editUser" data-args="${u.id}" title="تعديل"><i class="fas fa-edit"></i></button>` : ''}
+        ${showKey ? `<button class="btn btn-sm btn-outline" data-click="changeUserPassword" data-args="${u.id}" title="تغيير كلمة المرور"><i class="fas fa-key"></i></button>` : ''}
+        ${isMaster && u.id !== 1 ? `<button class="btn btn-sm btn-outline" data-click="deleteUser" data-args="${u.id}" title="حذف"><i class="fas fa-trash"></i></button>` : ''}
+        ${isMaster ? `<button class="btn btn-sm btn-outline" data-click="toggleSinglePassword" data-args="${u.id}" title="إظهار/إخفاء"><i class="fas fa-eye"></i></button>` : ''}`}</td></tr>`;
   }).join('');
 }
 window._showPasswords = false;
@@ -4075,19 +4098,19 @@ function showAddUserModal() {
       const roles = ['hospital_manager','hospital','branch_supervisor','org_supervisor','visitor'];
       const roleLabels = { hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
       openModal('إضافة مستخدم',
-        `<div class="form-group"><label>الاسم</label><div style="display:flex;gap:6px"><input class="form-control" id="auName" style="flex:1"> <button class="btn btn-sm btn-outline" onclick="pickEmpName('auName','auHosp')" title="اختيار الاسم من بيان العاملين" style="white-space:nowrap"><i class="fas fa-user-tie"></i></button></div></div>
+        `<div class="form-group"><label>الاسم</label><div style="display:flex;gap:6px"><input class="form-control" id="auName" style="flex:1"> <button class="btn btn-sm btn-outline" data-click="pickEmpName" data-args="'auName','auHosp'" title="اختيار الاسم من بيان العاملين" style="white-space:nowrap"><i class="fas fa-user-tie"></i></button></div></div>
         <div class="form-group"><label>اسم المستخدم</label><input class="form-control" id="auUsername"></div>
-        <div class="form-group" style="position:relative"><label>كلمة المرور</label><input class="form-control" id="auPassword" value="123" style="padding-left:36px"><span onclick="togglePasswordVisibility('auPassword',this)" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
-        <div class="form-group"><label>الدور</label><select class="form-control" id="auRole" onchange="toggleUserFields()">
+        <div class="form-group" style="position:relative"><label>كلمة المرور</label><input class="form-control" id="auPassword" value="123" style="padding-left:36px"><span data-click="togglePasswordVisibility" data-args="'auPassword'" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
+        <div class="form-group"><label>الدور</label><select class="form-control" id="auRole" data-change="toggleUserFields">
           ${roles.map(r => `<option value="${r}">${roleLabels[r]}</option>`).join('')}</select></div>
         <div class="form-group" id="auGovGroup" style="display:none"><label>الفرع</label><select class="form-control" id="auGov">
           ${Array.isArray(govs) ? govs.map(g => { const n = typeof g === 'string' ? g : g.name; return `<option value="${n}">${n}</option>`; }).join('') : ''}</select></div>
-        <div class="form-group" id="auHospGroup" style="display:none"><label>المستشفى</label><select class="form-control" id="auHosp" onchange="autoFillEmpName('auName','auHosp')">
+        <div class="form-group" id="auHospGroup" style="display:none"><label>المستشفى</label><select class="form-control" id="auHosp" data-change="autoFillEmpNameAdd">
           <option value="">بدون مستشفى</option>${hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>
         <div class="form-group"><label>التليفون</label><input class="form-control" id="auPhone" dir="ltr"></div>
         <div class="form-group"><label>البريد الالكتروني</label><input class="form-control" id="auEmail" dir="ltr"></div>`,
-        `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-        <button class="btn btn-primary" onclick="createUser()">حفظ</button>`);
+        `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+        <button class="btn btn-primary" data-click="createUser">حفظ</button>`);
       toggleUserFields();
     });
   });
@@ -4116,10 +4139,10 @@ async function pickEmpName(nameFieldId, hospSelectId) {
     if (!rows.length) { showToast('⚠ لا يوجد موظفون في هذه المستشفى'); return; }
     const names = [...new Set(rows.map(r => r.employee).filter(Boolean))];
     if (!names.length) { showToast('⚠ لا يوجد موظفون'); return; }
-    let html = names.map((n, i) => `<div class="emp-name-option" onclick="setNameFromEmp('${nameFieldId}','${esc(n)}')" style="padding:8px 12px;cursor:pointer;border-radius:6px;transition:background 0.2s" onmouseover="this.style.background='var(--hover-bg)'" onmouseout="this.style.background=''"><i class="fas fa-user"></i> ${esc(n)}</div>`).join('');
+    let html = names.map((n, i) => `<div class="emp-name-option" data-click="setNameFromEmp" data-args="'${nameFieldId}','${esc(n)}'" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="var(--hover-bg)" data-hover-off="" style="padding:8px 12px;cursor:pointer;border-radius:6px;transition:background 0.2s"><i class="fas fa-user"></i> ${esc(n)}</div>`).join('');
     openModal('اختيار الاسم من بيان العاملين',
       `<p style="margin-bottom:12px;color:#666">اختر اسم الموظف:</p><div style="max-height:300px;overflow-y:auto">${html}</div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>`);
+      `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>`);
   } catch(e) { showToast('❌ ' + e.message); }
 }
 function setNameFromEmp(fieldId, name) {
@@ -4154,8 +4177,8 @@ async function deleteUser(id) {
     `<div style="text-align:center;padding:16px"><i class="fas fa-user-minus" style="font-size:48px;color:#dc3545;opacity:0.6"></i>
     <p style="margin:12px 0;font-size:15px">هل أنت متأكد من حذف "<strong>${esc(name)}</strong>"؟</p>
     <p style="font-size:12px;color:#999">لا يمكن التراجع عن هذا الإجراء</p></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-    <button class="btn btn-danger" onclick="confirmDeleteUser(${id})"><i class="fas fa-trash"></i> حذف</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+    <button class="btn btn-danger" data-click="confirmDeleteUser" data-args="${id}"><i class="fas fa-trash"></i> حذف</button>`);
 }
 async function confirmDeleteUser(id) {
   closeModal();
@@ -4191,8 +4214,8 @@ async function renderEmployeeAccounts() {
       byHosp[hid].push(r);
     });
     const hospIds = Object.keys(byHosp).map(Number).sort((a,b) => a-b);
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-        <button class="btn btn-success" onclick="batchCreateAllEmployeeAccounts()" id="batchEmpBtn"><i class="fas fa-users-gear"></i> إنشاء حسابات الكل</button>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+        <button class="btn btn-success" data-click="batchCreateAllEmployeeAccounts" id="batchEmpBtn"><i class="fas fa-users-gear"></i> إنشاء حسابات الكل</button>
       </div>
       <div class="page-header"><h2><i class="fas fa-user-plus" style="color:#28a745"></i> حسابات الموظفين</h2></div>
       ${hospIds.map(hid => {
@@ -4245,17 +4268,17 @@ function editUser(id) {
     const roleLabels = { admin:'مدير عام', hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
     const govArr = Array.isArray(govs) ? govs : [];
     openModal('تعديل المستخدم - ' + u.name,
-      `<div class="form-group"><label>الاسم</label><div style="display:flex;gap:6px"><input class="form-control" id="euName" value="${String(u.name||'').replace(/"/g,'"')}" style="flex:1"> <button class="btn btn-sm btn-outline" onclick="pickEmpName('euName','euHosp')" title="اختيار الاسم من بيان العاملين" style="white-space:nowrap"><i class="fas fa-user-tie"></i></button></div></div>
-      ${isMaster ? `<div class="form-group"><label>الدور</label><select class="form-control" id="euRole" onchange="toggleEditUserFields()">
+      `<div class="form-group"><label>الاسم</label><div style="display:flex;gap:6px"><input class="form-control" id="euName" value="${String(u.name||'').replace(/"/g,'"')}" style="flex:1"> <button class="btn btn-sm btn-outline" data-click="pickEmpName" data-args="'euName','euHosp'" title="اختيار الاسم من بيان العاملين" style="white-space:nowrap"><i class="fas fa-user-tie"></i></button></div></div>
+      ${isMaster ? `<div class="form-group"><label>الدور</label><select class="form-control" id="euRole" data-change="toggleEditUserFields">
         ${roles.map(r => `<option value="${r}" ${r===u.role?'selected':''}>${roleLabels[r]}</option>`).join('')}</select></div>` : ''}
-      <div class="form-group" style="position:relative"><label>كلمة المرور</label><input class="form-control" id="euPassword" value="123" style="padding-left:36px"><span onclick="togglePasswordVisibility('euPassword',this)" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
+      <div class="form-group" style="position:relative"><label>كلمة المرور</label><input class="form-control" id="euPassword" value="123" style="padding-left:36px"><span data-click="togglePasswordVisibility" data-args="'euPassword'" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
       ${isMaster ? `<div class="form-group" id="euGovGroup" style="${u.role==='branch_supervisor'?'':'display:none'}"><label>الفرع</label><select class="form-control" id="euGov">${govArr.map(g => `<option value="${g}" ${g===u.governorate?'selected':''}>${g}</option>`).join('')}</select></div>` : ''}
-      ${isMaster ? `<div class="form-group" id="euHospGroup" style="${(u.role==='hospital' || u.role==='hospital_manager')?'':'display:none'}"><label>المستشفى</label><select class="form-control" id="euHosp" onchange="autoFillEmpName('euName','euHosp')">${hospitals.map(h => `<option value="${h.id}" ${h.id===u.hospital_id?'selected':''}>${h.name}</option>`).join('')}</select></div>` : ''}
+      ${isMaster ? `<div class="form-group" id="euHospGroup" style="${(u.role==='hospital' || u.role==='hospital_manager')?'':'display:none'}"><label>المستشفى</label><select class="form-control" id="euHosp" data-change="autoFillEmpNameEdit">${hospitals.map(h => `<option value="${h.id}" ${h.id===u.hospital_id?'selected':''}>${h.name}</option>`).join('')}</select></div>` : ''}
       <div class="form-group"><label>التليفون</label><input class="form-control" id="euPhone" value="${String(u.phone||'').replace(/"/g,'"')}" dir="ltr"></div>
       <div class="form-group"><label>البريد الالكتروني</label><input class="form-control" id="euEmail" value="${String(u.email||'').replace(/"/g,'"')}" dir="ltr"></div>
       ${isMaster ? `<div style="margin-top:8px;padding:8px 10px;background:#e8f5e9;border-radius:8px;font-size:12px;color:#2e7d32"><i class="fas fa-info-circle"></i> الصلاحيات تتحكم فيها من <strong>صلاحيات الأدوار</strong></div>` : ''}`,
-      `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveUser(${id})">حفظ</button>`);
+      `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+      <button class="btn btn-primary" data-click="saveUser" data-args="${id}">حفظ</button>`);
   });
 }
 function toggleEditUserFields() {
@@ -4292,11 +4315,11 @@ function changeUserPassword(id) {
     const u = users.find(x => x.id === id); if (!u) return;
     const isSelf = me.user.id === id;
     openModal('تغيير كلمة المرور - ' + (u.name || u.username),
-      `${isSelf ? `<div class="form-group" style="position:relative"><label>كلمة المرور الحالية</label><input class="form-control" id="cpCurrentPass" type="password" style="padding-left:36px"><span onclick="togglePasswordVisibility('cpCurrentPass',this)" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>` : ''}
-      <div class="form-group" style="position:relative"><label>كلمة المرور الجديدة</label><input class="form-control" id="cpPassword" type="password" style="padding-left:36px" placeholder="4 أحرف على الأقل"><span onclick="togglePasswordVisibility('cpPassword',this)" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
-      <div class="form-group" style="position:relative"><label>تأكيد كلمة المرور الجديدة</label><input class="form-control" id="cpConfirm" type="password" style="padding-left:36px"><span onclick="togglePasswordVisibility('cpConfirm',this)" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-      <button class="btn btn-primary" onclick="savePassword(${id})">حفظ</button>`);
+      `${isSelf ? `<div class="form-group" style="position:relative"><label>كلمة المرور الحالية</label><input class="form-control" id="cpCurrentPass" type="password" style="padding-left:36px"><span data-click="togglePasswordVisibility" data-args="'cpCurrentPass'" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>` : ''}
+      <div class="form-group" style="position:relative"><label>كلمة المرور الجديدة</label><input class="form-control" id="cpPassword" type="password" style="padding-left:36px" placeholder="4 أحرف على الأقل"><span data-click="togglePasswordVisibility" data-args="'cpPassword'" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
+      <div class="form-group" style="position:relative"><label>تأكيد كلمة المرور الجديدة</label><input class="form-control" id="cpConfirm" type="password" style="padding-left:36px"><span data-click="togglePasswordVisibility" data-args="'cpConfirm'" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>`,
+      `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+      <button class="btn btn-primary" data-click="savePassword" data-args="${id}">حفظ</button>`);
   });
 }
 async function savePassword(id) {
@@ -4315,14 +4338,14 @@ async function renderHospitals() {
   try {
     const me = (await api('GET', '/me')).user;
     const isMaster = me.id === 1;
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      ${isMaster ? '<button class="btn btn-primary" onclick="showAddHospitalModal()"><i class="fas fa-plus"></i> إضافة</button>' : ''}
-      ${isMaster ? '<button class="btn btn-outline" onclick="showHospitalTypesModal()" style="margin-right:6px"><i class="fas fa-tag"></i> أنواع البنوك</button>' : ''}</div>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+      ${isMaster ? '<button class="btn btn-primary" data-click="showAddHospitalModal"><i class="fas fa-plus"></i> إضافة</button>' : ''}
+      ${isMaster ? '<button class="btn btn-outline" data-click="showHospitalTypesModal" style="margin-right:6px"><i class="fas fa-tag"></i> أنواع البنوك</button>' : ''}</div>
       <div class="card"><div class="card-body table-scroll"><table class="data-table"><thead><tr><th>#</th><th>الكود</th><th>الاسم</th><th>الفرع</th><th>النوع</th>${isMaster?'<th></th>':''}</tr></thead><tbody id="hospBody"></tbody></table></div></div>`;
     const h = await api('GET', '/hospitals');
     document.getElementById('hospBody').innerHTML = h.map((x, i) => `<tr><td>${i+1}</td><td>${x.code || x.id}</td><td>${x.name}</td><td>${x.governorate}</td><td class="${x.type === 'تجميعي' ? 'agg-cell' : ''}">${x.type || 'تخزيني'}</td>
-      ${isMaster ? `<td><button class="btn btn-sm btn-outline" onclick="editHospital(${x.id})"><i class="fas fa-edit"></i></button>
-      <button class="btn btn-sm btn-outline" onclick="deleteHospital(${x.id})"><i class="fas fa-trash"></i></button></td>` : ''}</tr>`).join('');
+      ${isMaster ? `<td><button class="btn btn-sm btn-outline" data-click="editHospital" data-args="${x.id}"><i class="fas fa-edit"></i></button>
+      <button class="btn btn-sm btn-outline" data-click="deleteHospital" data-args="${x.id}"><i class="fas fa-trash"></i></button></td>` : ''}</tr>`).join('');
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
 }
 function showAddHospitalModal() {
@@ -4334,8 +4357,8 @@ function showAddHospitalModal() {
       <div class="form-group"><label>الاسم</label><input class="form-control" id="ahName"></div>
       <div class="form-group"><label>الفرع</label><select class="form-control" id="ahGov">${arr.map(g => `<option value="${g}">${g}</option>`).join('')}</select></div>
       <div class="form-group"><label>النوع</label><select class="form-control" id="ahType">${typeArr.map(t => `<option value="${t.name}">${t.name}</option>`).join('')}</select></div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-      <button class="btn btn-primary" onclick="addHospital()">حفظ</button>`);
+      `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+      <button class="btn btn-primary" data-click="addHospital">حفظ</button>`);
   });
 }
 async function addHospital() {
@@ -4356,8 +4379,8 @@ function editHospital(id) {
       <div class="form-group"><label>الاسم</label><input class="form-control" id="ehName" value="${x.name}"></div>
       <div class="form-group"><label>الفرع</label><select class="form-control" id="ehGov">${arr.map(g => `<option value="${g}" ${g===x.governorate?'selected':''}>${g}</option>`).join('')}</select></div>
       <div class="form-group"><label>النوع</label><select class="form-control" id="ehType">${typeArr.map(t => `<option value="${t.name}" ${t.name === (x.type || 'تخزيني') ? 'selected' : ''}>${t.name}</option>`).join('')}</select></div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveHospital(${id})">حفظ</button>`);
+      `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+      <button class="btn btn-primary" data-click="saveHospital" data-args="${id}">حفظ</button>`);
   });
 }
 async function saveHospital(id) {
@@ -4380,13 +4403,13 @@ async function showHospitalTypesModal() {
   openModal('إدارة أنواع البنوك',
     `<div style="margin-bottom:12px;display:flex;gap:8px">
       <input class="form-control" id="newTypeName" placeholder="اسم النوع الجديد" style="flex:1">
-      <button class="btn btn-primary" onclick="addHospitalType()">إضافة</button>
+      <button class="btn btn-primary" data-click="addHospitalType">إضافة</button>
     </div>
     <div id="typeListWrap">${typeArr.map(t => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #eee">
       <span>${t.name}</span>
-      <button class="btn btn-sm btn-outline" onclick="deleteHospitalType(${t.id})"><i class="fas fa-times"></i></button>
+      <button class="btn btn-sm btn-outline" data-click="deleteHospitalType" data-args="${t.id}"><i class="fas fa-times"></i></button>
     </div>`).join('')}</div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إغلاق</button>`);
 }
 
 async function addHospitalType() {
@@ -4409,23 +4432,23 @@ async function renderGovernorates() {
   try {
     const me = (await api('GET', '/me')).user;
     const isMaster = me.id === 1;
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      ${isMaster ? '<button class="btn btn-primary" onclick="showAddGovModal()"><i class="fas fa-plus"></i> إضافة</button>' : ''}</div>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+      ${isMaster ? '<button class="btn btn-primary" data-click="showAddGovModal"><i class="fas fa-plus"></i> إضافة</button>' : ''}</div>
       <div class="card"><div class="card-body table-scroll"><table class="data-table"><thead><tr><th>#</th><th>الاسم</th>${isMaster?'<th></th>':''}</tr></thead><tbody id="govBody"></tbody></table></div></div>`;
     const g = await api('GET', '/governorates');
     const arr = Array.isArray(g) ? g : [];
     document.getElementById('govBody').innerHTML = arr.map((x, i) => {
       const n = typeof x === 'string' ? x : (x.name || x);
       return `<tr><td>${i+1}</td><td>${n}</td>
-        ${isMaster ? `<td><button class="btn btn-sm btn-outline" onclick="deleteGovernorate('${n}')"><i class="fas fa-trash"></i></button></td>` : ''}</tr>`;
+        ${isMaster ? `<td><button class="btn btn-sm btn-outline" data-click="deleteGovernorate" data-args="'${n}'"><i class="fas fa-trash"></i></button></td>` : ''}</tr>`;
     }).join('');
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
 }
 function showAddGovModal() {
   openModal('إضافة فرع',
     `<div class="form-group"><label>الاسم</label><input class="form-control" id="agName"></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-    <button class="btn btn-primary" onclick="addGovernorate()">حفظ</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+    <button class="btn btn-primary" data-click="addGovernorate">حفظ</button>`);
 }
 async function addGovernorate() {
   const name = document.getElementById('agName').value.trim();
@@ -4440,17 +4463,6 @@ async function deleteGovernorate(name) {
 
 // supervisor_data page removed — المستخدمين تغني عنه
 
-async function renderInventory() {
-  const el = document.getElementById('mainContent');
-  try {
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
-      <div class="card"><div class="card-body table-scroll"><table class="data-table"><thead><tr><th>فصيلة</th><th>المخزون</th><th>إجمالي الوارد</th><th>إجمالي المستهلك</th></tr></thead><tbody id="invBody"></tbody></table></div></div>`;
-    const inv = await api('GET', '/inventory');
-    const arr = Object.entries(inv || {});
-    document.getElementById('invBody').innerHTML = arr.map(([bt, v]) => `<tr><td>${bt}</td><td>${v.storage ?? 0}</td><td>${v.totalReceived ?? 0}</td><td>${v.totalConsumed ?? 0}</td></tr>`).join('');
-  } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
-}
-
 // =============== Monthly Indicators (كبار + صغار) ===============
 
 async function renderRolePerms() {
@@ -4460,9 +4472,9 @@ async function renderRolePerms() {
     const defaultLabels = { admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
     const defaultColors = { admin:'#dc3545', hospital:'#17a2b8', branch_supervisor:'#fd7e14', org_supervisor:'#28a745', visitor:'#6c757d' };
     const defaultIcons = { admin:'fa-crown', hospital:'fa-hospital', branch_supervisor:'fa-user-check', org_supervisor:'fa-building', visitor:'fa-eye' };
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      <button class="btn btn-primary" onclick="saveAllRolePerms()" id="saveRolePermsBtn"><i class="fas fa-save"></i> حفظ الكل</button>
-      <button class="btn btn-success" onclick="showAddRoleModal()"><i class="fas fa-plus"></i> إضافة دور</button></div>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+      <button class="btn btn-primary" data-click="saveAllRolePerms" id="saveRolePermsBtn"><i class="fas fa-save"></i> حفظ الكل</button>
+      <button class="btn btn-success" data-click="showAddRoleModal"><i class="fas fa-plus"></i> إضافة دور</button></div>
       <div id="rolePermsContainer"></div>`;
     const container = document.getElementById('rolePermsContainer');
     let html = '';
@@ -4474,32 +4486,34 @@ async function renderRolePerms() {
       html += `<div class="card" style="margin-bottom:16px">
         <div class="card-header" style="background:${color};color:#fff;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
           <span><i class="fas ${icon}"></i> ${defaultLabels[rp.role] || rp.role}</span>
-          <span style="font-size:11px;opacity:0.9">${userCount} مستخدم ${rp.role !== 'admin' ? `<i class="fas fa-times" style="cursor:pointer;margin-right:8px" onclick="deleteRole('${rp.role}')"></i>` : ''}</span>
+          <span style="font-size:11px;opacity:0.9">${userCount} مستخدم ${rp.role !== 'admin' ? `<i class="fas fa-times" style="cursor:pointer;margin-right:8px" data-click="deleteRole" data-args="'${rp.role}'"></i>` : ''}</span>
         </div>
-        <div class="card-body" style="padding:12px">`;
+        <div class="card-body" style="padding:12px">
+        <input type="text" data-input="filterPermPages" data-role="${rp.role}" placeholder="🔍 بحث عن صفحة..." style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-size:12px;margin-bottom:10px;box-sizing:border-box">`;
       PERM_CATS.forEach(c => {
         const pages = PERM_PAGES.filter(p => p.cat === c.key);
         if (!pages.length) return;
         html += `<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:${c.color};margin-bottom:6px;display:flex;align-items:center;gap:4px"><i class="fas ${c.icon}"></i> ${c.label}
           <span style="margin-right:auto;font-size:11px;font-weight:400;display:flex;gap:4px">
-            <span onclick="toggleCatPerms('${rp.role}','${c.key}',1)" style="cursor:pointer;color:#28a745;padding:1px 6px;border-radius:4px;border:1px solid #28a74555;font-size:10px"><i class="fas fa-check"></i> الكل</span>
-            <span onclick="toggleCatPerms('${rp.role}','${c.key}',0)" style="cursor:pointer;color:#dc3545;padding:1px 6px;border-radius:4px;border:1px solid #dc354555;font-size:10px"><i class="fas fa-times"></i> إلغاء</span>
+            <span data-click="toggleCatPerms" data-args="'${rp.role}','${c.key}',1" style="cursor:pointer;color:#28a745;padding:1px 6px;border-radius:4px;border:1px solid #28a74555;font-size:10px"><i class="fas fa-check"></i> الكل</span>
+            <span data-click="toggleCatPerms" data-args="'${rp.role}','${c.key}',0" style="cursor:pointer;color:#dc3545;padding:1px 6px;border-radius:4px;border:1px solid #dc354555;font-size:10px"><i class="fas fa-times"></i> إلغاء</span>
           </span>
         </div>`;
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;border-bottom:1px solid #f0f0f0;font-size:11px;color:#999">
+            <span style="flex:1">الصفحة</span>
+            ${PERM_ACTIONS.map(a => `<span style="width:28px;text-align:center;font-size:9px" title="${a.label}">${a.label}</span>`).join('')}
+          </div>`;
         pages.forEach(p => {
           const pv = perms[p.key] || {v:0,a:0,e:0,d:0,x:0};
-          html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px">
-            <span><i class="fas ${p.icon}" style="margin-left:4px;color:${c.color};width:16px;text-align:center"></i>${p.label}</span>
-            <div style="display:flex;gap:3px">`;
+          html += `<div style="display:flex;align-items:center;padding:3px 0;border-bottom:1px solid #f0f0f0;font-size:12px">
+            <span style="flex:1"><i class="fas ${p.icon}" style="margin-left:4px;color:${c.color};width:16px;text-align:center"></i>${p.label}</span>`;
           PERM_ACTIONS.forEach(a => {
             const checked = pv[a.key] === 1;
-            html += `<label class="perm-toggle ${checked ? a.cls : ''}">
-              <input type="checkbox" data-role="${rp.role}" data-page="${p.key}" data-action="${a.key}" ${checked?'checked':''} onchange="this.parentElement.className='perm-toggle'+(this.checked?' ${a.cls}':'')">
-              <span class="toggle-track"></span>
-              <span class="toggle-label">${a.label}</span>
+            html += `<label style="width:28px;height:20px;display:flex;align-items:center;justify-content:center;cursor:pointer" title="${a.label}">
+              <input type="checkbox" data-role="${rp.role}" data-page="${p.key}" data-action="${a.key}" ${checked?'checked':''} data-change="permToggleChanged" style="width:16px;height:16px;cursor:pointer;accent-color:${a.color}">
             </label>`;
           });
-          html += `</div></div>`;
+          html += `</div>`;
         });
         html += `</div>`;
       });
@@ -4513,8 +4527,8 @@ function showAddRoleModal() {
   openModal('إضافة دور جديد',
     `<div class="form-group"><label>اسم الدور (بالإنجليزية)</label><input class="form-control" id="arKey" placeholder="مثال: supervisor"></div>
     <div class="form-group"><label>الاسم المعروض (بالعربية)</label><input class="form-control" id="arName" placeholder="مثال: مشرف"></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-    <button class="btn btn-primary" onclick="addNewRole()">إضافة</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+    <button class="btn btn-primary" data-click="addNewRole">إضافة</button>`);
 }
 
 async function addNewRole() {
@@ -4537,8 +4551,8 @@ async function deleteRole(role) {
     `<div style="text-align:center;padding:16px"><i class="fas fa-exclamation-triangle" style="font-size:48px;color:#dc3545;opacity:0.6"></i>
     <p style="margin:12px 0;font-size:15px">هل أنت متأكد من حذف دور "<strong>${defaultLabels[role] || role}</strong>"؟</p>
     <p style="font-size:12px;color:#999">المستخدمون المرتبطون بهذا الدور سيبقون بدون تغيير</p></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-    <button class="btn btn-danger" onclick="confirmDeleteRole('${role}')"><i class="fas fa-trash"></i> حذف</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+    <button class="btn btn-danger" data-click="confirmDeleteRole" data-args="'${role}'"><i class="fas fa-trash"></i> حذف</button>`);
 }
 async function confirmDeleteRole(role) {
   closeModal();
@@ -4555,10 +4569,6 @@ function toggleCatPerms(role, catKey, val) {
   pages.forEach(p => {
     document.querySelectorAll(`${prefix}[data-page="${p.key}"]`).forEach(cb => {
       cb.checked = val === 1;
-      const label = cb.parentElement;
-      const action = cb.dataset.action;
-      const aObj = PERM_ACTIONS.find(a => a.key === action);
-      if (aObj) label.className = 'perm-toggle' + (val === 1 ? ' ' + aObj.cls : '');
     });
   });
 }
@@ -4698,7 +4708,7 @@ function buildIndicatorFormHTML(colDefs, prefix, recalcFn) {
           if (fi) {
             html += `<span class="ind-form-input formula-val ${prefix}-inp" id="${prefix}_${f.key}">0%</span></div>`;
           } else {
-            html += `<input class="ind-form-input ${prefix}-inp" id="${prefix}_${f.key}" type="number" value="0"${recalcFn ? ` oninput="${recalcFn}()"` : ''}></div>`;
+            html += `<input class="ind-form-input ${prefix}-inp" id="${prefix}_${f.key}" type="number" value="0"${recalcFn ? ` data-input="${recalcFn}"` : ''}></div>`;
           }
         });
       } else {
@@ -4712,7 +4722,7 @@ function buildIndicatorFormHTML(colDefs, prefix, recalcFn) {
           if (fi) {
             html += `<span class="ind-form-input formula-val ${prefix}-inp" id="${prefix}_${f.key}">0%</span></div>`;
           } else {
-            html += `<input class="ind-form-input ${prefix}-inp" id="${prefix}_${f.key}" type="number" value="0"${recalcFn ? ` oninput="${recalcFn}()"` : ''}></div>`;
+            html += `<input class="ind-form-input ${prefix}-inp" id="${prefix}_${f.key}" type="number" value="0"${recalcFn ? ` data-input="${recalcFn}"` : ''}></div>`;
           }
         });
         html += '</div></div>';
@@ -4765,7 +4775,7 @@ async function renderBigIndicators() {
     if (isHospital) filteredHospitals = bigHospitals.filter(h => h.id === user.hospitalId);
     else if (isBranchSup) filteredHospitals = bigHospitals.filter(h => h.governorate === user.governorate);
 
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> رجوع</button>
     </div>`;
 
     if (canEdit) {
@@ -4777,17 +4787,17 @@ async function renderBigIndicators() {
         <div class="card-body" style="padding:10px 16px">
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:12px">
             <div class="form-group"><label>السنة</label>
-              <select class="form-control" id="biYear" style="width:100px" onchange="loadExistingBigIndicator()">${[2026,2025,2024,2023,2022].map(y => `<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('')}</select></div>
+              <select class="form-control" id="biYear" style="width:100px" data-change="loadExistingBigIndicator">${[2026,2025,2024,2023,2022].map(y => `<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('')}</select></div>
             <div class="form-group"><label>الشهر</label>
-              <select class="form-control" id="biMonth" style="width:120px" onchange="loadExistingBigIndicator()">${months.map((m,i) => `<option value="${i+1}" ${i===prevMonth?'selected':''}>${m}</option>`).join('')}</select></div>
+              <select class="form-control" id="biMonth" style="width:120px" data-change="loadExistingBigIndicator">${months.map((m,i) => `<option value="${i+1}" ${i===prevMonth?'selected':''}>${m}</option>`).join('')}</select></div>
             ${isHospital 
               ? `<div class="form-group" style="min-width:200px"><label>بنك الدم</label><div style="padding:6px 0;font-weight:600">${user.name}</div></div>`
               : `<div class="form-group" style="flex:1;min-width:200px"><label>بنك الدم</label>
-                  <select class="form-control" id="biHosp" onchange="loadExistingBigIndicator()">${filteredHospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>`
+                  <select class="form-control" id="biHosp" data-change="loadExistingBigIndicator">${filteredHospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>`
             }
           </div>
           ${buildIndicatorFormHTML(BIG_COL_DEFS, 'bi', 'recalcBigFormulas')}
-          <div style="margin-top:10px"><button class="btn btn-primary" onclick="saveBigIndicator()" style="height:32px"><i class="fas fa-save"></i> حفظ</button></div>
+          <div style="margin-top:10px"><button class="btn btn-primary" data-click="saveBigIndicator" style="height:32px"><i class="fas fa-save"></i> حفظ</button></div>
         </div>
       </div>`;
     }
@@ -4837,7 +4847,7 @@ async function renderBigIndicators() {
             if (ci === 1) td += `<td style="white-space:nowrap;font-size:11px;color:#5A7A9A;font-weight:600">${m}</td>`;
             return td;
           }).join('')}
-          ${canDelete ? `<td><button class="btn btn-sm btn-outline" onclick="deleteBigIndicator(${r.id})" style="color:#dc3545"><i class="fas fa-trash"></i></button></td>` : ''}
+          ${canDelete ? `<td><button class="btn btn-sm btn-outline" data-click="deleteBigIndicator" data-args="${r.id}" style="color:#dc3545"><i class="fas fa-trash"></i></button></td>` : ''}
         </tr>`;
       }).join('');
     }
@@ -4854,7 +4864,7 @@ function loadExistingBigIndicator() {
   let record = items.find(r => r.hospital_id === hospitalId && r.year === year && r.month === month);
   window._biEditingRecord = record;
   loadIndicatorFormData(record, 'bi', BIG_COL_DEFS, 'recalcBigFormulas');
-  const saveBtn = document.querySelector('button[onclick="saveBigIndicator()"]');
+  const saveBtn = document.querySelector('button[data-click="saveBigIndicator"]');
   if (saveBtn) {
     if (record) {
       saveBtn.innerHTML = '<i class="fas fa-edit"></i> تعديل';
@@ -4914,7 +4924,7 @@ async function renderSmallIndicators() {
     if (isHospital) filteredHospitals = smallHospitals.filter(h => h.id === user.hospitalId);
     else if (isBranchSup) filteredHospitals = smallHospitals.filter(h => h.governorate === user.governorate);
 
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button>
+    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> رجوع</button>
     </div>`;
 
     if (canEdit) {
@@ -4926,17 +4936,17 @@ async function renderSmallIndicators() {
         <div class="card-body" style="padding:10px 16px">
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:12px">
             <div class="form-group"><label>السنة</label>
-              <select class="form-control" id="siYear" style="width:100px" onchange="loadExistingSmallIndicator()">${[2026,2025,2024,2023,2022].map(y => `<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('')}</select></div>
+              <select class="form-control" id="siYear" style="width:100px" data-change="loadExistingSmallIndicator">${[2026,2025,2024,2023,2022].map(y => `<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('')}</select></div>
             <div class="form-group"><label>الشهر</label>
-              <select class="form-control" id="siMonth" style="width:120px" onchange="loadExistingSmallIndicator()">${months.map((m,i) => `<option value="${i+1}" ${i===prevMonth?'selected':''}>${m}</option>`).join('')}</select></div>
+              <select class="form-control" id="siMonth" style="width:120px" data-change="loadExistingSmallIndicator">${months.map((m,i) => `<option value="${i+1}" ${i===prevMonth?'selected':''}>${m}</option>`).join('')}</select></div>
             ${isHospital 
               ? `<div class="form-group" style="min-width:200px"><label>بنك الدم</label><div style="padding:6px 0;font-weight:600">${user.name}</div></div>`
               : `<div class="form-group" style="flex:1;min-width:200px"><label>بنك الدم</label>
-                  <select class="form-control" id="siHosp" onchange="loadExistingSmallIndicator()">${filteredHospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>`
+                  <select class="form-control" id="siHosp" data-change="loadExistingSmallIndicator">${filteredHospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>`
             }
           </div>
           ${buildIndicatorFormHTML(SMALL_COL_DEFS, 'si', 'recalcSmallFormulas')}
-          <div style="margin-top:10px"><button class="btn btn-primary" onclick="saveSmallIndicator()" style="height:32px"><i class="fas fa-save"></i> حفظ</button></div>
+          <div style="margin-top:10px"><button class="btn btn-primary" data-click="saveSmallIndicator" style="height:32px"><i class="fas fa-save"></i> حفظ</button></div>
         </div>
       </div>`;
     }
@@ -4986,7 +4996,7 @@ async function renderSmallIndicators() {
             if (ci === 1) td += `<td style="white-space:nowrap;font-size:11px;color:#5A7A9A;font-weight:600">${m}</td>`;
             return td;
           }).join('')}
-          ${canDelete ? `<td><button class="btn btn-sm btn-outline" onclick="deleteSmallIndicator(${r.id})" style="color:#dc3545"><i class="fas fa-trash"></i></button></td>` : ''}
+          ${canDelete ? `<td><button class="btn btn-sm btn-outline" data-click="deleteSmallIndicator" data-args="${r.id}" style="color:#dc3545"><i class="fas fa-trash"></i></button></td>` : ''}
         </tr>`;
       }).join('');
     }
@@ -5003,7 +5013,7 @@ function loadExistingSmallIndicator() {
   let record = items.find(r => r.hospital_id === hospitalId && r.year === year && r.month === month);
   window._siEditingRecord = record;
   loadIndicatorFormData(record, 'si', SMALL_COL_DEFS, 'recalcSmallFormulas');
-  const saveBtn = document.querySelector('button[onclick="saveSmallIndicator()"]');
+  const saveBtn = document.querySelector('button[data-click="saveSmallIndicator"]');
   if (saveBtn) {
     if (record) {
       saveBtn.innerHTML = '<i class="fas fa-edit"></i> تعديل';
@@ -5083,8 +5093,11 @@ async function renderMonthlyIndicators(presetType) {
     const canEdit = hasPerm('monthly_indicators', 'edit');
     const canDelete = hasPerm('monthly_indicators', 'delete');
     const govs = [...new Set(hospitals.map(h => h.governorate))];
+    const myRole = me?.user?.role || '';
+    const myGov = me?.user?.governorate || '';
+    const isRestricted = myRole && myRole !== 'admin' && myRole !== 'org_supervisor' && myGov;
     el.innerHTML = `
-      <div style="margin-bottom:16px"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
+      <div style="margin-bottom:16px"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
       <div class="page-title"><i class="fas fa-chart-line" style="color:#3f51b5"></i> مؤشرات شهرية</div>
       ${canEdit ? `
       ${new Date().getDate() >= 25 ? '<div style="background:#fff3cd;color:#856404;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;text-align:center"><i class="fas fa-lock"></i> التعديل مغلق بعد يوم 25 — يتم عرض بيانات الشهر السابق</div>' : ''}
@@ -5093,15 +5106,15 @@ async function renderMonthlyIndicators(presetType) {
         <div class="card-body" style="padding:10px 16px">
           <div class="filter-bar" style="margin-bottom:10px">
             <div class="form-group" style="margin:0"><label style="font-size:11px">الفرع</label>
-              <select class="form-control" id="monIndGov" onchange="onMonIndGovChange()" style="width:140px;height:32px;font-size:12px">
-                <option value="">الكل</option>${govs.map(g => `<option value="${g}">${g}</option>`).join('')}
+              <select class="form-control" id="monIndGov" data-change="onMonIndGovChange" style="width:140px;height:32px;font-size:12px">
+                ${isRestricted ? `<option value="${myGov}" selected>${myGov}</option>` : '<option value="">الكل</option>' + govs.map(g => `<option value="${g}">${g}</option>`).join('')}
               </select></div>
             <div class="form-group" style="margin:0"><label style="font-size:11px">بنك الدم</label>
-              <select class="form-control" id="monIndHosp" onchange="onMonIndSelChange()" style="min-width:180px;height:32px;font-size:12px"></select></div>
+              <select class="form-control" id="monIndHosp" data-change="onMonIndSelChange" style="min-width:180px;height:32px;font-size:12px"></select></div>
             <div class="form-group" style="margin:0"><label style="font-size:11px">السنة</label>
-              <input type="number" class="form-control" id="monIndYear" value="${now.getFullYear()}" onchange="onMonIndSelChange()" style="width:90px;height:32px;font-size:12px"></div>
+              <input type="number" class="form-control" id="monIndYear" value="${now.getFullYear()}" data-change="onMonIndSelChange" style="width:90px;height:32px;font-size:12px"></div>
             <div class="form-group" style="margin:0"><label style="font-size:11px">الشهر</label>
-              <select class="form-control" id="monIndMonth" onchange="onMonIndSelChange()" style="width:110px;height:32px;font-size:12px">
+              <select class="form-control" id="monIndMonth" data-change="onMonIndSelChange" style="width:110px;height:32px;font-size:12px">
                 ${MONTHS_AR.map((m, i) => `<option value="${i+1}" ${i === now.getMonth() ? 'selected' : ''}>${m}</option>`).join('')}
               </select></div>
           </div>
@@ -5115,26 +5128,26 @@ async function renderMonthlyIndicators(presetType) {
             ).join('')}
           </div>
           <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn btn-primary" onclick="saveMonthlyIndicatorDirect()"><i class="fas fa-save"></i> حفظ</button>
-            <button class="btn btn-outline" onclick="onMonIndSelChange()"><i class="fas fa-sync-alt"></i> تحميل البيانات</button>
+            <button class="btn btn-primary" data-click="saveMonthlyIndicatorDirect"><i class="fas fa-save"></i> حفظ</button>
+            <button class="btn btn-outline" data-click="onMonIndSelChange"><i class="fas fa-sync-alt"></i> تحميل البيانات</button>
           </div>
         </div>
       </div>` : ''}
       <div class="page-actions">
-        ${canDelete ? '<button class="btn btn-outline" onclick="archiveAllIndicators()" style="color:#795548"><i class="fas fa-archive"></i> أرشفة الكل</button>' : ''}
-        <select class="search-input" id="indTypeFilter" onchange="renderMonthlyIndicators()">
+        ${canDelete ? '<button class="btn btn-outline" data-click="archiveAllIndicators" style="color:#795548"><i class="fas fa-archive"></i> أرشفة الكل</button>' : ''}
+        <select class="search-input" id="indTypeFilter" data-change="renderMonthlyIndicators">
           <option value="">كل الأنواع</option>
           <option value="تجميعي" ${presetType === 'تجميعي' ? 'selected' : ''}>تجميعي</option>
           <option value="تخزيني" ${presetType === 'تخزيني' ? 'selected' : ''}>تخزيني</option>
         </select>
-        <select class="search-input" id="indGovFilter" onchange="indGovFilterChanged()">
-          <option value="">كل المحافظات</option>          ${govs.map(g => `<option value="${g}">${g}</option>`).join('')}
+        <select class="search-input" id="indGovFilter" data-change="indGovFilterChanged">
+          ${isRestricted ? `<option value="${myGov}" selected>${myGov}</option>` : '<option value="">كل المحافظات</option>' + govs.map(g => `<option value="${g}">${g}</option>`).join('')}
         </select>
-        <select class="search-input" id="indHospitalFilter" onchange="renderMonthlyIndicators()">
-          <option value="">كل المستشفيات</option>${hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}
+        <select class="search-input" id="indHospitalFilter" data-change="renderMonthlyIndicators">
+          ${isRestricted ? hospitals.filter(h => h.governorate === myGov).map(h => `<option value="${h.id}">${h.name}</option>`).join('') : '<option value="">كل المستشفيات</option>' + hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}
         </select>
-        <input type="number" class="search-input" id="indYearFilter" value="${now.getFullYear()}" style="width:80px" onchange="renderMonthlyIndicators()">
-        <select class="search-input" id="indMonthFilter" onchange="renderMonthlyIndicators()">
+        <input type="number" class="search-input" id="indYearFilter" value="${now.getFullYear()}" style="width:80px" data-change="renderMonthlyIndicators">
+        <select class="search-input" id="indMonthFilter" data-change="renderMonthlyIndicators">
           ${MONTHS_AR.map((m, i) => `<option value="${i+1}" ${i === now.getMonth() ? 'selected' : ''}>${m}</option>`).join('')}
         </select>
       </div>
@@ -5499,8 +5512,8 @@ function renderIndicatorsTable(hospitals, data, canEdit, presetType) {
         colIdx++;
         if (colIdx === 2) h += `<td style="white-space:nowrap;font-size:11px;color:#5A7A9A;font-weight:600">${m}</td>`;
       });
-      const addBtn = canEdit && !hasData ? `<button class="btn btn-sm btn-outline" onclick="showAddIndModal(${hosp.id},'${t}')"><i class="fas fa-plus"></i></button>` : '';
-      const delBtn = canDelete && hasData ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteIndicator(${r.id})" style="margin-right:4px"><i class="fas fa-trash"></i></button>` : '';
+      const addBtn = canEdit && !hasData ? `<button class="btn btn-sm btn-outline" data-click="showAddIndModal" data-args="${hosp.id},'${t}'"><i class="fas fa-plus"></i></button>` : '';
+      const delBtn = canDelete && hasData ? `<button class="btn btn-sm btn-outline-danger" data-click="deleteIndicator" data-args="${r.id}" style="margin-right:4px"><i class="fas fa-trash"></i></button>` : '';
       h += `<td style="white-space:nowrap">${delBtn}${addBtn}</td>`;
       h += '</tr>';
     });
@@ -5679,7 +5692,7 @@ async function showAddIndModal(hospitalId, type) {
   html += '</div>';
   const title = type === 'child' ? 'إضافة مؤشرات صغار' : 'إضافة مؤشرات كبار';
   openModal(title, html,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn btn-primary" onclick="createIndicator('${type}')">حفظ</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button><button class="btn btn-primary" data-click="createIndicator" data-args="'${type}'">حفظ</button>`);
 }
 
 async function createIndicator(type) {
@@ -5722,7 +5735,7 @@ async function editIndicator(id, type) {
   html += '</div>';
   const title = type === 'child' ? 'تعديل مؤشرات صغار' : 'تعديل مؤشرات كبار';
   openModal(title, html,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn btn-primary" onclick="updateIndicator(${id})">حفظ</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button><button class="btn btn-primary" data-click="updateIndicator" data-args="${id}">حفظ</button>`);
 }
 
 async function updateIndicator(id) {
@@ -5778,8 +5791,8 @@ async function editIndicatorArchiveRecord(archiveId, hospitalId, year, month, pe
     });
     html += '</div>';
     openModal('تعديل بيانات مؤشرات الأداء في الأرشيف', html,
-      `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveEditIndicatorArchive(${archiveId},${hospitalId},${year},${month},'${period}')">حفظ</button>`);
+      `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+      <button class="btn btn-primary" data-click="saveEditIndicatorArchive" data-args="${archiveId},${hospitalId},${year},${month},'${period}'">حفظ</button>`);
   } catch (e) { showToast('❌ '+e.message); }
 }
 
@@ -5877,51 +5890,57 @@ async function renderEquipment() {
     hospitals.forEach(function(h){Object.keys(h.equipment).forEach(function(tid){const t=types.find(function(tp){return tp.id===parseInt(tid);});if(t&&!allDeviceNames.includes(t.name))allDeviceNames.push(t.name);});});
     allDeviceNames.sort();
     const govKeys = [...new Set(hospitals.map(function(h){return h.governorate||'أخرى';}))].sort(eqGovSort);
+    const eqUserObj = window._user;
+    const eqRole = eqUserObj?.role || '';
+    const eqGov = eqUserObj?.governorate || '';
+    const eqRestricted = eqRole && eqRole !== 'admin' && eqRole !== 'org_supervisor' && eqGov;
     const showCount = localStorage.getItem('eq_showCount')!=='0';
     const showBrand = localStorage.getItem('eq_showBrand')!=='0';
     const showStatus = localStorage.getItem('eq_showStatus')!=='0';
     el.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">'+
-      '<button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>'+
+      '<button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>'+
       '<span style="font-size:15px;font-weight:700;color:#2c3e50;margin-left:auto"><i class="fas fa-microchip" style="margin-left:6px;color:#2c3e50"></i>أجهزة بنوك الدم</span>'+
-      (canEdit?'<button class="btn btn-sm btn-primary" onclick="eqManageTypes()" style="padding:4px 10px;font-size:11px"><i class="fas fa-cog"></i> إدارة الأنواع</button>':'')+
-      (canAdd?'<button class="btn btn-sm btn-primary" onclick="eqOpenForm()" style="padding:4px 10px;font-size:11px"><i class="fas fa-plus"></i> إضافة</button>':'')+
-      (canDelete?'<button class="btn btn-sm btn-danger" onclick="eqShowDeleteForm()" style="padding:4px 10px;font-size:11px"><i class="fas fa-trash"></i> حذف</button>':'')+
-      (canExport?'<button class="btn btn-sm btn-success" onclick="eqExportXlsx()" style="padding:4px 10px;font-size:11px"><i class="fas fa-file-excel"></i> Excel</button>':'')+
-      (canExport?'<button class="btn btn-sm btn-danger" onclick="eqExportPdf()" style="padding:4px 10px;font-size:11px"><i class="fas fa-file-pdf"></i> PDF</button>':'')+
+      (canEdit?'<button class="btn btn-sm btn-primary" data-click="eqManageTypes" style="padding:4px 10px;font-size:11px"><i class="fas fa-cog"></i> إدارة الأنواع</button>':'')+
+      (canAdd?'<button class="btn btn-sm btn-primary" data-click="eqOpenForm" style="padding:4px 10px;font-size:11px"><i class="fas fa-plus"></i> إضافة</button>':'')+
+      (canDelete?'<button class="btn btn-sm btn-danger" data-click="eqShowDeleteForm" style="padding:4px 10px;font-size:11px"><i class="fas fa-trash"></i> حذف</button>':'')+
+      (canExport?'<button class="btn btn-sm btn-success" data-click="eqExportXlsx" style="padding:4px 10px;font-size:11px"><i class="fas fa-file-excel"></i> Excel</button>':'')+
+      (canExport?'<button class="btn btn-sm btn-danger" data-click="eqExportPdf" style="padding:4px 10px;font-size:11px"><i class="fas fa-file-pdf"></i> PDF</button>':'')+
     '</div>'+
     // Filters + toggles row
     '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center;background:#f8f9fa;border-radius:8px;padding:8px 10px">'+
-      '<select id="eqGovFilter" onchange="eqFilterHosp()" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
-        '<option value="">كل المحافظات ('+hospitals.length+')</option>'+
-        govKeys.map(function(g){return '<option value="'+esc(g)+'">'+esc(g)+'</option>';}).join('')+
+      '<select id="eqGovFilter" data-change="eqFilterHosp" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
+        (eqRestricted ?
+          '<option value="'+esc(eqGov)+'">'+esc(eqGov)+'</option>' :
+          '<option value="">كل المحافظات ('+hospitals.length+')</option>'+
+          govKeys.map(function(g){return '<option value="'+esc(g)+'">'+esc(g)+'</option>';}).join(''))+
       '</select>'+
-      '<select id="eqCatFilter" onchange="eqFilterHosp()" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
+      '<select id="eqCatFilter" data-change="eqFilterHosp" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
         '<option value="">كل الأنواع</option>'+
         '<option value="تجميعي">تجميعي</option>'+
         '<option value="تجميعي وتخزيني">تجميعي وتخزيني</option>'+
       '</select>'+
-      '<select id="eqStatusFilter" onchange="eqFilterHosp()" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
+      '<select id="eqStatusFilter" data-change="eqFilterHosp" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
         '<option value="">كل الحالات</option>'+
         '<option value="يعمل">يعمل</option>'+
         '<option value="لا يعمل">لا يعمل</option>'+
       '</select>'+
-      '<select id="eqTypeFilter" onchange="eqFilterHosp()" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
+      '<select id="eqTypeFilter" data-change="eqFilterHosp" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
         '<option value="">كل الأجهزة</option>'+
         allDeviceNames.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join('')+
       '</select>'+
-      '<select id="eqBrandFilter" onchange="eqFilterHosp()" class="form-control" style="width:auto;font-size:11px;padding:3px 8px;display:none">'+
+      '<select id="eqBrandFilter" data-change="eqFilterHosp" class="form-control" style="width:auto;font-size:11px;padding:3px 8px;display:none">'+
         '<option value="">كل الماركات</option>'+
       '</select>'+
       '<span style="margin-right:auto"></span>'+
       (window._user&&(window._user.role==='admin'||window._user.role==='org_supervisor'||window._user.role==='branch_supervisor')?
-        '<label style="display:flex;align-items:center;gap:3px;font-size:10px;color:#555;cursor:pointer"><input type="checkbox" id="eqGroupView" onchange="eqToggleGroup()"'+(localStorage.getItem('eq_groupView')!=='0'?' checked':'')+'> <i class="fas fa-chart-pie" style="font-size:9px;color:#2c3e50"></i> عرض الملخص</label>':'')+
+        '<label style="display:flex;align-items:center;gap:3px;font-size:10px;color:#555;cursor:pointer"><input type="checkbox" id="eqGroupView" data-change="eqToggleGroup"'+(localStorage.getItem('eq_groupView')!=='0'?' checked':'')+'> <i class="fas fa-chart-pie" style="font-size:9px;color:#2c3e50"></i> عرض الملخص</label>':'')+
     '</div>'+
     // review section rendered inside eqRenderTable
     '' +
     '<div id="eqTable"></div>'
     try { window.__eqData = { types: types, hospitals: hospitals }; } catch(e){}
     eqRenderTable(types, hospitals);
-    const _eqU = window.me?.user;
+    const _eqU = window._user;
     if (_eqU && _eqU.role === 'hospital' && _eqU.name) {
       const mh = hospitals.find(function(h){return h.name===_eqU.name;});
       if (mh) setTimeout(function(){eqOpenForm(mh.name);},300);
@@ -6043,11 +6062,11 @@ function eqRenderTable(allTypes, hospitals) {
     });
     const rowsHtml = Object.keys(byGov).sort().map(function(g){
       return byGov[g].map(function(hr){
-        return '<tr onclick="eqOpenForm(\''+esc(hr.name)+'\')" style="cursor:pointer">'+
+        return '<tr data-click="eqOpenForm" data-args="\''+esc(hr.name)+'\'" style="cursor:pointer">'+
           '<td style="padding:2px 6px;font-size:9px">'+esc(g)+'</td>'+
           '<td style="padding:2px 6px;font-size:9px"><strong>'+esc(hr.name)+'</strong></td>'+
           '<td style="padding:2px 6px;text-align:center;font-size:9px">'+(hr.equipment?Object.keys(hr.equipment).length:'0')+' جهاز</td>'+
-          '<td style="padding:2px 6px;text-align:center"><button class="btn btn-xs" onclick="event.stopPropagation();eqReviewHospital(\''+esc(hr.name)+'\')" style="color:#fff;background:#1976d2;border:none;padding:2px 8px;border-radius:4px;font-size:9px;cursor:pointer"><i class="fas fa-check"></i></button></td>'+
+          '<td style="padding:2px 6px;text-align:center"><button class="btn btn-xs" data-click="eqReviewHospital" data-args="\''+esc(hr.name)+'\'" style="color:#fff;background:#1976d2;border:none;padding:2px 8px;border-radius:4px;font-size:9px;cursor:pointer"><i class="fas fa-check"></i></button></td>'+
         '</tr>';
       }).join('');
     }).join('');
@@ -6123,10 +6142,10 @@ function eqRenderTable(allTypes, hospitals) {
   h += '<div id="eqPivotTable" style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin-top:12px">'+
     '<div style="background:#1a1a2e;color:#fff;padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:6px">'+
     '<i class="fas fa-table"></i> <strong>الأجهزة بالمستشفيات</strong>'+
-    '<span style="margin-right:auto;font-size:11px;color:rgba(255,255,255,0.55)"><a href="javascript:void(0)" onclick="eqOpenForm()" style="color:rgba(255,255,255,0.7);text-decoration:none"><i class="fas fa-plus-circle"></i> إضافة</a></span>' +
+    '<span style="margin-right:auto;font-size:11px;color:rgba(255,255,255,0.55)"><a href="javascript:void(0)" data-click="eqOpenForm" style="color:rgba(255,255,255,0.7);text-decoration:none"><i class="fas fa-plus-circle"></i> إضافة</a></span>' +
     '<div style="display:flex;gap:4px">' +
-      (_canExport ? '<button class="btn btn-sm" onclick="eqExportXlsx()" style="background:#10b981;color:#fff;border:none;padding:3px 8px;border-radius:4px;font-size:9px;display:flex;align-items:center;gap:4px"><i class="fas fa-file-excel"></i> تنزيل Excel</button>' : '') +
-      (_canExport ? '<button class="btn btn-sm" onclick="eqExportPdf()" style="background:#ef4444;color:#fff;border:none;padding:3px 8px;border-radius:4px;font-size:9px;display:flex;align-items:center;gap:4px"><i class="fas fa-file-pdf"></i> تنزيل PDF</button>' : '') +
+      (_canExport ? '<button class="btn btn-sm" data-click="eqExportXlsx" style="background:#10b981;color:#fff;border:none;padding:3px 8px;border-radius:4px;font-size:9px;display:flex;align-items:center;gap:4px"><i class="fas fa-file-excel"></i> تنزيل Excel</button>' : '') +
+      (_canExport ? '<button class="btn btn-sm" data-click="eqExportPdf" style="background:#ef4444;color:#fff;border:none;padding:3px 8px;border-radius:4px;font-size:9px;display:flex;align-items:center;gap:4px"><i class="fas fa-file-pdf"></i> تنزيل PDF</button>' : '') +
     '</div>' +
     '</div>' +
     '<div style="overflow-x:auto"><table class="eq-pivot" style="width:100%;border-collapse:collapse;font-size:10px">'+
@@ -6153,10 +6172,10 @@ function eqRenderTable(allTypes, hospitals) {
       if (idx === 0) {
         h += '<tr style="border-bottom:1px solid #eee;background:'+ (rowIdx%2===0?'#fff':'#f8f9fa') +'">'+
           '<td style="padding:4px 6px;color:#888;font-size:9px;border:1px solid #f0f0f0" rowspan="'+hospByGov[gov].length+'"><span style="color:'+gc+';font-weight:600">'+esc(hr.gov)+'</span></td>'+
-          '<td style="padding:4px 6px;font-weight:600;border:1px solid #f0f0f0"><a href="javascript:void(0)" onclick="eqOpenForm(\''+esc(hr.hospital)+'\')" style="color:#2c3e50;text-decoration:none">'+esc(hr.hospital)+'</a></td>';
+          '<td style="padding:4px 6px;font-weight:600;border:1px solid #f0f0f0"><a href="javascript:void(0)" data-click="eqOpenForm" data-args="\''+esc(hr.hospital)+'\'" style="color:#2c3e50;text-decoration:none">'+esc(hr.hospital)+'</a></td>';
       } else {
         h += '<tr style="border-bottom:1px solid #eee;background:'+ (rowIdx%2===0?'#fff':'#f8f9fa') +'">'+
-          '<td style="padding:4px 6px;font-weight:600;border:1px solid #f0f0f0"><a href="javascript:void(0)" onclick="eqOpenForm(\''+esc(hr.hospital)+'\')" style="color:#2c3e50;text-decoration:none">'+esc(hr.hospital)+'</a></td>';
+          '<td style="padding:4px 6px;font-weight:600;border:1px solid #f0f0f0"><a href="javascript:void(0)" data-click="eqOpenForm" data-args="\''+esc(hr.hospital)+'\'" style="color:#2c3e50;text-decoration:none">'+esc(hr.hospital)+'</a></td>';
       }
       pivotTypes.forEach(function(t){
         let d = hr.devByType[t.name];
@@ -6172,7 +6191,7 @@ function eqRenderTable(allTypes, hospitals) {
           h += '<td style="padding:3px 4px;text-align:center;border:1px solid #f0f0f0;color:#ddd;font-size:9px">—</td>';
         }
       });
-      h += (_canEdit?'<td style="padding:3px 4px;text-align:center;border:1px solid #f0f0f0"><button class="btn btn-xs" onclick="eqOpenForm(\''+esc(hr.hospital)+'\')" style="color:#3498db;background:none;border:none;cursor:pointer;padding:2px" title="تعديل"><i class="fas fa-edit"></i></button></td>':'')+
+      h += (_canEdit?'<td style="padding:3px 4px;text-align:center;border:1px solid #f0f0f0"><button class="btn btn-xs" data-click="eqOpenForm" data-args="\''+esc(hr.hospital)+'\'" style="color:#3498db;background:none;border:none;cursor:pointer;padding:2px" title="تعديل"><i class="fas fa-edit"></i></button></td>':'')+
         '</tr>';
       rowIdx++;
     });
@@ -6197,7 +6216,7 @@ function eqSyncDeviceRows(tid) {
     div.style.cssText = 'display:flex;gap:4px;align-items:center;margin-bottom:3px';
     div.innerHTML = '<input type="text" class="form-input eq-dev-brand" style="flex:1;font-size:10px;padding:2px 4px" list="eqBrandList" autocomplete="off" placeholder="الماركة">' +
       '<select class="form-input eq-dev-status" style="width:70px;font-size:10px;padding:2px 4px"><option value="">—</option><option value="يعمل">يعمل</option><option value="لا يعمل">لا يعمل</option></select>' +
-      '<button type="button" onclick="eqRemoveSingleRow(' + tid + ',this)" style="background:none;border:none;color:#e74c3c;cursor:pointer;padding:2px;font-size:12px" title="حذف"><i class="fas fa-times"></i></button>';
+      '<button type="button" data-click="eqRemoveSingleRow" data-args="' + tid + '" style="background:none;border:none;color:#e74c3c;cursor:pointer;padding:2px;font-size:12px" title="حذف"><i class="fas fa-times"></i></button>';
     list.appendChild(div);
     current++;
   }
@@ -6247,7 +6266,7 @@ function eqOpenForm(hospName) {
           bodyHtml += `<option value="${esc(h.name)}" data-gov="${esc(h.governorate)}">${esc(h.name)} (${esc(h.governorate)})</option>`;
         });
         bodyHtml += `</select>
-          <button class="btn btn-primary" onclick="eqCreateNewEntry()" style="width:100%"><i class="fas fa-check"></i> بدء</button>
+          <button class="btn btn-primary" data-click="eqCreateNewEntry" style="width:100%"><i class="fas fa-check"></i> بدء</button>
         </div>`;
       } else {
         const stTypes = types.filter(t => t.category === 'تجميعي وتخزيني' || t.category === 'تخزيني');
@@ -6282,7 +6301,7 @@ function eqOpenForm(hospName) {
               </div>
               <div style="margin-bottom:4px">
                 <label style="font-size:10px;color:#555">عدد الأجهزة:</label>
-                <input type="number" id="eqCount_${t.id}" value="${devs.length}" min="0" max="99" style="width:50px;font-size:10px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;text-align:center" oninput="eqSyncDeviceRows(${t.id})">
+                <input type="number" id="eqCount_${t.id}" value="${devs.length}" min="0" max="99" style="width:50px;font-size:10px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;text-align:center" data-input="eqSyncDeviceRows" data-args="${t.id}">
               </div>
               <div id="eqDevList_${t.id}">`;
             devs.forEach(function(d, di){
@@ -6290,7 +6309,7 @@ function eqOpenForm(hospName) {
                 <span style="font-size:9px;color:#888;min-width:14px">${di+1}</span>
                 <input type="text" class="form-input eq-dev-brand" style="flex:1;font-size:10px;padding:2px 4px" value="${esc(d.brand || '')}" list="eqBrandList" autocomplete="off" placeholder="الماركة">
                 <select class="form-input eq-dev-status" style="width:70px;font-size:10px;padding:2px 4px">${_eqOpt('',d.status)}${_eqOpt('يعمل',d.status)}${_eqOpt('لا يعمل',d.status)}</select>
-                <button type="button" onclick="eqRemoveSingleRow(${t.id},this)" style="background:none;border:none;color:#e74c3c;cursor:pointer;padding:2px;font-size:12px" title="حذف"><i class="fas fa-times"></i></button>
+                <button type="button" data-click="eqRemoveSingleRow" data-args="${t.id}" style="background:none;border:none;color:#e74c3c;cursor:pointer;padding:2px;font-size:12px" title="حذف"><i class="fas fa-times"></i></button>
               </div>`;
             });
             h += `</div></div>`;
@@ -6301,11 +6320,11 @@ function eqOpenForm(hospName) {
         bodyHtml += eqDevicesHtml(stTypes, '#d4e6f1', '<i class="fas fa-snowflake"></i> أجهزة تخزينية');
         bodyHtml += eqDevicesHtml(ctTypes, '#d5f5e3', '<i class="fas fa-flask"></i> أجهزة تجميعي');
         bodyHtml += `<div style="text-align:center;margin-top:10px">
-          <button class="btn btn-primary" onclick="eqSave()" style="padding:6px 24px"><i class="fas fa-save"></i> حفظ</button>
+          <button class="btn btn-primary" data-click="eqSave" style="padding:6px 24px"><i class="fas fa-save"></i> حفظ</button>
         </div>`;
       }
       openModal(hospName ? esc(entry.name) : 'إضافة أجهزة', bodyHtml,
-        `<button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>`);
+        `<button class="btn btn-secondary" data-click="closeModal">إغلاق</button>`);
     } catch (e) { showToast('❌ '+e.message); }
   })();
 }
@@ -6359,9 +6378,9 @@ async function eqShowDeleteForm() {
       `<div style="padding:10px">
         <label>اختر المستشفى:</label>
         <select id="eqDelHospSelect" class="form-input" style="width:100%;margin:8px 0">${h.map(function(x){return '<option value="'+esc(x.name)+'">'+esc(x.name)+(x.governorate?' ('+esc(x.governorate)+')':'')+'</option>';}).join('')}</select>
-        <div style="text-align:center;margin-top:12px"><button class="btn btn-danger" onclick="eqDeleteHosp(document.getElementById('eqDelHospSelect').value)"><i class="fas fa-trash"></i> حذف</button></div>
+        <div style="text-align:center;margin-top:12px"><button class="btn btn-danger" data-click="eqDeleteHosp"><i class="fas fa-trash"></i> حذف</button></div>
       </div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>`);
+      `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>`);
   } catch(e) { showToast('❌ '+e.message); }
 }
 
@@ -6372,8 +6391,8 @@ async function eqDeleteHosp(name) {
       <p style="font-size:13px;color:#666">هل أنت متأكد من حذف أجهزة</p>
       <p style="font-size:15px;font-weight:700;color:#e74c3c">${esc(name)}</p>
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-     <button class="btn btn-danger" onclick="eqDoDelete('${esc(name)}')"><i class="fas fa-trash"></i> حذف</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+     <button class="btn btn-danger" data-click="eqDoDelete" data-args="'${esc(name)}'"><i class="fas fa-trash"></i> حذف</button>`);
 }
 
 async function eqDoDelete(name) {
@@ -6435,8 +6454,8 @@ async function eqExportXlsx() {
   let html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">'+style+'</head><body>'+
     '<h1>أجهزة بنوك الدم</h1>' +
     '<div class="toolbar">' +
-      '<button onclick="window.print()">طباعة</button>' +
-      '<button class="pdf" onclick="eqExportPdf()">تحميل PDF</button>' +
+      '<button data-click="windowPrint">طباعة</button>' +
+      '<button class="pdf" data-click="eqExportPdf">تحميل PDF</button>' +
     '</div>' +
     clone.outerHTML +
     '<div class="footer">إعداد و برمجة محمد ندا 01068880999</div></body></html>';
@@ -6496,7 +6515,7 @@ async function eqManageTypes() {
   try {
     const types = await api('GET', '/equipment/types');
     let html = `<div style="text-align:left;margin-bottom:8px">
-      <button class="btn btn-primary btn-sm" onclick="eqAddType()"><i class="fas fa-plus"></i> إضافة جهاز</button>
+      <button class="btn btn-primary btn-sm" data-click="eqAddType"><i class="fas fa-plus"></i> إضافة جهاز</button>
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:12px">
       <thead><tr style="background:#f0f0f0"><th style="padding:6px;text-align:right">الجهاز</th><th style="padding:6px;text-align:right">التصنيف</th><th style="padding:6px;width:80px">إجراءات</th></tr></thead>
@@ -6506,12 +6525,12 @@ async function eqManageTypes() {
         <td style="padding:6px">${esc(t.name)}</td>
         <td style="padding:6px"><span style="background:${t.category === 'تجميعي وتخزيني' ? '#8e44ad' : '#27ae60'}20;color:${t.category === 'تجميعي وتخزيني' ? '#8e44ad' : '#27ae60'};padding:2px 8px;border-radius:10px;font-size:10px">${esc(t.category||'تجميعي')}</span></td>
         <td style="padding:6px;text-align:center">
-          <button class="btn btn-xs" onclick="eqEditType(${t.id})" style="color:#3498db" title="تعديل"><i class="fas fa-edit"></i></button>
-          <button class="btn btn-xs" onclick="eqDeleteType(${t.id})" style="color:#e74c3c" title="حذف"><i class="fas fa-trash"></i></button>
+          <button class="btn btn-xs" data-click="eqEditType" data-args="${t.id}" style="color:#3498db" title="تعديل"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-xs" data-click="eqDeleteType" data-args="${t.id}" style="color:#e74c3c" title="حذف"><i class="fas fa-trash"></i></button>
         </td></tr>`;
     });
     html += `</tbody></table>`;
-    openModal('إدارة أنواع الأجهزة', html, `<button class="btn btn-secondary" onclick="closeModal();eqFilterHosp()">إغلاق</button>`);
+    openModal('إدارة أنواع الأجهزة', html, `<button class="btn btn-secondary" data-click="closeModalAndFilter">إغلاق</button>`);
   } catch (e) { showToast('❌ '+e.message); }
 }
 
@@ -6527,8 +6546,8 @@ async function eqAddType() {
       <option value="تجميعي وتخزيني">تجميعي وتخزيني</option>
     </select>
     <div style="text-align:center;margin-top:10px">
-      <button class="btn btn-primary" onclick="eqSaveNewType()"><i class="fas fa-check"></i> حفظ</button>
-      <button class="btn btn-secondary" onclick="eqManageTypes()">إلغاء</button>
+      <button class="btn btn-primary" data-click="eqSaveNewType"><i class="fas fa-check"></i> حفظ</button>
+      <button class="btn btn-secondary" data-click="eqManageTypes">إلغاء</button>
     </div>
   </div>`;
 }
@@ -6560,8 +6579,8 @@ async function eqEditType(id) {
         <option value="تجميعي وتخزيني" ${t.category === 'تجميعي وتخزيني'?'selected':''}>تجميعي وتخزيني</option>
       </select>
       <div style="text-align:center;margin-top:10px">
-        <button class="btn btn-primary" onclick="eqSaveEditType(${id})"><i class="fas fa-check"></i> حفظ</button>
-        <button class="btn btn-secondary" onclick="eqManageTypes()">إلغاء</button>
+        <button class="btn btn-primary" data-click="eqSaveEditType" data-args="${id}"><i class="fas fa-check"></i> حفظ</button>
+        <button class="btn btn-secondary" data-click="eqManageTypes">إلغاء</button>
       </div>
     </div>`;
   } catch (e) { showToast('❌ '+e.message); }
@@ -6589,8 +6608,8 @@ async function eqDeleteType(id) {
         <p style="font-size:15px;font-weight:700;color:#e74c3c">${esc(t ? t.name : '')}</p>
         <p style="font-size:12px;color:#999">سيتم إزالة الجهاز من جميع المستشفيات</p>
       </div>`,
-      `<button class="btn btn-secondary" onclick="eqManageTypes()">إلغاء</button>
-       <button class="btn btn-danger" onclick="eqDoDeleteType(${id})"><i class="fas fa-trash"></i> حذف</button>`);
+      `<button class="btn btn-secondary" data-click="eqManageTypes">إلغاء</button>
+       <button class="btn btn-danger" data-click="eqDoDeleteType" data-args="${id}"><i class="fas fa-trash"></i> حذف</button>`);
   } catch (e) { showToast('❌ '+e.message); }
 }
 
@@ -6712,18 +6731,18 @@ async function renderReadinessSheet() {
   try {
     const occasions = await api('GET', '/readiness-occasions');
     let html = `<div class="page-actions">
-      <button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> الرئيسية</button>
-      ${canAdd ? `<button class="btn btn-primary" onclick="rdnOpenOccasionModal()"><i class="fas fa-plus"></i> إضافة مناسبة</button>` : ''}
-      ${canExport ? `<button class="btn btn-success" onclick="rdnExportXlsx()"><i class="fas fa-file-excel"></i> تحميل Excel</button><button class="btn btn-danger" onclick="rdnExportPdf()" style="margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>` : ''}
+      <button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+      ${canAdd ? `<button class="btn btn-primary" data-click="rdnOpenOccasionModal"><i class="fas fa-plus"></i> إضافة مناسبة</button>` : ''}
+      ${canExport ? `<button class="btn btn-success" data-click="rdnExportXlsx"><i class="fas fa-file-excel"></i> تحميل Excel</button><button class="btn btn-danger" data-click="rdnExportPdf" style="margin-right:6px"><i class="fas fa-file-pdf"></i> تحميل PDF</button>` : ''}
     </div><div id="rdnContent">
       <div class="filter-bar" style="flex-wrap:wrap;align-items:center">
         <label style="font-weight:600">اختر المناسبة:</label>
-        <select id="rdnOccasionSelect" class="form-input" style="width:300px" onchange="rdnOccasionChanged()">
+        <select id="rdnOccasionSelect" class="form-input" style="width:300px" data-change="rdnOccasionChanged">
           <option value="">-- اختر مناسبة --</option>
           ${occasions.map(o => `<option value="${o.id}">${esc(o.name)} (${o.date_from} → ${o.date_to})</option>`).join('')}
         </select>
-        ${canAdd ? `<button class="btn btn-sm btn-outline-primary" onclick="rdnOpenOccasionModal()" title="إضافة"><i class="fas fa-plus"></i></button>` : ''}
-        ${canDelete ? `<button class="btn btn-sm btn-outline-danger" onclick="rdnDeleteSelectedOccasion()" title="حذف"><i class="fas fa-trash"></i></button>` : ''}
+        ${canAdd ? `<button class="btn btn-sm btn-outline-primary" data-click="rdnOpenOccasionModal" title="إضافة"><i class="fas fa-plus"></i></button>` : ''}
+        ${canDelete ? `<button class="btn btn-sm btn-outline-danger" data-click="rdnDeleteSelectedOccasion" title="حذف"><i class="fas fa-trash"></i></button>` : ''}
         <span id="rdnStatusMsg" style="margin-right:auto;font-size:13px;color:#666"></span>
       </div>
       <div id="rdnSummaryTable"></div>
@@ -6757,8 +6776,8 @@ function rdnDeleteSelectedOccasion() {
       <p style="font-size:13px;color:#e74c3c;font-weight:600">${esc(occName)}</p>
       <p style="font-size:12px;color:#999;margin-top:8px">سيتم حذف جميع تقارير الجاهزية والإشعارات المرتبطة بها</p>
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-     <button class="btn btn-danger" onclick="rdnDoDeleteOccasion(${occId})"><i class="fas fa-trash"></i> حذف</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+     <button class="btn btn-danger" data-click="rdnDoDeleteOccasion" data-args="${occId}"><i class="fas fa-trash"></i> حذف</button>`);
 }
 
 async function rdnDeleteOccasion(id) {
@@ -6771,8 +6790,8 @@ async function rdnDeleteOccasion(id) {
       <p style="font-size:13px;color:#e74c3c;font-weight:600">${esc(occName)}</p>
       <p style="font-size:12px;color:#999;margin-top:8px">سيتم حذف جميع تقارير الجاهزية والإشعارات المرتبطة بها</p>
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-     <button class="btn btn-danger" onclick="rdnDoDeleteOccasion(${id})"><i class="fas fa-trash"></i> حذف</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+     <button class="btn btn-danger" data-click="rdnDoDeleteOccasion" data-args="${id}"><i class="fas fa-trash"></i> حذف</button>`);
 }
 
 async function rdnDoDeleteOccasion(id) {
@@ -6839,7 +6858,7 @@ async function rdnOccasionChanged() {
     </div><div class="card-body">
       <div class="filter-bar" style="flex-wrap:wrap;row-gap:8px">
         <label style="font-weight:600">اختر المستشفى:</label>
-        <select id="rdnHospitalSelect" class="form-input" style="width:300px" onchange="rdnHospitalChanged(${occId})">
+        <select id="rdnHospitalSelect" class="form-input" style="width:300px" data-change="rdnHospitalChanged" data-args="${occId}">
           <option value="">-- اختر مستشفى --</option>
           ${govKeys.map(gov => `<optgroup label="${esc(gov)}">${govMap[gov].map(h => {
             const r = reports.find(rr => rr.hospital_id === h.id);
@@ -6926,7 +6945,7 @@ function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
           formContainer.innerHTML = `
             <div class="card"><div class="card-header">
               <h3><i class="fas fa-eye"></i> عرض بيانات الجاهزية — ${esc(hospName)}</h3>
-              <button class="btn btn-sm btn-secondary" onclick="rdnHideForm()"><i class="fas fa-times"></i> إغلاق</button>
+              <button class="btn btn-sm btn-secondary" data-click="rdnHideForm"><i class="fas fa-times"></i> إغلاق</button>
             </div><div class="card-body">
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
                 <div><strong>المخزون:</strong> ${esc(existingReport.stock||'-')}</div>
@@ -6949,7 +6968,7 @@ function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
           formContainer.innerHTML = `
             <div class="card"><div class="card-header">
               <h3><i class="fas fa-edit"></i> تعديل بيانات الجاهزية — ${esc(hospName)}</h3>
-              <button class="btn btn-sm btn-secondary" onclick="rdnHideForm()"><i class="fas fa-times"></i> إلغاء</button>
+              <button class="btn btn-sm btn-secondary" data-click="rdnHideForm"><i class="fas fa-times"></i> إلغاء</button>
             </div><div class="card-body" id="rdnFormBody">
               <div style="display:none" id="rdnFormIds" data-occid="${occId}" data-hospid="${hospId}" data-hospname="${esc(hospName)}" data-gov="${esc(govt)}"></div>
               <div style="display:none" id="rdnReportId">${existingReport.id}</div>
@@ -6962,18 +6981,18 @@ function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
                     <thead><tr><th>#</th><th>الاسم</th><th>رقم التليفون</th>${dayHtml}<th style="width:40px"></th></tr></thead>
                     <tbody id="rdnStaffBody">${staff.map((s, i) => {
                       const dayCells = days.map((_, di) =>
-                        `<td><select class="form-input rdnSShift" onchange="rdnShiftChanged(this)">${rdnShiftOpts(s.shifts?.[String(di)]||'')}</select></td>`
+                        `<td><select class="form-input rdnSShift" data-change="rdnShiftChanged">${rdnShiftOpts(s.shifts?.[String(di)]||'')}</select></td>`
                       ).join('');
                       return `<tr><td>${i+1}</td>
-                        <td><select class="form-input rdnSName" style="width:100%;min-width:100px" onchange="rdnNameSelected(this)">
+                        <td><select class="form-input rdnSName" style="width:100%;min-width:100px" data-change="rdnNameSelected">
                           <option value="">-- اختر --</option>
                           ${(window._rdnEmpList||[]).map(e => `<option value="${e.id}" ${e.employee===s.name?'selected':''}>${esc(e.employee)}</option>`).join('')}
                           <option value="__manual__">${esc(s.name)} (يدوي)</option>
                         </select></td>
                         <td><input type="text" class="form-input rdnSPhone" style="width:100px" value="${esc(s.phone||'')}"></td>
                         ${dayCells}
-                        <td><button class="btn btn-xs btn-success" onclick="rdnAddStaffRow(this)"><i class="fas fa-plus"></i></button>
-                        <button class="btn btn-xs btn-danger" onclick="rdnRemoveStaffRow(this)"><i class="fas fa-times"></i></button></td></tr>`;
+                        <td><button class="btn btn-xs btn-success" data-click="rdnAddStaffRow"><i class="fas fa-plus"></i></button>
+                        <button class="btn btn-xs btn-danger" data-click="rdnRemoveStaffRow"><i class="fas fa-times"></i></button></td></tr>`;
                     }).join('')}</tbody>
                   </table>
                 </div>
@@ -6981,51 +7000,51 @@ function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
               <div class="filter-bar" style="flex-wrap:wrap;row-gap:8px">
                 <div style="flex:1;min-width:200px"><label>حالة الرصيد:</label>
                   <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
-                    <label><input type="radio" name="rdnStockRadio" value="كافي" ${existingReport.stock==='كافي'?'checked':''} onchange="rdnStockChanged()"> كافي</label>
-                    <label><input type="radio" name="rdnStockRadio" value="غير كافي" ${existingReport.stock==='غير كافي'?'checked':''} onchange="rdnStockChanged()"> <span style="color:red">غير كافي</span></label>
+                    <label><input type="radio" name="rdnStockRadio" value="كافي" ${existingReport.stock==='كافي'?'checked':''} data-change="rdnStockChanged"> كافي</label>
+                    <label><input type="radio" name="rdnStockRadio" value="غير كافي" ${existingReport.stock==='غير كافي'?'checked':''} data-change="rdnStockChanged"> <span style="color:red">غير كافي</span></label>
                     <div style="font-size:11px;padding:3px 8px;background:#f5f5f5;border-radius:4px">${stockHtml}</div>
                   </div>
                 </div>
                 <div style="flex:1;min-width:200px"><label>مراجعة الصيانة:</label>
                   <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
-                    <label><input type="radio" name="rdnMaintRadio" value="تتم" ${existingReport.maintenance?.startsWith('تتم')?'checked':''} onchange="rdnMaintChanged()"> تتم</label>
-                    <label><input type="radio" name="rdnMaintRadio" value="لا تتم" ${existingReport.maintenance?.startsWith('لا تتم')?'checked':''} onchange="rdnMaintChanged()"> <span style="color:red">لا تتم</span></label>
+                    <label><input type="radio" name="rdnMaintRadio" value="تتم" ${existingReport.maintenance?.startsWith('تتم')?'checked':''} data-change="rdnMaintChanged"> تتم</label>
+                    <label><input type="radio" name="rdnMaintRadio" value="لا تتم" ${existingReport.maintenance?.startsWith('لا تتم')?'checked':''} data-change="rdnMaintChanged"> <span style="color:red">لا تتم</span></label>
                   </div>
                   <div id="rdnMaintReasonWrap" style="${existingReport.maintenance?.startsWith('لا تتم')?'':'display:none'};margin-top:4px">
-                    <input type="text" id="rdnMaintReason" class="form-input" placeholder="ذكر السبب" value="${esc(existingReport.maintenance?.replace(/^لا تتم:?\s*/,'')||'')}" oninput="rdnSyncFormToPrintTable()" style="width:100%">
+                    <input type="text" id="rdnMaintReason" class="form-input" placeholder="ذكر السبب" value="${esc(existingReport.maintenance?.replace(/^لا تتم:?\s*/,'')||'')}" data-input="rdnSyncFormToPrintTable" style="width:100%">
                   </div>
                 </div>
                 <div style="flex:1;min-width:200px"><label>الأعطال:</label>
                   <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
-                    <label><input type="radio" name="rdnBdRadio" value="لا يوجد" ${existingReport.breakdowns==='لا يوجد'||existingReport.breakdowns===''||!existingReport.breakdowns?'checked':''} onchange="rdnBdChanged()"> لا يوجد</label>
-                    <label><input type="radio" name="rdnBdRadio" value="يوجد" ${existingReport.breakdowns?.startsWith('يوجد')?'checked':''} onchange="rdnBdChanged()"> <span style="color:red">يوجد</span></label>
+                    <label><input type="radio" name="rdnBdRadio" value="لا يوجد" ${existingReport.breakdowns==='لا يوجد'||existingReport.breakdowns===''||!existingReport.breakdowns?'checked':''} data-change="rdnBdChanged"> لا يوجد</label>
+                    <label><input type="radio" name="rdnBdRadio" value="يوجد" ${existingReport.breakdowns?.startsWith('يوجد')?'checked':''} data-change="rdnBdChanged"> <span style="color:red">يوجد</span></label>
                   </div>
                   <div id="rdnBdWrap" style="${existingReport.breakdowns?.startsWith('يوجد')?'':'display:none'};margin-top:4px">
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
-                      <input type="text" id="rdnBdDevice" class="form-input" placeholder="اذكر الجهاز" value="${esc(existingReport.breakdowns?.replace(/^يوجد:?\s*/,'').replace(/\(.*/,'')||'')}" oninput="rdnSyncFormToPrintTable()" style="flex:1">
-                      <input type="text" id="rdnBdReplacement" class="form-input" placeholder="هل يوجد بديل" value="${esc(existingReport.breakdowns?.match(/بديل:\s*(.+?)\)/)?.[1]||'')}" oninput="rdnSyncFormToPrintTable()" style="flex:1">
+                      <input type="text" id="rdnBdDevice" class="form-input" placeholder="اذكر الجهاز" value="${esc(existingReport.breakdowns?.replace(/^يوجد:?\s*/,'').replace(/\(.*/,'')||'')}" data-input="rdnSyncFormToPrintTable" style="flex:1">
+                      <input type="text" id="rdnBdReplacement" class="form-input" placeholder="هل يوجد بديل" value="${esc(existingReport.breakdowns?.match(/بديل:\s*(.+?)\)/)?.[1]||'')}" data-input="rdnSyncFormToPrintTable" style="flex:1">
                     </div>
                   </div>
                 </div>
                 <div style="flex:1;min-width:200px"><label>المستهلكات:</label>
                   <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
-                    <label><input type="radio" name="rdnConsRadio" value="كافية" ${existingReport.consumables==='كافية'||existingReport.consumables===''||!existingReport.consumables?'checked':''} onchange="rdnConsChanged()"> كافية</label>
-                    <label><input type="radio" name="rdnConsRadio" value="غير كافية" ${existingReport.consumables?.startsWith('غير كافية')?'checked':''} onchange="rdnConsChanged()"> <span style="color:red">غير كافية</span></label>
+                    <label><input type="radio" name="rdnConsRadio" value="كافية" ${existingReport.consumables==='كافية'||existingReport.consumables===''||!existingReport.consumables?'checked':''} data-change="rdnConsChanged"> كافية</label>
+                    <label><input type="radio" name="rdnConsRadio" value="غير كافية" ${existingReport.consumables?.startsWith('غير كافية')?'checked':''} data-change="rdnConsChanged"> <span style="color:red">غير كافية</span></label>
                   </div>
                   <div id="rdnConsReasonWrap" style="${existingReport.consumables?.startsWith('غير كافية')?'':'display:none'};margin-top:4px">
-                    <input type="text" id="rdnConsReason" class="form-input" placeholder="ذكر السبب" value="${esc(existingReport.consumables?.replace(/^غير كافية:?\s*/,'')||'')}" oninput="rdnSyncFormToPrintTable()" style="width:100%">
+                    <input type="text" id="rdnConsReason" class="form-input" placeholder="ذكر السبب" value="${esc(existingReport.consumables?.replace(/^غير كافية:?\s*/,'')||'')}" data-input="rdnSyncFormToPrintTable" style="width:100%">
                   </div>
                 </div>
               </div>
               <div id="rdnCorrectionWrap" style="${existingReport.stock==='غير كافي'?'':'display:none'}">
                 <div class="filter-bar" style="flex-wrap:wrap;row-gap:8px;margin-top:8px">
                   <div style="flex:1;min-width:200px"><label style="color:red;font-weight:700">الاستعاضة:</label>
-                    <input type="text" id="rdnCorrection" class="form-input" value="${esc(existingReport.correction||'')}" oninput="rdnSyncFormToPrintTable()">
+                    <input type="text" id="rdnCorrection" class="form-input" value="${esc(existingReport.correction||'')}" data-input="rdnSyncFormToPrintTable">
                   </div>
                 </div>
               </div>
               <div style="text-align:center;margin-top:12px">
-                <button class="btn btn-primary" onclick="rdnSaveReport()"><i class="fas fa-save"></i> حفظ التقرير</button>
+                <button class="btn btn-primary" data-click="rdnSaveReport"><i class="fas fa-save"></i> حفظ التقرير</button>
               </div>
             </div></div>`;
           rdnRenumberStaffRows();
@@ -7036,14 +7055,14 @@ function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
       if (isReadOnly) {
         formContainer.innerHTML = `<div class="card"><div class="card-header">
           <h3>${esc(hospName)}</h3>
-          <button class="btn btn-sm btn-secondary" onclick="rdnHideForm()"><i class="fas fa-times"></i> إغلاق</button>
+          <button class="btn btn-sm btn-secondary" data-click="rdnHideForm"><i class="fas fa-times"></i> إغلاق</button>
         </div><div class="card-body"><div class="empty-msg" style="padding:30px">لم يتم إدخال بيانات الجاهزية لهذا المستشفى بعد</div></div></div>`;
         return;
       }
       formContainer.innerHTML = `
         <div class="card"><div class="card-header">
           <h3><i class="fas fa-edit"></i> إدخال بيانات الجاهزية — ${esc(hospName)}</h3>
-          <button class="btn btn-sm btn-secondary" onclick="rdnHideForm()"><i class="fas fa-times"></i> إلغاء</button>
+          <button class="btn btn-sm btn-secondary" data-click="rdnHideForm"><i class="fas fa-times"></i> إلغاء</button>
         </div><div class="card-body" id="rdnFormBody">
           <div style="display:none" id="rdnFormIds" data-occid="${occId}" data-hospid="${hospId}" data-hospname="${esc(hospName)}" data-gov="${esc(govt)}"></div>
           <div style="display:none" id="rdnReportId"></div>
@@ -7061,49 +7080,49 @@ function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
           <div class="filter-bar" style="flex-wrap:wrap;row-gap:8px">
             <div style="flex:1;min-width:200px"><label>حالة الرصيد:</label>
               <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
-                <label><input type="radio" name="rdnStockRadio" value="كافي" onchange="rdnStockChanged()"> كافي</label>
-                <label><input type="radio" name="rdnStockRadio" value="غير كافي" onchange="rdnStockChanged()"> <span style="color:red">غير كافي</span></label>
+                <label><input type="radio" name="rdnStockRadio" value="كافي" data-change="rdnStockChanged"> كافي</label>
+                <label><input type="radio" name="rdnStockRadio" value="غير كافي" data-change="rdnStockChanged"> <span style="color:red">غير كافي</span></label>
                 <div style="font-size:11px;padding:3px 8px;background:#f5f5f5;border-radius:4px">${stockHtml}</div>
               </div>
               <div id="rdnCorrectionWrap" style="display:none;margin-top:4px">
                 <div style="flex:1;min-width:200px"><label style="color:red;font-weight:700">الاستعاضة:</label>
-                  <input type="text" id="rdnCorrection" class="form-input" oninput="rdnSyncFormToPrintTable()">
+                  <input type="text" id="rdnCorrection" class="form-input" data-input="rdnSyncFormToPrintTable">
                 </div>
               </div>
             </div>
             <div style="flex:1;min-width:200px"><label>مراجعة الصيانة:</label>
               <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
-                <label><input type="radio" name="rdnMaintRadio" value="تتم" onchange="rdnMaintChanged()"> تتم</label>
-                 <label><input type="radio" name="rdnMaintRadio" value="لا تتم" onchange="rdnMaintChanged()"> <span style="color:red">لا تتم</span></label>
+                <label><input type="radio" name="rdnMaintRadio" value="تتم" data-change="rdnMaintChanged"> تتم</label>
+                 <label><input type="radio" name="rdnMaintRadio" value="لا تتم" data-change="rdnMaintChanged"> <span style="color:red">لا تتم</span></label>
               </div>
               <div id="rdnMaintReasonWrap" style="display:none;margin-top:4px">
-                <input type="text" id="rdnMaintReason" class="form-input" placeholder="ذكر السبب" oninput="rdnSyncFormToPrintTable()" style="width:100%">
+                <input type="text" id="rdnMaintReason" class="form-input" placeholder="ذكر السبب" data-input="rdnSyncFormToPrintTable" style="width:100%">
               </div>
             </div>
             <div style="flex:1;min-width:200px"><label>الأعطال:</label>
               <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
-                 <label><input type="radio" name="rdnBdRadio" value="لا يوجد" onchange="rdnBdChanged()"> لا يوجد</label>
-                <label><input type="radio" name="rdnBdRadio" value="يوجد" onchange="rdnBdChanged()"> <span style="color:red">يوجد</span></label>
+                 <label><input type="radio" name="rdnBdRadio" value="لا يوجد" data-change="rdnBdChanged"> لا يوجد</label>
+                <label><input type="radio" name="rdnBdRadio" value="يوجد" data-change="rdnBdChanged"> <span style="color:red">يوجد</span></label>
               </div>
               <div id="rdnBdWrap" style="display:none;margin-top:4px">
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  <input type="text" id="rdnBdDevice" class="form-input" placeholder="اذكر الجهاز" oninput="rdnSyncFormToPrintTable()" style="flex:1">
-                  <input type="text" id="rdnBdReplacement" class="form-input" placeholder="هل يوجد بديل" oninput="rdnSyncFormToPrintTable()" style="flex:1">
+                  <input type="text" id="rdnBdDevice" class="form-input" placeholder="اذكر الجهاز" data-input="rdnSyncFormToPrintTable" style="flex:1">
+                  <input type="text" id="rdnBdReplacement" class="form-input" placeholder="هل يوجد بديل" data-input="rdnSyncFormToPrintTable" style="flex:1">
                 </div>
               </div>
             </div>
             <div style="flex:1;min-width:200px"><label>المستهلكات:</label>
               <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
-                <label><input type="radio" name="rdnConsRadio" value="كافية" onchange="rdnConsChanged()"> كافية</label>
-                <label><input type="radio" name="rdnConsRadio" value="غير كافية" onchange="rdnConsChanged()"> <span style="color:red">غير كافية</span></label>
+                <label><input type="radio" name="rdnConsRadio" value="كافية" data-change="rdnConsChanged"> كافية</label>
+                <label><input type="radio" name="rdnConsRadio" value="غير كافية" data-change="rdnConsChanged"> <span style="color:red">غير كافية</span></label>
               </div>
               <div id="rdnConsReasonWrap" style="display:none;margin-top:4px">
-                <input type="text" id="rdnConsReason" class="form-input" placeholder="ذكر السبب" oninput="rdnSyncFormToPrintTable()" style="width:100%">
+                <input type="text" id="rdnConsReason" class="form-input" placeholder="ذكر السبب" data-input="rdnSyncFormToPrintTable" style="width:100%">
               </div>
             </div>
           </div>
           <div style="text-align:center;margin-top:12px">
-            <button class="btn btn-primary" onclick="rdnSaveReport()"><i class="fas fa-save"></i> حفظ التقرير</button>
+            <button class="btn btn-primary" data-click="rdnSaveReport"><i class="fas fa-save"></i> حفظ التقرير</button>
           </div>
         </div></div>`;
       rdnAddStaffRow();
@@ -7190,19 +7209,19 @@ function rdnNameSelected(selectEl) {
 
 function rdnStaffRowHtml(idx, dayCount) {
   const dayCells = Array.from({length: dayCount}, (_, di) =>
-    `<td><select class="form-input rdnSShift" onchange="rdnShiftChanged(this)">${rdnShiftOpts('')}</select></td>`
+    `<td><select class="form-input rdnSShift" data-change="rdnShiftChanged">${rdnShiftOpts('')}</select></td>`
   ).join('');
   const empOpts = (window._rdnEmpList||[]).map(e => `<option value="${e.id}">${esc(e.employee)}</option>`).join('');
   return `<tr>
     <td>${idx + 1}</td>
-    <td><select class="form-input rdnSName" style="width:100%;min-width:100px" onchange="rdnNameSelected(this)">
+    <td><select class="form-input rdnSName" style="width:100%;min-width:100px" data-change="rdnNameSelected">
       <option value="">-- اختر من العاملين --</option>
       ${empOpts}
     </select></td>
     <td><input type="text" class="form-input rdnSPhone" style="width:100px" placeholder="التليفون" readonly></td>
     ${dayCells}
-    <td><button class="btn btn-xs btn-success" onclick="rdnAddStaffRow(this)" title="إضافة موظف"><i class="fas fa-plus"></i></button>
-    <button class="btn btn-xs btn-danger" onclick="rdnRemoveStaffRow(this)" title="حذف"><i class="fas fa-times"></i></button></td>
+    <td><button class="btn btn-xs btn-success" data-click="rdnAddStaffRow" title="إضافة موظف"><i class="fas fa-plus"></i></button>
+    <button class="btn btn-xs btn-danger" data-click="rdnRemoveStaffRow" title="حذف"><i class="fas fa-times"></i></button></td>
   </tr>`;
 }
 
@@ -7389,13 +7408,13 @@ async function rdnEditReport(reportId) {
               const dayCount = header ? header.querySelectorAll('th').length - 4 : 0;
               staff.forEach((s, i) => {
                 const dayCells = Array.from({length: dayCount}, (_, di) =>
-                  `<td><select class="form-input rdnSShift" onchange="rdnShiftChanged(this)">${rdnShiftOpts(s.shifts?.[String(di)]||'')}</select></td>`
+                  `<td><select class="form-input rdnSShift" data-change="rdnShiftChanged">${rdnShiftOpts(s.shifts?.[String(di)]||'')}</select></td>`
                 ).join('');
                 const tr = `<tr><td>${i+1}</td>
-                  <td><input type="text" class="form-input rdnSName" style="width:100%;min-width:100px" value="${esc(s.name||'')}" oninput="rdnSyncFormToPrintTable()"></td>
-                  <td><input type="text" class="form-input rdnSPhone" style="width:100px" value="${esc(s.phone||'')}" oninput="rdnSyncFormToPrintTable()"></td>
+                  <td><input type="text" class="form-input rdnSName" style="width:100%;min-width:100px" value="${esc(s.name||'')}" data-input="rdnSyncFormToPrintTable"></td>
+                  <td><input type="text" class="form-input rdnSPhone" style="width:100px" value="${esc(s.phone||'')}" data-input="rdnSyncFormToPrintTable"></td>
                   ${dayCells}
-                  <td><button class="btn btn-xs btn-danger" onclick="rdnRemoveStaffRow(this)"><i class="fas fa-times"></i></button></td></tr>`;
+                  <td><button class="btn btn-xs btn-danger" data-click="rdnRemoveStaffRow"><i class="fas fa-times"></i></button></td></tr>`;
                 if (tbody) tbody.insertAdjacentHTML('beforeend', tr);
               });
             }
@@ -7412,7 +7431,7 @@ async function rdnEditReport(reportId) {
 async function rdnDeleteReport(reportId) {
   openModal('تأكيد الحذف',
     '<div style="text-align:center;padding:10px"><i class="fas fa-exclamation-triangle" style="font-size:36px;color:#e74c3c"></i><p style="margin:8px 0 0;font-size:14px">هل أنت متأكد من حذف التقرير؟</p></div>',
-    '<button class="btn btn-danger" onclick="(async function(){closeModal();try{await api(\'DELETE\',\'/readiness-reports/'+reportId+'\');showToast(\'✅ تم حذف التقرير\');rdnOccasionChanged();}catch(e){showToast(\'❌ \'+e.message)}})()"><i class="fas fa-trash"></i> حذف</button><button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>');
+    '<button class="btn btn-danger" data-click="rdnDeleteReport" data-args="' + reportId + '"><i class="fas fa-trash"></i> حذف</button><button class="btn btn-secondary" data-click="closeModal">إلغاء</button>');
   try {
     await api('DELETE', '/readiness-reports/' + reportId);
     showToast('✅ تم حذف التقرير');
@@ -7511,8 +7530,8 @@ function rdnOpenOccasionModal(occasion) {
     </div>
   </div>`;
   openModal(isEdit ? 'تعديل المناسبة' : 'إضافة مناسبة جديدة', modalHtml,
-    `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-     <button class="btn btn-primary" onclick="${isEdit ? 'rdnUpdateOccasion('+occasion.id+')' : 'rdnCreateOccasion()'}"><i class="fas ${isEdit ? 'fa-save' : 'fa-plus'}"></i> ${isEdit ? 'تحديث' : 'إضافة'}</button>`);
+    `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+     <button class="btn btn-primary" data-click="occFormAction" data-args="${isEdit ? 'edit,'+occasion.id : 'create'}"><i class="fas ${isEdit ? 'fa-save' : 'fa-plus'}"></i> ${isEdit ? 'تحديث' : 'إضافة'}</button>`);
   setTimeout(() => document.getElementById('rdnOccName')?.focus(), 100);
 }
 
@@ -7562,7 +7581,7 @@ async function rdnUpdateOccasion(id) {
 
 function showSyncDialog() {
   pushNav(showMenu);
-  let html = `<div class="page-actions"><button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button></div>
+  let html = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> رجوع</button></div>
     <div class="card"><div class="card-header"><i class="fas fa-cloud-upload-alt"></i> المزامنة مع Google Drive</div>
     <div class="card-body" id="syncBody">
       <div style="text-align:center;padding:40px"><i class="fas fa-spinner fa-spin" style="font-size:32px;color:#1a73e8"></i><br>جاري تحميل معلومات المزامنة...</div>
@@ -7606,11 +7625,11 @@ async function loadSyncStatus() {
         </div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:20px">
-        <button class="btn btn-primary" onclick="syncExport()" title="تصدير نسخة احتياطية"><i class="fas fa-download"></i> تصدير</button>
-        <button class="btn btn-secondary" onclick="syncImport()" title="استيراد نسخة احتياطية"><i class="fas fa-upload"></i> استيراد</button>
-        ${driveConfigured ? `<button class="btn btn-info" onclick="syncDriveAuth()" title="${driveConnected ? 'إعادة المصادقة' : 'المصادقة مع Google Drive'}"><i class="fas fa-cloud"></i> ${driveConnected ? 'إعادة ربط Drive' : 'ربط Drive'}</button>` : ''}
-        ${driveConnected ? `<button class="btn btn-success" onclick="syncDriveUpload()"><i class="fas fa-cloud-upload-alt"></i> رفع إلى Drive</button>` : ''}
-        ${driveConnected ? `<button class="btn btn-warning" onclick="syncDriveDownload()"><i class="fas fa-cloud-download-alt"></i> تنزيل من Drive</button>` : ''}
+        <button class="btn btn-primary" data-click="syncExport" title="تصدير نسخة احتياطية"><i class="fas fa-download"></i> تصدير</button>
+        <button class="btn btn-secondary" data-click="syncImport2" title="استيراد نسخة احتياطية"><i class="fas fa-upload"></i> استيراد</button>
+        ${driveConfigured ? `<button class="btn btn-info" data-click="syncDriveAuth" title="${driveConnected ? 'إعادة المصادقة' : 'المصادقة مع Google Drive'}"><i class="fas fa-cloud"></i> ${driveConnected ? 'إعادة ربط Drive' : 'ربط Drive'}</button>` : ''}
+        ${driveConnected ? `<button class="btn btn-success" data-click="syncDriveUpload"><i class="fas fa-cloud-upload-alt"></i> رفع إلى Drive</button>` : ''}
+        ${driveConnected ? `<button class="btn btn-warning" data-click="syncDriveDownload"><i class="fas fa-cloud-download-alt"></i> تنزيل من Drive</button>` : ''}
       </div>
       <div id="syncResult" style="text-align:center;margin-top:8px"></div>
       <div style="margin-top:20px;padding:16px;background:#f8f9fa;border-radius:8px;font-size:13px;color:#666;text-align:center">
@@ -7670,8 +7689,8 @@ async function syncDriveAuth() {
         </div>
         <p style="margin-bottom:12px"><strong>الخطوة 2:</strong> بعد السماح، انسخ رمز التفويض (code) من المتصفح والصقه هنا:</p>
         <input class="form-control" id="driveAuthCode" placeholder="الصق رمز التفويض هنا" style="direction:ltr;text-align:left">`,
-        `<button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-        <button class="btn btn-primary" onclick="syncDriveSubmitCode()"><i class="fas fa-check"></i> تأكيد</button>`);
+        `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
+        <button class="btn btn-primary" data-click="syncDriveSubmitCode"><i class="fas fa-check"></i> تأكيد</button>`);
     }
   } catch (e) { syncResultMsg('❌ ' + e.message, true); }
 }
@@ -7750,7 +7769,7 @@ function showAbout() {
       <li>الأجهزة — إدارة أجهزة بنوك الدم مع الأنواع والفئات</li>
       <li>المتبرعين — تسجيل المتبرعين، استبيان التبرع، سحب العينات، تحاليل (HIV/HBV/HCV/Syphilis)</li>
       <li>أرشيف — أرشيف المؤشرات الشهرية ومنصرف الفصائل</li>
-      <li>نظام الصلاحيات — 6 أدوار، 22 صفحة، 5 صلاحيات لكل صفحة</li>
+      <li>نظام الصلاحيات — 6 أدوار، 21 صفحة، 5 صلاحيات لكل صفحة</li>
       <li>المزامنة مع Google Drive — نسخ احتياطي سحابي آلي</li>
       <li>وضع ليلي (Dark Mode) — مريح للعين</li>
       <li>تصدير Excel و PDF — لجميع التقارير</li>
@@ -7878,10 +7897,7 @@ function showAbout() {
       <li><strong>الإحصائيات</strong> — لوحة إحصائيات: إجمالي المتبرعين، إجمالي التبرعات، المؤهلين والمرفوضين، توزيع فصائل الدم، النوع (ذكور/إناث)، نتائج التحاليل.</li>
     </ul></p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">20. المخزون (Inventory)</h4>
-    <p style="margin-bottom:16px">عرض وتعديل المخزون الكلي لكل فصيلة. يشمل: الرصيد الحالي (Storage)، إجمالي الوارد، إجمالي المنصرف. التعديل مباشر بالنقر على الخلايا.</p>
-
-    <h4 style="color:#e65100;margin-bottom:8px">21. المزامنة مع Google Drive (النسخ الاحتياطي السحابي)</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">20. المزامنة مع Google Drive (النسخ الاحتياطي السحابي)</h4>
     <p style="margin-bottom:8px"><strong>الهدف:</strong> عمل نسخ احتياطي سحابي آمن لقاعدة البيانات (<code>db.json</code>) على Google Drive، واستعادتها عند الحاجة — سواء لتثبيت النظام على جهاز جديد أو للرجوع لنسخة سابقة.</p>
 
     <h5 style="color:#c62828;margin-top:16px;margin-bottom:6px">الخطوة 0: الإعداد المسبق (مرة واحدة — يفعلها مدير النظام)</h5>
@@ -7996,16 +8012,16 @@ function showAbout() {
       <tr><td style="padding:8px 12px;border:1px solid #e0e0e0">تغيير حساب Google</td><td style="padding:8px 12px;border:1px solid #e0e0e0">الإدارة ← المزامنة ← إعادة ربط Drive (كرر الخطوات)</td></tr>
     </table>
 
-    <h4 style="color:#e65100;margin-bottom:8px">22. الوضع الليلي (Dark Mode)</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">21. الوضع الليلي (Dark Mode)</h4>
     <p style="margin-bottom:16px">اضغط على أيقونة القمر <i class="fas fa-moon"></i> في الشريط العلوي لتفعيل/إلغاء الوضع الليلي. الوضع الليلي يغير ألوان الواجهة إلى ألوان داكنة مريحة للعين في الإضاءة المنخفضة. يتم حفظ التفضيل في المتصفح (localStorage) ويستعيد تلقائياً عند تسجيل الدخول مرة أخرى.</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">23. التوقيت الصيفي/الشتوي</h4>
-    <p style="margin-bottom:16px">زر الساعة <i class="fas fa-clock"></i> في الشريط العلوي (يظهر للمدير فقط) يبدّل بين التوقيت الصيفي (+3 ساعات) والتوقيت الشتوي (+2 ساعات). يتم حفظ الإعداد في قاعدة البيانات ويؤثر على جميع المستخدمين.</p>
+    <h4 style="color:#e65100;margin-bottom:8px">22. التوقيت الصيفي/الشتوي</h4>
+    <p style="margin-bottom:16px">زر الساعة <i class="fas fa-clock"></i> في الشريط العلوي (يظهر للمدير فقط) يبدّل بين التوقيت الصيفي (+2 ساعة) والتوقيت الشتوي (+1 ساعة). يتم حفظ الإعداد في قاعدة البيانات ويؤثر على جميع المستخدمين.</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">24. الملف الشخصي (My Profile)</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">23. الملف الشخصي (My Profile)</h4>
     <p style="margin-bottom:16px">اضغط على أيقونة المستخدم <i class="fas fa-user-circle"></i> في الشريط العلوي. من هنا يمكنك: تعديل اسمك المعروض، تغيير كلمة المرور (تحتاج إدخال كلمة المرور الحالية أولاً).</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">25. قفل التعديل بعد يوم 25</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">24. قفل التعديل بعد يوم 25</h4>
     <p style="margin-bottom:16px">في المؤشرات الشهرية ومنصرف فصائل الدم، بعد يوم 25 من كل شهر يتم قفل التعديل تلقائياً. يظهر شريط أصفر في أعلى الصفحة للتأكيد. يتم عرض بيانات الشهر السابق تلقائياً. هذا يضمن عدم تعديل البيانات التاريخية بعد إغلاق الشهر.</p>
 
     <hr style="border:none;border-top:1px solid #ddd;margin:30px 0 20px">
@@ -8017,8 +8033,8 @@ function showAbout() {
     </div>`;
 
   document.getElementById('mainContent').innerHTML = `<div class="page-actions">
-    <button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button>
-    <button class="btn btn-danger" onclick="printAboutPdf()" style="float:left"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
+    <button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> رجوع</button>
+    <button class="btn btn-danger" data-click="printAboutPdf" style="float:left"><i class="fas fa-file-pdf"></i> تحميل PDF</button>
   </div>
   <div class="card"><div class="card-header"><i class="fas fa-info-circle"></i> حول النظام</div>
   <div class="card-body">${bodyHtml}</div></div>`;

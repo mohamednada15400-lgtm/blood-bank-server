@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: bloodbank
+      POSTGRES_USER: bloodbank
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-bloodbank_pass}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bloodbank"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis for sessions + caching
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # API server (can scale to multiple replicas)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgres://bloodbank:${PG_PASSWORD:-bloodbank_pass}@postgres:5432/bloodbank
+      REDIS_URL: redis://redis:6379
+      SESSION_SECRET: ${SESSION_SECRET:-change-this-secret-in-production}
+      DATA_DIR: /app/data
+    volumes:
+      - appdata:/app/data
+    deploy:
+      replicas: ${API_REPLICAS:-1}
+      resources:
+        limits:
+          memory: ${API_MEM_LIMIT:-512M}
+        reservations:
+          memory: 128M
+
+volumes:
+  pgdata:
+  redisdata:
+  appdata:

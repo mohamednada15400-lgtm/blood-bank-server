@@ -1,27 +1,37 @@
 #!/bin/sh
 set -e
 
-INIT_FILE="/app/data/db.json"
+SEED_FILE="/app/seed/db.json"
+OLD_DATA_FILE="/app/data/db.json"
 DATA_FILE="$DATA_DIR/db.json"
 
-# Check if we have a valid database or need to initialize
+mkdir -p "$DATA_DIR"
+
+# Migration from old DATA_DIR (/app/data) to new DATA_DIR (/data)
+if [ ! -f "$DATA_FILE" ] && [ -f "$OLD_DATA_FILE" ]; then
+  echo "Migrating data from old location ($OLD_DATA_FILE)..."
+  cp "$OLD_DATA_FILE" "$DATA_FILE"
+fi
+
+# If still no data file, use seed data
 if [ ! -f "$DATA_FILE" ]; then
-  echo "Initializing data directory (no db.json found)..."
-  mkdir -p "$DATA_DIR"
-elif [ -f "$INIT_FILE" ]; then
-  # Check if the existing db.json has users (from default init)
-  USER_COUNT=$(node -e "const d=JSON.parse(require('fs').readFileSync('$DATA_FILE','utf8'));console.log((d.users||[]).length)" 2>/dev/null || echo "0")
-  if [ "$USER_COUNT" = "0" ]; then
-    echo "Empty database found, replacing with initialized data..."
+  if [ -f "$SEED_FILE" ]; then
+    echo "Initializing from seed data..."
+    cp "$SEED_FILE" "$DATA_FILE"
   else
-    echo "Database found with $USER_COUNT users, keeping existing data."
-    INIT_FILE=""
+    echo "No seed data found, starting fresh..."
   fi
 fi
 
-if [ -n "$INIT_FILE" ] && [ -f "$INIT_FILE" ]; then
-  cp "$INIT_FILE" "$DATA_FILE"
-  echo "Copied initial database from $INIT_FILE"
+# If data file exists, check it has users (not empty/seed)
+if [ -f "$DATA_FILE" ]; then
+  USER_COUNT=$(node -e "try{const d=JSON.parse(require('fs').readFileSync('$DATA_FILE','utf8'));console.log((d.users||[]).length)}catch(e){console.log('0')}" 2>/dev/null)
+  if [ "$USER_COUNT" = "0" ] && [ -f "$SEED_FILE" ]; then
+    echo "Empty database found, replacing with seed data..."
+    cp "$SEED_FILE" "$DATA_FILE"
+  elif [ "$USER_COUNT" != "0" ]; then
+    echo "Database found with $USER_COUNT users."
+  fi
 fi
 
 exec node /app/server.js

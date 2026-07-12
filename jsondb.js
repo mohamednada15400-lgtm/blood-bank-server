@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','users','hospitals','governorates','inventory','role_perms','readiness','equipment','time_config','emp_accounts','audit_log'];
+const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','users','hospitals','governorates','role_perms','readiness','equipment','time_config','emp_accounts'];
 
 function makePerm(v,a,e,d,x) { return {v,a,e,d,x}; }
 
@@ -13,10 +13,10 @@ function pagePerms(v,a,e,d,x) {
 
 const DEF_PERMS = {
   admin: pagePerms(1,1,1,1,1),
-  org_supervisor: Object.assign(pagePerms(1,1,1,1,1), { users:makePerm(0,0,0,0,0), hospitals:makePerm(1,0,0,0,1), governorates:makePerm(1,0,0,0,1) }),
-  branch_supervisor: Object.assign(pagePerms(1,1,1,1,1), { archive:makePerm(0,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(1,0,0,0,1), governorates:makePerm(1,0,0,0,1), inventory:makePerm(1,0,0,0,1), daily_branch:makePerm(1,0,0,0,0) }),
-  hospital: Object.assign(pagePerms(1,1,1,1,1), { daily_total:makePerm(0,0,0,0,0), archive:makePerm(0,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), inventory:makePerm(1,0,0,0,0), daily_branch:makePerm(0,0,0,0,0) }),
-  hospital_manager: Object.assign(pagePerms(1,0,0,0,1), { archive:makePerm(0,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0) }),
+  org_supervisor: Object.assign(pagePerms(1,0,0,0,1), { users:makePerm(1,0,0,0,0), hospitals:makePerm(1,0,0,0,1), governorates:makePerm(1,0,0,0,1) }),
+  branch_supervisor: Object.assign(pagePerms(1,1,1,1,1), { archive:makePerm(1,0,0,0,1), users:makePerm(0,0,0,0,0), hospitals:makePerm(1,0,0,0,1), governorates:makePerm(1,0,0,0,1), daily_branch:makePerm(1,0,0,0,0) }),
+  hospital: Object.assign(pagePerms(1,1,1,1,1), { daily_total:makePerm(0,0,0,0,0), archive:makePerm(1,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0) }),
+  hospital_manager: Object.assign(pagePerms(1,0,0,0,1), { archive:makePerm(1,0,0,0,1), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0), employees:makePerm(1,1,1,1,1) }),
   visitor: Object.assign(pagePerms(1,0,0,0,0), { archive:makePerm(0,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0) })
 };
 
@@ -45,12 +45,14 @@ class JSONDB {
       monthly_storage: [], monthly_aggregate: [], monthly_indicators: [], monthly_consumption: [], monthly_big_indicators: [], monthly_small_indicators: [], consumption: [],
       employee_statements: [],
       archives: [],
+      strategic_settings: [],
+      strategic_reserves: [],
 
       readiness_occasions: [],
       readiness_reports: [],
       readiness_notifications: [],
       blood_bank_equipment: null,
-      app_config: { time_offset: 3 },
+      app_config: { time_offset: 2 },
       role_perms: Object.entries(DEF_PERMS).map(([role, perms]) => ({ role, permissions: JSON.parse(JSON.stringify(perms)) })),
       _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1 }
     };
@@ -122,7 +124,7 @@ class JSONDB {
       const types = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
       this.data.inventory = types.map((t, i) => ({ id: i + 1, blood_type: t, storage: 0, total_received: 0, total_consumed: 0 }));
       if (!this.data._counters.daily_reports) this.data._counters.daily_reports = this.data.daily_reports ? this.data.daily_reports.length + 1 : 1;
-      this.data._counters = { users: 9, hospitals: 40, governorates: 7, inventory: 9, daily_stock: 1, daily_statements: 1, daily_reports: this.data._counters.daily_reports || 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1, audit_log: 1 };
+      this.data._counters = { users: 9, hospitals: 40, governorates: 7, inventory: 9, daily_stock: 1, daily_statements: 1, daily_reports: this.data._counters.daily_reports || 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1 };
     }
     // Ensure tables exist even when loading existing db
     if (!this.data.daily_reports) this.data.daily_reports = [];
@@ -138,8 +140,10 @@ class JSONDB {
     if (!this.data.monthly_consumption) this.data.monthly_consumption = [];
     if (!this.data.monthly_big_indicators) this.data.monthly_big_indicators = [];
     if (!this.data.monthly_small_indicators) this.data.monthly_small_indicators = [];
-    if (!this.data.strategic_reserves) this.data.strategic_reserves = [];
-    if (!this.data.strategic_settings) this.data.strategic_settings = null;
+    if (!Array.isArray(this.data.strategic_reserves)) this.data.strategic_reserves = [];
+    if (!Array.isArray(this.data.strategic_settings)) {
+      this.data.strategic_settings = this.data.strategic_settings && typeof this.data.strategic_settings === 'object' ? [this.data.strategic_settings] : [];
+    }
     if (!this.data.employee_statements) this.data.employee_statements = [];
     if (!this.data._counters.employee_statements) this.data._counters.employee_statements = this.data.employee_statements.length + 1 || 1;
     if (!this.data.readiness_occasions) this.data.readiness_occasions = [];
@@ -148,9 +152,6 @@ class JSONDB {
     if (!this.data._counters.readiness_occasions) this.data._counters.readiness_occasions = this.data.readiness_occasions.length + 1 || 1;
     if (!this.data._counters.readiness_reports) this.data._counters.readiness_reports = this.data.readiness_reports.length + 1 || 1;
     if (!this.data._counters.readiness_notifications) this.data._counters.readiness_notifications = this.data.readiness_notifications.length + 1 || 1;
-    if (!this.data.audit_log) this.data.audit_log = [];
-    if (!this.data._counters.audit_log) this.data._counters.audit_log = this.data.audit_log.length + 1 || 1;
-
     if (!this.data.blood_bank_equipment || !this.data.blood_bank_equipment.types) {
       this.data.blood_bank_equipment = {
         types: [
@@ -180,7 +181,7 @@ class JSONDB {
     }
     if (!this.data.hospital_types || !this.data.hospital_types.length) this.data.hospital_types = [{ id: 1, name: 'تجميعي' }, { id: 2, name: 'تخزيني' }];
     if (!this.data._counters.hospital_types) this.data._counters.hospital_types = this.data.hospital_types.length + 1;
-    if (!this.data.app_config || typeof this.data.app_config.time_offset !== 'number') this.data.app_config = { time_offset: 3 };
+    if (!this.data.app_config || typeof this.data.app_config.time_offset !== 'number') this.data.app_config = { time_offset: 2 };
     if (!this.data.role_perms || !Array.isArray(this.data.role_perms)) {
       this.data.role_perms = Object.entries(DEF_PERMS).map(([role, perms]) => ({ role, permissions: JSON.parse(JSON.stringify(perms)) }));
     } else {
@@ -228,15 +229,20 @@ class JSONDB {
           rp.permissions.emp_accounts = { ...base };
         }
       });
-      // Migration: audit_log defaults (view only for admin, hidden for others)
+      // Migration: hospital_manager can add/edit/delete employees
       this.data.role_perms.forEach(rp => {
         if (typeof rp.permissions === 'string') rp.permissions = JSON.parse(rp.permissions);
-        if (rp.permissions.audit_log === undefined) {
-          if (rp.role === 'admin') rp.permissions.audit_log = { v:1, a:0, e:0, d:0, x:0 };
-          else rp.permissions.audit_log = { v:0, a:0, e:0, d:0, x:0 };
+        if (rp.role === 'hospital_manager' && rp.permissions.employees) {
+          rp.permissions.employees.a = 1;
+          rp.permissions.employees.e = 1;
+          rp.permissions.employees.d = 1;
+        }
+        // Fix branch_supervisor permissions: ensure hospitals, governorates have view
+        if (rp.role === 'branch_supervisor') {
+          if (rp.permissions.hospitals) { rp.permissions.hospitals.v = 1; rp.permissions.hospitals.x = 1; }
+          if (rp.permissions.governorates) { rp.permissions.governorates.v = 1; rp.permissions.governorates.x = 1; }
         }
       });
-
     }
     this._save();
   }
@@ -256,7 +262,9 @@ class JSONDB {
   _write() {
     const dir = path.dirname(this.filePath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf8');
+    const tmp = this.filePath + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(this.data, null, 2), 'utf8');
+    fs.renameSync(tmp, this.filePath);
     if (this._saveTimer) this._saveTimer._pending = false;
   }
 

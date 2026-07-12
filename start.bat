@@ -26,7 +26,7 @@ echo.
 echo    افتح الرابط في أي متصفح على نفس الشبكة
 echo.
 echo ============================================
-start /B /MIN "" node server.js
+start /B /MIN "" node --max-old-space-size=384 server.js
 timeout /t 4 /nobreak >nul
 start http://localhost:3001
 echo.

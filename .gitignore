@@ -1,5 +1,11 @@
 node_modules/
 data/db.json.backup_*
+data/db.json.backup_*/**/*
+data/*.backup_*
+data/*_modified.json
+data/*_modified*/
+data/*.before_*
+data/.pre-*
 data/auto-backups/
 dist/
 *.zip
@@ -16,3 +22,6 @@ start-cloud.ps1
 server_debug.err
 server_output.log.err
 data/drive-config.json.txt
+data/drive-config.json
+backups/
+
