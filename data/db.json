@@ -72,8 +72,8 @@
       "password": "$2b$10$Un1H9NkC/gqcAxmXdd2gF.mjvJb2uEFuxLec0i01.gLXqvBcXFnYW",
       "name": "مشرف الهيئة",
       "role": "org_supervisor",
-      "hospital_id": 2,
-      "governorate": "بورسعيد",
+      "hospital_id": null,
+      "governorate": null,
       "view_permission": "all"
     },
     {
