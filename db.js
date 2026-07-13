@@ -252,14 +252,66 @@ class Database {
     this.db = null;
     this._initialized = false;
   }
-
   async init() {
     if (this._initialized) return;
     this._initialized = true;
 
     let dbUrl = process.env.DATABASE_URL;
 
-    // If no env var, try reading pg_connection_string from db.json app_config
+    // Try connecting; if env var fails, fall back to pg_connection_string from db.json
+    async function tryConnect(url) {
+      const { Pool } = require('pg');
+      const p = new Pool({
+        connectionString: url,
+        ssl: url.includes('localhost') ? false : { rejectUnauthorized: false },
+        max: 2,
+        connectionTimeoutMillis: 5000
+      });
+      try {
+        const c = await p.connect();
+        c.release();
+        return p;
+      } catch (e) {
+        try { await p.end(); } catch(_) {}
+        throw e;
+      }
+    }
+
+    async function connectPG(url) {
+      pool = await tryConnect(url);
+      pool.options.max = 20;
+      pool.options.idleTimeoutMillis = 30000;
+      this.mode = 'pg';
+      DB_MODE = 'pg';
+
+      const client = await pool.connect();
+      try {
+        for (const sql of PG_TABLES) {
+          await client.query(sql);
+        }
+        const userCount = await client.query('SELECT COUNT(*) FROM users');
+        if (parseInt(userCount.rows[0].count) === 0) {
+          await this._seedPG(client);
+        }
+      } finally {
+        client.release();
+      }
+      console.log('✅ PostgreSQL connected');
+      return true;
+    }
+
+    // Try DATABASE_URL env var first
+    if (dbUrl) {
+      try {
+        await connectPG.call(this, dbUrl);
+        return;
+      } catch (e) {
+        console.log('⚠️ DATABASE_URL env var failed:', e.message);
+        dbUrl = null;
+      }
+    }
+
+    // Fall back to pg_connection_string from db.json
     if (!dbUrl) {
       try {
         const cfgPath = path.join(DATA_DIR, 'db.json');
@@ -269,49 +321,28 @@ class Database {
           if (cfg.app_config && cfg.app_config.pg_connection_string) {
             dbUrl = cfg.app_config.pg_connection_string;
             console.log('📦 DATABASE_URL loaded from db.json app_config');
+            try {
+              await connectPG.call(this, dbUrl);
+              return;
+            } catch (e) {
+              console.log('⚠️ pg_connection_string from db.json failed:', e.message);
+              dbUrl = null;
+            }
           }
         }
       } catch (e) {
         console.log('⚠️ Could not read pg_connection_string from db.json:', e.message);
       }
     }
-    if (dbUrl) {
-      // PostgreSQL mode
-      const { Pool } = require('pg');
-      pool = new Pool({
-        connectionString: dbUrl,
-        ssl: dbUrl.includes('localhost') ? false : { rejectUnauthorized: false },
-        max: 20, // connection pool size
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 10000
-      });
-      this.mode = 'pg';
-      DB_MODE = 'pg';
 
-      // Create tables
-      const client = await pool.connect();
-      try {
-        for (const sql of PG_TABLES) {
-          await client.query(sql);
-        }
-        // Seed default data if needed
-        const userCount = await client.query('SELECT COUNT(*) FROM users');
-        if (parseInt(userCount.rows[0].count) === 0) {
-          await this._seedPG(client);
-        }
-      } finally {
-        client.release();
-      }
-      console.log('✅ PostgreSQL connected');
-    } else {
-      // JSON file mode
-      const { JSONDB } = require('./jsondb');
-      const dbPath = path.join(DATA_DIR, 'db.json');
-      jsondb = new JSONDB(dbPath);
-      jsondb.init();
-      this.db = jsondb;
-      console.log('✅ JSON database loaded');
-    }
+    // Fall back to JSON mode
+    console.log('⚠️ PostgreSQL not available, falling back to JSON mode');
+    const { JSONDB } = require('./jsondb');
+    const dbPath = path.join(DATA_DIR, 'db.json');
+    jsondb = new JSONDB(dbPath);
+    jsondb.init();
+    this.db = jsondb;
+    console.log('✅ JSON database loaded');
   }
 
   async _seedPG(client) {
