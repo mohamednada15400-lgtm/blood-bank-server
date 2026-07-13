@@ -412,7 +412,7 @@ class Database {
     }
 
     // Seed app_config
-    await client.query("INSERT INTO app_config (key, value) VALUES ('time_offset', '2') ON CONFLICT (key) DO NOTHING");
+    await client.query("INSERT INTO app_config (key, value) VALUES ('time_offset', '3') ON CONFLICT (key) DO NOTHING");
   }
 
   async query(text, params) {
