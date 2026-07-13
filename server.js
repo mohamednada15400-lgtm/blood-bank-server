@@ -2199,12 +2199,82 @@ app.get('/api/sync/status', requireAuth(), async (req, res) => {
 
 // GET /api/sync/export
 app.get('/api/sync/export', requireAuth(), async (req, res) => {
-  const dbPath = path.join(DATA_DIR, 'db.json');
-  try {
-    const data = fs.readFileSync(dbPath, 'utf8');
-    res.json({ data: JSON.parse(data) });
-  } catch (e) {
-    res.status(500).json({ error: errMsg(e) });
+  if (isPG) {
+    try {
+      // Export from PostgreSQL — query all tables
+      const tables = [
+        'users', 'hospitals', 'governorates', 'hospital_types',
+        'daily_stock', 'daily_reports', 'daily_statements',
+        'monthly_storage', 'monthly_aggregate', 'monthly_indicators',
+        'monthly_consumption', 'monthly_big_indicators', 'monthly_small_indicators',
+        'consumption', 'archives', 'employee_statements',
+        'equipment_types', 'readiness_occasions', 'readiness_reports',
+        'readiness_notifications', 'role_perms', 'strategic_settings',
+        'strategic_reserves', 'equipment_hospitals'
+      ];
+      const result = {};
+      for (const table of tables) {
+        const r = await db.query(`SELECT * FROM ${table} ORDER BY id`);
+        result[table] = r.rows || [];
+      }
+      // Parse JSONB fields
+      const jsonbTables = ['daily_reports','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big_indicators','monthly_small_indicators','archives','readiness_occasions','role_perms','strategic_reserves'];
+      for (const t of jsonbTables) {
+        if (result[t]) {
+          result[t] = result[t].map(row => {
+            const r = { ...row };
+            for (const key of Object.keys(r)) {
+              if (typeof r[key] === 'string' && (r[key].startsWith('{') || r[key].startsWith('['))) {
+                try { r[key] = JSON.parse(r[key]); } catch(e) { /* keep as string */ }
+              }
+            }
+            return r;
+          });
+        }
+      }
+      // Parse equipment JSONB
+      if (result.equipment_hospitals) {
+        result.equipment_hospitals = result.equipment_hospitals.map(row => {
+          const r = { ...row };
+          if (typeof r.equipment === 'string') { try { r.equipment = JSON.parse(r.equipment); } catch(e) { r.equipment = {}; } }
+          return r;
+        });
+      }
+      // App config
+      const cfgRows = await db.query('SELECT key, value FROM app_config');
+      result.app_config = {};
+      for (const row of cfgRows.rows || []) {
+        let val = row.value;
+        if (typeof val === 'string') { try { val = JSON.parse(val); } catch(e) { /* keep */ } }
+        result.app_config[row.key] = val;
+      }
+      // Donors & Donations (may not exist as tables yet)
+      try {
+        const donors = await db.query('SELECT * FROM donors ORDER BY id');
+        result.donors = donors.rows || [];
+        const donations = await db.query('SELECT * FROM donations ORDER BY id');
+        result.donations = donations.rows || [];
+      } catch(e) { result.donors = []; result.donations = []; }
+      // Counters
+      result._counters = {};
+      for (const table of Object.keys(result)) {
+        if (Array.isArray(result[table]) && result[table].length > 0) {
+          const maxId = Math.max(...result[table].map(r => parseInt(r.id) || 0));
+          result._counters[table] = maxId + 1;
+        }
+      }
+      res.json({ data: result });
+    } catch (e) {
+      res.status(500).json({ error: errMsg(e) });
+    }
+  } else {
+    const dbPath = path.join(DATA_DIR, 'db.json');
+    try {
+      const data = fs.readFileSync(dbPath, 'utf8');
+      res.json({ data: JSON.parse(data) });
+    } catch (e) {
+      res.status(500).json({ error: errMsg(e) });
+    }
   }
 });
 
@@ -2213,10 +2283,43 @@ app.post('/api/sync/import', requireAuth(), async (req, res) => {
   const { data } = req.body;
   if (!data) return res.status(400).json({ error: 'البيانات مطلوبة' });
   try {
-    const dbPath = path.join(DATA_DIR, 'db.json');
-    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
-    // Reload the database
-    await db.reload();
+    if (isPG) {
+      const tables = ['users','hospitals','governorates','hospital_types','daily_stock','daily_reports','daily_statements','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big_indicators','monthly_small_indicators','consumption','archives','employee_statements','equipment_types','readiness_occasions','readiness_reports','readiness_notifications','role_perms','strategic_settings','strategic_reserves','equipment_hospitals'];
+      for (const table of tables) {
+        const rows = data[table];
+        if (Array.isArray(rows) && rows.length > 0) {
+          await db.query(`DELETE FROM ${table}`);
+          const batchSize = 50;
+          for (let i = 0; i < rows.length; i += batchSize) {
+            const batch = rows.slice(i, i + batchSize);
+            const cols = Object.keys(batch[0]).filter(c => c !== '_counters');
+            const placeholders = batch.map((_, ri) => `(${cols.map((_, ci) => `$${ri * cols.length + ci + 1}`).join(',')})`).join(',');
+            const values = batch.flatMap(r => cols.map(c => r[c] !== undefined ? (typeof r[c] === 'object' ? JSON.stringify(r[c]) : r[c]) : null));
+            const colStr = cols.map(c => `"${c}"`).join(',');
+            await db.query(`INSERT INTO "${table}" (${colStr}) VALUES ${placeholders} ON CONFLICT DO NOTHING`, values);
+          }
+        }
+      }
+      // App config
+      const ac = data.app_config;
+      if (ac && typeof ac === 'object') {
+        for (const [key, value] of Object.entries(ac)) {
+          await db.query('INSERT INTO app_config (key, value) VALUES ($1, $2::jsonb) ON CONFLICT (key) DO UPDATE SET value = $2::jsonb', [key, JSON.stringify(value)]);
+        }
+      }
+      // Reset sequences
+      for (const table of tables) {
+        const ids = data[table]?.filter(r => r.id).map(r => parseInt(r.id));
+        if (ids && ids.length > 0) {
+          const maxId = Math.max(...ids);
+          try { await db.query(`SELECT setval('${table}_id_seq', ${maxId}, true)`); } catch(e) { /* ignore */ }
+        }
+      }
+    } else {
+      const dbPath = path.join(DATA_DIR, 'db.json');
+      fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
+      await db.reload();
+    }
     res.json({ ok: true, message: '✅ تم استيراد البيانات بنجاح' });
   } catch (e) {
     res.status(500).json({ error: errMsg(e) });
