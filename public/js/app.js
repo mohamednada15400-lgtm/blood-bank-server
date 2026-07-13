@@ -274,7 +274,6 @@ function doConfirm() {
 }
 
 function initApp(u) {
-  console.log('[initApp] start');
   window._user = u;
   document.getElementById('loginPage').style.display = 'none';
   document.getElementById('appPage').style.display = '';
@@ -288,10 +287,7 @@ function initApp(u) {
   if (_clockInterval) clearInterval(_clockInterval);
   _clockInterval = setInterval(updateClock, 10000);
   updateClock();
-  applyDarkMode();
-  console.log('[initApp] calling showMenu');
-  try { showMenu(); } catch(e) { console.error('[initApp] showMenu error:', e); }
-  console.log('[initApp] done');
+  applyDarkMode(); showMenu();
 }
 
 async function doLogin() {
