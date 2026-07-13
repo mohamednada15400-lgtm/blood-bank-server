@@ -62,12 +62,8 @@ function utcToLocal(timeStr) {
   if (!timeStr) return '';
   const p = timeStr.split(':');
   if (p.length < 2) return timeStr;
-  const now = new Date();
-  const localMin = now.getHours() * 60 + now.getMinutes();
-  const utcMin = now.getUTCHours() * 60 + now.getUTCMinutes();
-  let diffH = Math.round((localMin - utcMin) / 60);
-  if (diffH < 0) diffH += 24;
-  let h = parseInt(p[0]) + diffH;
+  const addH = _timeOffset === 2 ? 3 : 2;
+  let h = parseInt(p[0]) + addH;
   if (h >= 24) h -= 24;
   return String(h).padStart(2,'0') + ':' + p[1];
 }
