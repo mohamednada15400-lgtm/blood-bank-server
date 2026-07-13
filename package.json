@@ -4,7 +4,7 @@
   "description": "نظام إدارة بنوك الدم",
   "main": "server.js",
   "scripts": {
-    "start": "node --max-old-space-size=256 server.js",
+    "start": "node --max-old-space-size=448 server.js",
     "build": "node init-db.js",
     "pkg": "node \"C:\\Users\\PC\\AppData\\Roaming\\npm\\node_modules\\pkg\\lib-es5\\bin.js\" server.js --targets node18-win-x64 --output dist/BloodBankServer.exe --public"
   },
