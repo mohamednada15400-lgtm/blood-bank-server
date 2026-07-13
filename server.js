@@ -1450,7 +1450,7 @@ app.post('/api/config/time', requireAuth(), requirePerm('time_config', 'edit'), 
 
 function getOffsetDate(offset) {
   const now = new Date();
-  return new Date(now.getTime() + ((offset || 3) - 1) * 3600000);
+  return new Date(now.getTime() + (offset === 2 ? 3 : 2) * 3600000);
 }
 // ============== Employee Statements (بيان العاملين) CRUD ==============
 
