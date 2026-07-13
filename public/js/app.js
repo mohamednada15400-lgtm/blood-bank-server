@@ -46,17 +46,21 @@ _dh('archiveCellFocus',function(el){if(typeof el==='undefined'||el===null)el=thi
 _dh('saveArchiveCell',function(el){if(typeof el==='undefined'||el===null)el=this;saveArchiveCell(el);});
 
 function getCairoDate() {
-  return new Date();
+  return new Date(Date.now() + _timeOffset * 3600000);
 }
 function fmtCairoDate(fmt) {
   const d = getCairoDate();
   const pad = n => String(n).padStart(2, '0');
   const dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
   const monthNames = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
-  if (fmt === 'date') return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  if (fmt === 'time') { const h = d.getHours(); const a = h >= 12 ? 'م' : 'ص'; return `${pad(h % 12 || 12)}:${pad(d.getMinutes())} ${a}`; }
-  if (fmt === 'full') return `${dayNames[d.getDay()]}، ${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+  if (fmt === 'date') return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;
+  if (fmt === 'time') { const h = d.getUTCHours(); const a = h >= 12 ? 'م' : 'ص'; return `${pad(h % 12 || 12)}:${pad(d.getUTCMinutes())} ${a}`; }
+  if (fmt === 'full') return `${dayNames[d.getUTCDay()]}، ${d.getUTCDate()} ${monthNames[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   return d.toLocaleDateString('ar-EG');
+}
+function curMonthCairo() {
+  const d = getCairoDate();
+  return d.getUTCFullYear() * 100 + d.getUTCMonth() + 1;
 }
 function updateClock() {
   const el = document.getElementById('clockDisplay');
@@ -473,10 +477,10 @@ async function checkAlerts() {
     const archiveItems = await api('GET', '/archive');
     const hospitals = await api('GET', '/hospitals');
     const me = (await api('GET', '/me')).user;
-    const now = new Date();
-    const today = now.toISOString().slice(0,10);
-    const curMonth = now.getMonth() + 1;
-    const curYear = now.getFullYear();
+    const now = getCairoDate();
+    const today = String(now.getUTCFullYear()).padStart(4,'0')+'-'+String(now.getUTCMonth()+1).padStart(2,'0')+'-'+String(now.getUTCDate()).padStart(2,'0');
+    const curMonth = now.getUTCMonth() + 1;
+    const curYear = now.getUTCFullYear();
     let prevMonth = curMonth - 1;
     let prevYear = curYear;
     if (prevMonth === 0) { prevMonth = 12; prevYear--; }
@@ -527,7 +531,7 @@ async function checkAlerts() {
     // Check employee statements - hospitals without update in the current month
     try {
       const empRes = await api('GET', '/employee-statements');
-      const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const curMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
       const hasData = (empRes.rows||[]).length > 0;
       if (!hasData) {
         alerts.push({ icon: 'fa-users', color: '#dc3545', title: 'بيان العاملين: لم يتم إدخال بيانات أي موظف بعد', detail: 'يرجى الدخول إلى بيان العاملين وإضافة البيانات', all: ['بيان العاملين فارغ — يجب إدخال بيانات الموظفين'] });
@@ -538,7 +542,7 @@ async function checkAlerts() {
           alerts.push({ icon: 'fa-users', color: '#dc3545', title: isMyHosp ? '⚠ يجب تحديث بيان العاملين لمستشفاك هذا الشهر' : 'بيان العاملين: ' + overdueEmp.length + ' بنك لم يحدث هذا الشهر', detail: overdueEmp.slice(0,5).map(h => h.name).join('، ') + (overdueEmp.length > 5 ? ' +' + (overdueEmp.length - 5) : ''), all: overdueEmp.map(h => h.name) });
         }
         // Check unreviewed employees
-        const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+        const nowCD = getCairoDate(); const curMonth = nowCD.getUTCFullYear() * 100 + nowCD.getUTCMonth() + 1;
         const unreviewed = (empRes.rows||[]).filter(r => !r.reviewed || r.review_month !== curMonth);
         if (unreviewed.length > 0) {
           const byHosp = {};
@@ -557,7 +561,7 @@ async function checkAlerts() {
     try {
       const eqRes = await api('GET', '/equipment');
       const eqHospitals = (eqRes.hospitals||[]);
-      const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+      const curMonth = curMonthCairo();
       if (eqHospitals.length === 0) {
         alerts.push({ icon: 'fa-microscope', color: '#8e44ad', title: 'الأجهزة: لم يتم إدخال بيانات أي مستشفى بعد', detail: 'يرجى الدخول إلى الأجهزة وإضافة البيانات', all: ['بيانات الأجهزة فارغة — يجب إدخال بيانات الأجهزة'] });
       } else {
@@ -822,7 +826,7 @@ async function collectGroupData(table, rid) {
   PTYPES.forEach(t => { pTot.previous += pd[t].previous; pTot.incoming += pd[t].incoming; pTot.outgoing += pd[t].outgoing; pTot.disposal += pd[t].disposal; pTot.available += pd[t].available; });
   const date = fmtCairoDate('date');
   const now = getCairoDate();
-  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const time = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
   try {
     const body = { blood: bd, plasma: pd, underInspection: under_inspection, date, time };
     if (platelets !== null) body.platelets = platelets;
@@ -866,7 +870,7 @@ async function showAddDailyModal() {
   const hospitals = await api('GET', '/hospitals');
   const d = fmtCairoDate('date');
   const now = getCairoDate();
-  const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const t = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
   let html = `<div class="form-group"><label>المستشفى</label><select class="form-control" id="addDailyHospital">
     ${hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>
     <div class="form-group"><label>التاريخ</label><input type="date" class="form-control" id="addDailyDate" value="${d}"></div>
@@ -908,9 +912,11 @@ async function renderStrategicStock() {
 
     // Auto-calculate if quarter changed
     if (strategicSettings && hasPerm('strategic_stock', 'edit')) {
-      const now = new Date();
-      const qStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 - 3, 1);
-      const qEnd = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 0);
+      const now = getCairoDate();
+      const curYear = now.getUTCFullYear();
+      const curMonth = now.getUTCMonth();
+      const qStart = new Date(Date.UTC(curYear, Math.floor(curMonth / 3) * 3 - 3, 1));
+      const qEnd = new Date(Date.UTC(curYear, Math.floor(curMonth / 3) * 3, 0));
       const expectedQuarter = qStart.toISOString().split('T')[0] + ' / ' + qEnd.toISOString().split('T')[0];
       if (strategicSettings.quarter !== expectedQuarter) {
         try {
@@ -927,7 +933,7 @@ async function renderStrategicStock() {
       const key = r.hospital_id;
       if (!latest[key] || (r.date || '') > (latest[key].date || '')) latest[key] = r;
     });
-    const todayStr = new Date().toISOString().slice(0,10);
+    const todayStr = String(getCairoDate().getUTCFullYear()).padStart(4,'0')+'-'+String(getCairoDate().getUTCMonth()+1).padStart(2,'0')+'-'+String(getCairoDate().getUTCDate()).padStart(2,'0');
     const govOrder = ['بورسعيد','الإسماعيلية','السويس','الأقصر','جنوب سيناء','أسوان'];
     const groups = {};
     hospitals.forEach(h => {
@@ -1302,8 +1308,8 @@ function renderTotalTable(data) {
       const pTotal = pAvail.reduce((s, v) => s + v, 0);
       tbody += `<tr class="data-row ${govIdx % 2 === 0 ? 'gov-light' : 'gov-dark'}">`;
       if (idx === 0) tbody += `<td class="gov-cell gov-${govIdx % 2 === 0 ? 'even' : 'odd'}" rowspan="${reports.length}">${gov}</td>`;
-      const todayStr = new Date().toISOString().slice(0,10);
-      const isOld = r.date && r.date.slice(0,10) !== todayStr;
+      const cT = getCairoDate(); const todayStr2 = String(cT.getUTCFullYear()).padStart(4,'0')+'-'+String(cT.getUTCMonth()+1).padStart(2,'0')+'-'+String(cT.getUTCDate()).padStart(2,'0');
+      const isOld = r.date && r.date.slice(0,10) !== todayStr2;
       const dateStyle = isOld ? ' style="color:red;font-weight:700"' : '';
       const timeStyle = isOld ? ' style="font-weight:700"' : '';
       tbody += `<td class="hosp-name">${r.hospital_name || ''}</td><td class="date-cell"${dateStyle}>${r.date ? r.date.slice(5) : ''}</td><td${timeStyle}>${r.time || ''}</td><td>${r.under_inspection || 0}</td>`;
@@ -1578,11 +1584,11 @@ async function renderBranchStatement() {
     const reports = await api('GET', '/daily-reports');
     const govHospIds = [...new Set(reports.filter(r => r.governorate === gov).map(r => r.hospital_id))];
     if (!govHospIds.length) { document.getElementById('branchStmtReport').innerHTML = `<div class="empty-msg">لا توجد تقارير للفرع: ${gov}</div>`; return; }
-    const now = new Date();
+    const now = getCairoDate();
     const dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-    const dd = now.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' });
-    const dayName = dayNames[now.getDay()];
-    const period = now.getHours() < 12 ? 'الصباحية' : 'المسائية';
+    const dd = now.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const dayName = dayNames[now.getUTCDay()];
+    const period = now.getUTCHours() < 12 ? 'الصباحية' : 'المسائية';
 
     const grouped = {};
     govHospIds.forEach(hid => {
@@ -1626,8 +1632,8 @@ async function renderBranchStatement() {
       grandBDisp += bOut; grandPDisp += pOut;
       const dateParts = r.date ? r.date.split('-') : [];
       const d = dateParts.length >= 3 ? `${dateParts[2]}-${dateParts[1]}` : (r.date || '');
-      const todayStr = new Date().toISOString().slice(0,10);
-      const isOld = r.date && r.date.slice(0,10) !== todayStr;
+      const cT2 = getCairoDate(); const todayStr3 = String(cT2.getUTCFullYear()).padStart(4,'0')+'-'+String(cT2.getUTCMonth()+1).padStart(2,'0')+'-'+String(cT2.getUTCDate()).padStart(2,'0');
+      const isOld = r.date && r.date.slice(0,10) !== todayStr3;
       const dtStyle = isOld ? ' style="color:red;font-weight:700"' : '';
       const tmStyle = isOld ? ' style="font-weight:700"' : '';
       html += `<tr>
@@ -1745,11 +1751,11 @@ async function renderBloodConsumption() {
     if (isHospital) filteredHospitals = hospitals.filter(h => h.id === user.hospitalId);
     else if (isBranchSup) filteredHospitals = hospitals.filter(h => h.governorate === user.governorate);
 
-    const now = new Date();
-    const isLocked = now.getDate() >= 25;
+    const now = getCairoDate();
+    const isLocked = now.getUTCDate() >= 25;
     // Default to current month
-    const year = now.getFullYear();
-    const monthVal = now.getMonth() + 1; // 1-indexed
+    const year = now.getUTCFullYear();
+    const monthVal = now.getUTCMonth() + 1; // 1-indexed
 
     el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
     </div>`;
@@ -1946,8 +1952,8 @@ async function renderEmployeeStatement() {
       hospitalStatus = hospitalStatus.filter(h => h.governorate === userGovEmp);
     }
     // Check monthly updates
-    const now = new Date();
-    const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const now = getCairoDate();
+    const curMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     const overdueHospitals = hospitalStatus.filter(h => h.employeeCount > 0 && (!h.lastUpdate || new Date(h.lastUpdate) < curMonthStart));
     // Scan for missing data in existing records (all fields)
     const missingFieldDefs = ['الفرع','بنك الدم','الاسم','الفئه','التصنيف','الرقم القومي','التليفون','البريد'];
@@ -2027,7 +2033,7 @@ const branchSupMissingRecords = branchSupHasMissingData ? branchSupervisors.filt
       <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-check-double"></i> حالة المراجعة حسب المستشفى</strong></div>
       <div class="card-body" style="padding:8px 12px">
         ${(() => {
-          const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+          const cd = getCairoDate(); const curMonth = cd.getUTCFullYear() * 100 + cd.getUTCMonth() + 1;
           const byHosp = {};
           data.forEach(d => {
             const key = d.hospital_id;
@@ -2328,7 +2334,7 @@ function applySupFilter() {
 }
 
 function applyEmpFilter() {
-  const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+  const curMonth = curMonthCairo();
   const gov = document.getElementById('empFilterGov')?.value || '';
   const hosp = document.getElementById('empFilterHosp')?.value || '';
   const cat = document.getElementById('empFilterCat')?.value || '';
@@ -2912,7 +2918,7 @@ async function empToggleReview(id) {
   const data = window._empData || [];
   const rec = data.find(r => r.id === id);
   if (!rec) { showToast('❌ السجل غير موجود'); return; }
-  const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+  const curMonth = curMonthCairo();
   const isReviewed = rec.reviewed && rec.review_month === curMonth;
   if (isReviewed) { showToast('ℹ️ تمت المراجعة مسبقاً — لا يمكن إلغاؤها'); return; }
   // Validate before marking as reviewed
@@ -2943,7 +2949,7 @@ async function empToggleReview(id) {
 async function empReviewHospital(hospId) {
   try {
   const data = window._empData || [];
-  const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+  const curMonth = curMonthCairo();
   const employees = data.filter(d => d.hospital_id === hospId);
   if (!employees.length) { showToast('❌ لا يوجد موظفين لهذا المستشفى'); return; }
   const allReviewed = employees.every(e => e.reviewed && e.review_month === curMonth);
@@ -3479,7 +3485,7 @@ const isAdmin = me.user.id === 1;
         </div>
       </div>
     </div>
-    ${new Date().getDate() >= 25 ? '<div style="background:#fff3cd;color:#856404;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;text-align:center"><i class="fas fa-lock"></i> التعديل مغلق بعد يوم 25 — يتم عرض بيانات الشهر السابق</div>' : ''}
+    ${getCairoDate().getUTCDate() >= 25 ? '<div style="background:#fff3cd;color:#856404;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;text-align:center"><i class="fas fa-lock"></i> التعديل مغلق بعد يوم 25 — يتم عرض بيانات الشهر السابق</div>' : ''}
     <div id="archIndTable"></div>`;
 
     const allHospitals = await api('GET', '/hospitals');
@@ -4775,9 +4781,9 @@ async function renderBigIndicators() {
     </div>`;
 
     if (canEdit) {
-      const now = new Date();
-      const year = now.getFullYear();
-      const prevMonth = (now.getMonth() + 11) % 12; // month before current
+      const now = getCairoDate();
+      const year = now.getUTCFullYear();
+      const prevMonth = (now.getUTCMonth() + 11) % 12; // month before current
       el.innerHTML += `<div class="card" style="margin-bottom:16px;border-right:4px solid #dc3545">
         <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-edit"></i> إدخال مؤشرات تجميعيه</strong></div>
         <div class="card-body" style="padding:10px 16px">
@@ -4811,9 +4817,9 @@ async function renderBigIndicators() {
     window._biMe = me;
     setTimeout(function() { loadExistingBigIndicator(); }, 50);
     const body = document.getElementById('biBody');
-    const now = new Date();
-    const prevDbMonth = (now.getMonth() + 11) % 12 + 1;
-    const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const now = getCairoDate();
+    const prevDbMonth = (now.getUTCMonth() + 11) % 12 + 1;
+    const prevYear = now.getUTCMonth() === 0 ? now.getUTCFullYear() - 1 : now.getUTCFullYear();
     let displayedItems = items.filter(r => r.month === prevDbMonth && r.year === prevYear);
     if (isHospital) displayedItems = displayedItems.filter(r => r.hospital_id === user.hospitalId);
     else if (isBranchSup) displayedItems = displayedItems.filter(r => r.governorate === user.governorate);
@@ -4924,9 +4930,9 @@ async function renderSmallIndicators() {
     </div>`;
 
     if (canEdit) {
-      const now = new Date();
-      const year = now.getFullYear();
-      const prevMonth = (now.getMonth() + 11) % 12;
+      const now = getCairoDate();
+      const year = now.getUTCFullYear();
+      const prevMonth = (now.getUTCMonth() + 11) % 12;
       el.innerHTML += `<div class="card" style="margin-bottom:16px;border-right:4px solid #17a2b8">
         <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-edit"></i> إدخال مؤشرات تخزينيه</strong></div>
         <div class="card-body" style="padding:10px 16px">
@@ -4960,9 +4966,9 @@ async function renderSmallIndicators() {
     window._siMe = me;
     setTimeout(function() { loadExistingSmallIndicator(); }, 50);
     const body = document.getElementById('siBody');
-    const now = new Date();
-    const prevDbMonth = (now.getMonth() + 11) % 12 + 1;
-    const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const now = getCairoDate();
+    const prevDbMonth = (now.getUTCMonth() + 11) % 12 + 1;
+    const prevYear = now.getUTCMonth() === 0 ? now.getUTCFullYear() - 1 : now.getUTCFullYear();
     let displayedItems = items.filter(r => r.month === prevDbMonth && r.year === prevYear);
     if (isHospital) displayedItems = displayedItems.filter(r => r.hospital_id === user.hospitalId);
     else if (isBranchSup) displayedItems = displayedItems.filter(r => r.governorate === user.governorate);
@@ -5084,8 +5090,10 @@ async function renderMonthlyIndicators(presetType) {
   try {
     const hospitals = await api('GET', '/hospitals');
     window._monIndHospitals = hospitals;
-    const now = new Date();
-    now.setMonth(now.getMonth() - 1); // Always default to previous month
+    const now = getCairoDate();
+    const prevMonth = (now.getUTCMonth() + 11) % 12; // month before current
+    const prevMonthVal = prevMonth + 1;
+    const prevYear = now.getUTCMonth() === 0 ? now.getUTCFullYear() - 1 : now.getUTCFullYear();
     const canEdit = hasPerm('monthly_indicators', 'edit');
     const canDelete = hasPerm('monthly_indicators', 'delete');
     const govs = [...new Set(hospitals.map(h => h.governorate))];
@@ -5096,7 +5104,7 @@ async function renderMonthlyIndicators(presetType) {
       <div style="margin-bottom:16px"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
       <div class="page-title"><i class="fas fa-chart-line" style="color:#3f51b5"></i> مؤشرات شهرية</div>
       ${canEdit ? `
-      ${new Date().getDate() >= 25 ? '<div style="background:#fff3cd;color:#856404;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;text-align:center"><i class="fas fa-lock"></i> التعديل مغلق بعد يوم 25 — يتم عرض بيانات الشهر السابق</div>' : ''}
+      ${getCairoDate().getUTCDate() >= 25 ? '<div style="background:#fff3cd;color:#856404;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;text-align:center"><i class="fas fa-lock"></i> التعديل مغلق بعد يوم 25 — يتم عرض بيانات الشهر السابق</div>' : ''}
       <div class="card" style="margin-bottom:16px">
         <div class="card-header" style="padding:10px 16px;background:linear-gradient(135deg,#e8eaf6,#f3e5f5)"><strong><i class="fas fa-pen"></i> إدخال مؤشرات الأداء</strong></div>
         <div class="card-body" style="padding:10px 16px">
@@ -5108,10 +5116,10 @@ async function renderMonthlyIndicators(presetType) {
             <div class="form-group" style="margin:0"><label style="font-size:11px">بنك الدم</label>
               <select class="form-control" id="monIndHosp" data-change="onMonIndSelChange" style="min-width:180px;height:32px;font-size:12px"></select></div>
             <div class="form-group" style="margin:0"><label style="font-size:11px">السنة</label>
-              <input type="number" class="form-control" id="monIndYear" value="${now.getFullYear()}" data-change="onMonIndSelChange" style="width:90px;height:32px;font-size:12px"></div>
+              <input type="number" class="form-control" id="monIndYear" value="${prevYear}" data-change="onMonIndSelChange" style="width:90px;height:32px;font-size:12px"></div>
             <div class="form-group" style="margin:0"><label style="font-size:11px">الشهر</label>
               <select class="form-control" id="monIndMonth" data-change="onMonIndSelChange" style="width:110px;height:32px;font-size:12px">
-                ${MONTHS_AR.map((m, i) => `<option value="${i+1}" ${i === now.getMonth() ? 'selected' : ''}>${m}</option>`).join('')}
+                ${MONTHS_AR.map((m, i) => `<option value="${i+1}" ${i === prevMonth ? 'selected' : ''}>${m}</option>`).join('')}
               </select></div>
           </div>
           <div style="margin-bottom:8px;font-size:12px;color:#3f51b5;font-weight:600"><i class="fas fa-database"></i> بيانات المؤشرات</div>
@@ -5142,9 +5150,9 @@ async function renderMonthlyIndicators(presetType) {
         <select class="search-input" id="indHospitalFilter" data-change="renderMonthlyIndicators">
           ${isRestricted ? hospitals.filter(h => h.governorate === myGov).map(h => `<option value="${h.id}">${h.name}</option>`).join('') : '<option value="">كل المستشفيات</option>' + hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}
         </select>
-        <input type="number" class="search-input" id="indYearFilter" value="${now.getFullYear()}" style="width:80px" data-change="renderMonthlyIndicators">
+        <input type="number" class="search-input" id="indYearFilter" value="${prevYear}" style="width:80px" data-change="renderMonthlyIndicators">
         <select class="search-input" id="indMonthFilter" data-change="renderMonthlyIndicators">
-          ${MONTHS_AR.map((m, i) => `<option value="${i+1}" ${i === now.getMonth() ? 'selected' : ''}>${m}</option>`).join('')}
+          ${MONTHS_AR.map((m, i) => `<option value="${i+1}" ${i === prevMonth ? 'selected' : ''}>${m}</option>`).join('')}
         </select>
       </div>
       <div class="card"><div class="card-body table-scroll" id="indTableWrap"></div></div>`;
@@ -5582,8 +5590,8 @@ async function saveIndicatorCell(hospitalId, recordId, fieldKey, newValue, isCol
       const result = await api('PUT', '/monthly-indicators/' + recordId, body);
       savedData = result.data || {};
     } else {
-      const year = parseInt(document.getElementById('indYearFilter')?.value) || new Date().getFullYear();
-      const month = parseInt(document.getElementById('indMonthFilter')?.value) || new Date().getMonth() + 1;
+      const year = parseInt(document.getElementById('indYearFilter')?.value) || getCairoDate().getUTCFullYear();
+      const month = parseInt(document.getElementById('indMonthFilter')?.value) || getCairoDate().getUTCMonth() + 1;
       const data = {};
       if (!isColKey) data[fieldKey] = isNaN(newValue) ? newValue : (parseInt(newValue) || 0);
       const body = { hospitalId, year, month, data };
@@ -5667,11 +5675,11 @@ async function showAddIndModal(hospitalId, type) {
   hospitals.forEach(h => {
     html += `<option value="${h.id}" ${h.id == hospitalId ? 'selected' : ''}>${h.name} (${h.type || ''})</option>`;
   });
-  const now = new Date();
+  const now = getCairoDate();
   html += `</select></div>
-    <div class="form-group"><label>السنة</label><input type="number" class="form-control" id="fIndYear" value="${now.getFullYear()}"></div>
+    <div class="form-group"><label>السنة</label><input type="number" class="form-control" id="fIndYear" value="${now.getUTCFullYear()}"></div>
     <div class="form-group"><label>الشهر</label><select class="form-control" id="fIndMonth">
-      ${['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'].map((m, i) => `<option value="${i+1}" ${i === now.getMonth() ? 'selected' : ''}>${m}</option>`).join('')}
+      ${['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'].map((m, i) => `<option value="${i+1}" ${i === now.getUTCMonth() ? 'selected' : ''}>${m}</option>`).join('')}
     </select></div>
     `;
   if (type === 'child') {
@@ -6048,7 +6056,7 @@ function eqRenderTable(allTypes, hospitals) {
   // Build review + group summary (side by side)
   let topHtml = '';
   if (_canEdit) {
-    const curMonthCheck = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+    const curMonthCheck = curMonthCairo();
     const unreviewed = hospitals.filter(function(hr){ return !hr.reviewed || hr.review_month !== curMonthCheck; });
     const byGov = {};
     unreviewed.forEach(function(hr){
@@ -6333,7 +6341,7 @@ async function eqCreateNewEntry() {
 }
 
 async function eqReviewHospital(name) {
-  const curMonth = new Date().getFullYear() * 100 + new Date().getMonth() + 1;
+  const curMonth = curMonthCairo();
   try {
     await api('POST', '/equipment/hospitals', { name, reviewed: true, review_month: curMonth });
     showToast('✅ تمت مراجعة أجهزة ' + name);
