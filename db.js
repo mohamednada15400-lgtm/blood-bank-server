@@ -258,6 +258,12 @@ class Database {
 
     let dbUrl = process.env.DATABASE_URL;
 
+    // If DATABASE_URL points to localhost (Belmo default), ignore it and use pg_connection_string
+    if (dbUrl && (dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1') || dbUrl.includes('0.0.0.0'))) {
+      console.log('⚠️ Ignoring DATABASE_URL env var (localhost), will use pg_connection_string from db.json');
+      dbUrl = null;
+    }
+
     // Try connecting; if env var fails, fall back to pg_connection_string from db.json
     async function tryConnect(url) {
       const { Pool } = require('pg');
