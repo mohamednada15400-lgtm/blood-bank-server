@@ -123,6 +123,9 @@ async function migrate() {
       // Stringify JSON fields
       const jsonCols = ['blood_data','plasma_data','plat_data','blood_types','data','permissions','day_labels','staff_data','equipment','values'];
 
+      // Integer columns that may have non-numeric values
+      const intCols = ['shifts_count', 'under_inspection', 'platelets', 'cryo', 'formula', 'holiday_days', 'quantity'];
+
       let migrated = 0;
       for (let i = 0; i < srcRows.length; i += BATCH_SIZE) {
         const batch = srcRows.slice(i, i + BATCH_SIZE);
@@ -132,10 +135,23 @@ async function migrate() {
             if (jsonCols.includes(col) && typeof r[col] === 'object') {
               r[col] = JSON.stringify(r[col]);
             }
+            if (intCols.includes(col)) {
+              const v = r[col];
+              if (v === '' || v === null || v === undefined || (typeof v === 'string' && isNaN(Number(v)))) {
+                r[col] = 0;
+              } else if (typeof v === 'string') {
+                r[col] = parseInt(v, 10) || 0;
+              }
+            }
           }
           return r;
         });
-        await insertBatch(table.name, table.columns, processed);
+        // Filter out undefined id columns (let SERIAL auto-generate)
+        const cols = table.columns.filter(c => {
+          if (c === 'id') return processed.some(r => r[c] !== undefined && r[c] !== null);
+          return true;
+        });
+        await insertBatch(table.name, cols, processed);
         migrated += processed.length;
       }
       console.log(`   ✅ ${table.name}: ${migrated} rows migrated`);

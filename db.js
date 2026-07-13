@@ -257,7 +257,24 @@ class Database {
     if (this._initialized) return;
     this._initialized = true;
 
-    const dbUrl = process.env.DATABASE_URL;
+    let dbUrl = process.env.DATABASE_URL;
+
+    // If no env var, try reading pg_connection_string from db.json app_config
+    if (!dbUrl) {
+      try {
+        const cfgPath = path.join(DATA_DIR, 'db.json');
+        if (fs.existsSync(cfgPath)) {
+          const raw = fs.readFileSync(cfgPath, 'utf8');
+          const cfg = JSON.parse(raw);
+          if (cfg.app_config && cfg.app_config.pg_connection_string) {
+            dbUrl = cfg.app_config.pg_connection_string;
+            console.log('📦 DATABASE_URL loaded from db.json app_config');
+          }
+        }
+      } catch (e) {
+        console.log('⚠️ Could not read pg_connection_string from db.json:', e.message);
+      }
+    }
     if (dbUrl) {
       // PostgreSQL mode
       const { Pool } = require('pg');
