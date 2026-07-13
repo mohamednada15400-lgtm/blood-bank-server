@@ -47,6 +47,7 @@ async function startServer() {
 
   // Session store: Redis → PostgreSQL → memorystore (priority order)
   let pool;
+  let pgConnStr;
   const SESSION_CONFIG = {
     secret: SESSION_SECRET,
     resave: false,
@@ -65,10 +66,11 @@ async function startServer() {
       app.locals.redis = redisClient;
       console.log('✅ Redis session store (horizontal scaling ready)');
     }
-    const pgConnStr = db._activeConnectionString || process.env.DATABASE_URL;
+    pgConnStr = db._activeConnectionString || process.env.DATABASE_URL;
     if (isPG) { const { Pool } = require('pg'); pool = new Pool({ connectionString: pgConnStr, ssl: { rejectUnauthorized: false }, max: 20 }); }
   }
   if (!SESSION_CONFIG.store && isPG) {
+    pgConnStr = pgConnStr || db._activeConnectionString || process.env.DATABASE_URL;
     const pgSession = require('connect-pg-simple')(session);
     const { Pool } = require('pg');
     pool = new Pool({ connectionString: pgConnStr, ssl: { rejectUnauthorized: false }, max: 20 });
