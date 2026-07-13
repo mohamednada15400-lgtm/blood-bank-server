@@ -754,7 +754,7 @@ app.post('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'edit')
   const { hospitalId, date, time } = req.body;
   const user = req.session.user;
   if ((user.role === 'hospital' || user.role === 'hospital_manager') && user.hospitalId !== hospitalId) return res.status(403).json({ error: 'غير مصرح' });
-  const to = (await db.getConfig('time_offset')) || 2;
+  const to = (await db.getConfig('time_offset')) || 3;
   const d = date || getOffsetDate(to).toISOString().slice(0, 10);
   const t = time || getOffsetDate(to).toISOString().slice(11, 16);
   const def = EMPTY_REPORT();
@@ -1445,12 +1445,12 @@ app.post('/api/calculate-strategic', requireAuth(), requirePerm('strategic_stock
 // ============== App Config (الإعدادات العامة) ==============
 app.get('/api/config/time', requireAuth(), async (req, res) => {
   const timeOffset = await db.getConfig('time_offset');
-  res.json({ time_offset: timeOffset || 2 });
+  res.json({ time_offset: timeOffset || 3 });
 });
 
 app.post('/api/config/time', requireAuth(), requirePerm('time_config', 'edit'), async (req, res) => {
   const { time_offset } = req.body;
-  if (time_offset !== 1 && time_offset !== 2) return res.status(400).json({ error: 'القيمة يجب أن تكون 1 (شتوي) أو 2 (صيفي)' });
+  if (time_offset !== 1 && time_offset !== 3) return res.status(400).json({ error: 'القيمة يجب أن تكون 1 (شتوي) أو 3 (صيفي)' });
   await db.setConfig('time_offset', time_offset);
   res.json({ ok: true, time_offset });
 });
