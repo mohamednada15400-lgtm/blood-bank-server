@@ -62,7 +62,12 @@ function utcToLocal(timeStr) {
   if (!timeStr) return '';
   const p = timeStr.split(':');
   if (p.length < 2) return timeStr;
-  let h = parseInt(p[0]) + (_timeOffset === 2 ? 3 : 2);
+  const now = new Date();
+  const localMin = now.getHours() * 60 + now.getMinutes();
+  const utcMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+  let diffH = Math.round((localMin - utcMin) / 60);
+  if (diffH < 0) diffH += 24;
+  let h = parseInt(p[0]) + diffH;
   if (h >= 24) h -= 24;
   return String(h).padStart(2,'0') + ':' + p[1];
 }
@@ -877,7 +882,7 @@ async function showAddDailyModal() {
   const hospitals = await api('GET', '/hospitals');
   const d = fmtCairoDate('date');
   const now = getCairoDate();
-  const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const t = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
   let html = `<div class="form-group"><label>المستشفى</label><select class="form-control" id="addDailyHospital">
     ${hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>
     <div class="form-group"><label>التاريخ</label><input type="date" class="form-control" id="addDailyDate" value="${d}"></div>
