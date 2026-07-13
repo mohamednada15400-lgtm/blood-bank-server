@@ -62,7 +62,7 @@ function fmtCairoDate(fmt) {
 async function loadTimeConfig() {
   try {
     const cfg = await api('GET', '/config/time');
-    _timeOffset = cfg.time_offset || 3;
+    _timeOffset = cfg.time_offset || 2;
   } catch(e) {}
 }
 function updateClock() {
@@ -71,7 +71,7 @@ function updateClock() {
 }
 async function toggleTime() {
   const prev = _timeOffset;
-  _timeOffset = _timeOffset === 1 ? 3 : 1;
+  _timeOffset = _timeOffset === 1 ? 2 : 1;
   try {
     await api('POST', '/config/time', { time_offset: _timeOffset });
     updateClock();
@@ -96,11 +96,11 @@ api('GET', '/config/time').then(res => {
       <div class="card" style="max-width:500px;margin:20px auto">
         <div style="text-align:center;padding:24px">
           <div style="font-size:64px;color:var(--primary);margin-bottom:16px"><i class="fas fa-clock"></i></div>
-          <h3 style="margin-bottom:12px">التوقيت الحالي: <strong>${offset === 1 ? 'شتوي (+1)' : 'صيفي (+3)'}</strong></h3>
+          <h3 style="margin-bottom:12px">التوقيت الحالي: <strong>${offset === 1 ? 'شتوي (+1)' : 'صيفي (+2)'}</strong></h3>
           <p style="color:#999;margin-bottom:20px">اختر التوقيت المناسب (صيفي / شتوي)</p>
           <div style="display:flex;gap:12px;justify-content:center">
-            <button class="btn ${offset === 3 ? 'btn-primary' : 'btn-outline'}" data-click="setTimeConfig" data-args="3">
-              <i class="fas fa-sun"></i> توقيت صيفي (+3)
+            <button class="btn ${offset === 2 ? 'btn-primary' : 'btn-outline'}" data-click="setTimeConfig" data-args="2">
+              <i class="fas fa-sun"></i> توقيت صيفي (+2)
             </button>
             <button class="btn ${offset === 1 ? 'btn-primary' : 'btn-outline'}" data-click="setTimeConfig" data-args="1">
               <i class="fas fa-moon"></i> توقيت شتوي (+1)
