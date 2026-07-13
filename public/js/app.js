@@ -62,8 +62,7 @@ function utcToLocal(timeStr) {
   if (!timeStr) return '';
   const p = timeStr.split(':');
   if (p.length < 2) return timeStr;
-  const addH = _timeOffset === 2 ? 3 : 2;
-  let h = parseInt(p[0]) + addH;
+  let h = parseInt(p[0]) + _timeOffset;
   if (h >= 24) h -= 24;
   return String(h).padStart(2,'0') + ':' + p[1];
 }
@@ -75,8 +74,7 @@ async function loadTimeConfig() {
 }
 function fmtOffsetTime() {
   const d = new Date();
-  const addH = _timeOffset === 2 ? 3 : 2;
-  let h = d.getUTCHours() + addH;
+  let h = d.getUTCHours() + _timeOffset;
   if (h >= 24) h -= 24;
   const a = h >= 12 ? 'م' : 'ص';
   h = h % 12 || 12;
