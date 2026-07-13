@@ -71,7 +71,7 @@ function updateClock() {
 }
 async function toggleTime() {
   const prev = _timeOffset;
-  _timeOffset = _timeOffset === 2 ? 1 : 2;
+  _timeOffset = _timeOffset === 1 ? 3 : 1;
   try {
     await api('POST', '/config/time', { time_offset: _timeOffset });
     updateClock();
