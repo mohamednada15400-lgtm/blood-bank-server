@@ -65,12 +65,13 @@ async function startServer() {
       app.locals.redis = redisClient;
       console.log('✅ Redis session store (horizontal scaling ready)');
     }
-    if (isPG) { const { Pool } = require('pg'); pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, max: 20 }); }
+    const pgConnStr = db._activeConnectionString || process.env.DATABASE_URL;
+    if (isPG) { const { Pool } = require('pg'); pool = new Pool({ connectionString: pgConnStr, ssl: { rejectUnauthorized: false }, max: 20 }); }
   }
   if (!SESSION_CONFIG.store && isPG) {
     const pgSession = require('connect-pg-simple')(session);
     const { Pool } = require('pg');
-    pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, max: 20 });
+    pool = new Pool({ connectionString: pgConnStr, ssl: { rejectUnauthorized: false }, max: 20 });
     SESSION_CONFIG.store = new pgSession({ pool, tableName: 'user_sessions', createTableIfMissing: true });
     SESSION_CONFIG.cookie.secure = true;
   }
