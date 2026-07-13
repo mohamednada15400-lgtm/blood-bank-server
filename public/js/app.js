@@ -58,6 +58,14 @@ function fmtCairoDate(fmt) {
   if (fmt === 'full') return `${dayNames[d.getDay()]}، ${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
   return d.toLocaleDateString('ar-EG');
 }
+function utcToLocal(timeStr) {
+  if (!timeStr) return '';
+  const p = timeStr.split(':');
+  if (p.length < 2) return timeStr;
+  let h = parseInt(p[0]) + (_timeOffset === 2 ? 3 : 2);
+  if (h >= 24) h -= 24;
+  return String(h).padStart(2,'0') + ':' + p[1];
+}
 async function loadTimeConfig() {
   try {
     const cfg = await api('GET', '/config/time');
@@ -702,7 +710,7 @@ async function renderDailyStock() {
         if (idx === 0) h += `<td class="gov-cell" rowspan="${reps.length}">${gov}</td>`;
         const todayStr = fmtCairoDate('date');
         const dateStyle = r.date && r.date !== todayStr ? ' style="color:red;font-weight:700"' : '';
-        h += `<td>${r.hospital_name || ''}</td><td data-role="date"${dateStyle}>${r.date || ''}</td><td data-role="time">${r.time || ''}</td>`;
+        h += `<td>${r.hospital_name || ''}</td><td data-role="date"${dateStyle}>${r.date || ''}</td><td data-role="time">${utcToLocal(r.time)}</td>`;
         h += `<td class="${canEdit ? 'editable' : ''}" data-group="meta" data-sub="under_inspection" data-rid="${r.id}">${r.under_inspection || 0}</td>`;
         BTYPES.forEach(t => {
           const d = bd[t] || {};
@@ -957,7 +965,7 @@ async function renderStrategicStock() {
         ${idx === 0 ? `<td class="gov-cell" rowspan="${groups[gov].length * 3 + (showPerGovTotals ? 3 : 0)}">${gov}</td>` : ''}
         <td rowspan="3" style="vertical-align:middle;font-weight:600;font-size:12px">${h.name}</td>
         <td rowspan="3" style="vertical-align:middle;font-size:11px"${dateStyle}>${r ? (r.date || '') : ''}</td>
-        <td rowspan="3" style="vertical-align:middle;font-size:11px"${timeStyle}>${r ? (r.time || '') : ''}</td>
+        <td rowspan="3" style="vertical-align:middle;font-size:11px"${timeStyle}>${r ? utcToLocal(r.time) : ''}</td>
         <th scope="row" class="label-cur">الرصيد الحالي</th>
         ${curVals.map(v => `<td class="cell-cur">${v}</td>`).join('')}
         <td rowspan="3" class="cell-under">${r ? (r.under_inspection || 0) : 0}</td>
@@ -1309,7 +1317,7 @@ function renderTotalTable(data) {
       const isOld = r.date && r.date.slice(0,10) !== todayStr;
       const dateStyle = isOld ? ' style="color:red;font-weight:700"' : '';
       const timeStyle = isOld ? ' style="font-weight:700"' : '';
-      tbody += `<td class="hosp-name">${r.hospital_name || ''}</td><td class="date-cell"${dateStyle}>${r.date ? r.date.slice(5) : ''}</td><td${timeStyle}>${r.time || ''}</td><td>${r.under_inspection || 0}</td>`;
+      tbody += `<td class="hosp-name">${r.hospital_name || ''}</td><td class="date-cell"${dateStyle}>${r.date ? r.date.slice(5) : ''}</td><td${timeStyle}>${utcToLocal(r.time)}</td><td>${r.under_inspection || 0}</td>`;
       bAvail.forEach(v => tbody += `<td class="avail-cell">${v}</td>`);
       tbody += `<td class="total-cell">${bTotal}</td>`;
       pAvail.forEach(v => tbody += `<td class="avail-cell">${v}</td>`);
@@ -1638,7 +1646,7 @@ async function renderBranchStatement() {
         <td class="deriv-label">الدم</td>
         ${bVals.map(v => `<td>${v}</td>`).join('')}
         <td class="total-cell">${bSum}</td><td>${bOut}</td>
-        <td rowspan="2"${dtStyle}>${d}</td><td rowspan="2"${tmStyle}>${r.time || ''}</td>
+        <td rowspan="2"${dtStyle}>${d}</td><td rowspan="2"${tmStyle}>${utcToLocal(r.time)}</td>
       </tr>
       <tr>
         <td class="deriv-label">البلازما</td>
