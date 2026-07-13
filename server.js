@@ -737,7 +737,7 @@ const HOSP_ORDER = {
 
 app.get('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'view'), async (req, res) => {
   const user = req.session.user;
-  let sql = 'SELECT dr.*, h.name as hospital_name, h.governorate, h.type FROM daily_reports dr JOIN hospitals h ON h.id = dr.hospital_id WHERE 1=1';
+  let sql = "SELECT dr.id, dr.hospital_id, TO_CHAR(dr.date, 'YYYY-MM-DD') as date, dr.time, dr.under_inspection, dr.blood_data, dr.plasma_data, dr.platelets, dr.cryo, dr.license_type, dr.license_status, dr.plat_data, dr.user_id, h.name as hospital_name, h.governorate, h.type FROM daily_reports dr JOIN hospitals h ON h.id = dr.hospital_id WHERE 1=1";
   let params = [];
   const f = await filterByRole(user, sql, params);
   sql = f.sql; params = f.params;

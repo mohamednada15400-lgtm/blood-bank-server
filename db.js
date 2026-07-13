@@ -608,7 +608,7 @@ class Database {
 
   async getReadinessOccasions() {
     if (this.mode === 'pg') {
-      const r = await this.query('SELECT * FROM readiness_occasions ORDER BY id DESC');
+      const r = await this.query("SELECT id, name, TO_CHAR(date_from, 'YYYY-MM-DD') as date_from, TO_CHAR(date_to, 'YYYY-MM-DD') as date_to, day_labels, created_at, updated_at, user_id FROM readiness_occasions ORDER BY id DESC");
       return r.rows;
     }
     return jsondb ? (jsondb.data.readiness_occasions || []).sort((a, b) => b.id - a.id) : [];
