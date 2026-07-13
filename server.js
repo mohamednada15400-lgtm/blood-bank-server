@@ -66,28 +66,7 @@ async function startServer() {
       console.log('✅ Redis session store (horizontal scaling ready)');
     }
   }
-  // If DATABASE_URL points to localhost (Belmo default), read pg_connection_string from db.json
-  let sessionDbUrl = process.env.DATABASE_URL;
-  if (sessionDbUrl && (sessionDbUrl.includes('localhost') || sessionDbUrl.includes('127.0.0.1') || sessionDbUrl.includes('0.0.0.0'))) {
-    try {
-      const dbJsonPath = path.join(DATA_DIR, 'db.json');
-      if (fs.existsSync(dbJsonPath)) {
-        const raw = fs.readFileSync(dbJsonPath, 'utf8');
-        const cfg = JSON.parse(raw);
-        if (cfg.app_config && cfg.app_config.pg_connection_string) {
-          sessionDbUrl = cfg.app_config.pg_connection_string;
-          console.log('📦 Session store using pg_connection_string from db.json');
-        }
-      }
-    } catch (e) { console.warn('⚠️ Could not read pg_connection_string for session store:', e.message); }
-  }
-  if (!SESSION_CONFIG.store && isPG && sessionDbUrl) {
-    const pgSession = require('connect-pg-simple')(session);
-    const { Pool } = require('pg');
-    pool = new Pool({ connectionString: sessionDbUrl, ssl: { rejectUnauthorized: false }, max: 20 });
-    SESSION_CONFIG.store = new pgSession({ pool, tableName: 'user_sessions', createTableIfMissing: true });
-    SESSION_CONFIG.cookie.secure = true;
-  }
+  // Use MemoryStore (lightweight, no extra connections)
   if (!SESSION_CONFIG.store) {
     const MemoryStore = require('memorystore')(session);
     SESSION_CONFIG.store = new MemoryStore({ checkPeriod: 86400000 });
