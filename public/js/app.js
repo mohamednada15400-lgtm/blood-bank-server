@@ -869,7 +869,7 @@ function updateRow(row, bd, pd, bTot, pTot, under_inspection, date, time) {
   dateCell.textContent = date;
   dateCell.style.color = date && date.slice(0,10) !== todayStr ? 'red' : '';
   dateCell.style.fontWeight = date && date.slice(0,10) !== todayStr ? '700' : '';
-  row.querySelector('[data-role="time"]').textContent = time;
+  row.querySelector('[data-role="time"]').textContent = utcToLocal(time);
   row.querySelector('[data-group="meta"][data-sub="under_inspection"]').textContent = under_inspection;
   BTYPES.forEach(t => {
     const cell = row.querySelector(`[data-group="blood"][data-type="${t}"][data-sub="available"]`);
@@ -895,7 +895,9 @@ async function showAddDailyModal() {
   const hospitals = await api('GET', '/hospitals');
   const d = fmtCairoDate('date');
   const now = getCairoDate();
-  const t = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
+  const utcH = now.getUTCHours();
+  const adjH = (utcH + _timeOffset) % 24;
+  const t = `${String(adjH).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
   let html = `<div class="form-group"><label>المستشفى</label><select class="form-control" id="addDailyHospital">
     ${hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>
     <div class="form-group"><label>التاريخ</label><input type="date" class="form-control" id="addDailyDate" value="${d}"></div>
@@ -907,7 +909,14 @@ async function showAddDailyModal() {
 async function createDailyReport() {
   const hospitalId = parseInt(document.getElementById('addDailyHospital').value);
   const date = document.getElementById('addDailyDate').value;
-  const time = document.getElementById('addDailyTime').value.trim();
+  let time = document.getElementById('addDailyTime').value.trim();
+  // Convert form time (local) back to UTC for storage
+  const p = time.split(':');
+  if (p.length >= 2) {
+    let h = parseInt(p[0]) - _timeOffset;
+    if (h < 0) h += 24;
+    time = String(h).padStart(2,'0') + ':' + p[1];
+  }
   if (!hospitalId || !date) { showToast('⚠ اختر المستشفى والتاريخ'); return; }
   try {
     await api('POST', '/daily-reports', { hospitalId, date, time });
