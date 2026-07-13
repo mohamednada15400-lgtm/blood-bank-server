@@ -1,5 +1,5 @@
 ﻿const API_BASE = '/api';
-let _timeOffset = 3;
+let _timeOffset = 2;
 let _clockInterval = null;
 
 /* event delegation for CSP compliance */
@@ -61,7 +61,7 @@ function fmtCairoDate(fmt) {
 async function loadTimeConfig() {
   try {
     const cfg = await api('GET', '/config/time');
-    _timeOffset = cfg.time_offset || 3;
+    _timeOffset = cfg.time_offset || 2;
   } catch(e) {}
 }
 function updateClock() {
@@ -70,13 +70,13 @@ function updateClock() {
 }
 async function toggleTime() {
   const prev = _timeOffset;
-  _timeOffset = _timeOffset === 2 ? 3 : 2;
+  _timeOffset = _timeOffset === 1 ? 2 : 1;
   try {
     await api('POST', '/config/time', { time_offset: _timeOffset });
     updateClock();
     const dd = document.getElementById('dateDisplay');
     if (dd) dd.textContent = fmtCairoDate('full');
-    showToast('✅ تم تغيير التوقيت إلى ' + (_timeOffset === 2 ? 'شتوي' : 'صيفي'));
+    showToast('✅ تم تغيير التوقيت إلى ' + (_timeOffset === 1 ? 'شتوي' : 'صيفي'));
   } catch(e) {
     _timeOffset = prev;
     showToast('❌ فشل تغيير التوقيت');
@@ -95,14 +95,14 @@ api('GET', '/config/time').then(res => {
       <div class="card" style="max-width:500px;margin:20px auto">
         <div style="text-align:center;padding:24px">
           <div style="font-size:64px;color:var(--primary);margin-bottom:16px"><i class="fas fa-clock"></i></div>
-          <h3 style="margin-bottom:12px">التوقيت الحالي: <strong>${offset === 2 ? 'شتوي (+2)' : 'صيفي (+3)'}</strong></h3>
+          <h3 style="margin-bottom:12px">التوقيت الحالي: <strong>${offset === 1 ? 'شتوي (+1)' : 'صيفي (+2)'}</strong></h3>
           <p style="color:#999;margin-bottom:20px">اختر التوقيت المناسب (صيفي / شتوي)</p>
           <div style="display:flex;gap:12px;justify-content:center">
-            <button class="btn ${offset === 3 ? 'btn-primary' : 'btn-outline'}" data-click="setTimeConfig" data-args="3">
-              <i class="fas fa-sun"></i> توقيت صيفي (+3)
-            </button>
             <button class="btn ${offset === 2 ? 'btn-primary' : 'btn-outline'}" data-click="setTimeConfig" data-args="2">
-              <i class="fas fa-moon"></i> توقيت شتوي (+2)
+              <i class="fas fa-sun"></i> توقيت صيفي (+2)
+            </button>
+            <button class="btn ${offset === 1 ? 'btn-primary' : 'btn-outline'}" data-click="setTimeConfig" data-args="1">
+              <i class="fas fa-moon"></i> توقيت شتوي (+1)
             </button>
           </div>
           <div style="margin-top:24px;padding:12px;background:var(--bg-card);border-radius:8px">
@@ -130,7 +130,7 @@ async function setTimeConfig(newOffset) {
     renderTimeConfig();
     updateClock();
     document.getElementById('dateDisplay').textContent = fmtCairoDate('full');
-    showToast('✅ تم تغيير التوقيت إلى ' + (newOffset === 2 ? 'شتوي' : 'صيفي'));
+    showToast('✅ تم تغيير التوقيت إلى ' + (newOffset === 1 ? 'شتوي' : 'صيفي'));
   } catch(e) {
     showToast('❌ فشل تغيير التوقيت');
   }
@@ -8015,7 +8015,7 @@ function showAbout() {
     <p style="margin-bottom:16px">اضغط على أيقونة القمر <i class="fas fa-moon"></i> في الشريط العلوي لتفعيل/إلغاء الوضع الليلي. الوضع الليلي يغير ألوان الواجهة إلى ألوان داكنة مريحة للعين في الإضاءة المنخفضة. يتم حفظ التفضيل في المتصفح (localStorage) ويستعيد تلقائياً عند تسجيل الدخول مرة أخرى.</p>
 
     <h4 style="color:#e65100;margin-bottom:8px">22. التوقيت الصيفي/الشتوي</h4>
-    <p style="margin-bottom:16px">زر الساعة <i class="fas fa-clock"></i> في الشريط العلوي (يظهر للمدير فقط) يبدّل بين التوقيت الصيفي (+3 ساعة) والتوقيت الشتوي (+2 ساعة). يتم حفظ الإعداد في قاعدة البيانات ويؤثر على جميع المستخدمين.</p>
+    <p style="margin-bottom:16px">زر الساعة <i class="fas fa-clock"></i> في الشريط العلوي (يظهر للمدير فقط) يبدّل بين التوقيت الصيفي (+2 ساعة) والتوقيت الشتوي (+1 ساعة). يتم حفظ الإعداد في قاعدة البيانات ويؤثر على جميع المستخدمين.</p>
 
     <h4 style="color:#e65100;margin-bottom:8px">23. الملف الشخصي (My Profile)</h4>
     <p style="margin-bottom:16px">اضغط على أيقونة المستخدم <i class="fas fa-user-circle"></i> في الشريط العلوي. من هنا يمكنك: تعديل اسمك المعروض، تغيير كلمة المرور (تحتاج إدخال كلمة المرور الحالية أولاً).</p>
