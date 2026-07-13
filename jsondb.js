@@ -263,9 +263,13 @@ class JSONDB {
   }
 
   _write() {
-    const dir = path.dirname(this.filePath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf8');
+    try {
+      const dir = path.dirname(this.filePath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf8');
+    } catch(e) {
+      console.error('⚠ JSONDB write error (read-only FS?):', e.message);
+    }
     if (this._saveTimer) this._saveTimer._pending = false;
   }
 
