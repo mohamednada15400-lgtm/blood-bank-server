@@ -73,9 +73,18 @@ async function loadTimeConfig() {
     _timeOffset = cfg.time_offset || 2;
   } catch(e) {}
 }
+function fmtOffsetTime() {
+  const d = new Date();
+  const addH = _timeOffset === 2 ? 3 : 2;
+  let h = d.getUTCHours() + addH;
+  if (h >= 24) h -= 24;
+  const a = h >= 12 ? 'م' : 'ص';
+  h = h % 12 || 12;
+  return String(h).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + a;
+}
 function updateClock() {
   const el = document.getElementById('clockDisplay');
-  if (el) el.textContent = fmtCairoDate('time');
+  if (el) el.textContent = fmtOffsetTime();
 }
 async function toggleTime() {
   const prev = _timeOffset;
@@ -119,7 +128,7 @@ api('GET', '/config/time').then(res => {
           </div>
           <div style="margin-top:24px;padding:12px;background:var(--bg-card);border-radius:8px">
             <div style="font-size:13px;color:var(--text-muted)">
-              <i class="fas fa-info-circle"></i> الوقت الحالي: <strong id="tcClock">${fmtCairoDate('time')}</strong>
+              <i class="fas fa-info-circle"></i> الوقت الحالي: <strong id="tcClock">${fmtOffsetTime()}</strong>
               — التاريخ: <strong id="tcDate">${fmtCairoDate('full')}</strong>
             </div>
           </div>
@@ -127,7 +136,7 @@ api('GET', '/config/time').then(res => {
       </div>`;
     if (_clockInterval) clearInterval(_clockInterval);
     _clockInterval = setInterval(() => {
-      const c = document.getElementById('tcClock'); if (c) c.textContent = fmtCairoDate('time');
+      const c = document.getElementById('tcClock'); if (c) c.textContent = fmtOffsetTime();
       const d = document.getElementById('tcDate'); if (d) d.textContent = fmtCairoDate('full');
     }, 1000);
   }).catch(() => {
