@@ -6,7 +6,7 @@ COPY . .
 
 FROM node:20-alpine
 WORKDIR /app
-RUN apk add --no-cache tzdata su-exec
+RUN apk add --no-cache tzdata su-exec curl
 ENV TZ=Africa/Cairo
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app .
