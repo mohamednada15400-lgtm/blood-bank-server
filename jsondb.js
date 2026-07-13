@@ -265,9 +265,7 @@ class JSONDB {
   _write() {
     const dir = path.dirname(this.filePath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    const tmp = this.filePath + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(this.data, null, 2), 'utf8');
-    fs.renameSync(tmp, this.filePath);
+    fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf8');
     if (this._saveTimer) this._saveTimer._pending = false;
   }
 
