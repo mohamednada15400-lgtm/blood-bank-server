@@ -13,29 +13,41 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'blood-bank-secret-key-2026';
 const BASE_DIR = process.pkg ? path.dirname(process.execPath) : __dirname;
-const DATA_DIR = process.env.DATA_DIR || path.join(BASE_DIR, 'data');
 const os = require('os');
+function getWritableDir() {
+  const preferred = process.env.DATA_DIR || path.join(BASE_DIR, 'data');
+  try {
+    const test = path.join(preferred, '.write-test');
+    fs.writeFileSync(test, 'ok', 'utf8');
+    fs.unlinkSync(test);
+    return preferred;
+  } catch {
+    // preferred path not writable → use /tmp
+    const fallback = path.join(os.tmpdir(), 'bloodbank-data');
+    try { fs.mkdirSync(fallback, { recursive: true }); } catch {}
+    return fallback;
+  }
+}
+const DATA_DIR = getWritableDir();
 // Consistent error sanitization: secure by default — hide details unless SHOW_ERROR_DETAILS=true
 const showError = process.env.SHOW_ERROR_DETAILS === 'true';
 function errMsg(e) { return e.message; }
 function getLocalIP() { const ifs = os.networkInterfaces(); for (const k in ifs) { for (const i of ifs[k]) { if (i.family === 'IPv4' && !i.internal) return i.address; } } return '127.0.0.1'; }
 
-// Cloud deploy: copy initial db.json if volume is empty or has default data
-if (DATA_DIR !== path.join(BASE_DIR, 'data')) {
-  const srcDb = path.join(BASE_DIR, 'data', 'db.json');
-  const dstDb = path.join(DATA_DIR, 'db.json');
-  try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {}
-  let needsCopy = !fs.existsSync(dstDb);
-  if (!needsCopy) {
-    try {
-      const dstData = JSON.parse(fs.readFileSync(dstDb, 'utf8'));
-      if (!dstData.users || dstData.users.length < 10) needsCopy = true;
-    } catch { needsCopy = true; }
-  }
-  if (needsCopy && fs.existsSync(srcDb)) {
-    fs.copyFileSync(srcDb, dstDb);
-    console.log('📦 Deployed initial db.json to', dstDb);
-  }
+// Copy initial db.json from seed to writable directory if needed
+const srcDb = path.join(BASE_DIR, 'data', 'db.json');
+const dstDb = path.join(DATA_DIR, 'db.json');
+try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {}
+let needsCopy = !fs.existsSync(dstDb);
+if (!needsCopy) {
+  try {
+    const dstData = JSON.parse(fs.readFileSync(dstDb, 'utf8'));
+    if (!dstData.users || dstData.users.length < 10) needsCopy = true;
+  } catch { needsCopy = true; }
+}
+if (needsCopy && fs.existsSync(srcDb)) {
+  fs.copyFileSync(srcDb, dstDb);
+  console.log('📦 Deployed initial db.json from seed to', dstDb);
 }
 
 const db = require('./db');
