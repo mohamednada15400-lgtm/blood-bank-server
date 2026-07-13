@@ -1,4 +1,4 @@
-﻿const API_BASE = '/api';
+const API_BASE = '/api';
 let _timeOffset = 2;
 let _clockInterval = null;
 
@@ -283,7 +283,6 @@ function initApp(u) {
   } else {
     document.getElementById('userBadge').textContent = u.name + ' (' + (roleLabels[u.role] || u.role) + ')';
   }
-  loadTimeConfig();
   document.getElementById('dateDisplay').textContent = fmtCairoDate('full');
   if (_clockInterval) clearInterval(_clockInterval);
   _clockInterval = setInterval(updateClock, 10000);
