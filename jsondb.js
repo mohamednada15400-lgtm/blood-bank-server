@@ -30,7 +30,10 @@ class JSONDB {
 
   init() {
     try {
-      this.data = JSON.parse(fs.readFileSync(this.filePath, 'utf8'));
+      let json = fs.readFileSync(this.filePath, 'utf8');
+      // strip BOM (PowerShell Set-Content adds it)
+      if (json.charCodeAt(0) === 0xFEFF) json = json.slice(1);
+      this.data = JSON.parse(json);
     } catch {
       this.data = this._getDefaultData();
       this._save();
