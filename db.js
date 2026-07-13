@@ -285,7 +285,6 @@ class Database {
 
     async function connectPG(url) {
       pool = await tryConnect(url);
-      this._activeConnectionString = url;
       pool.options.max = 20;
       pool.options.idleTimeoutMillis = 30000;
       this.mode = 'pg';
