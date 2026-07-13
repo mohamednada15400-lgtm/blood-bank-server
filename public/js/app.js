@@ -58,31 +58,9 @@ function fmtCairoDate(fmt) {
   if (fmt === 'full') return `${dayNames[d.getDay()]}، ${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
   return d.toLocaleDateString('ar-EG');
 }
-function utcToLocal(timeStr) {
-  if (!timeStr) return '';
-  const p = timeStr.split(':');
-  if (p.length < 2) return timeStr;
-  let h = parseInt(p[0]) + _timeOffset;
-  if (h >= 24) h -= 24;
-  return String(h).padStart(2,'0') + ':' + p[1];
-}
-async function loadTimeConfig() {
-  try {
-    const cfg = await api('GET', '/config/time');
-    _timeOffset = cfg.time_offset || 2;
-  } catch(e) {}
-}
-function fmtOffsetTime() {
-  const d = new Date();
-  let h = d.getUTCHours() + _timeOffset;
-  if (h >= 24) h -= 24;
-  const a = h >= 12 ? 'م' : 'ص';
-  h = h % 12 || 12;
-  return String(h).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + a;
-}
 function updateClock() {
   const el = document.getElementById('clockDisplay');
-  if (el) el.textContent = fmtOffsetTime();
+  if (el) el.textContent = fmtCairoDate('time');
 }
 async function toggleTime() {
   const prev = _timeOffset;
@@ -93,9 +71,6 @@ async function toggleTime() {
     const dd = document.getElementById('dateDisplay');
     if (dd) dd.textContent = fmtCairoDate('full');
     showToast('✅ تم تغيير التوقيت إلى ' + (_timeOffset === 1 ? 'شتوي' : 'صيفي'));
-    if (_prevPageName && typeof window[_prevPageName] === 'function') {
-      setTimeout(() => { window[_prevPageName](); }, 100);
-    }
   } catch(e) {
     _timeOffset = prev;
     showToast('❌ فشل تغيير التوقيت');
@@ -126,7 +101,7 @@ api('GET', '/config/time').then(res => {
           </div>
           <div style="margin-top:24px;padding:12px;background:var(--bg-card);border-radius:8px">
             <div style="font-size:13px;color:var(--text-muted)">
-              <i class="fas fa-info-circle"></i> الوقت الحالي: <strong id="tcClock">${fmtOffsetTime()}</strong>
+              <i class="fas fa-info-circle"></i> الوقت الحالي: <strong id="tcClock">${fmtCairoDate('time')}</strong>
               — التاريخ: <strong id="tcDate">${fmtCairoDate('full')}</strong>
             </div>
           </div>
@@ -134,7 +109,7 @@ api('GET', '/config/time').then(res => {
       </div>`;
     if (_clockInterval) clearInterval(_clockInterval);
     _clockInterval = setInterval(() => {
-      const c = document.getElementById('tcClock'); if (c) c.textContent = fmtOffsetTime();
+      const c = document.getElementById('tcClock'); if (c) c.textContent = fmtCairoDate('time');
       const d = document.getElementById('tcDate'); if (d) d.textContent = fmtCairoDate('full');
     }, 1000);
   }).catch(() => {
@@ -151,10 +126,6 @@ async function setTimeConfig(newOffset) {
     const dd = document.getElementById('dateDisplay');
     if (dd) dd.textContent = fmtCairoDate('full');
     showToast('✅ تم تغيير التوقيت إلى ' + (newOffset === 1 ? 'شتوي' : 'صيفي'));
-    // Re-render previous page so times update immediately
-    if (_prevPageName && typeof window[_prevPageName] === 'function') {
-      setTimeout(() => { window[_prevPageName](); }, 100);
-    }
   } catch(e) {
     showToast('❌ فشل تغيير التوقيت');
   }
@@ -728,7 +699,7 @@ async function renderDailyStock() {
         if (idx === 0) h += `<td class="gov-cell" rowspan="${reps.length}">${gov}</td>`;
         const todayStr = fmtCairoDate('date');
         const dateStyle = r.date && r.date !== todayStr ? ' style="color:red;font-weight:700"' : '';
-        h += `<td>${r.hospital_name || ''}</td><td data-role="date"${dateStyle}>${r.date || ''}</td><td data-role="time">${utcToLocal(r.time)}</td>`;
+        h += `<td>${r.hospital_name || ''}</td><td data-role="date"${dateStyle}>${r.date || ''}</td><td data-role="time">${r.time || ''}</td>`;
         h += `<td class="${canEdit ? 'editable' : ''}" data-group="meta" data-sub="under_inspection" data-rid="${r.id}">${r.under_inspection || 0}</td>`;
         BTYPES.forEach(t => {
           const d = bd[t] || {};
@@ -851,7 +822,7 @@ async function collectGroupData(table, rid) {
   PTYPES.forEach(t => { pTot.previous += pd[t].previous; pTot.incoming += pd[t].incoming; pTot.outgoing += pd[t].outgoing; pTot.disposal += pd[t].disposal; pTot.available += pd[t].available; });
   const date = fmtCairoDate('date');
   const now = getCairoDate();
-  const time = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   try {
     const body = { blood: bd, plasma: pd, underInspection: under_inspection, date, time };
     if (platelets !== null) body.platelets = platelets;
@@ -869,7 +840,7 @@ function updateRow(row, bd, pd, bTot, pTot, under_inspection, date, time) {
   dateCell.textContent = date;
   dateCell.style.color = date && date.slice(0,10) !== todayStr ? 'red' : '';
   dateCell.style.fontWeight = date && date.slice(0,10) !== todayStr ? '700' : '';
-  row.querySelector('[data-role="time"]').textContent = utcToLocal(time);
+  row.querySelector('[data-role="time"]').textContent = time;
   row.querySelector('[data-group="meta"][data-sub="under_inspection"]').textContent = under_inspection;
   BTYPES.forEach(t => {
     const cell = row.querySelector(`[data-group="blood"][data-type="${t}"][data-sub="available"]`);
@@ -895,9 +866,7 @@ async function showAddDailyModal() {
   const hospitals = await api('GET', '/hospitals');
   const d = fmtCairoDate('date');
   const now = getCairoDate();
-  const utcH = now.getUTCHours();
-  const adjH = (utcH + _timeOffset) % 24;
-  const t = `${String(adjH).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
+  const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   let html = `<div class="form-group"><label>المستشفى</label><select class="form-control" id="addDailyHospital">
     ${hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>
     <div class="form-group"><label>التاريخ</label><input type="date" class="form-control" id="addDailyDate" value="${d}"></div>
@@ -909,14 +878,7 @@ async function showAddDailyModal() {
 async function createDailyReport() {
   const hospitalId = parseInt(document.getElementById('addDailyHospital').value);
   const date = document.getElementById('addDailyDate').value;
-  let time = document.getElementById('addDailyTime').value.trim();
-  // Convert form time (local) back to UTC for storage
-  const p = time.split(':');
-  if (p.length >= 2) {
-    let h = parseInt(p[0]) - _timeOffset;
-    if (h < 0) h += 24;
-    time = String(h).padStart(2,'0') + ':' + p[1];
-  }
+  const time = document.getElementById('addDailyTime').value.trim();
   if (!hospitalId || !date) { showToast('⚠ اختر المستشفى والتاريخ'); return; }
   try {
     await api('POST', '/daily-reports', { hospitalId, date, time });
@@ -992,7 +954,7 @@ async function renderStrategicStock() {
         ${idx === 0 ? `<td class="gov-cell" rowspan="${groups[gov].length * 3 + (showPerGovTotals ? 3 : 0)}">${gov}</td>` : ''}
         <td rowspan="3" style="vertical-align:middle;font-weight:600;font-size:12px">${h.name}</td>
         <td rowspan="3" style="vertical-align:middle;font-size:11px"${dateStyle}>${r ? (r.date || '') : ''}</td>
-        <td rowspan="3" style="vertical-align:middle;font-size:11px"${timeStyle}>${r ? utcToLocal(r.time) : ''}</td>
+        <td rowspan="3" style="vertical-align:middle;font-size:11px"${timeStyle}>${r ? (r.time || '') : ''}</td>
         <th scope="row" class="label-cur">الرصيد الحالي</th>
         ${curVals.map(v => `<td class="cell-cur">${v}</td>`).join('')}
         <td rowspan="3" class="cell-under">${r ? (r.under_inspection || 0) : 0}</td>
@@ -1344,7 +1306,7 @@ function renderTotalTable(data) {
       const isOld = r.date && r.date.slice(0,10) !== todayStr;
       const dateStyle = isOld ? ' style="color:red;font-weight:700"' : '';
       const timeStyle = isOld ? ' style="font-weight:700"' : '';
-      tbody += `<td class="hosp-name">${r.hospital_name || ''}</td><td class="date-cell"${dateStyle}>${r.date ? r.date.slice(5) : ''}</td><td${timeStyle}>${utcToLocal(r.time)}</td><td>${r.under_inspection || 0}</td>`;
+      tbody += `<td class="hosp-name">${r.hospital_name || ''}</td><td class="date-cell"${dateStyle}>${r.date ? r.date.slice(5) : ''}</td><td${timeStyle}>${r.time || ''}</td><td>${r.under_inspection || 0}</td>`;
       bAvail.forEach(v => tbody += `<td class="avail-cell">${v}</td>`);
       tbody += `<td class="total-cell">${bTotal}</td>`;
       pAvail.forEach(v => tbody += `<td class="avail-cell">${v}</td>`);
@@ -1673,7 +1635,7 @@ async function renderBranchStatement() {
         <td class="deriv-label">الدم</td>
         ${bVals.map(v => `<td>${v}</td>`).join('')}
         <td class="total-cell">${bSum}</td><td>${bOut}</td>
-        <td rowspan="2"${dtStyle}>${d}</td><td rowspan="2"${tmStyle}>${utcToLocal(r.time)}</td>
+        <td rowspan="2"${dtStyle}>${d}</td><td rowspan="2"${tmStyle}>${r.time || ''}</td>
       </tr>
       <tr>
         <td class="deriv-label">البلازما</td>
