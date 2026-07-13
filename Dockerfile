@@ -6,7 +6,7 @@ COPY . .
 
 FROM node:20-alpine
 WORKDIR /app
-RUN apk add --no-cache tzdata
+RUN apk add --no-cache tzdata su-exec
 ENV TZ=Africa/Cairo
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app .
@@ -17,8 +17,6 @@ RUN mkdir -p /app/seed && \
     rm -rf /app/data && \
     chown -R node:node /app/seed
 
-USER node
-
 ENV NODE_ENV=production
 ENV DATA_DIR=/data
 EXPOSE 3001
@@ -26,4 +24,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
 
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node", "--max-old-space-size=256", "--gc-interval=100", "server.js"]

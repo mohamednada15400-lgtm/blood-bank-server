@@ -5,6 +5,9 @@ SEED_FILE="/app/seed/db.json"
 OLD_DATA_FILE="/app/data/db.json"
 DATA_FILE="$DATA_DIR/db.json"
 
+# Fix volume permissions for node user
+chown node:node "$DATA_DIR" 2>/dev/null || true
+
 mkdir -p "$DATA_DIR"
 
 # Migration from old DATA_DIR (/app/data) to new DATA_DIR (/data)
@@ -34,4 +37,5 @@ if [ -f "$DATA_FILE" ]; then
   fi
 fi
 
-exec node /app/server.js
+# Drop to node user and exec the CMD
+exec su-exec node "$@"
