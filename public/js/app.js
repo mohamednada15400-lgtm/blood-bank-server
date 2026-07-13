@@ -86,6 +86,9 @@ async function toggleTime() {
     const dd = document.getElementById('dateDisplay');
     if (dd) dd.textContent = fmtCairoDate('full');
     showToast('✅ تم تغيير التوقيت إلى ' + (_timeOffset === 1 ? 'شتوي' : 'صيفي'));
+    if (_prevPageName && typeof window[_prevPageName] === 'function') {
+      setTimeout(() => { window[_prevPageName](); }, 100);
+    }
   } catch(e) {
     _timeOffset = prev;
     showToast('❌ فشل تغيير التوقيت');
@@ -138,8 +141,13 @@ async function setTimeConfig(newOffset) {
     await api('POST', '/config/time', { time_offset: newOffset });
     renderTimeConfig();
     updateClock();
-    document.getElementById('dateDisplay').textContent = fmtCairoDate('full');
+    const dd = document.getElementById('dateDisplay');
+    if (dd) dd.textContent = fmtCairoDate('full');
     showToast('✅ تم تغيير التوقيت إلى ' + (newOffset === 1 ? 'شتوي' : 'صيفي'));
+    // Re-render previous page so times update immediately
+    if (_prevPageName && typeof window[_prevPageName] === 'function') {
+      setTimeout(() => { window[_prevPageName](); }, 100);
+    }
   } catch(e) {
     showToast('❌ فشل تغيير التوقيت');
   }
@@ -424,7 +432,9 @@ function goBack() {
   else showMenu();
 }
 
+let _prevPageName = null;
 function navigateTo(pageName, catKey, subKey) {
+  if (pageName !== 'renderTimeConfig') _prevPageName = pageName;
   const cat = MENU_CATS.find(c => c.key === catKey);
   if (cat && cat.page) {
     pushNav(showMenu);
