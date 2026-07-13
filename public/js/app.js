@@ -825,7 +825,7 @@ async function collectGroupData(table, rid) {
   PTYPES.forEach(t => { pTot.previous += pd[t].previous; pTot.incoming += pd[t].incoming; pTot.outgoing += pd[t].outgoing; pTot.disposal += pd[t].disposal; pTot.available += pd[t].available; });
   const date = fmtCairoDate('date');
   const now = getCairoDate();
-  const time = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   try {
     const body = { blood: bd, plasma: pd, underInspection: under_inspection, date, time };
     if (platelets !== null) body.platelets = platelets;
@@ -869,7 +869,7 @@ async function showAddDailyModal() {
   const hospitals = await api('GET', '/hospitals');
   const d = fmtCairoDate('date');
   const now = getCairoDate();
-  const t = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
+  const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   let html = `<div class="form-group"><label>المستشفى</label><select class="form-control" id="addDailyHospital">
     ${hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>
     <div class="form-group"><label>التاريخ</label><input type="date" class="form-control" id="addDailyDate" value="${d}"></div>
