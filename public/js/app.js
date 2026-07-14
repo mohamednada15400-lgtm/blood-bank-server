@@ -6866,7 +6866,7 @@ function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
         const dailyRows = dailyRes.rows || dailyRes || [];
         const myReport = dailyRows.filter(r => r.hospital_id === hospId).sort((a,b) => (b.id||0)-(a.id||0))[0];
         if (myReport) {
-          const bd = (()=>{try{return JSON.parse(myReport.blood_data);}catch(e){return {};}})();
+          const bd = tryParse(myReport.blood_data) || {};
           stockHtml = BTYPES.map(t => `<div style="font-size:10px;line-height:1.4"><strong>${t}:</strong> ${calcAvail(bd,t)}</div>`).join('');
         }
       } catch (e) { /* ignore */ }
@@ -7010,7 +7010,9 @@ function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
           <div class="card" style="margin-bottom:8px">
             <div class="card-header"><h4><i class="fas fa-users"></i> القوى العاملة</h4>
 ${!window._rdnEmpList || !window._rdnEmpList.length ? `<div style="padding:12px;margin:8px;background:#fff3cd;color:#856404;border-radius:6px;font-size:12px;text-align:center">
-  <i class="fas fa-exclamation-triangle"></i> لم تجد الأسماء في القائمة؟ قم بإضافتها أولاً في <strong>شيت العاملين</strong> من القائمة الرئيسية
+  <i class="fas fa-exclamation-triangle"></i> لم تجد الأسماء في القائمة؟ قم بإضافتها أولاً في
+  <button class="btn btn-sm btn-warning" style="font-weight:700;margin:2px 4px" data-click="navigateTo" data-args="'renderEmployeeStatement','other'">شيت العاملين</button>
+  من القائمة الرئيسية
 </div>` : ''}
             </div>
             <div class="card-body" style="padding:8px;overflow-x:auto">
