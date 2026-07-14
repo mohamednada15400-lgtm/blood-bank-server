@@ -9,6 +9,7 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
 const app = express();
 const PORT = process.env.PORT || 3001;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'blood-bank-secret-key-2026';
@@ -85,6 +86,11 @@ async function startServer() {
   }
   query = async (text, params) => { return isPG && pool ? (await pool.query(text, params)) : db.query(text, params); };
   
+  // Warm-up query: establish first connection before handling requests
+  if (isPG) {
+    db.query('SELECT 1').then(() => console.log('✅ PG warm-up complete')).catch(e => console.log('⚠️ PG warm-up:', e.message));
+  }
+  
   // Simple in-memory cache for read-heavy endpoints (cleared on writes)
   const cache = { _data: {}, _timestamps: {} };
   const CACHE_TTL = 5000;
@@ -105,13 +111,16 @@ async function startServer() {
   app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
-// HTTPS redirect (when behind Cloudflare or proxy)
+// HTTPS redirect (when behind Cloudflare or proxy — only if forwarded-proto is set)
 app.use((req, res, next) => {
-  if (req.headers['x-forwarded-proto'] === 'http' || (isPG && !req.secure)) {
+  if (req.headers['x-forwarded-proto'] === 'http') {
     return res.redirect(301, 'https://' + req.headers.host + req.originalUrl);
   }
   next();
 });
+
+// Morgan request logging
+app.use(morgan('[:date[iso]] :method :url :status :res[content-length] - :response-time ms'));
 
 // Nonce generator for CSP (used by template engine)
 app.use((req, res, next) => { res.locals.nonce = crypto.randomBytes(16).toString('base64'); next(); });
@@ -171,6 +180,51 @@ app.use((req, res, next) => {
 
 // Compression for all responses (gzip)
 app.use(compression({ level: 6, threshold: 512 }));
+
+// Server-side XSS sanitization — strips HTML tags from all string inputs
+function sanitizeStr(v) {
+  if (typeof v !== 'string') return v;
+  return v.replace(/<[^>]*>/g, '').replace(/javascript\s*:/gi, '').replace(/on\w+\s*=/gi, '');
+}
+function sanitizeBody(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  for (const k of Object.keys(obj)) {
+    if (typeof obj[k] === 'string') obj[k] = sanitizeStr(obj[k]);
+    else if (Array.isArray(obj[k])) obj[k] = obj[k].map(sanitizeBody);
+    else if (obj[k] && typeof obj[k] === 'object') sanitizeBody(obj[k]);
+  }
+  return obj;
+}
+app.use((req, res, next) => {
+  if (['POST','PUT','PATCH'].includes(req.method) && req.body) sanitizeBody(req.body);
+  next();
+});
+
+// Account lockout: 5 failed attempts → 15 min ban (per IP)
+const loginAttempts = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of loginAttempts) {
+    if (now - data.lockedUntil > 0 && data.lockedUntil > 0) loginAttempts.delete(ip);
+    if (now - data.lastAttempt > 900000) loginAttempts.delete(ip);
+  }
+}, 60000); // cleanup every 60s
+function checkLockout(ip) {
+  const entry = loginAttempts.get(ip);
+  if (!entry) return false;
+  if (entry.lockedUntil && Date.now() < entry.lockedUntil) return true;
+  if (entry.lockedUntil) { loginAttempts.delete(ip); return false; }
+  return false;
+}
+function recordFailedAttempt(ip) {
+  if (!ip) return;
+  const entry = loginAttempts.get(ip) || { count: 0, lastAttempt: 0, lockedUntil: 0 };
+  entry.count++;
+  entry.lastAttempt = Date.now();
+  if (entry.count >= 5) entry.lockedUntil = Date.now() + 15 * 60 * 1000; // 15 min
+  loginAttempts.set(ip, entry);
+}
+function clearLockout(ip) { loginAttempts.delete(ip); }
 
 // Body parsing with size limits
 function safeInt(v) { const n = parseInt(v); if (isNaN(n)) return null; return n; }
@@ -256,8 +310,18 @@ app.post('/api/login', loginLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور خطأ' });
+
+    // Account lockout check
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    if (checkLockout(clientIp)) {
+      return res.status(429).json({ error: 'تم قفل الحساب مؤقتاً بسبب محاولات كثيرة فاشلة. حاول بعد 15 دقيقة' });
+    }
+
     const result = await query('SELECT * FROM users WHERE username = $1', [username]);
-    if (result.rows.length === 0) return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور خطأ' });
+    if (result.rows.length === 0) {
+      recordFailedAttempt(clientIp);
+      return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور خطأ' });
+    }
     const u = result.rows[0];
     // Migrate plaintext to bcrypt on first login
     let passwordOk = false;
@@ -271,7 +335,12 @@ app.post('/api/login', loginLimiter, async (req, res) => {
         await query("UPDATE users SET password = $1 WHERE id = $2", [hash, u.id]);
       }
     }
-    if (!passwordOk) return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور خطأ' });
+    if (!passwordOk) {
+      recordFailedAttempt(clientIp);
+      return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور خطأ' });
+    }
+    // Successful login → clear lockout
+    clearLockout(clientIp);
     // Load permissions from role template
     const rpResult = await query("SELECT * FROM role_perms WHERE role = $1", [u.role]);
     let perms = rpResult.rows.length > 0 ? rpResult.rows[0].permissions : {};
