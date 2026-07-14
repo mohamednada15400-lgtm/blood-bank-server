@@ -2237,7 +2237,7 @@ app.post('/api/sync/import', requireAuth(), async (req, res) => {
             const batch = rows.slice(i, i + batchSize);
             const cols = Object.keys(batch[0]).filter(c => c !== '_counters');
             const placeholders = batch.map((_, ri) => `(${cols.map((_, ci) => `$${ri * cols.length + ci + 1}`).join(',')})`).join(',');
-            const values = batch.flatMap(r => cols.map(c => r[c] !== undefined ? (typeof r[c] === 'object' ? JSON.stringify(r[c]) : r[c]) : null));
+            const values = batch.flatMap(r => cols.map(c => r[c] !== undefined && r[c] !== null ? (typeof r[c] === 'object' ? JSON.stringify(r[c]) : r[c]) : null));
             const colStr = cols.map(c => `"${c}"`).join(',');
             await db.query(`INSERT INTO "${table}" (${colStr}) VALUES ${placeholders} ON CONFLICT DO NOTHING`, values);
           }
