@@ -297,6 +297,10 @@ class Database {
         }
         // Migration: add view_hospital_ids column
         try { await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS view_hospital_ids JSONB DEFAULT '[]'"); } catch(e) {}
+        // Migration: rename hospital users h{id} → emp{seq}
+        try {
+          await client.query("UPDATE users SET username = 'emp' || seq.num FROM (SELECT id, ROW_NUMBER() OVER (ORDER BY id)::text as num FROM users WHERE role = 'hospital' AND username ~ '^h\\d+$') seq WHERE users.id = seq.id AND users.username LIKE 'h%'");
+        } catch(e) {}
         const userCount = await client.query('SELECT COUNT(*) FROM users');
         if (parseInt(userCount.rows[0].count) === 0) {
           await this._seedPG(client);
