@@ -7167,7 +7167,7 @@ function rdnStaffRowHtml(idx, dayCount) {
       <option value="">-- اختر من العاملين --</option>
       ${empOpts}
     </select></td>
-    <td><input type="text" class="form-input rdnSPhone" style="width:100px" placeholder="التليفون"></td>
+    <td><input type="text" class="form-input rdnSPhone" style="width:100px" placeholder="التليفون" readonly></td>
     ${dayCells}
     <td><button class="btn btn-xs btn-success" data-click="rdnAddStaffRow" title="إضافة موظف"><i class="fas fa-plus"></i></button>
     <button class="btn btn-xs btn-danger" data-click="rdnRemoveStaffRow" title="حذف"><i class="fas fa-times"></i></button></td>
