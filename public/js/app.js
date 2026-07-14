@@ -794,7 +794,7 @@ function renderStatementReport(data, hospitals) {
   const hosp = hospitals.find(h => h.id === hId);
   if (!hosp) { document.getElementById('stmtReport').innerHTML = '<div class="empty-msg">اختر المستشفى</div>'; return; }
   const report = data.find(r => r.hospital_id === hId);
-  if (!report) { document.getElementById('stmtReport').innerHTML = '<div class="empty-msg">يوجد تقرير لهذا المستشفى</div>'; return; }
+  if (!report) { document.getElementById('stmtReport').innerHTML = '<div class="empty-msg">لا يوجد تقرير لهذا المستشفى</div>'; return; }
   const bd = tryParse(report.blood_data) || {};
   const pd = tryParse(report.plasma_data) || {};
   const pdData = tryParse(report.plat_data) || {};
