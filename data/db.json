@@ -113,20 +113,6 @@
       "permissions": {}
     },
     {
-      "id": 54,
-      "username": "h1",
-      "password": "123",
-      "name": "مستخدم 1",
-      "role": "hospital",
-      "hospital_id": 1,
-      "governorate": "بورسعيد",
-      "view_permission": "own",
-      "national_id": "",
-      "phone": "",
-      "email": "",
-      "permissions": {}
-    },
-    {
       "id": 55,
       "username": "mgr1",
       "password": "123",
@@ -381,7 +367,7 @@
     {
       "id": 73,
       "username": "mgr19",
-      "password": "123",
+      "password": "$2b$10$mmIT/8u59cmOfxrk0yNbR.cIH5SVKoatTTX3zBQm2zyMEin6iwtYC",
       "name": "مستخدم المجمع الطبي الاقصر",
       "role": "hospital_manager",
       "hospital_id": 19,
@@ -437,7 +423,7 @@
     {
       "id": 77,
       "username": "mgr23",
-      "password": "123",
+      "password": "$2b$10$NTr.PKgbNlIAxEBeaZCRDOz28tRWnoXID8S4nGj8Ilj7qEBcGVnJ.",
       "name": "مستخدم حورس",
       "role": "hospital_manager",
       "hospital_id": 23,
@@ -1922,8 +1908,8 @@
       "id": 6,
       "hospital_id": 3,
       "date": "2026-07-14T00:00:00.000Z",
-      "time": "14:04",
-      "under_inspection": 0,
+      "time": "15:49",
+      "under_inspection": 2,
       "blood_data": {
         "A+": {
           "disposal": 2,
@@ -2023,7 +2009,7 @@
       "id": 7,
       "hospital_id": 4,
       "date": "2026-07-14T00:00:00.000Z",
-      "time": "13:29",
+      "time": "14:27",
       "under_inspection": 0,
       "blood_data": {
         "A+": {
@@ -2325,8 +2311,8 @@
     {
       "id": 10,
       "hospital_id": 11,
-      "date": "2026-07-13T00:00:00.000Z",
-      "time": "11:59",
+      "date": "2026-07-14T00:00:00.000Z",
+      "time": "14:27",
       "under_inspection": 0,
       "blood_data": {
         "A+": {
@@ -2754,9 +2740,9 @@
     {
       "id": 14,
       "hospital_id": 7,
-      "date": "2026-07-06T00:00:00.000Z",
-      "time": "11:07",
-      "under_inspection": 9,
+      "date": "2026-07-14T00:00:00.000Z",
+      "time": "13:19",
+      "under_inspection": 0,
       "blood_data": {
         "A+": {
           "disposal": 1,
@@ -89091,7 +89077,7 @@
       "email": "abohafsanada422@gmail.com",
       "reviewed": true,
       "review_month": "202607",
-      "updated_at": "2026-07-04T09:42:25.469Z",
+      "updated_at": "2026-07-14T17:14:08.735Z",
       "user_id": 1
     },
     {
@@ -89109,7 +89095,7 @@
       "email": "Mohammed.Maarouf2016@gmail.com",
       "reviewed": true,
       "review_month": "202607",
-      "updated_at": "2026-07-04T09:13:36.505Z",
+      "updated_at": "2026-07-14T17:14:10.394Z",
       "user_id": 1
     },
     {
@@ -89127,7 +89113,7 @@
       "email": "ahmedmostafa5404@gmail.com",
       "reviewed": true,
       "review_month": "202607",
-      "updated_at": "2026-07-04T09:42:33.288Z",
+      "updated_at": "2026-07-14T17:14:09.636Z",
       "user_id": 1
     },
     {
@@ -89145,13 +89131,34 @@
       "email": "mmO413875@gmail.com",
       "reviewed": true,
       "review_month": "202607",
-      "updated_at": "2026-07-04T09:42:44.558Z",
+      "updated_at": "2026-07-14T17:14:10.256Z",
       "user_id": 1
     }
   ],
-  "readiness_occasions": [],
+  "readiness_occasions": [
+    {
+      "id": 12,
+      "name": "عيد الاضحي",
+      "date_from": "2026-07-15T00:00:00.000Z",
+      "date_to": "2026-07-15T00:00:00.000Z",
+      "day_labels": [],
+      "created_at": "2026-07-14T19:38:57.424Z",
+      "updated_at": "2026-07-14T19:38:57.424Z",
+      "user_id": 1
+    }
+  ],
   "readiness_reports": [],
-  "readiness_notifications": [],
+  "readiness_notifications": [
+    {
+      "id": 12,
+      "occasion_id": 12,
+      "occasion_name": "عيد الاضحي",
+      "message": "جاهزية بنوك الدم بمناسبة \"عيد الاضحي\" من 2026-07-15 إلى 2026-07-15 - 36 بنك دم",
+      "created_by": 1,
+      "created_at": "2026-07-14T19:38:57.424Z",
+      "dismissed": false
+    }
+  ],
   "role_perms": [
     {
       "id": 1,
@@ -90674,7 +90681,8 @@
   ],
   "app_config": {
     "pg_connection_string": "postgresql://neondb_owner:npg_iUfsE32CuQql@ep-proud-unit-atlclkm8.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require",
-    "time_offset": 2
+    "time_offset": 2,
+    "equipment_last_updated": "2026-07-14T19:43:15.108Z"
   },
   "donors": [],
   "donations": [],
@@ -90689,6 +90697,8 @@
     "archives": 135,
     "employee_statements": 93,
     "equipment_types": 2,
+    "readiness_occasions": 13,
+    "readiness_notifications": 13,
     "role_perms": 7,
     "strategic_settings": 3,
     "strategic_reserves": 38,
@@ -91746,10 +91756,21 @@
         "id": 29,
         "name": "المجمع الطبي الاقصر",
         "governorate": "الأقصر",
-        "equipment": {},
+        "equipment": {
+          "1": [
+            {
+              "brand": "KW",
+              "status": "يعمل"
+            },
+            {
+              "brand": "Electrolux",
+              "status": "يعمل"
+            }
+          ]
+        },
         "reviewed": false,
         "review_month": null,
-        "last_updated": "2026-07-05T19:28:55.488Z"
+        "last_updated": "2026-07-14T19:43:15.051Z"
       },
       {
         "id": 30,

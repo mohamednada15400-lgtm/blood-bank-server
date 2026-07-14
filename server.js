@@ -639,16 +639,17 @@ app.delete('/api/hospital-types/:id', requireAuth(), requireMaster(), async (req
   res.json({ ok: true });
 });
 
-async function filterByRole(user, baseSql, params = []) {
+async function filterByRole(user, baseSql, params = [], prefix = '') {
+  const col = prefix ? `${prefix}.hospital_id` : 'hospital_id';
   if (user.role === 'admin' || user.role === 'org_supervisor') return { sql: baseSql, params };
   if (user.role === 'branch_supervisor') {
     const result = await query('SELECT id FROM hospitals WHERE governorate = $1', [user.governorate]);
     const ids = result.rows.map(r => r.id);
     if (ids.length === 0) return { sql: baseSql + ' AND 1=0', params };
     const placeholders = ids.map((_, i) => `$${params.length + i + 1}`).join(',');
-    return { sql: `${baseSql} AND hospital_id IN (${placeholders})`, params: [...params, ...ids] };
+    return { sql: `${baseSql} AND ${col} IN (${placeholders})`, params: [...params, ...ids] };
   } else if (user.role === 'hospital' || user.role === 'hospital_manager') {
-    return { sql: baseSql + ` AND hospital_id = $${params.length + 1}`, params: [...params, user.hospitalId] };
+    return { sql: baseSql + ` AND ${col} = $${params.length + 1}`, params: [...params, user.hospitalId] };
   } else if (user.role === 'visitor' && user.viewPermission === 'limited') {
     return { sql: baseSql + ' AND 1=0', params };
   }
@@ -1013,7 +1014,7 @@ app.get('/api/monthly-consumption', requireAuth(), requirePerm('monthly_consumpt
   }
   let sql = 'SELECT mc.*, h.name as hospital_name, h.governorate, u.name as entered_by FROM monthly_consumption mc JOIN hospitals h ON h.id = mc.hospital_id LEFT JOIN users u ON u.id = mc.user_id WHERE 1=1';
   let params = [];
-  const f = await filterByRole(user, sql, params);
+  const f = await filterByRole(user, sql, params, 'mc');
   sql = f.sql; params = f.params;
   if (req.query.year) { sql += ` AND mc.year = $${params.length + 1}`; params.push(parseInt(req.query.year)); }
   if (req.query.month) { sql += ` AND mc.month = $${params.length + 1}`; params.push(parseInt(req.query.month)); }
