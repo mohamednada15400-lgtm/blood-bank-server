@@ -42,6 +42,9 @@ _dh('strategicHospChanged',function(){strategicViewHosp=this.value;renderStrateg
 _dh('empGovChangedAdd',function(){empGovChanged('add');});
 _dh('archiveCellEnter',function(e){if(e.key==='Enter'){e.preventDefault();this.blur();}});
 _dh('autoFillEmpNameEdit',function(){autoFillEmpName('euName','euHosp');});
+_dh('rdnNameSelected',function(){rdnNameSelected(this);});
+_dh('rdnShiftChanged',function(){rdnShiftChanged(this);});
+_dh('rdnRemoveStaffRow',function(btn){if(typeof btn==='undefined'||btn===null)btn=this;rdnRemoveStaffRow(btn);});
 _dh('archiveCellFocus',function(el){if(typeof el==='undefined'||el===null)el=this;archiveCellFocus(el);});
 _dh('saveArchiveCell',function(el){if(typeof el==='undefined'||el===null)el=this;saveArchiveCell(el);});
 
