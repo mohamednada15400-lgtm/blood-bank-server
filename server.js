@@ -275,7 +275,8 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     const rpResult = await query("SELECT * FROM role_perms WHERE role = $1", [u.role]);
     let perms = rpResult.rows.length > 0 ? rpResult.rows[0].permissions : {};
     if (typeof perms === 'string') perms = JSON.parse(perms);
-    req.session.user = { id: u.id, username: u.username, name: u.name, role: u.role, hospitalId: u.hospital_id, governorate: u.governorate, viewPermission: u.view_permission, permissions: perms };
+    const vIds = u.view_hospital_ids && typeof u.view_hospital_ids === 'string' ? JSON.parse(u.view_hospital_ids) : (u.view_hospital_ids || []);
+    req.session.user = { id: u.id, username: u.username, name: u.name, role: u.role, hospitalId: u.hospital_id, governorate: u.governorate, viewPermission: u.view_permission, viewHospitalIds: vIds, permissions: perms };
     res.json({ user: req.session.user });
   } catch (e) { console.error('LOGIN ERROR:', e); res.status(500).json({ error: errMsg(e) }); }
 });
@@ -322,16 +323,17 @@ app.get('/api/users', requireAuth(), async (req, res) => {
 });
 
 app.post('/api/users', requireAuth(), requireMaster(), async (req, res) => {
-  const { username, password, name, role, hospitalId, governorate, viewPermission, phone, email } = req.body;
+  const { username, password, name, role, hospitalId, governorate, viewPermission, phone, email, viewHospitalIds } = req.body;
   if (role === 'branch_supervisor' && governorate) {
     const existSup = await query("SELECT id FROM users WHERE role = 'branch_supervisor' AND governorate = $1", [governorate]);
     if (existSup.rows.length > 0) return res.status(400).json({ error: 'يوجد مشرف فرع بالفعل لهذا الفرع' });
   }
   const exist = await query('SELECT id FROM users WHERE username = $1', [username]);
   if (exist.rows.length > 0) return res.status(400).json({ error: 'اسم المستخدم موجود' });
+  const vhIds = viewHospitalIds && Array.isArray(viewHospitalIds) ? JSON.stringify(viewHospitalIds) : '[]';
   const result = await query(
-    "INSERT INTO users (username, password, name, role, hospital_id, governorate, view_permission, phone, email) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id, username, name, role, hospital_id, governorate, view_permission, phone, email",
-    [username, password || '123456', name, role, hospitalId || null, governorate || null, viewPermission || 'own', phone || '', email || '']
+    "INSERT INTO users (username, password, name, role, hospital_id, governorate, view_permission, phone, email, view_hospital_ids) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id, username, name, role, hospital_id, governorate, view_permission, phone, email, view_hospital_ids",
+    [username, password || '123456', name, role, hospitalId || null, governorate || null, viewPermission || 'own', phone || '', email || '', vhIds]
   );
   res.json(result.rows[0]);
 });
@@ -407,7 +409,7 @@ app.post('/api/users/batch-create-employees', requireAuth(), requireMaster(), as
 app.put('/api/users/:id', requireAuth(), async (req, res) => {
   const user = req.session.user;
   const targetId = parseInt(req.params.id);
-  const { password, name, role, hospitalId, governorate, viewPermission, phone, email } = req.body;
+  const { password, name, role, hospitalId, governorate, viewPermission, phone, email, viewHospitalIds } = req.body;
 
   // Master can update anything
   if (user.id === 1) {
@@ -420,8 +422,9 @@ app.put('/api/users/:id', requireAuth(), async (req, res) => {
     if (hospitalId !== undefined) { sets.push(`hospital_id = $${idx++}`); vals.push(hospitalId); }
     if (governorate !== undefined) { sets.push(`governorate = $${idx++}`); vals.push(governorate); }
     if (viewPermission) { sets.push(`view_permission = $${idx++}`); vals.push(viewPermission); }
+    if (viewHospitalIds !== undefined) { sets.push(`view_hospital_ids = $${idx++}`); vals.push(JSON.stringify(viewHospitalIds)); }
     vals.push(targetId);
-    const result = await query(`UPDATE users SET ${sets.join(', ')} WHERE id = $${idx} RETURNING id, username, name, role, hospital_id, governorate, view_permission, phone, email`, vals);
+    const result = await query(`UPDATE users SET ${sets.join(', ')} WHERE id = $${idx} RETURNING id, username, name, role, hospital_id, governorate, view_permission, phone, email, view_hospital_ids`, vals);
     if (result.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
     return res.json(result.rows[0]);
   }
@@ -650,8 +653,15 @@ async function filterByRole(user, baseSql, params = [], prefix = '') {
     return { sql: `${baseSql} AND ${col} IN (${placeholders})`, params: [...params, ...ids] };
   } else if (user.role === 'hospital' || user.role === 'hospital_manager') {
     return { sql: baseSql + ` AND ${col} = $${params.length + 1}`, params: [...params, user.hospitalId] };
-  } else if (user.role === 'visitor' && user.viewPermission === 'limited') {
-    return { sql: baseSql + ' AND 1=0', params };
+  } else if (user.role === 'visitor') {
+    if (user.viewHospitalIds && Array.isArray(user.viewHospitalIds) && user.viewHospitalIds.length > 0) {
+      const ids = user.viewHospitalIds.map(Number).filter(Boolean);
+      if (ids.length > 0) {
+        const placeholders = ids.map((_, i) => `$${params.length + i + 1}`).join(',');
+        return { sql: `${baseSql} AND ${col} IN (${placeholders})`, params: [...params, ...ids] };
+      }
+    }
+    if (user.viewPermission === 'limited') return { sql: baseSql + ' AND 1=0', params };
   }
   return { sql: baseSql, params };
 }

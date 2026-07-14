@@ -16,7 +16,7 @@ const DEF_PERMS = {
   org_supervisor: Object.assign(pagePerms(1,0,0,0,1), { users:makePerm(1,0,0,0,0), hospitals:makePerm(1,0,0,0,1), governorates:makePerm(1,0,0,0,1) }),
   branch_supervisor: Object.assign(pagePerms(1,1,1,1,1), { archive:makePerm(1,0,0,0,1), users:makePerm(0,0,0,0,0), hospitals:makePerm(1,0,0,0,1), governorates:makePerm(1,0,0,0,1), daily_branch:makePerm(1,0,0,0,0) }),
   hospital: Object.assign(pagePerms(1,1,1,1,1), { daily_total:makePerm(0,0,0,0,0), archive:makePerm(1,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0) }),
-  hospital_manager: Object.assign(pagePerms(1,0,0,0,1), { archive:makePerm(1,0,0,0,1), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0), employees:makePerm(1,1,1,1,1) }),
+  hospital_manager: Object.assign(pagePerms(1,1,1,1,1), { archive:makePerm(1,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0) }),
   visitor: Object.assign(pagePerms(1,0,0,0,0), { archive:makePerm(0,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0) })
 };
 

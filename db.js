@@ -295,6 +295,8 @@ class Database {
         for (const sql of PG_TABLES) {
           await client.query(sql);
         }
+        // Migration: add view_hospital_ids column
+        try { await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS view_hospital_ids JSONB DEFAULT '[]'"); } catch(e) {}
         const userCount = await client.query('SELECT COUNT(*) FROM users');
         if (parseInt(userCount.rows[0].count) === 0) {
           await this._seedPG(client);
@@ -439,7 +441,7 @@ class Database {
       org_supervisor: Object.fromEntries(['daily_stock','daily_total','daily_statement','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','inventory','role_perms','readiness','equipment','time_config','emp_accounts'].map(k => [k, {v:1,a:0,e:0,d:0,x:1}])),
       branch_supervisor: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','strategic_stock','readiness','equipment','time_config','emp_accounts','employees'].map(k => [k, {v:1,a:1,e:1,d:1,x:1}])),
       hospital: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','readiness','time_config','emp_accounts'].map(k => [k, {v:1,a:1,e:1,d:1,x:1}])),
-      hospital_manager: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','readiness','time_config','emp_accounts'].map(k => [k, {v:1,a:0,e:0,d:0,x:1}])),
+      hospital_manager: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','readiness','time_config','emp_accounts'].map(k => [k, {v:1,a:1,e:1,d:1,x:1}])),
       visitor: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','readiness','time_config','emp_accounts'].map(k => [k, {v:1,a:0,e:0,d:0,x:0}]))
     };
     // Fix overrides

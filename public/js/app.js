@@ -4080,6 +4080,7 @@ function showAddUserModal() {
           ${Array.isArray(govs) ? govs.map(g => { const n = typeof g === 'string' ? g : g.name; return `<option value="${n}">${n}</option>`; }).join('') : ''}</select></div>
         <div class="form-group" id="auHospGroup" style="display:none"><label>المستشفى</label><select class="form-control" id="auHosp" data-change="autoFillEmpNameAdd">
           <option value="">بدون مستشفى</option>${hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select></div>
+        <div class="form-group" id="auVisHospGroup" style="display:none"><label>المستشفيات المسموحة (للزائر)</label><select class="form-control" id="auVisHospitals" multiple style="height:120px">${hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}</select><small style="color:var(--text-muted);display:block;margin-top:4px">Ctrl+Click لتحديد أكثر من مستشفى</small></div>
         <div class="form-group"><label>التليفون</label><input class="form-control" id="auPhone" dir="ltr"></div>
         <div class="form-group"><label>البريد الالكتروني</label><input class="form-control" id="auEmail" dir="ltr"></div>`,
         `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
@@ -4126,6 +4127,8 @@ function toggleUserFields() {
   const r = document.getElementById('auRole').value;
   document.getElementById('auGovGroup').style.display = r === 'branch_supervisor' ? '' : 'none';
   document.getElementById('auHospGroup').style.display = (r === 'hospital' || r === 'hospital_manager') ? '' : 'none';
+  const visGroup = document.getElementById('auVisHospGroup');
+  if (visGroup) visGroup.style.display = r === 'visitor' ? '' : 'none';
 }
 async function createUser() {
   const name = document.getElementById('auName').value.trim();
@@ -4137,8 +4140,9 @@ async function createUser() {
   const phone = document.getElementById('auPhone').value.trim();
   const email = document.getElementById('auEmail').value.trim();
   if (!username) { showToast('⚠ اسم المستخدم مطلوب'); return; }
+  const vIds = role === 'visitor' ? Array.from(document.getElementById('auVisHospitals')?.selectedOptions || []).map(o => parseInt(o.value)).filter(Boolean) : undefined;
   try {
-    await api('POST', '/users', { username, password, name, role, hospitalId, governorate: gov, viewPermission: role === 'visitor' ? 'limited' : 'all', phone, email });
+    await api('POST', '/users', { username, password, name, role, hospitalId, governorate: gov, viewPermission: role === 'visitor' ? 'limited' : 'all', phone, email, viewHospitalIds: vIds });
     closeModal(); renderUsers();
   } catch(e) { showToast('❌ '+e.message); }
 }
@@ -4247,6 +4251,7 @@ function editUser(id) {
       <div class="form-group" style="position:relative"><label>كلمة المرور</label><input class="form-control" id="euPassword" value="123" style="padding-left:36px"><span data-click="togglePasswordVisibility" data-args="'euPassword'" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
       ${isMaster ? `<div class="form-group" id="euGovGroup" style="${u.role==='branch_supervisor'?'':'display:none'}"><label>الفرع</label><select class="form-control" id="euGov">${govArr.map(g => `<option value="${g}" ${g===u.governorate?'selected':''}>${g}</option>`).join('')}</select></div>` : ''}
       ${isMaster ? `<div class="form-group" id="euHospGroup" style="${(u.role==='hospital' || u.role==='hospital_manager')?'':'display:none'}"><label>المستشفى</label><select class="form-control" id="euHosp" data-change="autoFillEmpNameEdit">${hospitals.map(h => `<option value="${h.id}" ${h.id===u.hospital_id?'selected':''}>${h.name}</option>`).join('')}</select></div>` : ''}
+      ${isMaster ? `<div class="form-group" id="euVisHospGroup" style="${u.role==='visitor'?'':'display:none'}"><label>المستشفيات المسموحة (للزائر)</label><select class="form-control" id="euVisHospitals" multiple style="height:120px">${hospitals.map(h => `<option value="${h.id}" ${(u.view_hospital_ids||[]).includes(h.id)?'selected':''}>${h.name}</option>`).join('')}</select><small style="color:var(--text-muted);display:block;margin-top:4px">Ctrl+Click لتحديد أكثر من مستشفى</small></div>` : ''}
       <div class="form-group"><label>التليفون</label><input class="form-control" id="euPhone" value="${String(u.phone||'').replace(/"/g,'"')}" dir="ltr"></div>
       <div class="form-group"><label>البريد الالكتروني</label><input class="form-control" id="euEmail" value="${String(u.email||'').replace(/"/g,'"')}" dir="ltr"></div>
       ${isMaster ? `<div style="margin-top:8px;padding:8px 10px;background:#e8f5e9;border-radius:8px;font-size:12px;color:#2e7d32"><i class="fas fa-info-circle"></i> الصلاحيات تتحكم فيها من <strong>صلاحيات الأدوار</strong></div>` : ''}`,
@@ -4258,6 +4263,8 @@ function toggleEditUserFields() {
   const r = document.getElementById('euRole').value;
   document.getElementById('euGovGroup').style.display = r === 'branch_supervisor' ? '' : 'none';
   document.getElementById('euHospGroup').style.display = (r === 'hospital' || r === 'hospital_manager') ? '' : 'none';
+  const visGroup = document.getElementById('euVisHospGroup');
+  if (visGroup) visGroup.style.display = r === 'visitor' ? '' : 'none';
 }
 async function saveUser(id) {
   const name = document.getElementById('euName').value.trim();
@@ -4280,6 +4287,10 @@ async function saveUser(id) {
     if (hospEl && hospGroup && hospGroup.style.display !== 'none') {
       const hv = parseInt(hospEl.value);
       body.hospitalId = isNaN(hv) ? null : hv;
+    }
+    if (role === 'visitor') {
+      const visEl = document.getElementById('euVisHospitals');
+      if (visEl) body.viewHospitalIds = Array.from(visEl.selectedOptions).map(o => parseInt(o.value)).filter(Boolean);
     }
   }
   try {
