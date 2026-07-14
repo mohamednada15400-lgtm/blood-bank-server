@@ -32,10 +32,10 @@ _dh('hoverOn',function(){this.style.background=this.getAttribute('data-hover-bg'
 _dh('hoverOff',function(){this.style.background=this.getAttribute('data-hover-off');});
 _dh('permToggleChanged',function(){/* checkbox state handled by browser accent-color */});
 _dh('filterPermPages',function(){filterPermPages(this);});
-function filterPermPages(inp){var q=inp.value.trim().toLowerCase();var card=inp.closest('.card');if(!card)return;card.querySelectorAll('div[style*="padding:3px 0"]').forEach(function(row){var label=row.querySelector('span:first-child');if(!label||!label.textContent)return;row.style.display=(!q||label.textContent.toLowerCase().indexOf(q)!==-1)?'':'none';});
-var header=card.querySelector('div[style*="padding:2px 0"]');if(header){var has=Array.from(card.querySelectorAll('div[style*="padding:3px 0"]')).some(function(r){return r.style.display!=='none';});header.style.display=has?'':'none';}}
+function filterPermPages(inp){let q=inp.value.trim().toLowerCase();let card=inp.closest('.card');if(!card)return;card.querySelectorAll('div[style*="padding:3px 0"]').forEach(function(row){let label=row.querySelector('span:first-child');if(!label||!label.textContent)return;row.style.display=(!q||label.textContent.toLowerCase().indexOf(q)!==-1)?'':'none';});
+let header=card.querySelector('div[style*="padding:2px 0"]');if(header){let has=Array.from(card.querySelectorAll('div[style*="padding:3px 0"]')).some(function(r){return r.style.display!=='none';});header.style.display=has?'':'none';}}
 _dh('closeModalAndFilter',function(){closeModal();eqFilterHosp();});
-_dh('occFormAction',function(){var a=this.getAttribute('data-args').split(',');if(a[0]==='edit')rdnUpdateOccasion(parseInt(a[1]));else rdnCreateOccasion();});
+_dh('occFormAction',function(){let a=this.getAttribute('data-args').split(',');if(a[0]==='edit')rdnUpdateOccasion(parseInt(a[1]));else rdnCreateOccasion();});
 _dh('syncImport2',function(){showToast('جاري التحميل...');syncImport();});
 _dh('strategicGovChanged',function(){strategicViewGov=this.value;strategicViewMode='gov';renderStrategicStock();});
 _dh('strategicHospChanged',function(){strategicViewHosp=this.value;renderStrategicStock();});
@@ -168,7 +168,7 @@ function togglePasswordVisibility(fieldId, el) {
   if (!inp) return;
   const isPass = inp.type === 'password';
   inp.type = isPass ? 'text' : 'password';
-  var btn = el || (typeof this !== 'undefined' && this && this.nodeType ? this : null);
+  let btn = el || (typeof this !== 'undefined' && this && this.nodeType ? this : null);
   if (btn) btn.innerHTML = isPass ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
 }
 
@@ -347,12 +347,11 @@ function doLogout() {
 
 const ITEM_COLORS = {
   daily_stock: '#dc3545', daily_total: '#c0392b', daily_statement: '#e91e63', daily_branch: '#e67e22',
-  monthly_storage: '#2196f3', monthly_aggregate: '#00bcd4', monthly_indicators: '#0d7377', monthly_consumption: '#e91e63', monthly_big: '#dc3545', monthly_small: '#795548',
-  consumption: '#ff9800', archive: '#5d4037', strategic_stock: '#1565c0', employees: '#5d4037', readiness: '#7b1fa2', equipment: '#e65100',
+  monthly_indicators: '#0d7377', monthly_consumption: '#e91e63', monthly_big: '#dc3545', monthly_small: '#795548',
+  archive: '#5d4037', strategic_stock: '#1565c0', employees: '#5d4037', readiness: '#7b1fa2', equipment: '#e65100',
   users: '#00695c', role_perms: '#4a148c', hospitals: '#c62828', governorates: '#37474f',
   sync: '#1a73e8', emp_accounts: '#28a745', time_config: '#f39c12',
-  about: '#6c757d',
-
+  about: '#6c757d'
 };
 
 const MENU_CATS = [
@@ -1702,37 +1701,7 @@ function branchExportPdf() {
   downloadPdf(bodyHtml, 'branch-statement.pdf');
 }
 
-// ============== OTHER PAGES (read-only) ==============
-
-async function renderMonthlyStorage() {
-  const el = document.getElementById('mainContent');
-  try {
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
-      <div class="card"><div class="card-body table-scroll"><table class="data-table"><thead><tr><th>#</th><th>المستشفى</th><th>السنة</th><th>الشهر</th></tr></thead><tbody id="msBody"></tbody></table></div></div>`;
-    const items = await api('GET', '/monthly-storage');
-    document.getElementById('msBody').innerHTML = items.map((r, i) => `<tr><td>${i+1}</td><td>${r.hospital_name || ''}</td><td>${r.year}</td><td>${r.month}</td></tr>`).join('');
-  } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
-}
-
-async function renderMonthlyAggregate() {
-  const el = document.getElementById('mainContent');
-  try {
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
-      <div class="card"><div class="card-body table-scroll"><table class="data-table"><thead><tr><th>#</th><th>المستشفى</th><th>السنة</th><th>الشهر</th></tr></thead><tbody id="maBody"></tbody></table></div></div>`;
-    const items = await api('GET', '/monthly-aggregate');
-    document.getElementById('maBody').innerHTML = items.map((r, i) => `<tr><td>${i+1}</td><td>${r.hospital_name || ''}</td><td>${r.year}</td><td>${r.month}</td></tr>`).join('');
-  } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
-}
-
-async function renderConsumption() {
-  const el = document.getElementById('mainContent');
-  try {
-    el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button></div>
-      <div class="card"><div class="card-body table-scroll"><table class="data-table"><thead><tr><th>#</th><th>المستشفى</th><th>السنة</th><th>الشهر</th><th>فصيلة</th><th>الكمية</th></tr></thead><tbody id="consBody"></tbody></table></div></div>`;
-    const items = await api('GET', '/consumption');
-    document.getElementById('consBody').innerHTML = items.map((r, i) => `<tr><td>${i+1}</td><td>${r.hospital_name || ''}</td><td>${r.year}</td><td>${r.month}</td><td>${r.blood_type}</td><td>${r.quantity}</td></tr>`).join('');
-  } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
-}
+// ============== BLOOD CONSUMPTION (منصرف فصائل الدم) ==============
 
 async function renderBloodConsumption() {
   const el = document.getElementById('mainContent');
@@ -4304,7 +4273,11 @@ async function saveUser(id) {
     const govEl = document.getElementById('euGov');
     if (govEl) body.governorate = govEl.value;
     const hospEl = document.getElementById('euHosp');
-    if (hospEl) { const hv = parseInt(hospEl.value); body.hospitalId = isNaN(hv) ? null : hv; }
+    const hospGroup = document.getElementById('euHospGroup');
+    if (hospEl && hospGroup && hospGroup.style.display !== 'none') {
+      const hv = parseInt(hospEl.value);
+      body.hospitalId = isNaN(hv) ? null : hv;
+    }
   }
   try {
     await api('PUT', '/users/' + id, body);
@@ -5920,6 +5893,7 @@ async function renderEquipment() {
       '<select id="eqCatFilter" data-change="eqFilterHosp" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
         '<option value="">كل الأنواع</option>'+
         '<option value="تجميعي">تجميعي</option>'+
+        '<option value="تخزيني">تخزيني</option>'+
         '<option value="تجميعي وتخزيني">تجميعي وتخزيني</option>'+
       '</select>'+
       '<select id="eqStatusFilter" data-change="eqFilterHosp" class="form-control" style="width:auto;font-size:11px;padding:3px 8px">'+
@@ -5944,9 +5918,14 @@ async function renderEquipment() {
     try { window.__eqData = { types: types, hospitals: hospitals }; } catch(e){}
     eqRenderTable(types, hospitals);
     const _eqU = window._user;
-    if (_eqU && _eqU.role === 'hospital' && _eqU.name) {
-      const mh = hospitals.find(function(h){return h.name===_eqU.name;});
-      if (mh) setTimeout(function(){eqOpenForm(mh.name);},300);
+    if (_eqU && (_eqU.role === 'hospital' || _eqU.role === 'hospital_manager') && _eqU.hospitalId) {
+      api('GET', '/hospitals').then(function(allH) {
+        const hospName = allH.find(function(h){return h.id === _eqU.hospitalId;})?.name;
+        if (hospName) {
+          const mh = hospitals.find(function(h){return h.name === hospName;});
+          if (mh) setTimeout(function(){eqOpenForm(mh.name);},300);
+        }
+      }).catch(function(){});
     }
   } catch (e) { el.innerHTML = '<div class="empty-msg">'+esc(e.message)+'</div>'; }
 }
@@ -6418,56 +6397,11 @@ async function eqImport() {
   });
 }
 
-async function eqExportXlsx() {
-  let pivotTable = document.querySelector('#eqPivotTable table');
-  if (!pivotTable) { showToast('❌ لا توجد بيانات'); return; }
-  let clone = pivotTable.cloneNode(true);
-  // Remove edit buttons column if present
-  let rows = clone.querySelectorAll('tr');
-  rows.forEach(function(r){
-    let last = r.querySelector('td:last-child, th:last-child');
-    if (last && last.querySelector('button')) last.remove();
-  });
-  // Inline styles for professional look (Excel friendly)
-  let style = '<style>'+
-    '@page { size: auto; margin: 8mm; } ' +
-    'body{font-family:"Arial",Tahoma,sans-serif;font-size:9px;margin:0;padding:0} ' +
-    'table{border-collapse:collapse;width:100%;border:1px solid #ccc} ' +
-    'th{background:#1a1a2e;color:#fff;padding:4px 6px;border:1px solid #333;text-align:center;font-weight:700;font-size:9px} ' +
-    'td{padding:3px 4px;border:1px solid #ddd;text-align:center;font-size:8px} ' +
-    'td:first-child,td:nth-child(2){text-align:right} ' +
-    '.gov-header{font-weight:700;text-align:right;padding:4px 8px;font-size:9px} ' +
-    '.footer{text-align:center;font-size:8px;color:#666;margin-top:6px} ' +
-    '.status-good{font-weight:700;color:#10b981} ' +
-    '.status-bad{font-weight:700;color:#ef4444} ' +
-    '.count{font-weight:700;color:#1f2937} ' +
-    '.brand{color:#6b7280;font-size:7px} ' +
-    'h1{text-align:center;color:#1a1a2e;margin:0 0 8px 0;font-size:12px} ' +
-    '.toolbar{margin:4px 0 8px 0;text-align:left} ' +
-    '.toolbar button{background:#10b981;color:#fff;border:none;padding:4px 10px;border-radius:4px;margin:0 2px;font-size:8px;cursor:pointer} ' +
-    '.toolbar .pdf{background:#ef4444} ' +
-    '.empty{text-align:center;color:#9ca3af;padding:20px;font-size:9px} ' +
-    'tr.bg-success{background-color:#ecfdf5} ' +
-    'tr.bg-danger{background-color:#fef2f2} ' +
-    'span.status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:3px;vertical-align:middle} ' +
-    '.status-good-dot{background:#10b981} ' +
-    '.status-bad-dot{background:#ef4444} ' +
-    '.status-neutral-dot{background:#9ca3af}' +
-  '</style>';
-  let html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">'+style+'</head><body>'+
-    '<h1>أجهزة بنوك الدم</h1>' +
-    '<div class="toolbar">' +
-      '<button data-click="windowPrint">طباعة</button>' +
-      '<button class="pdf" data-click="eqExportPdf">تحميل PDF</button>' +
-    '</div>' +
-    clone.outerHTML +
-    '<div class="footer">إعداد و برمجة محمد ندا 01068880999</div></body></html>';
-  let blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
-  let a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'اجهزة_بنوك_الدم.xls'; a.click();
-  URL.revokeObjectURL(blob);
-  showToast('✅ تم تحميل ملف Excel');
+function eqExportXlsx() {
+  const a = document.createElement('a');
+  a.href = '/api/equipment/export/xlsx';
+  a.download = 'اجهزة_بنوك_الدم.xlsx'; a.click();
+  showToast('✅ جاري تحميل ملف Excel');
 }
 
 function eqExportPdf() {
@@ -7753,7 +7687,7 @@ function showAbout() {
     <h3 style="color:#17a2b8;margin-bottom:12px"><i class="fas fa-cubes"></i> التقنيات المستخدمة</h3>
     <table style="width:100%;max-width:500px;border-collapse:collapse;margin-bottom:20px">
       <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">الخادم</td><td style="padding:6px 12px;border:1px solid #e0e0e0">Node.js + Express</td></tr>
-      <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">قاعدة البيانات</td><td style="padding:6px 12px;border:1px solid #e0e0e0">lowdb (JSON) — محلياً + سحابياً عبر Google Drive</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">قاعدة البيانات</td><td style="padding:6px 12px;border:1px solid #e0e0e0">PostgreSQL (سحابي) + lowdb JSON (محلي) — سحابياً عبر Google Drive</td></tr>
       <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">الواجهة</td><td style="padding:6px 12px;border:1px solid #e0e0e0">Vanilla JS + CSS + Font Awesome 6.5.0</td></tr>
       <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">الأمان</td><td style="padding:6px 12px;border:1px solid #e0e0e0">bcryptjs + helmet + express-rate-limit + DOMPurify</td></tr>
       <tr><td style="padding:6px 12px;font-weight:600;border:1px solid #e0e0e0;background:#f8f9fa">التصدير</td><td style="padding:6px 12px;border:1px solid #e0e0e0">Excel (xlsx) + PDF (print-to-PDF)</td></tr>
@@ -7770,7 +7704,6 @@ function showAbout() {
       <li>بيان العاملين — إدارة الموظفين مع المراجعة والبيانات الناقصة</li>
       <li>شيت الجاهزية — جاهزية بنوك الدم للمناسبات (قوى عاملة، رصيد، صيانة، أعطال، مستهلكات)</li>
       <li>الأجهزة — إدارة أجهزة بنوك الدم مع الأنواع والفئات</li>
-      <li>المتبرعين — تسجيل المتبرعين، استبيان التبرع، سحب العينات، تحاليل (HIV/HBV/HCV/Syphilis)</li>
       <li>أرشيف — أرشيف المؤشرات الشهرية ومنصرف الفصائل</li>
       <li>نظام الصلاحيات — 6 أدوار، 21 صفحة، 5 صلاحيات لكل صفحة</li>
       <li>المزامنة مع Google Drive — نسخ احتياطي سحابي آلي</li>
@@ -7792,7 +7725,7 @@ function showAbout() {
     <h2 style="color:#7b1fa2;border-bottom:2px solid #7b1fa2;padding-bottom:8px;margin:32px 0 20px"><i class="fas fa-book"></i> دليل المستخدم الشامل</h2>
 
     <h4 style="color:#e65100;margin-bottom:8px">1. تسجيل الدخول</h4>
-    <p style="margin-bottom:16px">افتح المتصفح على <code>http://localhost:3001</code>. أدخل اسم المستخدم وكلمة المرور في الحقول المخصصة. اضغط على زر "دخول" أو اضغط Enter. الجلسة تبقى نشطة لمدة 24 ساعة — حتى لو حدث Refresh للصفحة، هتكون لسه داخل. في حال نسيان كلمة المرور، تواصل مع مدير النظام.</p>
+    <p style="margin-bottom:16px">افتح المتصفح على <code>http://localhost:3001</code>. أدخل اسم المستخدم وكلمة المرور في الحقول المخصصة. اضغط على زر "دخول" أو اضغط Enter. الجلسة تبقى نشطة لمدة 8 ساعات — حتى لو حدث Refresh للصفحة، هتكون لسه داخل. في حال نسيان كلمة المرور، تواصل مع مدير النظام.</p>
 
     <h4 style="color:#e65100;margin-bottom:8px">2. القائمة الرئيسية (Dashboard)</h4>
     <p style="margin-bottom:16px">بعد تسجيل الدخول تظهر القائمة الرئيسية مقسمة إلى فئات: <strong>يومي</strong>، <strong>شهري</strong>، <strong>أرشيف</strong>، <strong>أخرى</strong>، <strong>الإدارة</strong>. كل فئة تحتوي على أيقونات الصفحات المتاحة حسب صلاحياتك. في الشريط العلوي تجد: اسم المستخدم، التاريخ والوقت، أزرار التوقيت الصيفي/الشتوي، الوضع الليلي، الملف الشخصي، وتسجيل الخروج.</p>
@@ -7889,18 +7822,7 @@ function showAbout() {
     <h4 style="color:#e65100;margin-bottom:8px">18. بيانات المشرفين</h4>
     <p style="margin-bottom:16px">عرض بيانات المشرفين والمستخدمين مع فلترة متقدمة (اختيار المحافظات). نسخ البيانات المفلترة إلى الحافظة بتنسيق جدولي.</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">19. إدارة المتبرعين (Donors)</h4>
-    <p style="margin-bottom:16px">إدارة المتبرعين بنوك الدم — دورة كاملة من التسجيل حتى التحليل:
-    <ul style="margin-bottom:12px">
-      <li><strong>تسجيل متبرع</strong> — إدخال الرقم القومي (14 رقم)، الاسم رباعي، الجنس، العنوان، التليفون، تاريخ الميلاد. إذا كان المتبرع مسجل مسبقاً، يتم تعبئة البيانات تلقائياً.</li>
-      <li><strong>استبيان التبرع</strong> — استبيان صحي كامل: الوزن، الأمراض المزمنة، العمليات الجراحية، التاتو، الأدوية، الالتهاب الكبدي، الملاريا، ضغط الدم، الهيموجلوبين، الحمل (للإناث). يتم تحديد النتيجة تلقائياً (مؤهل / مرفوض مؤقتاً / مرفوض نهائياً) بناءً على معايير منظمة الصحة العالمية.</li>
-      <li><strong>سحب العينة</strong> — تسجيل تاريخ سحب العينة وإرسالها للمعمل.</li>
-      <li><strong>نتائج التحاليل</strong> — إدخال نتائج HIV, HBV, HCV, Syphilis وفصيلة الدم.</li>
-      <li><strong>سجل التبرعات</strong> — جدول يعرض جميع التبرعات مع إمكانية عرض التفاصيل الكاملة لكل تبرعة.</li>
-      <li><strong>الإحصائيات</strong> — لوحة إحصائيات: إجمالي المتبرعين، إجمالي التبرعات، المؤهلين والمرفوضين، توزيع فصائل الدم، النوع (ذكور/إناث)، نتائج التحاليل.</li>
-    </ul></p>
-
-    <h4 style="color:#e65100;margin-bottom:8px">20. المزامنة مع Google Drive (النسخ الاحتياطي السحابي)</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">19. المزامنة مع Google Drive (النسخ الاحتياطي السحابي)</h4>
     <p style="margin-bottom:8px"><strong>الهدف:</strong> عمل نسخ احتياطي سحابي آمن لقاعدة البيانات (<code>db.json</code>) على Google Drive، واستعادتها عند الحاجة — سواء لتثبيت النظام على جهاز جديد أو للرجوع لنسخة سابقة.</p>
 
     <h5 style="color:#c62828;margin-top:16px;margin-bottom:6px">الخطوة 0: الإعداد المسبق (مرة واحدة — يفعلها مدير النظام)</h5>
@@ -8015,17 +7937,17 @@ function showAbout() {
       <tr><td style="padding:8px 12px;border:1px solid #e0e0e0">تغيير حساب Google</td><td style="padding:8px 12px;border:1px solid #e0e0e0">الإدارة ← المزامنة ← إعادة ربط Drive (كرر الخطوات)</td></tr>
     </table>
 
-    <h4 style="color:#e65100;margin-bottom:8px">21. الوضع الليلي (Dark Mode)</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">20. الوضع الليلي (Dark Mode)</h4>
     <p style="margin-bottom:16px">اضغط على أيقونة القمر <i class="fas fa-moon"></i> في الشريط العلوي لتفعيل/إلغاء الوضع الليلي. الوضع الليلي يغير ألوان الواجهة إلى ألوان داكنة مريحة للعين في الإضاءة المنخفضة. يتم حفظ التفضيل في المتصفح (localStorage) ويستعيد تلقائياً عند تسجيل الدخول مرة أخرى.</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">22. التوقيت الصيفي/الشتوي</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">21. التوقيت الصيفي/الشتوي</h4>
     <p style="margin-bottom:16px">زر الساعة <i class="fas fa-clock"></i> في الشريط العلوي (يظهر للمدير فقط) يبدّل بين التوقيت الصيفي (+2 ساعة) والتوقيت الشتوي (+1 ساعة). يتم حفظ الإعداد في قاعدة البيانات ويؤثر على جميع المستخدمين.</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">23. الملف الشخصي (My Profile)</h4>
+    <h4 style="color:#e65100;margin-bottom:8px">22. الملف الشخصي (My Profile)</h4>
     <p style="margin-bottom:16px">اضغط على أيقونة المستخدم <i class="fas fa-user-circle"></i> في الشريط العلوي. من هنا يمكنك: تعديل اسمك المعروض، تغيير كلمة المرور (تحتاج إدخال كلمة المرور الحالية أولاً).</p>
 
-    <h4 style="color:#e65100;margin-bottom:8px">24. قفل التعديل بعد يوم 25</h4>
-    <p style="margin-bottom:16px">في المؤشرات الشهرية ومنصرف فصائل الدم، بعد يوم 25 من كل شهر يتم قفل التعديل تلقائياً. يظهر شريط أصفر في أعلى الصفحة للتأكيد. يتم عرض بيانات الشهر السابق تلقائياً. هذا يضمن عدم تعديل البيانات التاريخية بعد إغلاق الشهر.</p>
+    <h4 style="color:#e65100;margin-bottom:8px">23. قفل التعديل بعد يوم 25</h4>
+    <p style="margin-bottom:16px">في المؤشرات الشهرية ومنصرف فصائل الدم، بعد يوم 25 من كل شهر يُقفل التعديل تلقائياً. يظهر شريط أصفر في أعلى الصفحة للتأكيد. يتم عرض بيانات الشهر السابق تلقائياً. هذا يضمن عدم تعديل البيانات التاريخية بعد إغلاق الشهر.</p>
 
     <hr style="border:none;border-top:1px solid #ddd;margin:30px 0 20px">
 

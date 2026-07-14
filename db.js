@@ -578,7 +578,7 @@ class Database {
     if (this.mode === 'pg') {
       await this.query(`INSERT INTO equipment_hospitals (name, governorate, equipment, reviewed, review_month, last_updated)
         VALUES ($1,$2,$3::jsonb,$4,$5,NOW())
-        ON CONFLICT (name) DO UPDATE SET governorage=$2, equipment=$3::jsonb, reviewed=$4, review_month=$5, last_updated=NOW()`,
+        ON CONFLICT (name) DO UPDATE SET governorate=$2, equipment=$3::jsonb, reviewed=$4, review_month=$5, last_updated=NOW()`,
         [hosp.name, hosp.governorate || '', JSON.stringify(hosp.equipment || {}), hosp.reviewed || false, hosp.review_month || null]);
       await this.query("INSERT INTO app_config (key, value) VALUES ('equipment_last_updated', $1::jsonb) ON CONFLICT (key) DO UPDATE SET value = $1::jsonb",
         [JSON.stringify(new Date().toISOString())]);

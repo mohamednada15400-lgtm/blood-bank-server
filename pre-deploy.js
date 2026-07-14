@@ -46,6 +46,17 @@ async function main() {
   
   let dbData = exp.data.data || exp.data;
   
+  // Merge equipment tables into combined blood_bank_equipment format
+  const eqTypes = dbData.equipment_types || [];
+  const eqHosps = dbData.equipment_hospitals || [];
+  delete dbData.equipment_types;
+  delete dbData.equipment_hospitals;
+  if (!dbData.blood_bank_equipment || typeof dbData.blood_bank_equipment !== 'object') {
+    dbData.blood_bank_equipment = { types: [], hospitals: [], lastUpdated: null };
+  }
+  if (eqTypes.length > 0) dbData.blood_bank_equipment.types = eqTypes;
+  if (eqHosps.length > 0) dbData.blood_bank_equipment.hospitals = eqHosps;
+
   // Ensure time_offset is set
   if (!dbData.app_config) dbData.app_config = {};
   if (!dbData.app_config.time_offset) dbData.app_config.time_offset = 2;

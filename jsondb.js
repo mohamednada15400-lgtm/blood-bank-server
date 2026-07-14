@@ -245,6 +245,12 @@ class JSONDB {
           if (rp.permissions.hospitals) { rp.permissions.hospitals.v = 1; rp.permissions.hospitals.x = 1; }
           if (rp.permissions.governorates) { rp.permissions.governorates.v = 1; rp.permissions.governorates.x = 1; }
         }
+        // Fix hospital equipment permissions: موظف مستشفى needs to view/edit equipment
+        if (rp.role === 'hospital' && rp.permissions.equipment) {
+          rp.permissions.equipment.v = 1;
+          rp.permissions.equipment.a = 1;
+          rp.permissions.equipment.e = 1;
+        }
       });
     }
     this._save();

@@ -131,9 +131,8 @@ app.use(helmet({
       reportUri: '/api/csp-violation'
     }
   },
-  crossOriginEmbedderPolicy: { policy: 'require-corp' },
   crossOriginOpenerPolicy: { policy: 'same-origin' },
-  crossOriginResourcePolicy: { policy: 'same-origin' },
+  originAgentCluster: true,
   originAgentCluster: true,
   dnsPrefetchControl: { allow: false },
   frameguard: { action: 'deny' },
@@ -834,54 +833,7 @@ app.delete('/api/daily-statement/:id', requireAuth(), requirePerm('daily_stateme
   res.json({ ok: true });
 });
 
-app.post('/api/monthly-storage', requireAuth(), requirePerm('monthly_storage', 'edit'), async (req, res) => {
-  const { hospitalId, year, month, bloodTypes } = req.body;
-  const result = await query('INSERT INTO monthly_storage (hospital_id, year, month, blood_types, user_id) VALUES ($1,$2,$3,$4,$5) RETURNING *', [hospitalId, year, month, JSON.stringify(bloodTypes), req.session.user.id]);
-  res.json(result.rows[0]);
-});
 
-app.get('/api/monthly-storage', requireAuth(), requirePerm('monthly_storage', 'view'), async (req, res) => {
-  const user = req.session.user;
-  let sql = 'SELECT ms.*, h.name as hospital_name FROM monthly_storage ms JOIN hospitals h ON h.id = ms.hospital_id WHERE 1=1';
-  let params = [];
-  const f = await filterByRole(user, sql, params);
-  sql = f.sql; params = f.params;
-  if (req.query.year) { sql += ` AND ms.year = $${params.length + 1}`; params.push(parseInt(req.query.year)); }
-  if (req.query.month) { sql += ` AND ms.month = $${params.length + 1}`; params.push(parseInt(req.query.month)); }
-  if (req.query.hospitalId) { sql += ` AND ms.hospital_id = $${params.length + 1}`; params.push(parseInt(req.query.hospitalId)); }
-  sql += ' ORDER BY ms.year DESC, ms.month DESC, ms.id DESC';
-  const result = await query(sql, params);
-  res.json(result.rows);
-});
-
-app.delete('/api/monthly-storage/:id', requireAuth(), requirePerm('monthly_storage', 'edit'), async (req, res) => {
-  await query('DELETE FROM monthly_storage WHERE id = $1', [parseInt(req.params.id)]);
-  res.json({ ok: true });
-});
-
-app.post('/api/monthly-aggregate', requireAuth(), requirePerm('monthly_aggregate', 'edit'), async (req, res) => {
-  const { hospitalId, year, month, data } = req.body;
-  const result = await query('INSERT INTO monthly_aggregate (hospital_id, year, month, data, user_id) VALUES ($1,$2,$3,$4,$5) RETURNING *', [hospitalId, year, month, JSON.stringify(data), req.session.user.id]);
-  res.json(result.rows[0]);
-});
-
-app.get('/api/monthly-aggregate', requireAuth(), requirePerm('monthly_aggregate', 'view'), async (req, res) => {
-  const user = req.session.user;
-  let sql = 'SELECT ma.*, h.name as hospital_name FROM monthly_aggregate ma JOIN hospitals h ON h.id = ma.hospital_id WHERE 1=1';
-  let params = [];
-  const f = await filterByRole(user, sql, params);
-  sql = f.sql; params = f.params;
-  if (req.query.year) { sql += ` AND ma.year = $${params.length + 1}`; params.push(parseInt(req.query.year)); }
-  if (req.query.month) { sql += ` AND ma.month = $${params.length + 1}`; params.push(parseInt(req.query.month)); }
-  sql += ' ORDER BY ma.year DESC, ma.month DESC, ma.id DESC';
-  const result = await query(sql, params);
-  res.json(result.rows);
-});
-
-app.delete('/api/monthly-aggregate/:id', requireAuth(), requirePerm('monthly_aggregate', 'edit'), async (req, res) => {
-  await query('DELETE FROM monthly_aggregate WHERE id = $1', [parseInt(req.params.id)]);
-  res.json({ ok: true });
-});
 
 app.post('/api/monthly-indicators', requireAuth(), requirePerm('monthly_indicators', 'edit'), async (req, res) => {
   const { hospitalId, year, month, data, day, time } = req.body;
@@ -1289,31 +1241,7 @@ app.post('/api/monthly-small-indicators/archive-direct', requireAuth(), requireP
   res.json({ ok: true });
 });
 
-app.post('/api/consumption', requireAuth(), requirePerm('consumption', 'edit'), async (req, res) => {
-  const { hospitalId, year, month, bloodType, quantity } = req.body;
-  const result = await query('INSERT INTO consumption (hospital_id, year, month, blood_type, quantity, user_id) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *', [hospitalId, year, month, bloodType, quantity, req.session.user.id]);
-  await query('UPDATE inventory SET total_consumed = total_consumed + $1 WHERE blood_type = $2', [quantity, bloodType]);
-  res.json(result.rows[0]);
-});
 
-app.get('/api/consumption', requireAuth(), requirePerm('consumption', 'view'), async (req, res) => {
-  const user = req.session.user;
-  let sql = 'SELECT c.*, h.name as hospital_name FROM consumption c JOIN hospitals h ON h.id = c.hospital_id WHERE 1=1';
-  let params = [];
-  const f = await filterByRole(user, sql, params);
-  sql = f.sql; params = f.params;
-  if (req.query.year) { sql += ` AND c.year = $${params.length + 1}`; params.push(parseInt(req.query.year)); }
-  if (req.query.month) { sql += ` AND c.month = $${params.length + 1}`; params.push(parseInt(req.query.month)); }
-  if (req.query.bloodType) { sql += ` AND c.blood_type = $${params.length + 1}`; params.push(req.query.bloodType); }
-  sql += ' ORDER BY c.id DESC LIMIT 200';
-  const result = await query(sql, params);
-  res.json(result.rows);
-});
-
-app.delete('/api/consumption/:id', requireAuth(), requirePerm('consumption', 'edit'), async (req, res) => {
-  await query('DELETE FROM consumption WHERE id = $1', [parseInt(req.params.id)]);
-  res.json({ ok: true });
-});
 
 app.get('/api/archive', requireAuth(), requirePerm('archive', 'view'), async (req, res) => {
   let sql = 'SELECT * FROM archives WHERE 1=1'; const params = [];
@@ -1736,8 +1664,13 @@ app.get('/api/equipment', requireAuth(), requirePerm('equipment', 'view'), async
   const eq = await db.getEquipment();
   const user = req.session.user;
   let hospitals = [...eq.hospitals];
-  if (user.role === 'hospital' && user.governorate) {
-    hospitals = hospitals.filter(h => h.governorate === user.governorate);
+  if (user.role === 'hospital' || user.role === 'hospital_manager') {
+    const hospRes = await query('SELECT name FROM hospitals WHERE id = $1', [user.hospitalId]);
+    if (hospRes.rows.length > 0) {
+      hospitals = hospitals.filter(h => h.name === hospRes.rows[0].name);
+    } else {
+      hospitals = [];
+    }
   } else if (user.role === 'branch_supervisor' && user.governorate) {
     hospitals = hospitals.filter(h => h.governorate === user.governorate);
   }
@@ -1758,9 +1691,9 @@ app.post('/api/equipment/hospitals', requireAuth(), requirePerm('equipment', 'ed
   const user = req.session.user;
   const { name, governorate, equipment, reviewed, review_month } = req.body;
   if (!name) return res.status(400).json({ error: 'اسم المستشفى مطلوب' });
-  if (user.role === 'hospital' && user.governorate) {
-    const hospCheck = await query('SELECT id FROM hospitals WHERE name = $1', [name]);
-    if (hospCheck.rows.length > 0 && hospCheck.rows[0].id !== user.hospitalId) {
+  if (user.role === 'hospital' || user.role === 'hospital_manager') {
+    const hospRes = await query('SELECT name FROM hospitals WHERE id = $1', [user.hospitalId]);
+    if (hospRes.rows.length > 0 && hospRes.rows[0].name !== name) {
       return res.status(403).json({ error: 'غير مصرح' });
     }
   }
@@ -1862,15 +1795,20 @@ app.get('/api/equipment/export/xlsx', requireAuth(), requirePerm('equipment', 'e
     const rows = [headers];
     // Sort by governorate then name
     const sorted = [...hospitals].sort((a, b) => a.governorate.localeCompare(b.governorate, 'ar') || a.name.localeCompare(b.name, 'ar'));
+    function getEqVal(eq, field) {
+      if (Array.isArray(eq)) return eq.map(e => e[field] || '').filter(Boolean).join(', ');
+      if (eq && typeof eq === 'object') return eq[field] != null ? eq[field] : '';
+      return '';
+    }
     sorted.forEach(h => {
       const row = [h.governorate, h.name];
       types.forEach(t => {
         const eqEntry = h.equipment[t.id];
         if (eqEntry) {
-          row.push(eqEntry.count != null ? eqEntry.count : '');
-          row.push(eqEntry.status || '');
-          row.push(eqEntry.brand || '');
-          row.push(eqEntry.capacity || '');
+          row.push(getEqVal(eqEntry, 'count'));
+          row.push(getEqVal(eqEntry, 'status'));
+          row.push(getEqVal(eqEntry, 'brand'));
+          row.push(getEqVal(eqEntry, 'capacity'));
         } else {
           row.push('', '', '', '');
         }
@@ -2439,53 +2377,7 @@ app.get('/api/sync/drive/download', requireAuth(), async (req, res) => {
 });
 
 // ============== Dashboard API ==============
-app.get('/api/dashboard', requireAuth(), async (req, res) => {
-  try {
-    const hospitals = await query('SELECT * FROM hospitals');
-    const employees = await query('SELECT * FROM employee_statements');
-    const users = await query('SELECT * FROM users');
-    const consumption = await query('SELECT * FROM monthly_consumption');
-    const equipment = await db.getEquipment();
 
-    const hospList = hospitals.rows || [];
-    const empList = employees.rows || [];
-    const userList = users.rows || [];
-    const consList = consumption.rows || [];
-    const eqHospList = equipment.hospitals || [];
-
-    const totalHospitals = hospList.length;
-    const totalEmployees = empList.length;
-    const totalUsers = userList.length;
-    const totalConsumptions = consList.length;
-
-    const userRoleCount = {};
-    userList.forEach(u => {
-      const r = u.role || 'unknown';
-      userRoleCount[r] = (userRoleCount[r] || 0) + 1;
-    });
-
-    let govCount = {};
-    hospList.forEach(h => {
-      const g = h.governorate || 'غير معروف';
-      govCount[g] = (govCount[g] || 0) + 1;
-    });
-
-    res.json({
-      totalHospitals,
-      totalEmployees,
-      totalUsers,
-      totalConsumptions,
-      totalDonors: 0,
-      totalDonations: 0,
-      bloodTypes: {},
-      userRoles: userRoleCount,
-      governorates: govCount,
-      equipmentCount: eqHospList.length
-    });
-  } catch (e) {
-    res.status(500).json({ error: errMsg(e) });
-  }
-});
 
 
 

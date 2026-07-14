@@ -1210,3 +1210,28 @@ body.dark-mode .modal-close:hover { background: var(--bg-alt); }
   .table-wrap { overflow: visible !important; }
   .table-scroll { overflow: visible !important; }
 }
+
+/* ============== Responsive (شاشات صغيرة) ============== */
+@media (max-width: 768px) {
+  .grid-menu { grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; }
+  .grid-menu .menu-card { padding: 12px 8px; font-size: 12px; }
+  .grid-menu .menu-card i { font-size: 20px; }
+  .stats-bar { flex-wrap: wrap; }
+  .stats-bar .stat-item { flex: 1 1 45%; margin: 4px; }
+  .data-table, .ind-table, .stock-table, .strategic-table, .consumption-table, .eq-pivot, .stmt-table { min-width: auto !important; font-size: 10px; }
+  .data-table th, .data-table td, .ind-table th, .ind-table td, .stock-table th, .stock-table td { padding: 4px 6px; }
+  .card-body { padding: 8px; }
+  .page-actions { flex-wrap: wrap; gap: 4px; }
+  .page-actions button, .page-actions select, .page-actions input { font-size: 11px; padding: 4px 8px; }
+  .modal-content { width: 95%; margin: 10% auto; }
+  .tabs { flex-wrap: wrap; }
+  .tabs .tab { flex: 1 1 auto; font-size: 11px; padding: 6px 10px; }
+  .header { flex-wrap: wrap; gap: 4px; font-size: 12px; }
+  .header .brand { font-size: 14px; }
+  .header .header-left { flex-wrap: wrap; }
+  .emp-table-wrap { overflow-x: auto; }
+  .rdn-summary-table { font-size: 9px; }
+  .rdn-summary-table th, .rdn-summary-table td { padding: 2px 4px; }
+  .filter-row { flex-wrap: wrap; }
+  .filter-row > * { flex: 1 1 100%; margin: 2px 0; }
+}
