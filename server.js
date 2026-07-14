@@ -2547,7 +2547,18 @@ app.get('/api/sync/auto-backup-status', requireAuth(), async (req, res) => {
 
 // Health check for cloud deployment
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString(), uptime: process.uptime() });
+  let dbSize = 0;
+  try { dbSize = fs.statSync(path.join(DATA_DIR, 'db.json')).size; } catch {}
+  res.json({
+    status: 'ok',
+    time: new Date().toISOString(),
+    uptime: process.uptime(),
+    mode: db.mode || 'json',
+    dbSizeBytes: dbSize,
+    memory: process.memoryUsage(),
+    node: process.version,
+    platform: process.platform
+  });
 });
 
 // CSP violation reporting endpoint (no auth — just logs)
