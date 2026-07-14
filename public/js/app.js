@@ -7009,6 +7009,9 @@ function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
           <!-- Staff -->
           <div class="card" style="margin-bottom:8px">
             <div class="card-header"><h4><i class="fas fa-users"></i> القوى العاملة</h4>
+${!window._rdnEmpList || !window._rdnEmpList.length ? `<div style="padding:12px;margin:8px;background:#fff3cd;color:#856404;border-radius:6px;font-size:12px;text-align:center">
+  <i class="fas fa-exclamation-triangle"></i> لم تجد الأسماء في القائمة؟ قم بإضافتها أولاً في <strong>شيت العاملين</strong> من القائمة الرئيسية
+</div>` : ''}
             </div>
             <div class="card-body" style="padding:8px;overflow-x:auto">
               <table class="data-table" id="rdnStaffTable" style="font-size:11px;width:100%">
@@ -7141,8 +7144,14 @@ function rdnNameSelected(selectEl) {
   if (empId) {
     const emp = (window._rdnEmpList||[]).find(e => e.id === empId);
     if (emp) { phoneInput.value = emp.phone || ''; phoneInput.style.background = '#f5f5f5'; }
+    else { phoneInput.value = ''; phoneInput.style.background = ''; }
   } else {
-    phoneInput.value = ''; phoneInput.style.background = '';
+    const sel = selectEl.selectedOptions[0];
+    if (sel && sel.value === '__manual__') {
+      // manual name — keep stored phone (if any)
+    } else {
+      phoneInput.value = ''; phoneInput.style.background = '';
+    }
   }
   rdnSyncFormToPrintTable();
 }
@@ -7158,7 +7167,7 @@ function rdnStaffRowHtml(idx, dayCount) {
       <option value="">-- اختر من العاملين --</option>
       ${empOpts}
     </select></td>
-    <td><input type="text" class="form-input rdnSPhone" style="width:100px" placeholder="التليفون" readonly></td>
+    <td><input type="text" class="form-input rdnSPhone" style="width:100px" placeholder="التليفون"></td>
     ${dayCells}
     <td><button class="btn btn-xs btn-success" data-click="rdnAddStaffRow" title="إضافة موظف"><i class="fas fa-plus"></i></button>
     <button class="btn btn-xs btn-danger" data-click="rdnRemoveStaffRow" title="حذف"><i class="fas fa-times"></i></button></td>
