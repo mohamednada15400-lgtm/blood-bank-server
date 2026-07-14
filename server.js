@@ -185,6 +185,7 @@ app.use(express.static(path.join(BASE_DIR, 'public'), {
   lastModified: true,
   setHeaders: (res, p) => {
     if (p.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    if (p.endsWith('.js') || p.endsWith('.css')) res.setHeader('Cache-Control', 'no-cache, must-revalidate');
   }
 }));
 
