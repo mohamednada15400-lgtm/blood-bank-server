@@ -1496,7 +1496,7 @@ app.post('/api/calculate-strategic', requireAuth(), requirePerm('strategic_stock
 // ============== App Config (الإعدادات العامة) ==============
 app.get('/api/config/time', requireAuth(), async (req, res) => {
   const timeOffset = await db.getConfig('time_offset');
-  res.json({ time_offset: timeOffset || 2 });
+  res.json({ time_offset: timeOffset || 2, serverTime: Date.now() });
 });
 
 app.post('/api/config/time', requireAuth(), requirePerm('time_config', 'edit'), async (req, res) => {

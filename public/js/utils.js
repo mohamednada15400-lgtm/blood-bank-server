@@ -1,9 +1,10 @@
 const API_BASE = '/api';
 let _timeOffset = 2;
+let _serverTimeOffset = 0;
 let _clockInterval = null;
 
 function getCairoDate() {
-  return new Date();
+  return new Date(Date.now() + _serverTimeOffset);
 }
 function fmtCairoDate(fmt) {
   const d = getCairoDate();
@@ -143,6 +144,9 @@ function applyDarkMode() {
 async function loadTimeConfig() {
   try {
     const res = await api('GET', '/config/time');
+    if (res.serverTime) {
+      _serverTimeOffset = res.serverTime - Date.now();
+    }
     if (res.time_offset) {
       _timeOffset = res.time_offset;
       updateClock();

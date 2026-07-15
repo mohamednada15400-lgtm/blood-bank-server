@@ -1,6 +1,344 @@
 {
   "users": [
     {
+      "id": 156,
+      "username": "h33_8",
+      "password": "123",
+      "name": "محمد خالد محمود عبده",
+      "role": "hospital",
+      "hospital_id": 33,
+      "governorate": "أسوان",
+      "view_permission": "own",
+      "phone": "01123463391",
+      "email": ""
+    },
+    {
+      "id": 155,
+      "username": "h33_7",
+      "password": "123",
+      "name": "ليديا جون ابراهيم سنتاؤوس",
+      "role": "hospital",
+      "hospital_id": 33,
+      "governorate": "أسوان",
+      "view_permission": "own",
+      "phone": "01272260285",
+      "email": ""
+    },
+    {
+      "id": 154,
+      "username": "h33_6",
+      "password": "123",
+      "name": "طارق محمد عبد الراضي عبدالحافظ",
+      "role": "hospital",
+      "hospital_id": 33,
+      "governorate": "أسوان",
+      "view_permission": "own",
+      "phone": "01152099356",
+      "email": ""
+    },
+    {
+      "id": 153,
+      "username": "h33_5",
+      "password": "123",
+      "name": "عبدالكريم عبدالرحمن كريم الطيب",
+      "role": "hospital",
+      "hospital_id": 33,
+      "governorate": "أسوان",
+      "view_permission": "own",
+      "phone": "01065393393",
+      "email": ""
+    },
+    {
+      "id": 152,
+      "username": "h33_4",
+      "password": "123",
+      "name": "ابانوب صابر عطاالله ابراهيم",
+      "role": "hospital",
+      "hospital_id": 33,
+      "governorate": "أسوان",
+      "view_permission": "own",
+      "phone": "01271917753",
+      "email": ""
+    },
+    {
+      "id": 151,
+      "username": "h33_3",
+      "password": "123",
+      "name": "فاطمه سليمان عباس سليمان",
+      "role": "hospital",
+      "hospital_id": 33,
+      "governorate": "أسوان",
+      "view_permission": "own",
+      "phone": "01100167153",
+      "email": ""
+    },
+    {
+      "id": 150,
+      "username": "h33_2",
+      "password": "123",
+      "name": "محمود احمد عطا على",
+      "role": "hospital",
+      "hospital_id": 33,
+      "governorate": "أسوان",
+      "view_permission": "own",
+      "phone": "01224070495",
+      "email": ""
+    },
+    {
+      "id": 149,
+      "username": "h33_1",
+      "password": "123",
+      "name": "مروه محمد امين بغدادى",
+      "role": "hospital",
+      "hospital_id": 33,
+      "governorate": "أسوان",
+      "view_permission": "own",
+      "phone": "01555785438",
+      "email": ""
+    },
+    {
+      "id": 148,
+      "username": "h8_4",
+      "password": "123",
+      "name": "محمد محمد مسعد",
+      "role": "hospital",
+      "hospital_id": 8,
+      "governorate": "الإسماعيلية",
+      "view_permission": "own",
+      "phone": "1099569696",
+      "email": ""
+    },
+    {
+      "id": 147,
+      "username": "h8_3",
+      "password": "123",
+      "name": "آيه عدلو عبدالحميد",
+      "role": "hospital",
+      "hospital_id": 8,
+      "governorate": "الإسماعيلية",
+      "view_permission": "own",
+      "phone": "1022883289",
+      "email": ""
+    },
+    {
+      "id": 146,
+      "username": "h8_2",
+      "password": "123",
+      "name": "محمد الامين السيد",
+      "role": "hospital",
+      "hospital_id": 8,
+      "governorate": "الإسماعيلية",
+      "view_permission": "own",
+      "phone": "1097673941",
+      "email": ""
+    },
+    {
+      "id": 145,
+      "username": "h8_1",
+      "password": "123",
+      "name": "محمد عبدالمنعم حسن",
+      "role": "hospital",
+      "hospital_id": 8,
+      "governorate": "الإسماعيلية",
+      "view_permission": "own",
+      "phone": "1068880999",
+      "email": ""
+    },
+    {
+      "id": 144,
+      "username": "h2_12",
+      "password": "123",
+      "name": "ندى طارق محمد نصر الدين",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01228632075",
+      "email": ""
+    },
+    {
+      "id": 143,
+      "username": "h2_11",
+      "password": "123",
+      "name": "انسام سعد الدين علام",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01210460592",
+      "email": ""
+    },
+    {
+      "id": 142,
+      "username": "h2_10",
+      "password": "123",
+      "name": "انتصار محمد جمعة",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01276223962",
+      "email": ""
+    },
+    {
+      "id": 141,
+      "username": "h2_9",
+      "password": "123",
+      "name": "جورج كارميل صموئيل متى",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01201629714",
+      "email": ""
+    },
+    {
+      "id": 140,
+      "username": "h2_8",
+      "password": "123",
+      "name": "سحر السيد محمد سلطان",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01208697217",
+      "email": ""
+    },
+    {
+      "id": 139,
+      "username": "h2_7",
+      "password": "123",
+      "name": "خالد فريد عبد الحافظ",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01000039367",
+      "email": ""
+    },
+    {
+      "id": 138,
+      "username": "h2_6",
+      "password": "123",
+      "name": "مي خالد محمودعلي الزند",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01001283993",
+      "email": ""
+    },
+    {
+      "id": 137,
+      "username": "h2_5",
+      "password": "123",
+      "name": "شريف محمد حنفي مقلد",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01505144141",
+      "email": ""
+    },
+    {
+      "id": 136,
+      "username": "h2_4",
+      "password": "123",
+      "name": "شيماء جمال الغريب عوض",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01276943568",
+      "email": ""
+    },
+    {
+      "id": 135,
+      "username": "h2_3",
+      "password": "123",
+      "name": "بسمه علي محمود محمد",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01222239872",
+      "email": ""
+    },
+    {
+      "id": 134,
+      "username": "h2_2",
+      "password": "123",
+      "name": "امل محمد ابراهيم محمد",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01288925407",
+      "email": ""
+    },
+    {
+      "id": 133,
+      "username": "h2_1",
+      "password": "123",
+      "name": "محمد السيد الحسانين محمد",
+      "role": "hospital",
+      "hospital_id": 2,
+      "governorate": "بورسعيد",
+      "view_permission": "own",
+      "phone": "01000047459",
+      "email": ""
+    },
+    {
+      "id": 132,
+      "username": "h19_17",
+      "password": "$2b$10$mONWUMrG4A4RrKz7ROU7iu4LjhESkNJ05HXJ9sz6/NYWE2rskFdRu",
+      "name": "هشام علي محمود",
+      "role": "hospital",
+      "hospital_id": 19,
+      "governorate": "الأقصر",
+      "view_permission": "own"
+    },
+    {
+      "id": 131,
+      "username": "h19_16",
+      "password": "$2b$10$EfWNVCZtNSQwOCdDD.w/2.EG755qMmhXFl7XelM.vC1g1gp0REvYi",
+      "name": "ممدوح عبد الرحيم محمد عمر",
+      "role": "hospital",
+      "hospital_id": 19,
+      "governorate": "الأقصر",
+      "view_permission": "own"
+    },
+    {
+      "id": 130,
+      "username": "h19_15",
+      "password": "$2b$10$lcKoY6ZDaCRU55diT6w/buWEeBHVAjGtTgH4s9k7mKB/mQqfC5PYy",
+      "name": "مريم لطفي داوود درياس",
+      "role": "hospital",
+      "hospital_id": 19,
+      "governorate": "الأقصر",
+      "view_permission": "own"
+    },
+    {
+      "id": 129,
+      "username": "h19_14",
+      "password": "$2b$10$3hfDPEua99oWrX.NqYGbxufzAq55qHug2trJqSKaldjdj/3gPtIq2",
+      "name": "شيماء صالح محمد",
+      "role": "hospital",
+      "hospital_id": 19,
+      "governorate": "الأقصر",
+      "view_permission": "own"
+    },
+    {
+      "id": 128,
+      "username": "h19_13",
+      "password": "$2b$10$3GJ/9RvTI5OR5grrAoseieLratzawOLPibijUhmfJhNIJz5Vo6Xem",
+      "name": "زكريا عبد الجابر علي",
+      "role": "hospital",
+      "hospital_id": 19,
+      "governorate": "الأقصر",
+      "view_permission": "own"
+    },
+    {
       "id": 127,
       "username": "h19_12",
       "password": "$2b$10$ZSJPxc73OvN6HfalRvk56OgPdKvFRtCLPgEh5r9GpNk17KPDobX6W",
@@ -4204,97 +4542,11 @@
     {
       "id": 31,
       "hospital_id": 10,
-      "date": "2026-07-13T00:00:00.000Z",
-      "time": "15:50",
+      "date": "2026-07-15",
+      "time": "16:19",
       "under_inspection": 0,
-      "blood_data": {
-        "A+": {
-          "disposal": 1,
-          "incoming": 9,
-          "outgoing": 8,
-          "previous": 16,
-          "available": 16
-        },
-        "A-": {
-          "disposal": 1,
-          "incoming": 4,
-          "outgoing": 0,
-          "previous": 9,
-          "available": 12
-        },
-        "B+": {
-          "disposal": 2,
-          "incoming": 1,
-          "outgoing": 6,
-          "previous": 4,
-          "available": -3
-        },
-        "B-": {
-          "disposal": 0,
-          "incoming": 1,
-          "outgoing": 2,
-          "previous": 0,
-          "available": -1
-        },
-        "O+": {
-          "disposal": 1,
-          "incoming": 8,
-          "outgoing": 8,
-          "previous": 20,
-          "available": 19
-        },
-        "O-": {
-          "disposal": 0,
-          "incoming": 3,
-          "outgoing": 2,
-          "previous": 15,
-          "available": 16
-        },
-        "AB+": {
-          "disposal": 0,
-          "incoming": 3,
-          "outgoing": 3,
-          "previous": 0,
-          "available": 0
-        },
-        "AB-": {
-          "disposal": 0,
-          "incoming": 0,
-          "outgoing": 0,
-          "previous": 0,
-          "available": 0
-        }
-      },
-      "plasma_data": {
-        "A": {
-          "disposal": 0,
-          "incoming": 2,
-          "outgoing": 7,
-          "previous": 30,
-          "available": 25
-        },
-        "B": {
-          "disposal": 0,
-          "incoming": 3,
-          "outgoing": 6,
-          "previous": 40,
-          "available": 37
-        },
-        "O": {
-          "disposal": 0,
-          "incoming": 2,
-          "outgoing": 3,
-          "previous": 59,
-          "available": 58
-        },
-        "AB": {
-          "disposal": 0,
-          "incoming": 5,
-          "outgoing": 4,
-          "previous": 23,
-          "available": 24
-        }
-      },
+      "blood_data": "{\"A+\":{\"previous\":16,\"incoming\":9,\"outgoing\":8,\"disposal\":1,\"available\":16},\"A-\":{\"previous\":9,\"incoming\":4,\"outgoing\":0,\"disposal\":1,\"available\":12},\"B+\":{\"previous\":4,\"incoming\":1,\"outgoing\":6,\"disposal\":2,\"available\":-3},\"B-\":{\"previous\":0,\"incoming\":1,\"outgoing\":2,\"disposal\":0,\"available\":-1},\"O+\":{\"previous\":20,\"incoming\":8,\"outgoing\":8,\"disposal\":1,\"available\":19},\"O-\":{\"previous\":15,\"incoming\":3,\"outgoing\":2,\"disposal\":0,\"available\":16},\"AB+\":{\"previous\":0,\"incoming\":3,\"outgoing\":3,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "plasma_data": "{\"A\":{\"previous\":30,\"incoming\":2,\"outgoing\":7,\"disposal\":0,\"available\":25},\"B\":{\"previous\":40,\"incoming\":3,\"outgoing\":6,\"disposal\":0,\"available\":37},\"AB\":{\"previous\":23,\"incoming\":5,\"outgoing\":4,\"disposal\":0,\"available\":24},\"O\":{\"previous\":59,\"incoming\":2,\"outgoing\":3,\"disposal\":0,\"available\":58}}",
       "platelets": 0,
       "cryo": 0,
       "license_type": "تخزيني",
@@ -4836,7 +5088,7 @@
       "id": 37,
       "hospital_id": 5,
       "date": "2026-07-15",
-      "time": "11:32",
+      "time": "16:19",
       "under_inspection": 0,
       "blood_data": "{\"A+\":{\"previous\":27,\"incoming\":12,\"outgoing\":5,\"disposal\":3,\"available\":31},\"A-\":{\"previous\":5,\"incoming\":0,\"outgoing\":2,\"disposal\":0,\"available\":3},\"B+\":{\"previous\":15,\"incoming\":11,\"outgoing\":5,\"disposal\":1,\"available\":20},\"B-\":{\"previous\":6,\"incoming\":3,\"outgoing\":2,\"disposal\":0,\"available\":7},\"O+\":{\"previous\":35,\"incoming\":18,\"outgoing\":7,\"disposal\":2,\"available\":44},\"O-\":{\"previous\":7,\"incoming\":6,\"outgoing\":3,\"disposal\":0,\"available\":10},\"AB+\":{\"previous\":12,\"incoming\":0,\"outgoing\":1,\"disposal\":0,\"available\":11},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
       "plasma_data": "{\"A\":{\"previous\":17,\"incoming\":5,\"outgoing\":7,\"disposal\":0,\"available\":15},\"B\":{\"previous\":19,\"incoming\":6,\"outgoing\":5,\"disposal\":0,\"available\":20},\"AB\":{\"previous\":29,\"incoming\":3,\"outgoing\":2,\"disposal\":0,\"available\":30},\"O\":{\"previous\":39,\"incoming\":12,\"outgoing\":8,\"disposal\":0,\"available\":43}}",
@@ -88842,6 +89094,92 @@
   ],
   "employee_statements": [
     {
+      "id": 99,
+      "hospital_id": 19,
+      "hospital_name": "المجمع الطبي الاقصر",
+      "governorate": "الأقصر",
+      "employee": "هشام علي محمود",
+      "category": "فني",
+      "classification": "اساسي",
+      "shift": "",
+      "shifts_count": "",
+      "national_id": "29612082702657",
+      "phone": "01102030355",
+      "email": "hm852015@gmail.com",
+      "updated_at": "2026-07-15T15:17:27.292Z",
+      "user_id": 73
+    },
+    {
+      "id": 98,
+      "hospital_id": 19,
+      "hospital_name": "المجمع الطبي الاقصر",
+      "governorate": "الأقصر",
+      "employee": "ممدوح عبد الرحيم محمد عمر",
+      "category": "فني",
+      "classification": "اساسي",
+      "shift": "",
+      "shifts_count": "",
+      "national_id": "29409052700994",
+      "phone": "01153082502",
+      "email": "mamdouhabdelraheem2@gmail.com",
+      "updated_at": "2026-07-15T15:16:06.306Z",
+      "user_id": 73
+    },
+    {
+      "id": 97,
+      "hospital_id": 19,
+      "hospital_name": "المجمع الطبي الاقصر",
+      "governorate": "الأقصر",
+      "employee": "مريم لطفي داوود درياس",
+      "category": "اخصائي تكنولوجي",
+      "classification": "اساسي",
+      "shift": "",
+      "shifts_count": "",
+      "national_id": "29509162704302",
+      "phone": "01223996466",
+      "email": "sangorge133@gmail.com",
+      "updated_at": "2026-07-15T15:15:37.696Z",
+      "user_id": 73,
+      "reviewed": true,
+      "review_month": 202607
+    },
+    {
+      "id": 96,
+      "hospital_id": 19,
+      "hospital_name": "المجمع الطبي الاقصر",
+      "governorate": "الأقصر",
+      "employee": "شيماء صالح محمد",
+      "category": "فني",
+      "classification": "اساسي",
+      "shift": "",
+      "shifts_count": "",
+      "national_id": "29707202700808",
+      "phone": "01116187912",
+      "email": "shimaasalih7@gmail.com",
+      "updated_at": "2026-07-15T15:15:37.533Z",
+      "user_id": 73,
+      "reviewed": true,
+      "review_month": 202607
+    },
+    {
+      "id": 95,
+      "hospital_id": 19,
+      "hospital_name": "المجمع الطبي الاقصر",
+      "governorate": "الأقصر",
+      "employee": "زكريا عبد الجابر علي",
+      "category": "فني",
+      "classification": "اساسي",
+      "shift": "",
+      "shifts_count": "",
+      "national_id": "29204292702152",
+      "phone": "01118121502",
+      "email": "Zecoronaldo2014@gmail.com",
+      "updated_at": "2026-07-15T15:15:37.371Z",
+      "user_id": 73,
+      "reviewed": true,
+      "review_month": 202607
+    },
+    {
       "id": 94,
       "hospital_id": 19,
       "hospital_name": "المجمع الطبي الاقصر",
@@ -88854,8 +89192,10 @@
       "national_id": "27204110101739",
       "phone": "01118183538",
       "email": "",
-      "updated_at": "2026-07-15T15:09:50.784Z",
-      "user_id": 73
+      "updated_at": "2026-07-15T15:15:37.212Z",
+      "user_id": 73,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 93,
@@ -88870,8 +89210,10 @@
       "national_id": "28706012500799",
       "phone": "01006291813",
       "email": "a.makboul1987@gmail.com",
-      "updated_at": "2026-07-15T15:08:25.071Z",
-      "user_id": 73
+      "updated_at": "2026-07-15T15:15:37.046Z",
+      "user_id": 73,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 89,
@@ -88960,7 +89302,7 @@
       "shifts_count": 0,
       "reviewed": true,
       "review_month": 202607,
-      "updated_at": "2026-07-15T13:39:17.323Z",
+      "updated_at": "2026-07-15T15:15:37.046Z",
       "user_id": null
     },
     {
@@ -88978,7 +89320,7 @@
       "shifts_count": 0,
       "reviewed": true,
       "review_month": 202607,
-      "updated_at": "2026-07-15T13:39:17.499Z",
+      "updated_at": "2026-07-15T15:15:37.212Z",
       "user_id": null
     },
     {
@@ -88996,7 +89338,7 @@
       "shifts_count": 0,
       "reviewed": true,
       "review_month": 202607,
-      "updated_at": "2026-07-15T13:39:17.672Z",
+      "updated_at": "2026-07-15T15:15:37.371Z",
       "user_id": null
     },
     {
@@ -89014,7 +89356,7 @@
       "shifts_count": 0,
       "reviewed": true,
       "review_month": 202607,
-      "updated_at": "2026-07-15T13:39:17.827Z",
+      "updated_at": "2026-07-15T15:15:37.533Z",
       "user_id": null
     },
     {
@@ -89032,7 +89374,7 @@
       "shifts_count": 0,
       "reviewed": true,
       "review_month": 202607,
-      "updated_at": "2026-07-15T13:39:18.005Z",
+      "updated_at": "2026-07-15T15:15:37.696Z",
       "user_id": null
     },
     {
@@ -90932,7 +91274,7 @@
   "donors": [],
   "donations": [],
   "_counters": {
-    "users": 128,
+    "users": 157,
     "hospitals": 38,
     "governorates": 8,
     "hospital_types": 3,
@@ -90940,7 +91282,7 @@
     "monthly_big_indicators": 337,
     "monthly_small_indicators": 644,
     "archives": 135,
-    "employee_statements": 95,
+    "employee_statements": 100,
     "equipment_types": 2,
     "readiness_occasions": 14,
     "readiness_notifications": 14,
