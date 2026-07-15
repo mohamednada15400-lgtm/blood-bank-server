@@ -64,6 +64,11 @@ function goBack() {
   if (fn) fn();
   else showMenu();
 }
+function refreshCurrentPage() {
+  const fn = _navStack.length ? _navStack[_navStack.length - 1] : null;
+  if (fn) fn();
+  else showMenu();
+}
 
 let _prevPageName = null;
 function navigateTo(pageName, catKey, subKey) {
@@ -248,7 +253,7 @@ function showSubMenu(catKey, subKey) {
   }
   if (isNested) pushNav(() => showSubMenu(catKey));
   else pushNav(showMenu);
-  let html = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> رجوع</button></div>
+  let html = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> رجوع</button><button class="btn-refresh" data-click="refreshCurrentPage"><i class="fas fa-sync-alt"></i> تحديث</button></div>
     <div class="sub-icons-grid">`;
   items.forEach(item => {
     if (item.subitems) {

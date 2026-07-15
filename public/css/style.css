@@ -330,6 +330,8 @@ table tr:last-child td { border-bottom: none; }
 .btn-outline { background: none; border: 1px solid var(--border); color: var(--text-soft); } .btn-outline:hover { background: var(--hover-bg); }
 .btn-back { background: var(--primary-gradient); color: #fff; border: none; padding: 8px 20px; border-radius: 25px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all var(--transition); display: inline-flex; align-items: center; gap: 6px; }
 .btn-back:hover { transform: scale(1.03); box-shadow: 0 4px 16px rgba(192,57,43,0.3); }
+.btn-refresh { background: #27ae60; color: #fff; border: none; padding: 8px 20px; border-radius: 25px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all var(--transition); display: inline-flex; align-items: center; gap: 6px; }
+.btn-refresh:hover { transform: scale(1.03); box-shadow: 0 4px 16px rgba(39,174,96,0.3); }
 
 /* ====== PAGE ACTIONS ====== */
 .page-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
