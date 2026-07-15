@@ -2167,7 +2167,7 @@ app.get('/api/readiness-export/xlsx', requireAuth(), requirePerm('readiness', 'e
         const govHospitals = hospitals.filter(h => h.governorate === gov);
         govHospitals.forEach(h => {
           const r = reports.find(rep => rep.hospital_id === h.id);
-          const staff = r ? (() => { try { return JSON.parse(r.staff_data); } catch(e) { return []; } })() : [];
+          const staff = r ? (() => { try { let s = JSON.parse(r.staff_data); if (!Array.isArray(s) && typeof s === 'string') s = JSON.parse(s); if (!Array.isArray(s)) s = []; return s; } catch(e) { return []; } })() : [];
           if (staff.length === 0) {
             // Empty row
             const row = Array(3 + dayCount + 12).fill('');
