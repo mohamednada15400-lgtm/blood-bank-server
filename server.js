@@ -961,9 +961,9 @@ app.get('/api/monthly-indicators', requireAuth(), requirePerm('monthly_indicator
     }
   }
   // Query from all three indicator tables (historical data may be in big/small tables)
-  let sql1 = 'SELECT mi.*, h.name as hospital_name, h.governorate FROM monthly_indicators mi JOIN hospitals h ON h.id = mi.hospital_id WHERE 1=1';
-  let sql2 = "SELECT mbi.*, h.name as hospital_name, h.governorate, '' as day, '' as time FROM monthly_big_indicators mbi JOIN hospitals h ON h.id = mbi.hospital_id WHERE 1=1";
-  let sql3 = "SELECT msi.*, h.name as hospital_name, h.governorate, '' as day, '' as time FROM monthly_small_indicators msi JOIN hospitals h ON h.id = msi.hospital_id WHERE 1=1";
+  let sql1 = 'SELECT mi.*, h.name as hospital_name, h.governorate, u.name as entered_by FROM monthly_indicators mi JOIN hospitals h ON h.id = mi.hospital_id LEFT JOIN users u ON u.id = mi.user_id WHERE 1=1';
+  let sql2 = "SELECT mbi.*, h.name as hospital_name, h.governorate, '' as day, '' as time, NULL as entered_by FROM monthly_big_indicators mbi JOIN hospitals h ON h.id = mbi.hospital_id WHERE 1=1";
+  let sql3 = "SELECT msi.*, h.name as hospital_name, h.governorate, '' as day, '' as time, NULL as entered_by FROM monthly_small_indicators msi JOIN hospitals h ON h.id = msi.hospital_id WHERE 1=1";
   let params1 = [], params2 = [], params3 = [];
   // Apply role filters
   const f1 = await filterByRole(user, sql1, params1, 'mi');
@@ -1024,7 +1024,7 @@ app.put('/api/monthly-indicators/:id', requireAuth(), requirePerm('monthly_indic
   }
   await query('UPDATE monthly_indicators SET data = $1, day = $2, time = $3 WHERE id = $4',
     [JSON.stringify(data || {}), day || '', time || '', parseInt(req.params.id)]);
-  const result = await query('SELECT mi.id, mi.hospital_id, mi.year, mi.month, mi.day, mi.time, mi.data, mi.date, mi.user_id, h.name as hospital_name, h.governorate FROM monthly_indicators mi JOIN hospitals h ON mi.hospital_id = h.id WHERE mi.id = $1', [parseInt(req.params.id)]);
+  const result = await query('SELECT mi.id, mi.hospital_id, mi.year, mi.month, mi.day, mi.time, mi.data, mi.date, mi.user_id, h.name as hospital_name, h.governorate, u.name as entered_by FROM monthly_indicators mi JOIN hospitals h ON mi.hospital_id = h.id LEFT JOIN users u ON u.id = mi.user_id WHERE mi.id = $1', [parseInt(req.params.id)]);
   res.json(result.rows[0]);
 });
 
@@ -2167,7 +2167,7 @@ app.get('/api/readiness-export/xlsx', requireAuth(), requirePerm('readiness', 'e
         const govHospitals = hospitals.filter(h => h.governorate === gov);
         govHospitals.forEach(h => {
           const r = reports.find(rep => rep.hospital_id === h.id);
-          const staff = r ? (() => { try { let s = JSON.parse(r.staff_data); if (!Array.isArray(s) && typeof s === 'string') s = JSON.parse(s); if (!Array.isArray(s)) s = []; return s; } catch(e) { return []; } })() : [];
+          const raw = r ? (r.staff_data || []) : []; const staff = Array.isArray(raw) ? raw : (typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch(e) { return []; } })() : []);
           if (staff.length === 0) {
             // Empty row
             const row = Array(3 + dayCount + 12).fill('');

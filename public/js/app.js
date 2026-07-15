@@ -44,6 +44,41 @@ _dh('rdnRemoveStaffRow',function(btn){if(typeof btn==='undefined'||btn===null)bt
 _dh('archiveCellFocus',function(el){if(typeof el==='undefined'||el===null)el=this;archiveCellFocus(el);});
 _dh('saveArchiveCell',function(el){if(typeof el==='undefined'||el===null)el=this;saveArchiveCell(el);});
 
+/* mobile-safe download helper */
+function downloadBlob(blob, filename) {
+  if (window.navigator && window.navigator.msSaveBlob) { window.navigator.msSaveBlob(blob, filename); return; }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function() {
+    // Mobile fallback (iOS Safari etc.): open in new tab
+    if (/Mobi|iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      window.open(url, '_blank');
+    }
+    document.body.removeChild(a);
+  }, 400);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 30000);
+}
+
+function downloadPdfMobile(bodyHtml, filename) {
+  // Mobile-compatible PDF via HTML blob download
+  const fullHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>' + filename + '</title><style>@page{size:landscape;margin:8mm 6mm}body{font-family:\'Traditional Arabic\',\'Segoe UI\',Arial,sans-serif;padding:8px;background:#fff;margin:0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>' + bodyHtml + '</body></html>';
+  downloadBlob(new Blob([fullHtml], { type: 'application/octet-stream' }), filename);
+}
+
+function downloadPdf(bodyHtml, filename) {
+  if (/Mobi|iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+    downloadPdfMobile(bodyHtml, filename);
+    return;
+  }
+  const w = window.open('', '_blank');
+  if (!w) { downloadPdfMobile(bodyHtml, filename); return; }
+  w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>' + filename + '</title><style>@page{size:landscape;margin:8mm 6mm}body{font-family:\'Traditional Arabic\',\'Segoe UI\',Arial,sans-serif;padding:8px;background:#fff;margin:0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>' + bodyHtml + '<script>window.print();window.close();</' + 'script></body></html>');
+  w.document.close();
+}
+
 // ============== DAILY STOCK (رصيد يومى) ==============
 
 const BTYPES = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
@@ -156,11 +191,7 @@ function exportStockExcel() {
       <tr><td style="text-align:center;font-size:11px;color:#7f8c8d;border:none">${dateStr}</td></tr></table>
     ${html}
     <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'stock-management-' + fmtCairoDate('date') + '.xls'; a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'stock-management-' + fmtCairoDate('date') + '.xls');
 }
 
 function setupInlineEdit() {
@@ -631,11 +662,7 @@ function exportStrategicExcel() {
     ${html}
     <table style="width:100%;margin-top:12px"><tr><td style="text-align:center;font-size:11px;color:#888;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table>
     </body></html>`;
-  const blob = new Blob(['\ufeff' + fullHtml], { type: 'application/vnd.ms-excel' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'strategic-stock.xls'; a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(new Blob(['\ufeff' + fullHtml], { type: 'application/octet-stream' }), 'strategic-stock.xls');
 }
 
 function downloadPdf(bodyHtml, filename) {
@@ -742,11 +769,7 @@ function exportTotalExcel() {
       <tr><td style="text-align:center;font-size:11px;color:#666;border:none">تاريخ التقرير: ${dateStr}</td></tr></table>
     ${html}
     <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#888;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'total-stock.xls'; a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'total-stock.xls');
 }
 
 function exportTotalPDF() {
@@ -1082,11 +1105,7 @@ function branchExportExcel() {
     <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#2c3e50;border:none">${title}</td></tr></table>
     ${html}
     <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'branch-statement-' + fmtCairoDate('date') + '.xls'; a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'branch-statement-' + fmtCairoDate('date') + '.xls');
 }
 
 function branchExportPdf() {
@@ -1897,11 +1916,18 @@ async function printEmployeeTable() {
         csv += [esc(cells[1].textContent), esc(cells[2].textContent), esc(cells[3].textContent), esc(cells[4].textContent), esc(cells[5].textContent), esc(cells[6].textContent), esc(cells[7].textContent), esc(cells[8].textContent)].join(',') + '\\n';
       });
       csv += '\\n"إعداد و برمجة محمد ندا 01068880999"\\n';
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([csv], { type: 'application/octet-stream' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'بيان_العاملين_' + new Date().toISOString().slice(0,10) + '.csv';
-      a.click();
+      a.style.display = 'none';
+      document.body.appendChild(a); a.click();
+      setTimeout(function() {
+        if (/Mobi|iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+          window.open(a.href, '_blank');
+        }
+        document.body.removeChild(a);
+      }, 400);
     }
     window.onload = function() { window.print(); };
   </script>
@@ -1960,11 +1986,7 @@ function exportEmployeeExcel() {
       </tr></thead>
       <tbody>${rows}</tbody></table>
     <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'بيان_العاملين.xls'; a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'بيان_العاملين.xls');
   showToast('✅ تم التحميل');
 }
 
@@ -3254,11 +3276,7 @@ function exportArchiveIndicatorsExcel() {
     <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#5A7A9A;border:none">أرشيف مؤشرات الأداء</td></tr></table>
     ${html}
     <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'archive_indicators_' + fmtCairoDate('date') + '.xls'; a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'archive_indicators_' + fmtCairoDate('date') + '.xls');
 }
 
 function exportArchiveIndicatorsPdf() {
@@ -3307,11 +3325,7 @@ function exportExcel() {
     <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#2e7d32;border:none">${title}</td></tr></table>
     ${html}
     <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'consumption_archive_' + fmtCairoDate('date') + '.xls'; a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'consumption_archive_' + fmtCairoDate('date') + '.xls');
 }
 
 function exportPDF() {
@@ -3451,8 +3465,7 @@ function exportUsersExcel() {
     if (last) last.remove();
   });
   const html = `<html><meta charset="utf-8"><body>${clone.outerHTML}</body></html>`;
-  const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'users.xls'; a.click();
+  downloadBlob(new Blob([html], { type: 'application/octet-stream' }), 'users.xls');
 }
 function exportUsersPdf() {
   const table = document.getElementById('userTable');
@@ -4540,9 +4553,10 @@ async function renderMonthlyIndicators(presetType) {
         <select class="search-input" id="indHospitalFilter" data-change="renderMonthlyIndicators">
           ${isRestricted ? hospitals.filter(h => h.governorate === myGov).map(h => `<option value="${h.id}">${h.name}</option>`).join('') : '<option value="">كل المستشفيات</option>' + hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}
         </select>
-        <input type="number" class="search-input" id="indYearFilter" value="${prevYear}" style="width:80px" data-change="renderMonthlyIndicators">
+        <input type="number" class="search-input" id="indYearFilter" value="${now.getUTCFullYear()}" style="width:80px" data-change="renderMonthlyIndicators">
         <select class="search-input" id="indMonthFilter" data-change="renderMonthlyIndicators">
-          ${MONTHS_AR.map((m, i) => `<option value="${i+1}" ${i === prevMonth ? 'selected' : ''}>${m}</option>`).join('')}
+          <option value="">الشهرين الأخيرين</option>
+          ${MONTHS_AR.map((m, i) => `<option value="${i+1}">${m}</option>`).join('')}
         </select>
       </div>
       <div class="card"><div class="card-body table-scroll" id="indTableWrap"></div></div>`;
@@ -4556,7 +4570,9 @@ async function renderMonthlyIndicators(presetType) {
       window.onMonIndGovChange = fillHosp;
       fillHosp();
     }
-    const params = new URLSearchParams({ year: document.getElementById('indYearFilter').value, month: document.getElementById('indMonthFilter').value });
+    const filtMonth = document.getElementById('indMonthFilter').value;
+    const params = new URLSearchParams({ year: document.getElementById('indYearFilter').value });
+    if (filtMonth) params.set('month', filtMonth);
     const hId = document.getElementById('indHospitalFilter').value;
     if (hId) params.set('hospitalId', hId);
     const data = await api('GET', '/monthly-indicators?' + params.toString());
@@ -4849,8 +4865,11 @@ function makeGroupHeader(colDefs) {
 
 function renderIndicatorsTable(hospitals, data, canEdit, presetType) {
   const wrap = document.getElementById('indTableWrap');
-  const dataMap = {};
-  data.forEach(r => { dataMap[r.hospital_id] = r; });
+  const hospRecords = {};
+  data.forEach(r => {
+    if (!hospRecords[r.hospital_id]) hospRecords[r.hospital_id] = [];
+    hospRecords[r.hospital_id].push(r);
+  });
   const hFilter = document.getElementById('indHospitalFilter')?.value;
   const typeFilter = document.getElementById('indTypeFilter')?.value || presetType;
   let showHospitals;
@@ -4872,46 +4891,61 @@ function renderIndicatorsTable(hospitals, data, canEdit, presetType) {
     const t = type === 'child' ? 'child' : 'big';
     const months = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
     const filtYear = document.getElementById('indYearFilter')?.value || '';
-    const filtMonth = parseInt(document.getElementById('indMonthFilter')?.value) || 1;
+    const filtMonth = parseInt(document.getElementById('indMonthFilter')?.value) || 0;
     let headerHtml = makeGroupHeader(colDefs);
-    headerHtml = headerHtml.replace(/(rowspan="[23]">بنك الدم<\/th>)/, '$1<th rowspan="3" style="min-width:44px;font-size:11px;color:#5A7A9A">الشهر</th>');
+    headerHtml = headerHtml.replace(/(rowspan="[23]">بنك الدم<\/th>)/, '$1<th rowspan="3" style="min-width:44px;font-size:11px;color:#5A7A9A">الشهر</th><th rowspan="3" style="min-width:55px;font-size:11px;color:#5A7A9A">المدخل</th>');
     let h = `<h3 style="margin:24px 0 10px;font-size:16px;color:#2c3e50;border-right:4px solid #dc3545;padding-right:10px">${label}</h3>
       <div class="table-wrap"><table class="ind-table"><thead>${headerHtml}</thead><tbody>`;
     showHospitals.forEach(hosp => {
-      const r = dataMap[hosp.id];
-      const d = r ? (r.data || {}) : {};
-      const f = computeFn(d);
-      const hasData = !!r;
-      const m = r ? (months[(r.month||1)-1] + ' ' + (r.year||'')) : (months[filtMonth-1] + ' ' + filtYear);
-      h += `<tr data-rid="${r ? r.id : ''}" data-hid="${hosp.id}" data-type="${t}">`;
-      let colIdx = 0;
-      colDefs.forEach(c => {
-        let val = getCellValue(hosp, r, d, f, c);
-        const isEditable = canEdit && !c.formula && c.key !== 'governorate' && c.key !== 'hospital_name';
-        let cls = c.cls || (c.formula ? 'formula-cell' : '');
-        let style = '';
-        if (c.formula && val !== '' && val != null) {
-          const n = parseFloat(val);
-          if (!isNaN(n) && (c.key.startsWith('pct_') || c.key.startsWith('child_pct_') || c.key.startsWith('ratio_'))) {
-            val = n + '%';
-            if (n > 0) { cls += ' warn-pct'; style = ' style="color:#e74c3c;font-weight:700;background:#ffeaea"'; }
+      const records = (hospRecords[hosp.id] || []).sort((a, b) => (b.year||0)- (a.year||0) || (b.month||0)- (a.month||0));
+      if (!records.length) {
+        const d = {}, f = computeFn(d);
+        h += `<tr data-rid="" data-hid="${hosp.id}" data-type="${t}">`;
+        let colIdx = 0;
+        colDefs.forEach(c => {
+          let val = getCellValue(hosp, null, d, f, c);
+          const isEditable = canEdit && !c.formula && c.key !== 'governorate' && c.key !== 'hospital_name';
+          let cls = c.cls || (c.formula ? 'formula-cell' : '');
+          h += `<td class="${cls}">${val}</td>`;
+          colIdx++;
+          if (colIdx === 2) { h += '<td style="white-space:nowrap;font-size:11px;color:#5A7A9A;font-weight:600">—</td><td style="white-space:nowrap;font-size:11px;color:#555;text-align:center"></td>'; }
+        });
+        const addBtn = canEdit ? `<button class="btn btn-sm btn-outline" data-click="showAddIndModal" data-args="${hosp.id},'${t}'"><i class="fas fa-plus"></i></button>` : '';
+        h += `<td style="white-space:nowrap">${addBtn}</td></tr>`;
+        return;
+      }
+      records.forEach(r => {
+        const d = r ? (r.data || {}) : {};
+        const f = computeFn(d);
+        const m = months[(r.month||1)-1] + ' ' + (r.year||'');
+        h += `<tr data-rid="${r.id}" data-hid="${hosp.id}" data-type="${t}">`;
+        let colIdx = 0;
+        colDefs.forEach(c => {
+          let val = getCellValue(hosp, r, d, f, c);
+          const isEditable = canEdit && !c.formula && c.key !== 'governorate' && c.key !== 'hospital_name';
+          let cls = c.cls || (c.formula ? 'formula-cell' : '');
+          let style = '';
+          if (c.formula && val !== '' && val != null) {
+            const n = parseFloat(val);
+            if (!isNaN(n) && (c.key.startsWith('pct_') || c.key.startsWith('child_pct_') || c.key.startsWith('ratio_'))) {
+              val = n + '%';
+              if (n > 0) { cls += ' warn-pct'; style = ' style="color:#e74c3c;font-weight:700;background:#ffeaea"'; }
+            }
           }
-        }
-        if (isEditable) {
-          const dataKey = COL_KEYS.includes(c.key) ? 'col:' + c.key : c.key;
-          h += `<td class="${cls} editable-cell" data-key="${dataKey}"${style}>${val}</td>`;
-        } else {
-          h += `<td class="${cls}"${style}>${val}</td>`;
-        }
-        colIdx++;
-        if (colIdx === 2) h += `<td style="white-space:nowrap;font-size:11px;color:#5A7A9A;font-weight:600">${m}</td>`;
+          if (isEditable) {
+            const dataKey = COL_KEYS.includes(c.key) ? 'col:' + c.key : c.key;
+            h += `<td class="${cls} editable-cell" data-key="${dataKey}"${style}>${val}</td>`;
+          } else {
+            h += `<td class="${cls}"${style}>${val}</td>`;
+          }
+          colIdx++;
+          if (colIdx === 2) { h += `<td style="white-space:nowrap;font-size:11px;color:#5A7A9A;font-weight:600">${m}</td><td style="white-space:nowrap;font-size:11px;color:#555;text-align:center">${r.entered_by || ''}</td>`; }
+        });
+        const delBtn = canDelete ? `<button class="btn btn-sm btn-outline-danger" data-click="deleteIndicator" data-args="${r.id}" style="margin-right:4px"><i class="fas fa-trash"></i></button>` : '';
+        h += `<td style="white-space:nowrap">${delBtn}</td></tr>`;
       });
-      const addBtn = canEdit && !hasData ? `<button class="btn btn-sm btn-outline" data-click="showAddIndModal" data-args="${hosp.id},'${t}'"><i class="fas fa-plus"></i></button>` : '';
-      const delBtn = canDelete && hasData ? `<button class="btn btn-sm btn-outline-danger" data-click="deleteIndicator" data-args="${r.id}" style="margin-right:4px"><i class="fas fa-trash"></i></button>` : '';
-      h += `<td style="white-space:nowrap">${delBtn}${addBtn}</td>`;
-      h += '</tr>';
     });
-    if (!showHospitals.length) h += `<tr><td colspan="${colDefs.length + 2}" class="empty-msg">لا توجد مستشفيات</td></tr>`;
+    if (!showHospitals.length) h += `<tr><td colspan="${colDefs.length + 3}" class="empty-msg">لا توجد مستشفيات</td></tr>`;
     h += '</tbody></table></div>';
     return h;
   }
@@ -6506,9 +6540,9 @@ function rdnRenderSummaryTable(occ, reports, hospitals, bloodMap) {
     const maintVal = esc(r.maintenance || '—');
     const bdVal = esc(r.breakdowns || '—');
     const consVal = esc(r.consumables || '—');
-    // Parse staff
-    let staffArr = [];
-    try { staffArr = r.staff_data ? JSON.parse(r.staff_data) : []; if (!Array.isArray(staffArr)) { if (typeof staffArr === 'string') staffArr = JSON.parse(staffArr); else staffArr = []; } } catch (e) { staffArr = []; }
+    let staffArr = r.staff_data || [];
+    if (typeof staffArr === 'string') { try { staffArr = JSON.parse(staffArr); } catch (e) { staffArr = []; } }
+    if (!Array.isArray(staffArr)) staffArr = [];
     if (!staffArr.length) {
       return `<tr>
         <td>${esc(gov)}</td>
@@ -6843,11 +6877,7 @@ function rdnExportXlsx() {
       <tr><td style="text-align:center;font-size:11px;color:#7f8c8d;border:none">${esc(title)}</td></tr></table>
     ${html}
     <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  const blob = new Blob(['\ufeff' + full], { type: 'application/vnd.ms-excel' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'جاهزية_بنوك_الدم.xls'; a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'جاهزية_بنوك_الدم.xls');
 }
 
 function rdnExportPdf() {
@@ -7015,13 +7045,7 @@ function syncResultMsg(msg, isError) {
 async function syncExport() {
   try {
     const result = await api('GET', '/sync/export');
-    const blob = new Blob([JSON.stringify(result.data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'blood-bank-backup.json';
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(new Blob([JSON.stringify(result.data, null, 2)], { type: 'application/json' }), 'blood-bank-backup.json');
     syncResultMsg('✅ تم تصدير نسخة احتياطية', false);
   } catch (e) { syncResultMsg('❌ ' + e.message, true); }
 }

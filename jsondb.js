@@ -353,6 +353,37 @@ class JSONDB {
         rows = rows.filter(row => this._evalWhere(row, whereClause, params));
       }
 
+      // Handle aggregates (COUNT/SUM/AVG/MAX/MIN) without GROUP BY
+      const selMatch = sql.match(/SELECT\s+(.+?)\s+FROM/i);
+      if (selMatch && !sql.match(/GROUP\s+BY/i)) {
+        const selCols = selMatch[1].split(',').map(c => c.trim());
+        let hasAgg = false;
+        const aggRow = {};
+        selCols.forEach(c => {
+          const m = c.match(/(SUM|COUNT|AVG|MAX|MIN)\s*\((\*|\w+)\)\s+as\s+(\w+)/i);
+          if (m) {
+            hasAgg = true;
+            const fn = m[1].toUpperCase();
+            const col = m[2] === '*' ? null : m[2];
+            const alias = m[3];
+            if (fn === 'COUNT') {
+              aggRow[alias] = rows.length;
+            } else if (fn === 'SUM') {
+              aggRow[alias] = rows.reduce((s, r) => s + (parseFloat(r[col]) || 0), 0);
+            } else if (fn === 'AVG') {
+              aggRow[alias] = rows.length ? rows.reduce((s, r) => s + (parseFloat(r[col]) || 0), 0) / rows.length : 0;
+            } else if (fn === 'MAX') {
+              aggRow[alias] = rows.length ? rows.reduce((m2, r) => Math.max(m2, parseFloat(r[col]) || 0), -Infinity) : 0;
+            } else if (fn === 'MIN') {
+              aggRow[alias] = rows.length ? rows.reduce((m2, r) => Math.min(m2, parseFloat(r[col]) || 0), Infinity) : 0;
+            }
+          } else {
+            aggRow[c] = rows.length ? rows[0][c] : null;
+          }
+        });
+        if (hasAgg) rows = [aggRow];
+      }
+
       if (/JOIN/i.test(sql)) {
         const joinMatch = sql.match(/JOIN\s+(\w+)\s+(\w+)\s+ON\s+(.+?)(?:WHERE|ORDER BY|GROUP BY|LIMIT|$)/is);
         if (joinMatch) {
