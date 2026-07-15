@@ -24,4 +24,6 @@ server_output.log.err
 data/drive-config.json.txt
 data/drive-config.json
 backups/
+temp_*.json
+UsersPC*
 
