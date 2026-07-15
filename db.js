@@ -1,10 +1,20 @@
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 let DB_MODE = 'json'; // 'json' or 'pg'
 let pool = null;
 let jsondb = null;
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const PREFERRED_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+let DATA_DIR = PREFERRED_DIR;
+try {
+  const test = path.join(PREFERRED_DIR, '.write-test');
+  fs.writeFileSync(test, 'ok', 'utf8');
+  fs.unlinkSync(test);
+} catch {
+  DATA_DIR = path.join(os.tmpdir(), 'bloodbank-data');
+  try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {}
+}
 
 // ============== PostgreSQL Table Definitions ==============
 const PG_TABLES = [

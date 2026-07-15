@@ -534,6 +534,8 @@ class JSONDB {
                 }
               } else if (/^null$/i.test(val)) {
                 val = null;
+              } else if (/^NOW\(\)$/i.test(val)) {
+                val = new Date().toISOString();
               } else {
                 val = parseInt(val);
               }

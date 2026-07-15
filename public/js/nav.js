@@ -186,7 +186,7 @@ async function checkAlerts() {
           alerts.push({ icon: 'fa-users', color: '#dc3545', title: 'بيان العاملين: ' + overdueEmp.length + ' بنك لم يحدث هذا الشهر', detail: overdueEmp.slice(0,5).map(h => h.name).join('، ') + (overdueEmp.length > 5 ? ' +' + (overdueEmp.length - 5) : ''), all: overdueEmp.map(h => h.name) });
         }
         const nowCD = getCairoDate(); const curMonthCode = nowCD.getUTCFullYear() * 100 + nowCD.getUTCMonth() + 1;
-        const unreviewed = (empRes.rows||[]).filter(r => !r.reviewed || r.review_month !== curMonthCode);
+        const unreviewed = (empRes.rows||[]).filter(r => !r.reviewed || r.review_month != curMonthCode);
         if (unreviewed.length > 0) {
           const byHosp = {};
           unreviewed.forEach(r => { const k = r.hospital_name||'غير معروف'; if (!byHosp[k]) byHosp[k] = []; byHosp[k].push(r); });
@@ -202,7 +202,7 @@ async function checkAlerts() {
         alerts.push({ icon: 'fa-microscope', color: '#8e44ad', title: 'الأجهزة: لم يتم إدخال بيانات أي مستشفى بعد', detail: 'يرجى الدخول إلى الأجهزة وإضافة البيانات', all: ['بيانات الأجهزة فارغة — يجب إدخال بيانات الأجهزة'] });
       } else {
         const curMonthCode = curMonthCairo();
-        const unreviewedEq = eqHospitals.filter(h => !h.reviewed || h.review_month !== curMonthCode);
+        const unreviewedEq = eqHospitals.filter(h => !h.reviewed || h.review_month != curMonthCode);
         if (unreviewedEq.length > 0) {
           alerts.push({ icon: 'fa-microscope', color: '#8e44ad', title: 'الأجهزة: ' + unreviewedEq.length + ' مستشفى لم يُراجع أجهزته هذا الشهر', detail: unreviewedEq.slice(0,5).map(h => h.name).join('، ') + (unreviewedEq.length > 5 ? ' +' + (unreviewedEq.length - 5) : ''), all: unreviewedEq.map(h => h.name) });
         }

@@ -2315,6 +2315,7 @@ async function empToggleReview(id) {
   rec.reviewed = true; rec.review_month = curMonth;
   showToast('✅ تمت المراجعة');
   renderEmployeeStatement();
+  checkAlerts();
   } catch(e) { showToast('❌ ' + e.message); }
 }
 
@@ -2352,6 +2353,7 @@ async function empReviewHospital(hospId) {
   }
   showToast('✅ تمت مراجعة ' + employees.length + ' موظف');
   renderEmployeeStatement();
+  checkAlerts();
   } catch(e) { showToast('❌ ' + e.message); }
 }
 
@@ -4624,7 +4626,7 @@ function computeBigFormulas(d) {
   const dispOther = d.disp_other || 0;
 
   const tested = collectTotal - refusedIcteric - refusedFatty - uncompleted - donationTherapeutic;
-  const totalOut = (d.out_blood_int||0) + (d.out_blood_ext||0);
+  const totalOut = (d.out_blood_int||0) + (d.out_blood_branch||0) + (d.out_blood_auth||0) + (d.out_blood_ext||0);
   const compat = d.compatibility || 0;
 
   return {
