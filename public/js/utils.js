@@ -10,14 +10,14 @@ function fmtCairoDate(fmt) {
   const pad = n => String(n).padStart(2, '0');
   const dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
   const monthNames = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
-  if (fmt === 'date') return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;
-  if (fmt === 'time') { const h = d.getUTCHours(); const a = h >= 12 ? 'م' : 'ص'; return `${pad(h % 12 || 12)}:${pad(d.getUTCMinutes())} ${a}`; }
-  if (fmt === 'full') return `${dayNames[d.getUTCDay()]}، ${d.getUTCDate()} ${monthNames[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  if (fmt === 'date') return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  if (fmt === 'time') { const h = d.getHours(); const a = h >= 12 ? 'م' : 'ص'; return `${pad(h % 12 || 12)}:${pad(d.getMinutes())} ${a}`; }
+  if (fmt === 'full') return `${dayNames[d.getDay()]}، ${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
   return d.toLocaleDateString('ar-EG');
 }
 function curMonthCairo() {
   const d = getCairoDate();
-  return d.getUTCFullYear() * 100 + d.getUTCMonth() + 1;
+  return d.getFullYear() * 100 + d.getMonth() + 1;
 }
 function updateClock() {
   const el = document.getElementById('clockDisplay');

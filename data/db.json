@@ -4816,7 +4816,7 @@
       "id": 37,
       "hospital_id": 5,
       "date": "2026-07-15",
-      "time": "00:46",
+      "time": "11:32",
       "under_inspection": 0,
       "blood_data": "{\"A+\":{\"previous\":27,\"incoming\":12,\"outgoing\":5,\"disposal\":3,\"available\":31},\"A-\":{\"previous\":5,\"incoming\":0,\"outgoing\":2,\"disposal\":0,\"available\":3},\"B+\":{\"previous\":15,\"incoming\":11,\"outgoing\":5,\"disposal\":1,\"available\":20},\"B-\":{\"previous\":6,\"incoming\":3,\"outgoing\":2,\"disposal\":0,\"available\":7},\"O+\":{\"previous\":35,\"incoming\":18,\"outgoing\":7,\"disposal\":2,\"available\":44},\"O-\":{\"previous\":7,\"incoming\":6,\"outgoing\":3,\"disposal\":0,\"available\":10},\"AB+\":{\"previous\":12,\"incoming\":0,\"outgoing\":1,\"disposal\":0,\"available\":11},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
       "plasma_data": "{\"A\":{\"previous\":17,\"incoming\":5,\"outgoing\":7,\"disposal\":0,\"available\":15},\"B\":{\"previous\":19,\"incoming\":6,\"outgoing\":5,\"disposal\":0,\"available\":20},\"AB\":{\"previous\":29,\"incoming\":3,\"outgoing\":2,\"disposal\":0,\"available\":30},\"O\":{\"previous\":39,\"incoming\":12,\"outgoing\":8,\"disposal\":0,\"available\":43}}",
@@ -88877,68 +88877,9 @@
       "user_id": 1
     }
   ],
-  "readiness_occasions": [
-    {
-      "id": 12,
-      "name": "عيد الاضحي",
-      "date_from": "2026-07-15T00:00:00.000Z",
-      "date_to": "2026-07-15T00:00:00.000Z",
-      "day_labels": [],
-      "created_at": "2026-07-14T19:38:57.424Z",
-      "updated_at": "2026-07-14T19:38:57.424Z",
-      "user_id": 1
-    }
-  ],
+  "readiness_occasions": [],
   "readiness_reports": [],
-  "readiness_notifications": [
-    {
-      "id": 12,
-      "occasion_id": 12,
-      "occasion_name": "عيد الاضحي",
-      "message": "جاهزية بنوك الدم بمناسبة \"عيد الاضحي\" من 2026-07-15T00:00:00.000Z إلى 2026-07-15T00:00:00.000Z - 36 بنك دم لم يدخل الجاهزية",
-      "created_by": 1,
-      "created_at": "2026-07-14T19:38:57.424Z",
-      "dismissed": false,
-      "_missingHospitals": [
-        "التضامن (مجمع الشفاء)*",
-        "النصر *",
-        "الحياة بورفؤاد *",
-        "الزهور",
-        "٣٠ يونيو",
-        "السلام",
-        "المجمع الطبي *",
-        "طوارئ ابو خليفه",
-        "مركز 30 يونيو",
-        "فايد التخصصي",
-        "القصاصين التخصصي",
-        "القنطرة غرب التخصصي",
-        "القنطرة شرق التخصصي",
-        "التل الكبيرالتخصصي",
-        "مجمع السويس الطبي *",
-        "المرأه والطفل ( حوض الدرس )",
-        "المناظير و الجهاز الهضمي",
-        "طيبة التخصصي *",
-        "المجمع الطبي الاقصر",
-        "ايزيس التخصصي",
-        "الاطفال التخصصي",
-        "الكرنك الدولي *",
-        "حورس",
-        "راس سدر *",
-        "شرم الشيخ الدولي",
-        "طابا",
-        "سانت كاترين",
-        "مجمع الفيروز *",
-        "النيل التخصصي*(حورس ادفو)",
-        "اسوان التخصصي (الصداقه)",
-        "كوم امبو *",
-        "دراو",
-        "معهد الاورام",
-        "ابوسمبل الدولي",
-        "المسلة التخصصي",
-        "السباعية التخصصي"
-      ]
-    }
-  ],
+  "readiness_notifications": [],
   "role_perms": [
     {
       "id": 1,
