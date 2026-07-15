@@ -960,15 +960,52 @@ app.get('/api/monthly-indicators', requireAuth(), requirePerm('monthly_indicator
       }
     }
   }
-  let sql = 'SELECT mi.*, h.name as hospital_name FROM monthly_indicators mi JOIN hospitals h ON h.id = mi.hospital_id WHERE 1=1';
-  let params = [];
-  const f = await filterByRole(user, sql, params);
-  sql = f.sql; params = f.params;
-  if (req.query.year) { sql += ` AND mi.year = $${params.length + 1}`; params.push(parseInt(req.query.year)); }
-  if (req.query.month) { sql += ` AND mi.month = $${params.length + 1}`; params.push(parseInt(req.query.month)); }
-  sql += ' ORDER BY mi.year DESC, mi.month DESC, mi.id DESC';
-  const result = await query(sql, params);
-  res.json(result.rows);
+  // Query from all three indicator tables (historical data may be in big/small tables)
+  let sql1 = 'SELECT mi.*, h.name as hospital_name, h.governorate FROM monthly_indicators mi JOIN hospitals h ON h.id = mi.hospital_id WHERE 1=1';
+  let sql2 = "SELECT mbi.*, h.name as hospital_name, h.governorate, '' as day, '' as time FROM monthly_big_indicators mbi JOIN hospitals h ON h.id = mbi.hospital_id WHERE 1=1";
+  let sql3 = "SELECT msi.*, h.name as hospital_name, h.governorate, '' as day, '' as time FROM monthly_small_indicators msi JOIN hospitals h ON h.id = msi.hospital_id WHERE 1=1";
+  let params1 = [], params2 = [], params3 = [];
+  // Apply role filters
+  const f1 = await filterByRole(user, sql1, params1, 'mi');
+  const f2 = await filterByRole(user, sql2, params2, 'mbi');
+  const f3 = await filterByRole(user, sql3, params3, 'msi');
+  sql1 = f1.sql; params1 = f1.params;
+  sql2 = f2.sql; params2 = f2.params;
+  sql3 = f3.sql; params3 = f3.params;
+  if (req.query.year) {
+    sql1 += ` AND mi.year = $${params1.length + 1}`; params1.push(parseInt(req.query.year));
+    sql2 += ` AND mbi.year = $${params2.length + 1}`; params2.push(parseInt(req.query.year));
+    sql3 += ` AND msi.year = $${params3.length + 1}`; params3.push(parseInt(req.query.year));
+  }
+  if (req.query.month) {
+    sql1 += ` AND mi.month = $${params1.length + 1}`; params1.push(parseInt(req.query.month));
+    sql2 += ` AND mbi.month = $${params2.length + 1}`; params2.push(parseInt(req.query.month));
+    sql3 += ` AND msi.month = $${params3.length + 1}`; params3.push(parseInt(req.query.month));
+  }
+  if (req.query.hospitalId || req.query.hospital_id) {
+    const hid = parseInt(req.query.hospitalId || req.query.hospital_id);
+    sql1 += ` AND mi.hospital_id = $${params1.length + 1}`; params1.push(hid);
+    sql2 += ` AND mbi.hospital_id = $${params2.length + 1}`; params2.push(hid);
+    sql3 += ` AND msi.hospital_id = $${params3.length + 1}`; params3.push(hid);
+  }
+  const [r1, r2, r3] = await Promise.all([
+    query(sql1, params1),
+    query(sql2, params2),
+    query(sql3, params3)
+  ]);
+  // Merge and deduplicate by (hospital_id, year, month) — prefer monthly_indicators
+  const merged = [...r1.rows];
+  const seen = new Set(merged.map(r => r.hospital_id + '|' + (r.year||'') + '|' + (r.month||'')));
+  for (const r of r2.rows) {
+    const key = r.hospital_id + '|' + (r.year||'') + '|' + (r.month||'');
+    if (!seen.has(key)) { merged.push(r); seen.add(key); }
+  }
+  for (const r of r3.rows) {
+    const key = r.hospital_id + '|' + (r.year||'') + '|' + (r.month||'');
+    if (!seen.has(key)) { merged.push(r); seen.add(key); }
+  }
+  merged.sort((a, b) => (b.year||0)*100+(b.month||0) - (a.year||0)*100-(a.month||0) || (b.id||0)-(a.id||0));
+  res.json(merged);
 });
 
 app.put('/api/monthly-indicators/:id', requireAuth(), requirePerm('monthly_indicators', 'edit'), async (req, res) => {
