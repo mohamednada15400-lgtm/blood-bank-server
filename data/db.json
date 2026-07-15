@@ -1,6 +1,26 @@
 {
   "users": [
     {
+      "id": 127,
+      "username": "h19_12",
+      "password": "$2b$10$ZSJPxc73OvN6HfalRvk56OgPdKvFRtCLPgEh5r9GpNk17KPDobX6W",
+      "name": "احمد جابر عوض احمد",
+      "role": "hospital",
+      "hospital_id": 19,
+      "governorate": "الأقصر",
+      "view_permission": "own"
+    },
+    {
+      "id": 126,
+      "username": "h19_11",
+      "password": "$2b$10$dBXQledN/WkPFOB2cOfuoOrPWjze6MfFbtSRsXrpsOeIbPfEYoNY2",
+      "name": "احمد مقبول احمد مقبول",
+      "role": "hospital",
+      "hospital_id": 19,
+      "governorate": "الأقصر",
+      "view_permission": "own"
+    },
+    {
       "id": 1,
       "username": "admin",
       "password": "$2b$10$c4a2BtZ3od.SI7pqeNbd4elrf36S46QYX4Rqw6cPt2/Ff/.2CWSBS",
@@ -115,7 +135,7 @@
     {
       "id": 55,
       "username": "mgr1",
-      "password": "123",
+      "password": "$2b$10$2h8d9rxY3iPtNoo6MWyBaeMq/ONGXJiKaORUhMTC0yGuSwPKXOUpa",
       "name": "مستخدم النصر *",
       "role": "hospital_manager",
       "hospital_id": 2,
@@ -4832,7 +4852,16 @@
   "monthly_storage": [],
   "monthly_aggregate": [],
   "monthly_indicators": [],
-  "monthly_consumption": [],
+  "monthly_consumption": [
+    {
+      "id": 3,
+      "hospital_id": 19,
+      "year": 2026,
+      "month": 6,
+      "blood_types": "{\"A+\":133,\"A-\":10,\"B+\":92,\"B-\":8,\"O+\":178,\"O-\":10,\"AB+\":30,\"AB-\":1}",
+      "user_id": 73
+    }
+  ],
   "monthly_big_indicators": [
     {
       "id": 1,
@@ -13474,6 +13503,14 @@
     }
   ],
   "monthly_small_indicators": [
+    {
+      "id": 643,
+      "hospital_id": 19,
+      "year": 2026,
+      "month": 6,
+      "data": "{\"inc_collected\":6,\"inc_regional\":448,\"inc_plasma\":314,\"inc_sdp\":120,\"inc_rdp\":98,\"out_blood\":462,\"out_plasma\":367,\"out_sdp\":120,\"out_rdp\":86,\"blood_groups\":495,\"compatibility\":473,\"disp_exp_blood\":0,\"disp_exp_plasma\":0,\"disp_exp_sdp\":0,\"disp_exp_rdp\":12,\"disp_returned\":3,\"disp_reaction\":0,\"disp_open\":0,\"disp_other\":2,\"child_inc_collected\":0,\"child_inc_regional\":27,\"child_out_blood\":27,\"child_blood_groups\":54,\"child_compatibility\":54,\"child_disp_exp\":0,\"child_disp_returned\":0,\"child_disp_reaction\":0,\"child_disp_open\":0,\"child_disp_other\":0}",
+      "user_id": 73
+    },
     {
       "id": 1,
       "hospital_id": 21,
@@ -88805,6 +88842,38 @@
   ],
   "employee_statements": [
     {
+      "id": 94,
+      "hospital_id": 19,
+      "hospital_name": "المجمع الطبي الاقصر",
+      "governorate": "الأقصر",
+      "employee": "احمد جابر عوض احمد",
+      "category": "كميائي",
+      "classification": "اساسي",
+      "shift": "",
+      "shifts_count": "",
+      "national_id": "27204110101739",
+      "phone": "01118183538",
+      "email": "",
+      "updated_at": "2026-07-15T15:09:50.784Z",
+      "user_id": 73
+    },
+    {
+      "id": 93,
+      "hospital_id": 19,
+      "hospital_name": "المجمع الطبي الاقصر",
+      "governorate": "الأقصر",
+      "employee": "احمد مقبول احمد مقبول",
+      "category": "مدير بنك",
+      "classification": "تعاقد",
+      "shift": "",
+      "shifts_count": "",
+      "national_id": "28706012500799",
+      "phone": "01006291813",
+      "email": "a.makboul1987@gmail.com",
+      "updated_at": "2026-07-15T15:08:25.071Z",
+      "user_id": 73
+    },
+    {
       "id": 89,
       "hospital_id": 8,
       "hospital_name": "طوارئ ابو خليفه",
@@ -88818,8 +88887,8 @@
       "phone": "1068880999",
       "email": "abohafsanada422@gmail.com",
       "reviewed": true,
-      "review_month": "202607",
-      "updated_at": "2026-07-14T17:14:08.735Z",
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:20.203Z",
       "user_id": 1
     },
     {
@@ -88836,8 +88905,8 @@
       "phone": "1097673941",
       "email": "Mohammed.Maarouf2016@gmail.com",
       "reviewed": true,
-      "review_month": "202607",
-      "updated_at": "2026-07-14T17:14:10.394Z",
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:20.374Z",
       "user_id": 1
     },
     {
@@ -88854,8 +88923,8 @@
       "phone": "1022883289",
       "email": "ahmedmostafa5404@gmail.com",
       "reviewed": true,
-      "review_month": "202607",
-      "updated_at": "2026-07-14T17:14:09.636Z",
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:20.545Z",
       "user_id": 1
     },
     {
@@ -88872,8 +88941,8 @@
       "phone": "1099569696",
       "email": "mmO413875@gmail.com",
       "reviewed": true,
-      "review_month": "202607",
-      "updated_at": "2026-07-14T17:14:10.256Z",
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:20.719Z",
       "user_id": 1
     },
     {
@@ -88889,9 +88958,9 @@
       "id": 93,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:17.323Z",
       "user_id": null
     },
     {
@@ -88907,9 +88976,9 @@
       "id": 94,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:17.499Z",
       "user_id": null
     },
     {
@@ -88925,9 +88994,9 @@
       "id": 95,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:17.672Z",
       "user_id": null
     },
     {
@@ -88943,9 +89012,9 @@
       "id": 96,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:17.827Z",
       "user_id": null
     },
     {
@@ -88961,9 +89030,9 @@
       "id": 97,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:18.005Z",
       "user_id": null
     },
     {
@@ -88979,9 +89048,9 @@
       "id": 98,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:18.244Z",
       "user_id": null
     },
     {
@@ -88997,9 +89066,9 @@
       "id": 99,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:18.409Z",
       "user_id": null
     },
     {
@@ -89015,9 +89084,9 @@
       "id": 100,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:18.653Z",
       "user_id": null
     },
     {
@@ -89033,9 +89102,9 @@
       "id": 101,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:22.344Z",
       "user_id": null
     },
     {
@@ -89051,9 +89120,9 @@
       "id": 102,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:22.521Z",
       "user_id": null
     },
     {
@@ -89069,9 +89138,9 @@
       "id": 103,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:22.695Z",
       "user_id": null
     },
     {
@@ -89087,9 +89156,9 @@
       "id": 104,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:22.869Z",
       "user_id": null
     },
     {
@@ -89105,9 +89174,9 @@
       "id": 105,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:23.047Z",
       "user_id": null
     },
     {
@@ -89123,9 +89192,9 @@
       "id": 106,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:23.261Z",
       "user_id": null
     },
     {
@@ -89141,9 +89210,9 @@
       "id": 107,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:23.433Z",
       "user_id": null
     },
     {
@@ -89159,9 +89228,9 @@
       "id": 108,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:23.671Z",
       "user_id": null
     },
     {
@@ -89177,9 +89246,9 @@
       "id": 109,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:23.837Z",
       "user_id": null
     },
     {
@@ -89195,9 +89264,9 @@
       "id": 110,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:24.082Z",
       "user_id": null
     },
     {
@@ -89213,9 +89282,9 @@
       "id": 111,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:24.319Z",
       "user_id": null
     },
     {
@@ -89231,15 +89300,111 @@
       "id": 112,
       "shift": "",
       "shifts_count": 0,
-      "reviewed": false,
-      "review_month": "",
-      "updated_at": "2026-07-15T14:16:29.698Z",
+      "reviewed": true,
+      "review_month": 202607,
+      "updated_at": "2026-07-15T13:39:24.501Z",
       "user_id": null
     }
   ],
-  "readiness_occasions": [],
-  "readiness_reports": [],
-  "readiness_notifications": [],
+  "readiness_occasions": [
+    {
+      "id": 13,
+      "name": "عيد الاضحي",
+      "date_from": "2026-07-16",
+      "date_to": "2026-07-16",
+      "day_labels": "[]",
+      "created_at": "2026-07-15T13:32:04.273Z",
+      "updated_at": "2026-07-15T13:32:04.273Z",
+      "user_id": 1
+    }
+  ],
+  "readiness_reports": [
+    {
+      "id": 2,
+      "occasion_id": 13,
+      "hospital_id": 2,
+      "hospital_name": "النصر *",
+      "governorate": "بورسعيد",
+      "staff_data": "\"[{\\\"name\\\":\\\"محمد السيد الحسانين محمد\\\",\\\"phone\\\":\\\"01000047459\\\",\\\"shifts\\\":{\\\"0\\\":\\\"12 A\\\"}},{\\\"name\\\":\\\"شريف محمد حنفي مقلد\\\",\\\"phone\\\":\\\"01505144141\\\",\\\"shifts\\\":{\\\"0\\\":\\\"12 P\\\"}},{\\\"name\\\":\\\"ندى طارق محمد نصر الدين\\\",\\\"phone\\\":\\\"01228632075\\\",\\\"shifts\\\":{\\\"0\\\":\\\"12 P\\\"}}]\"",
+      "stock": "كافي",
+      "shortage": "",
+      "maintenance": "تتم",
+      "breakdowns": "لا يوجد",
+      "consumables": "كافية",
+      "correction": "",
+      "notes_manager": "",
+      "notes_branch": "",
+      "notes_authority": "",
+      "created_by": 55,
+      "created_at": "2026-07-15T13:37:27.778Z"
+    },
+    {
+      "id": 1,
+      "occasion_id": 13,
+      "hospital_id": 8,
+      "hospital_name": "طوارئ ابو خليفه",
+      "governorate": "الإسماعيلية",
+      "staff_data": "[{\"name\":\"محمد عبدالمنعم حسن\",\"phone\":\"1068880999\",\"shifts\":{\"0\":\"12 A\"}}]",
+      "stock": "كافي",
+      "shortage": "",
+      "maintenance": "تتم",
+      "breakdowns": "لا يوجد",
+      "consumables": "كافية",
+      "correction": "",
+      "notes_manager": "",
+      "notes_branch": "",
+      "notes_authority": "",
+      "created_by": 1,
+      "created_at": "2026-07-15T13:32:19.801Z"
+    }
+  ],
+  "readiness_notifications": [
+    {
+      "id": 13,
+      "occasion_id": 13,
+      "occasion_name": "عيد الاضحي",
+      "message": "جاهزية بنوك الدم بمناسبة \"عيد الاضحي\" من 2026-07-16 إلى 2026-07-16 - 34 بنك دم لم يدخل الجاهزية",
+      "created_by": 1,
+      "created_at": "2026-07-15T13:32:04.273Z",
+      "dismissed": false,
+      "_missingHospitals": [
+        "التضامن (مجمع الشفاء)*",
+        "الحياة بورفؤاد *",
+        "الزهور",
+        "٣٠ يونيو",
+        "السلام",
+        "المجمع الطبي *",
+        "مركز 30 يونيو",
+        "فايد التخصصي",
+        "القصاصين التخصصي",
+        "القنطرة غرب التخصصي",
+        "القنطرة شرق التخصصي",
+        "التل الكبيرالتخصصي",
+        "مجمع السويس الطبي *",
+        "المرأه والطفل ( حوض الدرس )",
+        "المناظير و الجهاز الهضمي",
+        "طيبة التخصصي *",
+        "المجمع الطبي الاقصر",
+        "ايزيس التخصصي",
+        "الاطفال التخصصي",
+        "الكرنك الدولي *",
+        "حورس",
+        "راس سدر *",
+        "شرم الشيخ الدولي",
+        "طابا",
+        "سانت كاترين",
+        "مجمع الفيروز *",
+        "النيل التخصصي*(حورس ادفو)",
+        "اسوان التخصصي (الصداقه)",
+        "كوم امبو *",
+        "دراو",
+        "معهد الاورام",
+        "ابوسمبل الدولي",
+        "المسلة التخصصي",
+        "السباعية التخصصي"
+      ]
+    }
+  ],
   "role_perms": [
     {
       "id": 1,
@@ -90767,24 +90932,25 @@
   "donors": [],
   "donations": [],
   "_counters": {
-    "users": 126,
+    "users": 128,
     "hospitals": 38,
     "governorates": 8,
     "hospital_types": 3,
     "daily_reports": 38,
     "monthly_big_indicators": 337,
-    "monthly_small_indicators": 643,
+    "monthly_small_indicators": 644,
     "archives": 135,
-    "employee_statements": 93,
+    "employee_statements": 95,
     "equipment_types": 2,
-    "readiness_occasions": 13,
-    "readiness_notifications": 13,
+    "readiness_occasions": 14,
+    "readiness_notifications": 14,
     "role_perms": 7,
     "strategic_settings": 3,
     "strategic_reserves": 38,
     "equipment_hospitals": 37,
-    "readiness_reports": 1,
-    "equipment": 1
+    "readiness_reports": 3,
+    "equipment": 1,
+    "monthly_consumption": 4
   },
   "blood_bank_equipment": {
     "types": [

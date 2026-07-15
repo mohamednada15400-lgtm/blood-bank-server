@@ -2009,6 +2009,7 @@ app.get('/api/readiness-reports', requireAuth(), requirePerm('readiness', 'view'
   else if (user.role === 'branch_supervisor' && user.governorate) { sql += ` AND governorate = $${params.length + 1}`; params.push(user.governorate); }
   sql += ' ORDER BY id DESC';
   const result = await query(sql, params);
+  result.rows.forEach(r => { if (typeof r.staff_data === 'string') { try { r.staff_data = JSON.parse(r.staff_data); } catch(e) { r.staff_data = []; } } });
   res.json(result.rows);
 });
 
@@ -2021,11 +2022,12 @@ app.post('/api/readiness-reports', requireAuth(), requirePerm('readiness', 'add'
   if (existing.rows.length > 0) return res.status(400).json({ error: 'يوجد تقرير جاهزية مسبق لهذا المستشفى في هذه المناسبة' });
   const result = await query(
     `INSERT INTO readiness_reports (occasion_id, hospital_id, hospital_name, governorate, staff_data, stock, shortage, maintenance, breakdowns, consumables, correction, notes_manager, notes_branch, notes_authority, created_by, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,NOW()) RETURNING *`,
-    [occasion_id, hospital_id, hospital_name || '', governorate || '', JSON.stringify(staff_data || []),
+    [occasion_id, hospital_id, hospital_name || '', governorate || '', staff_data || [],
      stock || '', shortage || '', maintenance || '', breakdowns || '', consumables || '', correction || '',
      notes_manager || '', notes_branch || '', notes_authority || '', user.id]
   );
   const report = result.rows[0];
+  if (report && typeof report.staff_data === 'string') { try { report.staff_data = JSON.parse(report.staff_data); } catch(e) { report.staff_data = []; } }
   const occReports = await query('SELECT hospital_id FROM readiness_reports WHERE occasion_id = $1', [occasion_id]);
   const allHospitals = await query('SELECT id FROM hospitals');
   const reportHospIds = new Set(occReports.rows.map(r => r.hospital_id));
@@ -2044,7 +2046,7 @@ app.put('/api/readiness-reports/:id', requireAuth(), requirePerm('readiness', 'e
   if (user.role === 'hospital' && reportResult.rows[0].hospital_id !== user.hospitalId) return res.status(403).json({ error: 'غير مصرح' });
   const { staff_data, stock, shortage, maintenance, breakdowns, consumables, correction, notes_manager, notes_branch, notes_authority } = req.body;
   const sets = []; const vals = []; let idx = 1;
-  if (staff_data !== undefined) { sets.push(`staff_data = $${idx++}`); vals.push(JSON.stringify(staff_data)); }
+  if (staff_data !== undefined) { sets.push(`staff_data = $${idx++}`); vals.push(staff_data); }
   if (stock !== undefined) { sets.push(`stock = $${idx++}`); vals.push(stock); }
   if (shortage !== undefined) { sets.push(`shortage = $${idx++}`); vals.push(shortage); }
   if (maintenance !== undefined) { sets.push(`maintenance = $${idx++}`); vals.push(maintenance); }
@@ -2059,7 +2061,9 @@ app.put('/api/readiness-reports/:id', requireAuth(), requirePerm('readiness', 'e
     await query(`UPDATE readiness_reports SET ${sets.join(', ')} WHERE id = $${idx}`, vals);
   }
   const updated = await query('SELECT * FROM readiness_reports WHERE id = $1', [id]);
-  res.json(updated.rows[0]);
+  const row = updated.rows[0];
+  if (row && typeof row.staff_data === 'string') { try { row.staff_data = JSON.parse(row.staff_data); } catch(e) { row.staff_data = []; } }
+  res.json(row);
 });
 
 app.delete('/api/readiness-reports/:id', requireAuth(), requirePerm('readiness', 'delete'), async (req, res) => {
