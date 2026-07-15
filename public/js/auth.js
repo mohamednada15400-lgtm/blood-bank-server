@@ -92,6 +92,7 @@ function initApp(u) {
   _clockInterval = setInterval(updateClock, 10000);
   updateClock();
   applyDarkMode(); showMenu();
+  loadTimeConfig();
 }
 
 async function doLogin() {

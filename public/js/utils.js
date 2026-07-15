@@ -3,7 +3,7 @@ let _timeOffset = 2;
 let _clockInterval = null;
 
 function getCairoDate() {
-  return new Date(Date.now() + _timeOffset * 3600000);
+  return new Date();
 }
 function fmtCairoDate(fmt) {
   const d = getCairoDate();
@@ -139,6 +139,16 @@ function applyDarkMode() {
   if (isDark) { document.body.classList.add('dark-mode'); }
   const btn = document.getElementById('darkModeBtn');
   if (btn) btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+}
+async function loadTimeConfig() {
+  try {
+    const res = await api('GET', '/config/time');
+    if (res.time_offset) {
+      _timeOffset = res.time_offset;
+      updateClock();
+      document.getElementById('dateDisplay').textContent = fmtCairoDate('full');
+    }
+  } catch {}
 }
 async function checkSession() {
   try {
