@@ -112,7 +112,7 @@ function grad(arr) { return `linear-gradient(135deg,${arr[0]},${arr[1]})`; }
 
 function showMenu() { _navStack = [];
   const m = document.getElementById('mainContent');
-  const menuHtml = '<div style="display:flex;justify-content:flex-start;margin-bottom:2px"><div data-click="toggleNotifDropdown" id="menuBellBtn" style="position:relative;cursor:pointer;font-size:28px;color:#e53935;padding:8px;transition:0.15s"><i class="fas fa-bell"></i><span id="menuNotifBadge" style="display:none;position:absolute;top:-4px;left:-4px;background:#e53935;color:#fff;border-radius:50%;min-width:20px;height:20px;line-height:20px;font-size:10px;font-weight:700;text-align:center;padding:0 5px;box-shadow:0 0 6px #e5393580"></span></div></div><div id="menuNotifDropdown" style="display:none;position:fixed;top:126px;left:10px;z-index:997;background:var(--bg-card,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);width:320px;max-height:400px;overflow-y:auto;direction:rtl;font-size:12px"></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
+  const menuHtml = '<div style="position:relative;display:flex;justify-content:flex-start;margin-bottom:2px"><div data-click="toggleNotifDropdown" id="menuBellBtn" style="position:relative;cursor:pointer;font-size:28px;color:#e53935;padding:8px;transition:0.15s"><i class="fas fa-bell"></i><span id="menuNotifBadge" style="display:none;position:absolute;top:-4px;left:-4px;background:#e53935;color:#fff;border-radius:50%;min-width:20px;height:20px;line-height:20px;font-size:10px;font-weight:700;text-align:center;padding:0 5px;box-shadow:0 0 6px #e5393580"></span></div><div id="menuNotifDropdown" style="display:none;position:absolute;top:100%;left:0;z-index:997;background:var(--bg-card,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);width:320px;max-height:400px;overflow-y:auto;direction:rtl;font-size:12px"></div></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
     const bg = Array.isArray(c.color) ? grad(c.color) : c.color;
     const itemsTip = (c.items || []).filter(i => hasPerm(i.key, 'view'));
     const catHasView = (c.page ? hasPerm(c.key, 'view') : false) || itemsTip.length > 0;
@@ -147,7 +147,7 @@ async function checkAlerts() {
     const todayIds = reports.filter(r => r.date === today).map(r => r.hospital_id);
     const missStock = myHospitals.filter(h => !todayIds.includes(h.id));
     if (missStock.length > 0) {
-      alerts.push({ icon: 'fa-chart-bar', color: '#e74c3c', title: 'لم يتم تحديث STOCK Mang', detail: missStock.slice(0,5).map(h => h.name).join('، ') + (missStock.length > 5 ? ' +' + (missStock.length - 5) : ''), all: missStock.map(h => h.name) });
+      alerts.push({ icon: 'fa-chart-bar', color: '#e74c3c', title: 'لم يتم تحديث STOCK Mang', detail: missStock.slice(0,5).map(h => h.name).join('، ') + (missStock.length > 5 ? ' +' + (missStock.length - 5) : ''), all: missStock.map(h => h.name), _page: 'renderDailyStock' });
     }
     const prevConsumed = consumption.filter(r => r.year === prevYear && r.month === prevMonth).map(r => r.hospital_id);
     archiveItems.filter(a => a.type === 'منصرف فصائل الدم').forEach(a => {
@@ -158,7 +158,7 @@ async function checkAlerts() {
     });
     const missCons = myHospitals.filter(h => !prevConsumed.includes(h.id));
     if (missCons.length > 0) {
-      alerts.push({ icon: 'fa-droplet', color: '#e91e63', title: 'لم يتم إدخال منصرف فصائل ' + months[prevMonth] + ' ' + prevYear, detail: missCons.slice(0,5).map(h => h.name).join('، ') + (missCons.length > 5 ? ' +' + (missCons.length - 5) : ''), all: missCons.map(h => h.name) });
+      alerts.push({ icon: 'fa-droplet', color: '#e91e63', title: 'لم يتم إدخال منصرف فصائل ' + months[prevMonth] + ' ' + prevYear, detail: missCons.slice(0,5).map(h => h.name).join('، ') + (missCons.length > 5 ? ' +' + (missCons.length - 5) : ''), all: missCons.map(h => h.name), _page: 'renderBloodConsumption' });
     }
     const bigInd = await api('GET', '/monthly-big-indicators');
     const smallInd = await api('GET', '/monthly-small-indicators');
@@ -172,22 +172,22 @@ async function checkAlerts() {
     });
     const missBig = myHospitals.filter(h => h.type === 'تجميعي' && !prevBig.includes(h.id));
     if (missBig.length > 0) {
-      alerts.push({ icon: 'fa-chart-line', color: '#3f51b5', title: 'لم يتم إدخال مؤشرات تجميعي ' + months[prevMonth] + ' ' + prevYear, detail: missBig.slice(0,5).map(h => h.name).join('، ') + (missBig.length > 5 ? ' +' + (missBig.length - 5) : ''), all: missBig.map(h => h.name) });
+      alerts.push({ icon: 'fa-chart-line', color: '#3f51b5', title: 'لم يتم إدخال مؤشرات تجميعي ' + months[prevMonth] + ' ' + prevYear, detail: missBig.slice(0,5).map(h => h.name).join('، ') + (missBig.length > 5 ? ' +' + (missBig.length - 5) : ''), all: missBig.map(h => h.name), _page: 'renderBigIndicators' });
     }
     const missSmall = myHospitals.filter(h => h.type === 'تخزيني' && !prevSmall.includes(h.id));
     if (missSmall.length > 0) {
-      alerts.push({ icon: 'fa-chart-simple', color: '#17a2b8', title: 'لم يتم إدخال مؤشرات تخزيني ' + months[prevMonth] + ' ' + prevYear, detail: missSmall.slice(0,5).map(h => h.name).join('، ') + (missSmall.length > 5 ? ' +' + (missSmall.length - 5) : ''), all: missSmall.map(h => h.name) });
+      alerts.push({ icon: 'fa-chart-simple', color: '#17a2b8', title: 'لم يتم إدخال مؤشرات تخزيني ' + months[prevMonth] + ' ' + prevYear, detail: missSmall.slice(0,5).map(h => h.name).join('، ') + (missSmall.length > 5 ? ' +' + (missSmall.length - 5) : ''), all: missSmall.map(h => h.name), _page: 'renderSmallIndicators' });
     }
     try {
       const empRes = await api('GET', '/employee-statements');
       const curMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
       const hasData = (empRes.rows||[]).length > 0;
       if (!hasData) {
-        alerts.push({ icon: 'fa-users', color: '#dc3545', title: 'بيان العاملين: لم يتم إدخال بيانات أي موظف بعد', detail: 'يرجى الدخول إلى بيان العاملين وإضافة البيانات', all: ['بيان العاملين فارغ — يجب إدخال بيانات الموظفين'] });
+        alerts.push({ icon: 'fa-users', color: '#dc3545', title: 'بيان العاملين: لم يتم إدخال بيانات أي موظف بعد', detail: 'يرجى الدخول إلى بيان العاملين وإضافة البيانات', all: ['بيان العاملين فارغ — يجب إدخال بيانات الموظفين'], _page: 'renderEmployeeStatement' });
       } else {
         const overdueEmp = (empRes.hospitalStatus||[]).filter(h => h.employeeCount > 0 && (!h.lastUpdate || new Date(h.lastUpdate) < curMonthStart));
         if (overdueEmp.length > 0) {
-          alerts.push({ icon: 'fa-users', color: '#dc3545', title: 'بيان العاملين: ' + overdueEmp.length + ' بنك لم يحدث هذا الشهر', detail: overdueEmp.slice(0,5).map(h => h.name).join('، ') + (overdueEmp.length > 5 ? ' +' + (overdueEmp.length - 5) : ''), all: overdueEmp.map(h => h.name) });
+          alerts.push({ icon: 'fa-users', color: '#dc3545', title: 'بيان العاملين: ' + overdueEmp.length + ' بنك لم يحدث هذا الشهر', detail: overdueEmp.slice(0,5).map(h => h.name).join('، ') + (overdueEmp.length > 5 ? ' +' + (overdueEmp.length - 5) : ''), all: overdueEmp.map(h => h.name), _page: 'renderEmployeeStatement' });
         }
         const nowCD = getCairoDate(); const curMonthCode = nowCD.getUTCFullYear() * 100 + nowCD.getUTCMonth() + 1;
         const unreviewed = (empRes.rows||[]).filter(r => !r.reviewed || r.review_month != curMonthCode);
@@ -195,7 +195,7 @@ async function checkAlerts() {
           const byHosp = {};
           unreviewed.forEach(r => { const k = r.hospital_name||'غير معروف'; if (!byHosp[k]) byHosp[k] = []; byHosp[k].push(r); });
           const hospKeys = Object.keys(byHosp);
-          alerts.push({ icon: 'fa-check-double', color: '#e65100', title: 'بيان العاملين: ' + unreviewed.length + ' موظف لم يُراجع في ' + hospKeys.length + ' بنك', detail: hospKeys.slice(0,5).map(h => h + ' (' + byHosp[h].length + ')').join('، ') + (hospKeys.length > 5 ? ' +' + (hospKeys.length - 5) : ''), all: hospKeys.map(h => h + ': ' + byHosp[h].length + ' موظف') });
+          alerts.push({ icon: 'fa-check-double', color: '#e65100', title: 'بيان العاملين: ' + unreviewed.length + ' موظف لم يُراجع في ' + hospKeys.length + ' بنك', detail: hospKeys.slice(0,5).map(h => h + ' (' + byHosp[h].length + ')').join('، ') + (hospKeys.length > 5 ? ' +' + (hospKeys.length - 5) : ''), all: hospKeys.map(h => h + ': ' + byHosp[h].length + ' موظف'), _page: 'renderEmployeeStatement' });
         }
       }
     } catch (e) { /* ignore */ }
@@ -203,19 +203,19 @@ async function checkAlerts() {
       const eqRes = await api('GET', '/equipment');
       const eqHospitals = (eqRes.hospitals||[]);
       if (eqHospitals.length === 0) {
-        alerts.push({ icon: 'fa-microscope', color: '#8e44ad', title: 'الأجهزة: لم يتم إدخال بيانات أي مستشفى بعد', detail: 'يرجى الدخول إلى الأجهزة وإضافة البيانات', all: ['بيانات الأجهزة فارغة — يجب إدخال بيانات الأجهزة'] });
+        alerts.push({ icon: 'fa-microscope', color: '#8e44ad', title: 'الأجهزة: لم يتم إدخال بيانات أي مستشفى بعد', detail: 'يرجى الدخول إلى الأجهزة وإضافة البيانات', all: ['بيانات الأجهزة فارغة — يجب إدخال بيانات الأجهزة'], _page: 'renderEquipment' });
       } else {
         const curMonthCode = curMonthCairo();
         const unreviewedEq = eqHospitals.filter(h => !h.reviewed || h.review_month != curMonthCode);
         if (unreviewedEq.length > 0) {
-          alerts.push({ icon: 'fa-microscope', color: '#8e44ad', title: 'الأجهزة: ' + unreviewedEq.length + ' مستشفى لم يُراجع أجهزته هذا الشهر', detail: unreviewedEq.slice(0,5).map(h => h.name).join('، ') + (unreviewedEq.length > 5 ? ' +' + (unreviewedEq.length - 5) : ''), all: unreviewedEq.map(h => h.name) });
+          alerts.push({ icon: 'fa-microscope', color: '#8e44ad', title: 'الأجهزة: ' + unreviewedEq.length + ' مستشفى لم يُراجع أجهزته هذا الشهر', detail: unreviewedEq.slice(0,5).map(h => h.name).join('، ') + (unreviewedEq.length > 5 ? ' +' + (unreviewedEq.length - 5) : ''), all: unreviewedEq.map(h => h.name), _page: 'renderEquipment' });
         }
       }
     } catch (e) { /* ignore */ }
     try {
       const rdnNotifs = await api('GET', '/readiness-notifications');
       rdnNotifs.forEach(n => {
-        alerts.push({ icon: 'fa-clipboard-check', color: '#9c27b0', title: n.message, detail: n._missingHospitals ? n._missingHospitals.slice(0,5).join('، ') : '', all: n._missingHospitals || [], _rdnNotifId: n.id, _rdnNotifDismiss: true });
+        alerts.push({ icon: 'fa-clipboard-check', color: '#9c27b0', title: n.message, detail: n._missingHospitals ? n._missingHospitals.slice(0,5).join('، ') : '', all: n._missingHospitals || [], _rdnNotifId: n.id, _rdnNotifDismiss: true, _page: 'renderReadinessSheet' });
       });
     } catch (e) { /* ignore */ }
     window._alertsData = alerts;
@@ -283,7 +283,8 @@ function toggleNotifDropdown() {
     dd.innerHTML = alerts.map((a, i) => {
       const sev = getSev(a.title);
       const count = a.all ? a.all.length : 0;
-      return `<div data-click="showAlertList" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="transparent" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border,#f0f0f0);transition:0.1s">
+      const page = a._page || '';
+      return `<div data-click="notifNavToPage" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="transparent" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border,#f0f0f0);transition:0.1s">
         <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};flex-shrink:0"></span>
         <span style="flex:1;font-size:10px;color:var(--text,#333)">${a.title}</span>
         ${count > 0 ? `<span style="background:${sev.dot};color:#fff;border-radius:10px;padding:0 5px;font-size:8px;font-weight:700;line-height:15px;flex-shrink:0">${count}</span>` : ''}
@@ -293,11 +294,19 @@ function toggleNotifDropdown() {
   dd.style.display = '';
 }
 
+function notifNavToPage(idx) {
+  const a = window._alertsData && window._alertsData[idx];
+  if (!a || !a._page) return;
+  closeNotifDropdown();
+  pushNav(showMenu);
+  window[a._page]();
+}
+
 // Close dropdown on click outside
 document.addEventListener('click', function(e) {
   const dd = document.getElementById('menuNotifDropdown');
-  const bellBar = document.getElementById('menuBellBtn');
-  if (dd && dd.style.display !== 'none' && !dd.contains(e.target) && bellBar && !bellBar.contains(e.target)) {
+  const wrap = dd && dd.parentElement;
+  if (dd && dd.style.display !== 'none' && wrap && !wrap.contains(e.target)) {
     dd.style.display = 'none';
   }
 });
