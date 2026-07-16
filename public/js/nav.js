@@ -220,13 +220,30 @@ async function checkAlerts() {
       });
     } catch (e) { /* ignore */ }
     window._alertsData = alerts;
-    const al = alerts.map((a, i) => `<span data-click="showAlertList" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="#ffe0b2" data-hover-off="#fff3e0" style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;background:#fff3e0;border-right:3px solid ${a.color};border-radius:4px;padding:2px 6px;margin-left:4px;font-size:10px;white-space:nowrap;transition:0.15s">
-      <i class="fas ${a.icon}" style="color:${a.color};font-size:9px"></i>
-      <span style="color:#c62828;font-weight:600">${a.title}</span>
-      ${a._rdnNotifDismiss ? `<i class="fas fa-times" data-click="rdnDismissNotifAlert" data-args="${i}" style="color:#999;font-size:8px;padding:2px;margin-right:2px;cursor:pointer"></i>` : ''}
-    </span>`).join('');
+    const sevMap = {
+      critical: { bg: '#ffebee', border: '#e53935', dot: '#e53935', label: 'خطير' },
+      warning:  { bg: '#fff8e1', border: '#ff8f00', dot: '#ff8f00', label: 'تحذيري' },
+      info:     { bg: '#e3f2fd', border: '#1e88e5', dot: '#1e88e5', label: 'تنبيهي' }
+    };
+    const getSev = a => {
+      const t = a.title || '';
+      if (t.includes('STOCK') || t.includes('منصرف فصائل') || t.includes('لم يتم إدخال بيانات')) return sevMap.critical;
+      if (t.includes('مؤشرات') || t.includes('لم يُراجع') || t.includes('لم يراجع')) return sevMap.warning;
+      return sevMap.info;
+    };
+    const al = alerts.map((a, i) => {
+      const sev = getSev(a);
+      const count = a.all ? a.all.length : 0;
+      return `<span data-click="showAlertList" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="${sev.bg}" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:${sev.bg};border:1px solid ${sev.border}22;border-right:3px solid ${sev.border};border-radius:6px;padding:4px 8px;margin-left:4px;font-size:10px;white-space:nowrap;transition:0.15s;box-shadow:0 1px 2px #00000008">
+        <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};display:inline-block;flex-shrink:0"></span>
+        <i class="fas ${a.icon}" style="color:${sev.dot};font-size:9px;flex-shrink:0"></i>
+        <span style="font-weight:600;color:#333">${a.title}</span>
+        ${count > 0 ? `<span style="background:${sev.dot};color:#fff;border-radius:10px;padding:0 5px;font-size:9px;font-weight:700;line-height:16px">${count}</span>` : ''}
+        ${a._rdnNotifDismiss ? `<i class="fas fa-times" data-click="rdnDismissNotifAlert" data-args="${i}" style="color:#999;font-size:8px;padding:2px;cursor:pointer"></i>` : ''}
+      </span>`;
+    }).join('');
     el.innerHTML = alerts.length === 0
-      ? '<span style="background:#e8f5e9;border-radius:4px;padding:2px 8px;font-size:10px;color:#2e7d32;display:inline-flex;align-items:center;gap:3px"><i class="fas fa-check-circle" style="font-size:9px"></i> كل البيانات محدثة ✓</span>'
+      ? '<span style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:4px 12px;font-size:10px;color:#2e7d32;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 3px #0000000a"><i class="fas fa-check-circle" style="font-size:11px;color:#43a047"></i> كل البيانات محدثة ✓</span>'
       : al;
   } catch (e) { /* ignore */ }
 }
@@ -234,8 +251,21 @@ async function checkAlerts() {
 function showAlertList(idx) {
   const a = window._alertsData && window._alertsData[idx];
   if (!a || !a.all || a.all.length === 0) return;
-  openModal(a.title,
-    `<div style="max-height:400px;overflow-y:auto;direction:ltr"><ol style="direction:rtl;text-align:right;font-size:13px;padding-right:20px;margin:0">${a.all.map(n => `<li style="padding:4px 0">${n}</li>`).join('')}</ol></div>`,
+  const sevMap = {
+    critical: { dot: '#e53935', bg: '#ffebee' },
+    warning:  { dot: '#ff8f00', bg: '#fff8e1' },
+    info:     { dot: '#1e88e5', bg: '#e3f2fd' }
+  };
+  const getSev = t => {
+    if (t.includes('STOCK') || t.includes('منصرف فصائل') || t.includes('لم يتم إدخال بيانات')) return sevMap.critical;
+    if (t.includes('مؤشرات') || t.includes('لم يُراجع') || t.includes('لم يراجع')) return sevMap.warning;
+    return sevMap.info;
+  };
+  const sev = getSev(a.title);
+  openModal(`<span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${sev.dot};display:inline-block"></span> ${a.title}</span>`,
+    `<div style="max-height:400px;overflow-y:auto">
+      <div style="font-size:11px;color:#666;margin-bottom:8px">إجمالي: <strong>${a.all.length}</strong></div>
+      <ol style="direction:rtl;text-align:right;font-size:13px;padding-right:20px;margin:0">${a.all.map(n => `<li style="padding:3px 0;border-bottom:1px solid #f0f0f0">${n}</li>`).join('')}</ol></div>`,
     `<button class="btn btn-secondary" data-click="closeModal">إغلاق</button>`);
 }
 
