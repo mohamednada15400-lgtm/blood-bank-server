@@ -2009,7 +2009,7 @@ app.get('/api/readiness-reports', requireAuth(), requirePerm('readiness', 'view'
   else if (user.role === 'branch_supervisor' && user.governorate) { sql += ` AND governorate = $${params.length + 1}`; params.push(user.governorate); }
   sql += ' ORDER BY id DESC';
   const result = await query(sql, params);
-  result.rows.forEach(r => { if (typeof r.staff_data === 'string') { try { r.staff_data = JSON.parse(r.staff_data); } catch(e) { r.staff_data = []; } } });
+  result.rows.forEach(r => { if (r.staff_data != null && Array.isArray(r.staff_data)) { r.staff_data = JSON.stringify(r.staff_data); } else if (r.staff_data == null) { r.staff_data = '[]'; } });
   res.json(result.rows);
 });
 
@@ -2027,7 +2027,7 @@ app.post('/api/readiness-reports', requireAuth(), requirePerm('readiness', 'add'
      notes_manager || '', notes_branch || '', notes_authority || '', user.id]
   );
   const report = result.rows[0];
-  if (report && typeof report.staff_data === 'string') { try { report.staff_data = JSON.parse(report.staff_data); } catch(e) { report.staff_data = []; } }
+  if (report && report.staff_data != null && Array.isArray(report.staff_data)) { report.staff_data = JSON.stringify(report.staff_data); }
   const occReports = await query('SELECT hospital_id FROM readiness_reports WHERE occasion_id = $1', [occasion_id]);
   const allHospitals = await query('SELECT id FROM hospitals');
   const reportHospIds = new Set(occReports.rows.map(r => r.hospital_id));
@@ -2062,7 +2062,7 @@ app.put('/api/readiness-reports/:id', requireAuth(), requirePerm('readiness', 'e
   }
   const updated = await query('SELECT * FROM readiness_reports WHERE id = $1', [id]);
   const row = updated.rows[0];
-  if (row && typeof row.staff_data === 'string') { try { row.staff_data = JSON.parse(row.staff_data); } catch(e) { row.staff_data = []; } }
+  if (row && row.staff_data != null && Array.isArray(row.staff_data)) { row.staff_data = JSON.stringify(row.staff_data); }
   res.json(row);
 });
 
