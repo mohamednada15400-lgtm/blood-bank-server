@@ -6326,7 +6326,7 @@ function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
       if (existingReport) {
         if (isReadOnly) {
           // Show read-only view for branch supervisor
-          const staff = (()=>{try{let s=JSON.parse(existingReport.staff_data);if(!Array.isArray(s)&&typeof s==='string')s=JSON.parse(s);if(!Array.isArray(s))s=[];return s;}catch(e){return [];}})();
+          const staff = (()=>{try{let s=existingReport.staff_data||[];if(typeof s==='string'){s=JSON.parse(s);if(!Array.isArray(s)&&typeof s==='string')s=JSON.parse(s);}if(!Array.isArray(s))s=[];return s;}catch(e){return [];}})();
           const staffRows = staff.length ? staff.map((s, i) => {
             const shifts = days.map((_, di) => `<td style="font-size:10px;text-align:center">${s.shifts?.[String(di)]||''}</td>`).join('');
             return `<tr><td>${i+1}</td><td>${esc(s.name||'')}</td><td>${esc(s.phone||'')}</td>${shifts}</tr>`;
@@ -6353,7 +6353,7 @@ function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
           return;
         } else {
           // Render form pre-filled from existing report for editing
-          const staff = (()=>{try{let s=JSON.parse(existingReport.staff_data);if(!Array.isArray(s)&&typeof s==='string')s=JSON.parse(s);if(!Array.isArray(s))s=[];return s;}catch(e){return [];}})();
+          const staff = (()=>{try{let s=existingReport.staff_data||[];if(typeof s==='string'){s=JSON.parse(s);if(!Array.isArray(s)&&typeof s==='string')s=JSON.parse(s);}if(!Array.isArray(s))s=[];return s;}catch(e){return [];}})();
           formContainer.innerHTML = `
             <div class="card"><div class="card-header">
               <h3><i class="fas fa-edit"></i> تعديل بيانات الجاهزية — ${esc(hospName)}</h3>
@@ -6800,7 +6800,7 @@ async function rdnEditReport(reportId) {
           }
           if (r.correction) sf('rdnCorrection').value = r.correction;
           if (r.staff_data) {
-            const staff = (()=>{try{let s=JSON.parse(r.staff_data);if(!Array.isArray(s)&&typeof s==='string')s=JSON.parse(s);if(!Array.isArray(s))s=[];return s;}catch(e){return [];}})();
+            const staff = (()=>{try{let s=r.staff_data||[];if(typeof s==='string'){s=JSON.parse(s);if(!Array.isArray(s)&&typeof s==='string')s=JSON.parse(s);}if(!Array.isArray(s))s=[];return s;}catch(e){return [];}})();
             const tbody = document.querySelector('#rdnStaffTable tbody');
             if (tbody) {
               tbody.innerHTML = '';
