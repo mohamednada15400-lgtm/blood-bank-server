@@ -245,8 +245,62 @@ async function checkAlerts() {
     el.innerHTML = alerts.length === 0
       ? '<span style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:4px 12px;font-size:10px;color:#2e7d32;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 3px #0000000a"><i class="fas fa-check-circle" style="font-size:11px;color:#43a047"></i> كل البيانات محدثة ✓</span>'
       : al;
+    // Update bell badge
+    const badge = document.getElementById('notifBadge');
+    const bell = document.getElementById('notifBellBtn');
+    if (badge && bell) {
+      const criticalCount = alerts.filter(a => a.title && (a.title.includes('STOCK') || a.title.includes('منصرف فصائل') || a.title.includes('لم يتم إدخال بيانات'))).length;
+      if (criticalCount > 0) { badge.textContent = criticalCount; badge.style.display = ''; badge.style.background = '#e53935'; bell.className = 'header-icon-btn has-alerts'; }
+      else if (alerts.length > 0) { badge.textContent = alerts.length; badge.style.display = ''; badge.style.background = '#ff8f00'; bell.className = 'header-icon-btn has-alerts'; }
+      else { badge.style.display = 'none'; bell.className = 'header-icon-btn'; }
+    }
   } catch (e) { /* ignore */ }
 }
+
+function closeNotifDropdown() {
+  const dd = document.getElementById('notifDropdown');
+  if (dd) dd.style.display = 'none';
+}
+
+function toggleNotifDropdown() {
+  const dd = document.getElementById('notifDropdown');
+  if (!dd) return;
+  if (dd.style.display !== 'none') { dd.style.display = 'none'; return; }
+  const alerts = window._alertsData || [];
+  if (!alerts.length) {
+    dd.innerHTML = '<div style="padding:16px;text-align:center;color:#999;font-size:11px"><i class="fas fa-check-circle" style="color:#43a047;font-size:14px;display:block;margin-bottom:6px"></i>كل البيانات محدثة ✓</div>';
+  } else {
+    const sevMap = {
+      critical: { dot: '#e53935', bg: '#ffebee' },
+      warning:  { dot: '#ff8f00', bg: '#fff8e1' },
+      info:     { dot: '#1e88e5', bg: '#e3f2fd' }
+    };
+    const getSev = t => {
+      if (t.includes('STOCK') || t.includes('منصرف فصائل') || t.includes('لم يتم إدخال بيانات')) return sevMap.critical;
+      if (t.includes('مؤشرات') || t.includes('لم يُراجع') || t.includes('لم يراجع')) return sevMap.warning;
+      return sevMap.info;
+    };
+    dd.innerHTML = alerts.map((a, i) => {
+      const sev = getSev(a.title);
+      const count = a.all ? a.all.length : 0;
+      return `<div data-click="showAlertList" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="transparent" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid #f0f0f0;transition:0.1s">
+        <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};flex-shrink:0"></span>
+        <span style="flex:1;font-size:10px;color:#333">${a.title}</span>
+        ${count > 0 ? `<span style="background:${sev.dot};color:#fff;border-radius:10px;padding:0 5px;font-size:8px;font-weight:700;line-height:15px;flex-shrink:0">${count}</span>` : ''}
+      </div>`;
+    }).join('');
+  }
+  dd.style.display = '';
+}
+
+// Close dropdown on click outside
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('notifDropdown');
+  const btn = document.getElementById('notifBellBtn');
+  if (dd && dd.style.display !== 'none' && !dd.contains(e.target) && btn && !btn.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
 
 function showAlertList(idx) {
   const a = window._alertsData && window._alertsData[idx];

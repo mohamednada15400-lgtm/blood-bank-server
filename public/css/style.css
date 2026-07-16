@@ -194,6 +194,7 @@ body.dark-mode .stock-summary-cards .stat-card .stat-label { color: #8b949e; }
   box-shadow: 0 2px 12px rgba(192,57,43,0.06);
   position: sticky; top: 0; z-index: 100;
 }
+.header { position: relative; }
 .header-right { display: flex; align-items: center; gap: 10px; }
 .header-left { display: flex; align-items: center; gap: 8px; }
 .header-brand { font-size: 18px; font-weight: 800; color: var(--primary); }
@@ -1156,6 +1157,24 @@ body.dark-mode .login-error { background: #3d1a1a; border-color: #5a2a2a; color:
 }
 .modal-close:hover { background: var(--hover-bg); color: var(--text); }
 body.dark-mode .modal-close:hover { background: var(--bg-alt); }
+
+/* ====== NOTIFICATION DROPDOWN ====== */
+#notifDropdown::-webkit-scrollbar { width: 4px; }
+#notifDropdown::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+#notifDropdown::-webkit-scrollbar-track { background: transparent; }
+body.dark-mode #notifDropdown { background: var(--bg-card); border-color: var(--border); }
+body.dark-mode #notifDropdown > div { border-bottom-color: var(--border) !important; color: var(--text) !important; }
+
+/* Bell button animation */
+#notifBellBtn.has-alerts { animation: bell-ring 2s ease-in-out infinite; }
+@keyframes bell-ring {
+  0%, 100% { transform: rotate(0); }
+  2% { transform: rotate(15deg); }
+  4% { transform: rotate(-15deg); }
+  6% { transform: rotate(10deg); }
+  8% { transform: rotate(-10deg); }
+  10%, 100% { transform: rotate(0); }
+}
 
 /* ====== CONFIRM MODAL ====== */
 .confirm-msg { font-size: 15px; text-align: center; padding: 24px 10px; color: var(--text); line-height: 1.7; }
