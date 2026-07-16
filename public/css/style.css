@@ -1158,6 +1158,17 @@ body.dark-mode .login-error { background: #3d1a1a; border-color: #5a2a2a; color:
 .modal-close:hover { background: var(--hover-bg); color: var(--text); }
 body.dark-mode .modal-close:hover { background: var(--bg-alt); }
 
+/* ====== MENU BELL BAR ====== */
+.menu-bell-bar {
+  display: flex; align-items: center; gap: 6px; justify-content: center;
+  padding: 10px; margin-bottom: 4px; cursor: pointer;
+  background: var(--card-bg,#fff); border: 1px solid var(--border,#ddd);
+  border-radius: var(--radius-md); transition: all 0.15s;
+  font-size: 18px; color: #e53935; user-select: none;
+}
+.menu-bell-bar:hover { border-color: #e53935; box-shadow: 0 0 8px #e5393540; }
+.menu-bell-bar .menu-bell-label { font-size: 12px; color: var(--text-muted,#666); font-weight: 600; }
+body.dark-mode .menu-bell-bar { background: var(--bg-card); border-color: var(--border); }
 /* ====== NOTIFICATION DROPDOWN ====== */
 #notifDropdown::-webkit-scrollbar { width: 4px; }
 #notifDropdown::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }

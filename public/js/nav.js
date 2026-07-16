@@ -112,7 +112,7 @@ function grad(arr) { return `linear-gradient(135deg,${arr[0]},${arr[1]})`; }
 
 function showMenu() { _navStack = [];
   const m = document.getElementById('mainContent');
-  const menuHtml = '<div class="main-icons-grid">' + MENU_CATS.map(c => {
+  const menuHtml = '<div class="menu-bell-bar" data-click="toggleNotifDropdown"><i class="fas fa-bell"></i><span class="menu-bell-label" id="menuBellLabel">الإشعارات</span><span id="menuNotifBadge" style="display:none;background:#e53935;color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700;line-height:16px;min-width:16px;text-align:center;box-shadow:0 0 0 0 #e5393580;animation:badge-pulse 1.5s ease-in-out infinite"></span></div><div id="menuNotifDropdown" style="display:none;margin:0 0 8px;background:var(--bg-card,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);max-height:320px;overflow-y:auto;direction:rtl;font-size:12px"></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
     const bg = Array.isArray(c.color) ? grad(c.color) : c.color;
     const itemsTip = (c.items || []).filter(i => hasPerm(i.key, 'view'));
     const catHasView = (c.page ? hasPerm(c.key, 'view') : false) || itemsTip.length > 0;
@@ -246,25 +246,26 @@ async function checkAlerts() {
         ? '<span style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:4px 12px;font-size:10px;color:#2e7d32;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 3px #0000000a"><i class="fas fa-check-circle" style="font-size:11px;color:#43a047"></i> كل البيانات محدثة ✓</span>'
         : al;
     }
-    // Update bell badge
-    const badge = document.getElementById('notifBadge');
-    const bell = document.getElementById('notifBellBtn');
-    if (badge && bell) {
+    // Update menu bell badge
+    const badge = document.getElementById('menuNotifBadge');
+    const label = document.getElementById('menuBellLabel');
+    if (badge) {
       const criticalCount = alerts.filter(a => a.title && (a.title.includes('STOCK') || a.title.includes('منصرف فصائل') || a.title.includes('لم يتم إدخال بيانات'))).length;
-      if (criticalCount > 0) { badge.textContent = criticalCount; badge.style.display = ''; badge.style.background = '#e53935'; bell.className = 'header-icon-btn has-alerts'; }
-      else if (alerts.length > 0) { badge.textContent = alerts.length; badge.style.display = ''; badge.style.background = '#ff8f00'; bell.className = 'header-icon-btn has-alerts'; }
-      else { badge.style.display = 'none'; bell.className = 'header-icon-btn'; }
+      if (criticalCount > 0) { badge.textContent = criticalCount; badge.style.display = 'inline-block'; badge.style.animation = 'badge-pulse 1.5s ease-in-out infinite'; if (label) label.textContent = criticalCount + ' إنذار'; }
+      else if (alerts.length > 0) { badge.textContent = alerts.length; badge.style.display = 'inline-block'; badge.style.animation = 'badge-pulse 1.5s ease-in-out infinite'; if (label) label.textContent = alerts.length + ' تنبيه'; }
+      else { badge.style.display = 'none'; if (label) label.textContent = 'لا توجد إنذارات'; }
     }
   } catch (e) { /* ignore */ }
 }
 
 function closeNotifDropdown() {
-  const dd = document.getElementById('notifDropdown');
+  const dd = document.getElementById('menuNotifDropdown');
   if (dd) dd.style.display = 'none';
 }
 
 function toggleNotifDropdown() {
-  const dd = document.getElementById('notifDropdown');
+  const dd = document.getElementById('menuNotifDropdown');
+  const bell = document.getElementById('menuNotifBadge');
   if (!dd) return;
   if (dd.style.display !== 'none') { dd.style.display = 'none'; return; }
   const alerts = window._alertsData || [];
@@ -284,9 +285,9 @@ function toggleNotifDropdown() {
     dd.innerHTML = alerts.map((a, i) => {
       const sev = getSev(a.title);
       const count = a.all ? a.all.length : 0;
-      return `<div data-click="showAlertList" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="transparent" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid #f0f0f0;transition:0.1s">
+      return `<div data-click="showAlertList" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="transparent" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border,#f0f0f0);transition:0.1s">
         <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};flex-shrink:0"></span>
-        <span style="flex:1;font-size:10px;color:#333">${a.title}</span>
+        <span style="flex:1;font-size:10px;color:var(--text,#333)">${a.title}</span>
         ${count > 0 ? `<span style="background:${sev.dot};color:#fff;border-radius:10px;padding:0 5px;font-size:8px;font-weight:700;line-height:15px;flex-shrink:0">${count}</span>` : ''}
       </div>`;
     }).join('');
@@ -296,9 +297,9 @@ function toggleNotifDropdown() {
 
 // Close dropdown on click outside
 document.addEventListener('click', function(e) {
-  const dd = document.getElementById('notifDropdown');
-  const btn = document.getElementById('notifBellBtn');
-  if (dd && dd.style.display !== 'none' && !dd.contains(e.target) && btn && !btn.contains(e.target)) {
+  const dd = document.getElementById('menuNotifDropdown');
+  const bellBar = document.querySelector('.menu-bell-bar');
+  if (dd && dd.style.display !== 'none' && !dd.contains(e.target) && bellBar && !bellBar.contains(e.target)) {
     dd.style.display = 'none';
   }
 });
