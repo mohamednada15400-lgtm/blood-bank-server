@@ -112,7 +112,7 @@ function grad(arr) { return `linear-gradient(135deg,${arr[0]},${arr[1]})`; }
 
 function showMenu() { _navStack = [];
   const m = document.getElementById('mainContent');
-  const menuHtml = '<div class="menu-bell-bar" data-click="toggleNotifDropdown"><i class="fas fa-bell"></i><span class="menu-bell-label" id="menuBellLabel">الإشعارات</span><span id="menuNotifBadge" style="display:none;background:#e53935;color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700;line-height:16px;min-width:16px;text-align:center;box-shadow:0 0 0 0 #e5393580;animation:badge-pulse 1.5s ease-in-out infinite"></span></div><div id="menuNotifDropdown" style="display:none;margin:0 0 8px;background:var(--bg-card,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);max-height:320px;overflow-y:auto;direction:rtl;font-size:12px"></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
+  const menuHtml = '<div class="menu-bell-bar" data-click="toggleNotifDropdown"><i class="fas fa-bell"></i><span id="menuNotifBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e53935;color:#fff;border-radius:50%;min-width:16px;height:16px;line-height:16px;font-size:9px;font-weight:700;text-align:center;padding:0 4px;box-shadow:0 0 0 0 #e5393580;animation:badge-pulse 1.5s ease-in-out infinite"></span></div><div id="menuNotifDropdown" style="display:none;position:fixed;top:126px;left:10px;z-index:997;background:var(--bg-card,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);width:320px;max-height:400px;overflow-y:auto;direction:rtl;font-size:12px"></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
     const bg = Array.isArray(c.color) ? grad(c.color) : c.color;
     const itemsTip = (c.items || []).filter(i => hasPerm(i.key, 'view'));
     const catHasView = (c.page ? hasPerm(c.key, 'view') : false) || itemsTip.length > 0;
@@ -248,12 +248,11 @@ async function checkAlerts() {
     }
     // Update menu bell badge
     const badge = document.getElementById('menuNotifBadge');
-    const label = document.getElementById('menuBellLabel');
     if (badge) {
       const criticalCount = alerts.filter(a => a.title && (a.title.includes('STOCK') || a.title.includes('منصرف فصائل') || a.title.includes('لم يتم إدخال بيانات'))).length;
-      if (criticalCount > 0) { badge.textContent = criticalCount; badge.style.display = 'inline-block'; badge.style.animation = 'badge-pulse 1.5s ease-in-out infinite'; if (label) label.textContent = criticalCount + ' إنذار'; }
-      else if (alerts.length > 0) { badge.textContent = alerts.length; badge.style.display = 'inline-block'; badge.style.animation = 'badge-pulse 1.5s ease-in-out infinite'; if (label) label.textContent = alerts.length + ' تنبيه'; }
-      else { badge.style.display = 'none'; if (label) label.textContent = 'لا توجد إنذارات'; }
+      if (criticalCount > 0) { badge.textContent = criticalCount; badge.style.display = ''; badge.style.background = '#e53935'; badge.style.animation = 'badge-pulse 1.5s ease-in-out infinite'; }
+      else if (alerts.length > 0) { badge.textContent = alerts.length; badge.style.display = ''; badge.style.background = '#ff8f00'; badge.style.animation = 'badge-pulse 1.5s ease-in-out infinite'; }
+      else { badge.style.display = 'none'; }
     }
   } catch (e) { /* ignore */ }
 }
