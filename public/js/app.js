@@ -1508,7 +1508,7 @@ const branchSupMissingRecords = branchSupHasMissingData ? branchSupervisors.filt
     <div class="card" style="margin-bottom:12px"><div class="card-body" style="padding:0">
       <div class="table-scroll"><table class="data-table" id="empTable" style="font-size:12px">
         <thead><tr style="background:#f5f5f5">
-          <th>#</th><th>الفرع</th><th>بنك الدم</th><th>العاملين</th><th>الفئه</th><th>التصنيف</th><th>الرقم القومي</th><th>التليفون</th><th>البريد الالكتروني</th>${canEdit||canDelete?'<th>إجراءات</th>':''}
+          <th>#</th><th>العاملين</th><th>الفئه</th><th>التصنيف</th><th>الرقم القومي</th><th>التليفون</th><th>البريد الالكتروني</th>${canEdit||canDelete?'<th>إجراءات</th>':''}
         </tr></thead>
         <tbody id="empTbody"></tbody>
       </table></div>
@@ -1748,23 +1748,52 @@ function applyEmpFilter() {
   
   const tbody = document.getElementById('empTbody');
   if (!tbody) return;
-  const colSpan = canEdit||canDelete ? 10 : 9;
+  const colSpan = canEdit||canDelete ? 8 : 7;
   if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;padding:20px;color:#999">لا توجد نتائج</td></tr>`; return; }
-  tbody.innerHTML = filtered.map((d,i) => `<tr${i%2?' style="background:#fafafa"':''} data-id="${d.id}">
-    <td>${i+1}</td>
-    <td>${d.governorate}</td>
-    <td>${d.hospital_name}</td>
-    <td><strong>${d.employee}</strong></td>
-    <td>${d.category}</td>
-    <td>${d.classification}</td>
-    <td style="direction:ltr;font-family:monospace">${d.national_id||''}</td>
-    <td style="direction:ltr">${d.phone||''}</td>
-    <td style="direction:ltr;font-size:11px">${d.email||''}</td>
-    ${canEdit||canDelete ? `<td style="white-space:nowrap">
-      ${canEdit ? `<button class="btn btn-sm btn-outline" data-click="empShowEditModal" data-args="${d.id}" style="color:#1976d2;font-size:10px;margin:1px"><i class="fas fa-edit"></i></button>` : ''}
-      ${canDelete ? `<button class="btn btn-sm btn-outline" data-click="empDeleteRecord" data-args="${d.id}" style="color:#dc3545;font-size:10px;margin:1px"><i class="fas fa-trash"></i></button>` : ''}
-    </td>` : ''}
-  </tr>`).join('');
+  // Group by governorate → hospital
+  const groups = {};
+  filtered.forEach(d => {
+    const gk = d.governorate || 'أخرى';
+    const hk = d.hospital_name || 'غير معروف';
+    if (!groups[gk]) groups[gk] = {};
+    if (!groups[gk][hk]) groups[gk][hk] = [];
+    groups[gk][hk].push(d);
+  });
+  const govKeys = Object.keys(groups).sort((a,b) => a.localeCompare(b, 'ar'));
+  let html = '', idx = 0;
+  govKeys.forEach(g => {
+    const hospKeys = Object.keys(groups[g]).sort((a,b) => a.localeCompare(b, 'ar'));
+    const totalEmps = hospKeys.reduce((s,k) => s + groups[g][k].length, 0);
+    html += `<tr style="background:#e3f2fd;font-weight:700"><td colspan="${colSpan}" style="padding:5px 8px;font-size:12px;color:#1565c0">
+      <i class="fas fa-map-marker-alt" style="margin-left:4px"></i> محافظة ${esc(g)}
+      <span style="background:#1565c0;color:#fff;border-radius:10px;padding:1px 6px;font-size:9px;margin-right:6px">${totalEmps}</span>
+    </td></tr>`;
+    hospKeys.forEach(h => {
+      const emps = groups[g][h];
+      let empRows = '';
+      emps.forEach(d => {
+        idx++;
+        empRows += `<tr${idx%2?' style="background:#fafafa"':''} data-id="${d.id}">
+          <td>${idx}</td>
+          <td><strong>${esc(d.employee)}</strong></td>
+          <td>${esc(d.category)}</td>
+          <td>${esc(d.classification)}</td>
+          <td style="direction:ltr;font-family:monospace">${esc(d.national_id||'')}</td>
+          <td style="direction:ltr">${esc(d.phone||'')}</td>
+          <td style="direction:ltr;font-size:11px">${esc(d.email||'')}</td>
+          ${canEdit||canDelete ? `<td style="white-space:nowrap">
+            ${canEdit ? `<button class="btn btn-sm btn-outline" data-click="empShowEditModal" data-args="${d.id}" style="color:#1976d2;font-size:10px;margin:1px"><i class="fas fa-edit"></i></button>` : ''}
+            ${canDelete ? `<button class="btn btn-sm btn-outline" data-click="empDeleteRecord" data-args="${d.id}" style="color:#dc3545;font-size:10px;margin:1px"><i class="fas fa-trash"></i></button>` : ''}
+          </td>` : ''}
+        </tr>`;
+      });
+      html += `<tr style="background:#fff8e1;font-weight:600"><td colspan="${colSpan}" style="padding:3px 8px 3px 20px;font-size:11px;color:#e65100">
+        <i class="fas fa-hospital" style="margin-left:4px"></i> ${esc(h)}
+        <span style="background:#e65100;color:#fff;border-radius:10px;padding:0 5px;font-size:8px;margin-right:6px">${emps.length}</span>
+      </td></tr>${empRows}`;
+    });
+  });
+  tbody.innerHTML = html;
 }
 
 function updateEmpStats(filtered) {
@@ -1865,8 +1894,6 @@ async function printEmployeeTable() {
     <thead>
       <tr>
         <th>#</th>
-        <th>الفرع</th>
-        <th>بنك الدم</th>
         <th>الموظف</th>
         <th>الفئة</th>
         <th>التصنيف</th>
@@ -1878,20 +1905,42 @@ async function printEmployeeTable() {
     <tbody>
 `;
 
-  filtered.forEach((d, i) => {
-    html += `
-      <tr>
-        <td>${i+1}</td>
-        <td>${d.governorate || ''}</td>
-        <td>${d.hospital_name || ''}</td>
-        <td><strong>${d.employee || ''}</strong></td>
-        <td>${d.category || ''}</td>
-        <td>${d.classification || ''}</td>
-        <td style="direction:ltr;font-family:monospace">${d.national_id || ''}</td>
-        <td style="direction:ltr">${d.phone || ''}</td>
-        <td style="direction:ltr;font-size:10px">${d.email || ''}</td>
-      </tr>
-    `;
+  // Group by governorate → hospital
+  const pg = {};
+  filtered.forEach(d => {
+    const gk = d.governorate || 'أخرى';
+    const hk = d.hospital_name || 'غير معروف';
+    if (!pg[gk]) pg[gk] = {};
+    if (!pg[gk][hk]) pg[gk][hk] = [];
+    pg[gk][hk].push(d);
+  });
+  const pgKeys = Object.keys(pg).sort((a,b) => a.localeCompare(b, 'ar'));
+  let pi = 0;
+  pgKeys.forEach(g => {
+    const phKeys = Object.keys(pg[g]).sort((a,b) => a.localeCompare(b, 'ar'));
+    html += `<tr style="background:#e3f2fd;font-weight:700"><td colspan="7" style="padding:6px 8px;font-size:13px;color:#1565c0">
+      <i class="fas fa-map-marker-alt"></i> محافظة ${g}
+      <span style="background:#1565c0;color:#fff;border-radius:10px;padding:1px 6px;font-size:9px;margin-right:6px">${phKeys.reduce((s,k) => s + pg[g][k].length, 0)}</span>
+    </td></tr>`;
+    phKeys.forEach(h => {
+      const emps = pg[g][h];
+      html += `<tr style="background:#fff8e1;font-weight:600"><td colspan="7" style="padding:3px 8px 3px 20px;font-size:12px;color:#e65100">
+        <i class="fas fa-hospital"></i> ${h}
+        <span style="background:#e65100;color:#fff;border-radius:10px;padding:0 5px;font-size:8px;margin-right:6px">${emps.length}</span>
+      </td></tr>`;
+      emps.forEach(d => {
+        pi++;
+        html += `<tr>
+          <td>${pi}</td>
+          <td><strong>${d.employee || ''}</strong></td>
+          <td>${d.category || ''}</td>
+          <td>${d.classification || ''}</td>
+          <td style="direction:ltr;font-family:monospace">${d.national_id || ''}</td>
+          <td style="direction:ltr">${d.phone || ''}</td>
+          <td style="direction:ltr;font-size:10px">${d.email || ''}</td>
+        </tr>`;
+      });
+    });
   });
   
   html += `
@@ -1957,17 +2006,43 @@ function exportEmployeeExcel() {
   });
   const branchName = gov || 'جميع الفروع';
   const hospitalName = hosp || 'جميع بنوك الدم';
-  const rows = filtered.map((d,i) => `<tr>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${i+1}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.governorate||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.hospital_name||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.employee||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.category||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.classification||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.national_id||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.phone||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.email||''}</td>
-  </tr>`).join('');
+  // Group by governorate → hospital
+  const egroups = {};
+  filtered.forEach(d => {
+    const gk = d.governorate || 'أخرى'; const hk = d.hospital_name || 'غير معروف';
+    if (!egroups[gk]) egroups[gk] = {};
+    if (!egroups[gk][hk]) egroups[gk][hk] = [];
+    egroups[gk][hk].push(d);
+  });
+  const egKeys = Object.keys(egroups).sort((a,b) => a.localeCompare(b, 'ar'));
+  let ei = 0, eRows = '';
+  const escExcel = v => (v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  egKeys.forEach(g => {
+    const ehKeys = Object.keys(egroups[g]).sort((a,b) => a.localeCompare(b, 'ar'));
+    eRows += `<tr style="background:#e3f2fd"><td colspan="7" style="padding:5px 8px;border:1px solid #bdc3c7;font-size:11px;font-weight:700;color:#1565c0;text-align:right">
+      📍 محافظة ${escExcel(g)}
+      <span style="background:#1565c0;color:#fff;border-radius:10px;padding:0 6px;font-size:9px;margin-right:6px">${ehKeys.reduce((s,k) => s + egroups[g][k].length, 0)}</span>
+    </td></tr>`;
+    ehKeys.forEach(h => {
+      const emps = egroups[g][h];
+      eRows += `<tr style="background:#fff8e1"><td colspan="7" style="padding:3px 8px 3px 20px;border:1px solid #bdc3c7;font-size:10px;font-weight:600;color:#e65100;text-align:right">
+        🏥 ${escExcel(h)}
+        <span style="background:#e65100;color:#fff;border-radius:10px;padding:0 4px;font-size:8px;margin-right:6px">${emps.length}</span>
+      </td></tr>`;
+      emps.forEach(d => {
+        ei++;
+        eRows += `<tr>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${ei}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${escExcel(d.employee)}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${escExcel(d.category)}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${escExcel(d.classification)}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${escExcel(d.national_id)}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${escExcel(d.phone)}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${escExcel(d.email)}</td>
+        </tr>`;
+      });
+    });
+  });
   const dateStr = new Date().toLocaleDateString('ar-EG');
   const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
     <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#795548;border:none">بيان العاملين ببنوك الدم</td></tr>
@@ -1975,8 +2050,6 @@ function exportEmployeeExcel() {
     <table style="border-collapse:collapse;width:100%;font-family:'Segoe UI',Arial;font-size:10px">
       <thead><tr>
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">م</th>
-        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">المحافظة</th>
-        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">بنك الدم</th>
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الموظف</th>
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الفئه</th>
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">التصنيف</th>
@@ -1984,7 +2057,7 @@ function exportEmployeeExcel() {
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">التليفون</th>
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">البريد</th>
       </tr></thead>
-      <tbody>${rows}</tbody></table>
+      <tbody>${eRows}</tbody></table>
     <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
   downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'بيان_العاملين.xls');
   showToast('✅ تم التحميل');
@@ -2009,25 +2082,42 @@ function exportEmployeePDF() {
   const branchName = gov || 'جميع الفروع';
   const hospitalName = hosp || 'جميع بنوك الدم';
   const dateStr = new Date().toLocaleDateString('ar-EG');
-  const rows = filtered.map((d,i) => `<tr>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${i+1}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.governorate||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.hospital_name||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.employee||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.category||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.classification||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.national_id||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.phone||''}</td>
-    <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.email||''}</td>
-  </tr>`).join('');
+  // Group by governorate → hospital
+  const pgroups = {};
+  filtered.forEach(d => {
+    const gk = d.governorate || 'أخرى'; const hk = d.hospital_name || 'غير معروف';
+    if (!pgroups[gk]) pgroups[gk] = {};
+    if (!pgroups[gk][hk]) pgroups[gk][hk] = [];
+    pgroups[gk][hk].push(d);
+  });
+  const pgKeys = Object.keys(pgroups).sort((a,b) => a.localeCompare(b, 'ar'));
+  let pi = 0, pRows = '';
+  pgKeys.forEach(g => {
+    const phKeys = Object.keys(pgroups[g]).sort((a,b) => a.localeCompare(b, 'ar'));
+    pRows += `<tr style="background:#e3f2fd"><td colspan="7" style="padding:5px 8px;border:1px solid #bdc3c7;font-size:11px;font-weight:700;color:#1565c0;text-align:right">📍 محافظة ${g} <span style="background:#1565c0;color:#fff;border-radius:10px;padding:0 6px;font-size:9px;margin-right:6px">${phKeys.reduce((s,k) => s + pgroups[g][k].length, 0)}</span></td></tr>`;
+    phKeys.forEach(h => {
+      const emps = pgroups[g][h];
+      pRows += `<tr style="background:#fff8e1"><td colspan="7" style="padding:3px 8px 3px 20px;border:1px solid #bdc3c7;font-size:10px;font-weight:600;color:#e65100;text-align:right">🏥 ${h} <span style="background:#e65100;color:#fff;border-radius:10px;padding:0 4px;font-size:8px;margin-right:6px">${emps.length}</span></td></tr>`;
+      emps.forEach(d => {
+        pi++;
+        pRows += `<tr>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${pi}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.employee||''}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.category||''}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${d.classification||''}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.national_id||''}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.phone||''}</td>
+          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${d.email||''}</td>
+        </tr>`;
+      });
+    });
+  });
   const bodyHtml = `<div style="text-align:center;margin-bottom:12px">
     <h2 style="color:#795548;margin:0 0 3px 0;font-size:18px">بيان العاملين ببنوك الدم</h2>
     <p style="color:#666;margin:0;font-size:12px">${dateStr} | ${branchName} | ${hospitalName}</p></div>
     <table style="border-collapse:collapse;width:100%;font-family:'Segoe UI',Arial;font-size:10px">
       <thead><tr>
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">م</th>
-        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">المحافظة</th>
-        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">بنك الدم</th>
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الموظف</th>
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الفئه</th>
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">التصنيف</th>
@@ -2035,7 +2125,7 @@ function exportEmployeePDF() {
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">التليفون</th>
         <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">البريد</th>
       </tr></thead>
-      <tbody>${rows}</tbody></table>
+      <tbody>${pRows}</tbody></table>
     <div style="text-align:center;margin-top:10px;font-size:10px;color:#888">إعداد و برمجة محمد ندا 01068880999</div>`;
   downloadPdf(bodyHtml, 'بيان_العاملين.pdf');
 }
@@ -6218,7 +6308,6 @@ async function rdnOccasionChanged() {
     } else if (role === 'branch_supervisor' && userGov) {
       hospitals = allHospitals.filter(h => h.governorate === userGov);
     }
-    const isViewOnly = role === 'branch_supervisor';
     const days = rdnGetDayLabels(occ);
     window._rdnHospitals = hospitals;
     // Group hospitals by governorate
@@ -6277,8 +6366,7 @@ function rdnHospitalChanged(occId) {
   const hospName = hosp ? hosp.name : '';
   const gov = hosp ? hosp.governorate : '';
   const user = window._user || {};
-  const isViewOnly = user.role === 'branch_supervisor';
-  rdnShowForm(occId, hospId, hospName, gov, isViewOnly);
+  rdnShowForm(occId, hospId, hospName, gov, false);
 }
 
 function rdnShowForm(occId, hospId, hospNameOrEl, gov, isViewOnly) {
