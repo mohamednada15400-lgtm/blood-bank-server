@@ -277,7 +277,7 @@ function validate(schema) {
 }
 
 // Rate limiting per-endpoint (not just /api/)
-const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.RATE_LIMIT_LOGIN) || 20, message: { error: 'محاولات كثيرة جدًا، حاول بعد 15 دقيقة' }, skip: (req) => !req.body || !req.body.username });
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.RATE_LIMIT_LOGIN) || 500, message: { error: 'محاولات كثيرة جدًا، حاول بعد 15 دقيقة' }, skip: (req) => !req.body || !req.body.username });
 const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: Number(process.env.RATE_LIMIT_API) || 3000, message: { error: 'طلبات كثيرة جدًا، حاول بعد دقيقة' } });
 const globalLimiter = rateLimit({ windowMs: 60 * 1000, max: 5000, message: { error: 'طلبات كثيرة جدًا' } });
 app.use(globalLimiter);
