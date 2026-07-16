@@ -870,6 +870,27 @@ app.put('/api/daily-reports/:id', requireAuth(), requirePerm('daily_stock', 'edi
   res.json(result.rows[0]);
 });
 
+// Auto-save individual cell in daily stock table
+app.patch('/api/daily-reports/:id/cell', requireAuth(), requirePerm('daily_stock', 'edit'), async (req, res) => {
+  const { group, type, sub, value } = req.body;
+  const result = await query('SELECT * FROM daily_reports WHERE id = $1', [parseInt(req.params.id)]);
+  if (!result.rows.length) return res.status(404).json({ error: 'غير موجود' });
+  const r = result.rows[0];
+  if (group === 'license') {
+    const f = sub === 'type' ? 'license_type' : 'license_status';
+    await query(`UPDATE daily_reports SET ${f} = $1 WHERE id = $2`, [value, parseInt(req.params.id)]);
+  } else if (group === 'plat_cryo') {
+    await query(`UPDATE daily_reports SET ${sub} = $1 WHERE id = $2`, [parseInt(value) || 0, parseInt(req.params.id)]);
+  } else {
+    const field = group === 'plasma' ? 'plasma_data' : 'blood_data';
+    const data = typeof r[field] === 'object' && r[field] ? r[field] : {};
+    if (!data[type]) data[type] = {};
+    data[type][sub] = parseInt(value) || 0;
+    await query(`UPDATE daily_reports SET ${field} = $1 WHERE id = $2`, [JSON.stringify(data), parseInt(req.params.id)]);
+  }
+  res.json({ ok: true });
+});
+
 // Allow anyone to edit platelets & cryo
 app.patch('/api/daily-reports/:id/pc', requireAuth(), async (req, res) => {
   const { platelets, cryo } = req.body;

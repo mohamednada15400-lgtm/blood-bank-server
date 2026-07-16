@@ -211,17 +211,17 @@ function setupInlineEdit() {
     sel.addRange(range);
     const finish = () => {
       td.contentEditable = false;
-      if (isText) {
-        // Keep text as-is
-      } else {
-        const newVal = parseInt(td.textContent.trim()) || 0;
-        td.textContent = newVal;
-      }
+      const newVal = isText ? td.textContent.trim() : (parseInt(td.textContent.trim()) || 0);
+      if (!isText) td.textContent = newVal;
       const rid = parseInt(td.dataset.rid);
       const group = td.dataset.group;
       const type = td.dataset.type;
       const sub = td.dataset.sub;
       collectGroupData(table, rid);
+      // Auto-save cell
+      if (rid && group) {
+        api('PATCH', '/daily-reports/' + rid + '/cell', { group, type, sub, value: newVal }).catch(() => {});
+      }
     };
     td.onblur = finish;
     td.onkeydown = function(ev) {
