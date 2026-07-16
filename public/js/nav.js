@@ -112,7 +112,7 @@ function grad(arr) { return `linear-gradient(135deg,${arr[0]},${arr[1]})`; }
 
 function showMenu() { _navStack = [];
   const m = document.getElementById('mainContent');
-  const menuHtml = '<div style="position:relative;display:flex;justify-content:flex-start;margin-bottom:2px"><div data-click="toggleNotifDropdown" id="menuBellBtn" style="position:relative;cursor:pointer;font-size:28px;color:#e53935;padding:8px;transition:0.15s"><i class="fas fa-bell"></i><span id="menuNotifBadge" style="display:none;position:absolute;top:-4px;left:-4px;background:#e53935;color:#fff;border-radius:50%;min-width:20px;height:20px;line-height:20px;font-size:10px;font-weight:700;text-align:center;padding:0 5px;box-shadow:0 0 6px #e5393580"></span></div><div id="menuNotifDropdown" style="display:none;position:absolute;top:100%;left:0;z-index:997;background:var(--bg-card,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);width:320px;max-height:400px;overflow-y:auto;direction:rtl;font-size:12px"></div></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
+  const menuHtml = '<div style="position:relative;display:inline-flex;flex-direction:column;margin-bottom:2px"><div data-click="toggleNotifDropdown" id="menuBellBtn" style="position:relative;cursor:pointer;font-size:28px;color:#e53935;padding:8px;transition:0.15s;align-self:flex-start"><i class="fas fa-bell"></i><span id="menuNotifBadge" style="display:none;position:absolute;top:-4px;left:-4px;background:#e53935;color:#fff;border-radius:50%;min-width:20px;height:20px;line-height:20px;font-size:10px;font-weight:700;text-align:center;padding:0 5px;box-shadow:0 0 6px #e5393580"></span></div><div id="menuNotifDropdown" style="display:none;position:absolute;top:100%;right:0;z-index:997;background:var(--bg-card,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);width:320px;max-height:400px;overflow-y:auto;direction:rtl;font-size:12px"></div></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
     const bg = Array.isArray(c.color) ? grad(c.color) : c.color;
     const itemsTip = (c.items || []).filter(i => hasPerm(i.key, 'view'));
     const catHasView = (c.page ? hasPerm(c.key, 'view') : false) || itemsTip.length > 0;
@@ -263,7 +263,6 @@ function closeNotifDropdown() {
 
 function toggleNotifDropdown() {
   const dd = document.getElementById('menuNotifDropdown');
-  const bell = document.getElementById('menuNotifBadge');
   if (!dd) return;
   if (dd.style.display !== 'none') { dd.style.display = 'none'; return; }
   const alerts = window._alertsData || [];
@@ -298,8 +297,14 @@ function notifNavToPage(idx) {
   const a = window._alertsData && window._alertsData[idx];
   if (!a || !a._page) return;
   closeNotifDropdown();
-  pushNav(showMenu);
-  window[a._page]();
+  const role = (window._user && window._user.role) || '';
+  // hospital/hospital_manager → open page directly, supervisors/admin → show list
+  if (role === 'hospital' || role === 'hospital_manager') {
+    pushNav(showMenu);
+    window[a._page]();
+  } else {
+    showAlertList(idx);
+  }
 }
 
 // Close dropdown on click outside
