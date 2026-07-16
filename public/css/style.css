@@ -1166,7 +1166,17 @@ body.dark-mode #notifDropdown { background: var(--bg-card); border-color: var(--
 body.dark-mode #notifDropdown > div { border-bottom-color: var(--border) !important; color: var(--text) !important; }
 
 /* Bell button animation */
-#notifBellBtn.has-alerts { animation: bell-ring 2s ease-in-out infinite; }
+#notifBellBtn.has-alerts {
+  animation: bell-ring 2s ease-in-out infinite;
+  color: #e53935 !important;
+  text-shadow: 0 0 8px #e5393580, 0 0 20px #e5393540;
+}
+#notifBellBtn.has-alerts:hover { color: #ff1744 !important; text-shadow: 0 0 12px #e53935b3, 0 0 30px #e5393566; }
+#notifBadge { animation: badge-pulse 1.5s ease-in-out infinite; }
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 #e5393580; }
+  50% { box-shadow: 0 0 0 6px #e5393500; }
+}
 @keyframes bell-ring {
   0%, 100% { transform: rotate(0); }
   2% { transform: rotate(15deg); }

@@ -112,7 +112,7 @@ function grad(arr) { return `linear-gradient(135deg,${arr[0]},${arr[1]})`; }
 
 function showMenu() { _navStack = [];
   const m = document.getElementById('mainContent');
-  const menuHtml = '<div id="alertArea" style="overflow-x:auto;overflow-y:hidden;white-space:nowrap;height:26px;line-height:26px;margin-bottom:4px;scrollbar-width:thin"></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
+  const menuHtml = '<div class="main-icons-grid">' + MENU_CATS.map(c => {
     const bg = Array.isArray(c.color) ? grad(c.color) : c.color;
     const itemsTip = (c.items || []).filter(i => hasPerm(i.key, 'view'));
     const catHasView = (c.page ? hasPerm(c.key, 'view') : false) || itemsTip.length > 0;
@@ -126,7 +126,6 @@ function showMenu() { _navStack = [];
 
 async function checkAlerts() {
   const el = document.getElementById('alertArea');
-  if (!el) return;
   try {
     const reports = await api('GET', '/daily-reports');
     const consumption = await api('GET', '/monthly-consumption');
@@ -242,9 +241,11 @@ async function checkAlerts() {
         ${a._rdnNotifDismiss ? `<i class="fas fa-times" data-click="rdnDismissNotifAlert" data-args="${i}" style="color:#999;font-size:8px;padding:2px;cursor:pointer"></i>` : ''}
       </span>`;
     }).join('');
-    el.innerHTML = alerts.length === 0
-      ? '<span style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:4px 12px;font-size:10px;color:#2e7d32;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 3px #0000000a"><i class="fas fa-check-circle" style="font-size:11px;color:#43a047"></i> كل البيانات محدثة ✓</span>'
-      : al;
+    if (el) {
+      el.innerHTML = alerts.length === 0
+        ? '<span style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:4px 12px;font-size:10px;color:#2e7d32;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 3px #0000000a"><i class="fas fa-check-circle" style="font-size:11px;color:#43a047"></i> كل البيانات محدثة ✓</span>'
+        : al;
+    }
     // Update bell badge
     const badge = document.getElementById('notifBadge');
     const bell = document.getElementById('notifBellBtn');
