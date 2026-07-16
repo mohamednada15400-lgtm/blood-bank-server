@@ -112,7 +112,7 @@ function grad(arr) { return `linear-gradient(135deg,${arr[0]},${arr[1]})`; }
 
 function showMenu() { _navStack = [];
   const m = document.getElementById('mainContent');
-  const menuHtml = '<div style="display:flex;justify-content:flex-end;margin-bottom:2px"><div data-click="toggleNotifDropdown" id="menuBellBtn" style="position:relative;cursor:pointer;font-size:20px;color:#e53935;padding:4px;transition:0.15s"><i class="fas fa-bell"></i><span id="menuNotifBadge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e53935;color:#fff;border-radius:50%;min-width:18px;height:18px;line-height:18px;font-size:9px;font-weight:700;text-align:center;padding:0 4px;box-shadow:0 0 4px #e5393580"></span></div></div><div id="menuNotifDropdown" style="display:none;position:fixed;top:126px;left:10px;z-index:997;background:var(--bg-card,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);width:320px;max-height:400px;overflow-y:auto;direction:rtl;font-size:12px"></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
+  const menuHtml = '<div style="display:flex;justify-content:flex-start;margin-bottom:2px"><div data-click="toggleNotifDropdown" id="menuBellBtn" style="position:relative;cursor:pointer;font-size:28px;color:#e53935;padding:8px;transition:0.15s"><i class="fas fa-bell"></i><span id="menuNotifBadge" style="display:none;position:absolute;top:-4px;left:-4px;background:#e53935;color:#fff;border-radius:50%;min-width:20px;height:20px;line-height:20px;font-size:10px;font-weight:700;text-align:center;padding:0 5px;box-shadow:0 0 6px #e5393580"></span></div></div><div id="menuNotifDropdown" style="display:none;position:fixed;top:126px;left:10px;z-index:997;background:var(--bg-card,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);width:320px;max-height:400px;overflow-y:auto;direction:rtl;font-size:12px"></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
     const bg = Array.isArray(c.color) ? grad(c.color) : c.color;
     const itemsTip = (c.items || []).filter(i => hasPerm(i.key, 'view'));
     const catHasView = (c.page ? hasPerm(c.key, 'view') : false) || itemsTip.length > 0;
@@ -246,11 +246,12 @@ async function checkAlerts() {
         ? '<span style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:4px 12px;font-size:10px;color:#2e7d32;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 3px #0000000a"><i class="fas fa-check-circle" style="font-size:11px;color:#43a047"></i> كل البيانات محدثة ✓</span>'
         : al;
     }
-    // Update menu bell badge — total alerts count
+    // Update menu bell badge + shake animation
     const badge = document.getElementById('menuNotifBadge');
-    if (badge) {
-      if (alerts.length > 0) { badge.textContent = alerts.length; badge.style.display = ''; }
-      else { badge.style.display = 'none'; }
+    const bellBtn = document.getElementById('menuBellBtn');
+    if (badge && bellBtn) {
+      if (alerts.length > 0) { badge.textContent = alerts.length; badge.style.display = ''; bellBtn.classList.add('has-alerts'); }
+      else { badge.style.display = 'none'; bellBtn.classList.remove('has-alerts'); }
     }
   } catch (e) { /* ignore */ }
 }
