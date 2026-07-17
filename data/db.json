@@ -5458,6 +5458,30 @@
       "month": 6,
       "data": "{\"ct\":1.5519568151147098,\"tested\":955,\"inc_rdp\":2,\"inc_sdp\":618,\"out_rdp\":0,\"out_sdp\":42,\"ratio_b\":0.0010471204188481676,\"ratio_c\":0.0062827225130890054,\"ratio_i\":0,\"disp_open\":1,\"inc_blood\":107,\"ratio_exp\":0,\"disp_other\":6,\"inc_plasma\":0,\"ratio_open\":0.0014792899408284023,\"virology_b\":1,\"virology_c\":6,\"virology_i\":0,\"ratio_other\":0.008875739644970414,\"uncompleted\":20,\"blood_groups\":1025,\"disp_exp_rdp\":0,\"disp_exp_sdp\":42,\"ratio_dollar\":0,\"collect_total\":984,\"compatibility\":1150,\"disp_reaction\":0,\"disp_returned\":8,\"out_blood_ext\":65,\"out_blood_int\":676,\"ratio_refused\":0,\"refused_fatty\":0,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":49,\"out_plasma_int\":152,\"ratio_reaction\":0,\"ratio_returned\":0.011834319526627219,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":146,\"ratio_uncompleted\":0.020512820512820513,\"donation_therapeutic\":9}",
       "user_id": 1
+    },
+    {
+      "id": 346,
+      "hospital_id": 3,
+      "year": 2026,
+      "month": 6,
+      "data": "{\"collect_total\":50,\"inc_blood\":188,\"inc_plasma\":0,\"inc_sdp\":0,\"inc_rdp\":0,\"out_blood_int\":220,\"out_blood_branch\":0,\"out_blood_auth\":0,\"out_blood_ext\":2,\"out_plasma_int\":43,\"out_plasma_ext\":0,\"out_sdp\":6,\"out_rdp\":0,\"blood_groups\":201,\"compatibility\":239,\"ct\":1.0765765765765767,\"disp_exp_blood\":0,\"disp_exp_plasma\":2,\"disp_exp_sdp\":1,\"disp_exp_rdp\":0,\"refused_fatty\":0,\"refused_icteric\":0,\"refused_all\":0,\"virology_c\":0,\"virology_b\":0,\"virology_i\":1,\"virology_dollar\":39,\"disp_exp_blood2\":0,\"disp_exp_plasma2\":0,\"disp_exp_sdp2\":0,\"disp_exp_rdp2\":2,\"disp_returned\":1,\"disp_reaction\":0,\"tested\":47,\"ratio_uncompleted\":0.04,\"ratio_refused\":0.020833333333333332,\"ratio_virus\":0,\"ratio_b\":0,\"ratio_c\":0,\"ratio_i\":0,\"ratio_dollar\":0.00425531914893617,\"ratio_exp\":0,\"ratio_returned\":0.00909090909090909,\"ratio_reaction\":0.004545454545454545,\"ratio_open\":0,\"ratio_other\":0,\"disp_open\":0,\"disp_other\":0,\"uncompleted\":0,\"donation_therapeutic\":0}",
+      "user_id": 1
+    },
+    {
+      "id": 347,
+      "hospital_id": 7,
+      "year": 2026,
+      "month": 6,
+      "data": "{\"collect_total\":1867,\"inc_blood\":8,\"inc_plasma\":0,\"inc_sdp\":0,\"inc_rdp\":196,\"out_blood_int\":826,\"out_blood_branch\":701,\"out_blood_auth\":0,\"out_blood_ext\":13,\"out_plasma_int\":323,\"out_plasma_ext\":291,\"out_sdp\":93,\"out_rdp\":192,\"blood_groups\":1295,\"compatibility\":1197,\"ct\":1.4266984505363527,\"disp_exp_blood\":6,\"disp_exp_plasma\":15,\"disp_exp_sdp\":2,\"disp_exp_rdp\":0,\"refused_fatty\":20,\"refused_icteric\":10,\"refused_all\":5,\"virology_c\":2,\"virology_b\":3,\"virology_i\":0,\"virology_dollar\":0,\"disp_exp_blood2\":0,\"disp_exp_plasma2\":15,\"disp_exp_sdp2\":0,\"disp_exp_rdp2\":0,\"disp_returned\":0,\"disp_reaction\":\"1dat\",\"tested\":1844,\"ratio_uncompleted\":0.008060182697474477,\"ratio_refused\":0.0010834236186348862,\"ratio_virus\":0.005422993492407809,\"ratio_b\":0.0027114967462039045,\"ratio_c\":0.0010845986984815619,\"ratio_i\":0.0016268980477223427,\"ratio_dollar\":0,\"ratio_exp\":0,\"ratio_returned\":0,\"ratio_reaction\":0,\"ratio_open\":0,\"ratio_other\":0,\"disp_open\":0,\"disp_other\":0,\"uncompleted\":0,\"donation_therapeutic\":0}",
+      "user_id": 1
+    },
+    {
+      "id": 348,
+      "hospital_id": 15,
+      "year": 2026,
+      "month": 6,
+      "data": "{\"collect_total\":897,\"inc_blood\":12,\"inc_plasma\":20,\"inc_sdp\":0,\"inc_rdp\":0,\"out_blood_int\":731,\"out_blood_branch\":68,\"out_blood_auth\":23,\"out_blood_ext\":1,\"out_plasma_int\":439,\"out_plasma_ext\":0,\"out_sdp\":0,\"out_rdp\":20,\"blood_groups\":835,\"compatibility\":1427,\"ct\":1.9494535519125684,\"disp_exp_blood\":2,\"disp_exp_plasma\":21,\"disp_exp_sdp\":56,\"disp_exp_rdp\":1,\"refused_fatty\":15,\"refused_icteric\":6,\"refused_all\":7,\"virology_c\":1,\"virology_b\":1,\"virology_i\":0,\"virology_dollar\":0,\"disp_exp_blood2\":0,\"disp_exp_plasma2\":0,\"disp_exp_sdp2\":3,\"disp_exp_rdp2\":0,\"disp_returned\":1,\"disp_reaction\":\"7 dat\",\"tested\":817,\"ratio_uncompleted\":0.02346368715083799,\"ratio_refused\":0.06521739130434782,\"ratio_virus\":0.0073439412484700125,\"ratio_b\":0.008567931456548347,\"ratio_c\":0.0012239902080783353,\"ratio_i\":0.0012239902080783353,\"ratio_dollar\":0,\"ratio_exp\":0.004103967168262654,\"ratio_returned\":0,\"ratio_reaction\":0.0013679890560875513,\"ratio_open\":0,\"ratio_other\":0,\"disp_open\":0,\"disp_other\":0,\"uncompleted\":0,\"donation_therapeutic\":0}",
+      "user_id": 1
     }
   ],
   "monthly_small_indicators": [
