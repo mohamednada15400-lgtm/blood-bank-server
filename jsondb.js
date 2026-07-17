@@ -477,7 +477,7 @@ class JSONDB {
         rows = rows.map(row => {
           const newRow = { ...row };
           for (const [alias, info] of Object.entries(aliasMap)) {
-            newRow[alias] = row[`${info.table}_${info.col}`] || row[info.col];
+            newRow[alias] = row[`${info.table}_${info.col}`] || row[alias] || row[info.col];
           }
           return newRow;
         });
