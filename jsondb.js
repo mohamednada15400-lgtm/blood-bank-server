@@ -392,12 +392,20 @@ class JSONDB {
           const onClause = joinMatch[3];
           if (this.data[joinTable]) {
             const isLeftJoin = /LEFT\s+JOIN/i.test(sql);
+            const selMatch = sql.match(/SELECT\s+(.+?)\s+FROM/i);
+            const colMap = {};
+            if (selMatch) {
+              selMatch[1].split(',').map(c => c.trim()).forEach(c => {
+                const m = c.match(new RegExp(joinAlias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\.(\\w+)(?:\\s+as\\s+(\\w+))?', 'i'));
+                if (m) colMap[m[1]] = m[2] || joinAlias + '_' + m[1];
+              });
+            }
             rows = rows.map(row => {
               const joinRow = this.data[joinTable].find(jr => this._evalOn(row, jr, onClause, joinAlias));
               if (!joinRow) return isLeftJoin ? { ...row } : null;
               const joined = { ...row };
               for (const [k, v] of Object.entries(joinRow)) {
-                joined[`${joinAlias}_${k}`] = v;
+                joined[colMap[k] || joinAlias + '_' + k] = v;
               }
               return joined;
             }).filter(r => r !== null);
