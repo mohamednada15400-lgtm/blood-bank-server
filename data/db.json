@@ -3,7 +3,7 @@
     {
       "id": 156,
       "username": "h33_8",
-      "password": "123",
+      "password": "$2b$10$xoT6UFQV.WlatWE.hJgTAePSvariZ6Fge0Ka3V3m7tP6dO6OYeDuy",
       "name": "محمد خالد محمود عبده",
       "role": "hospital",
       "hospital_id": 33,
@@ -15,7 +15,7 @@
     {
       "id": 155,
       "username": "h33_7",
-      "password": "123",
+      "password": "$2b$10$0gNHNMkPlF5oscBXdR/OzepMK0pyHT6qqtCouV/PuIZSKo5lKg/V.",
       "name": "ليديا جون ابراهيم سنتاؤوس",
       "role": "hospital",
       "hospital_id": 33,
@@ -27,7 +27,7 @@
     {
       "id": 154,
       "username": "h33_6",
-      "password": "123",
+      "password": "$2b$10$daoK5Eryo/AG/YU6lv5CIuIkuGL2Ge7em7wodARE4fgRrb47E81SC",
       "name": "طارق محمد عبد الراضي عبدالحافظ",
       "role": "hospital",
       "hospital_id": 33,
@@ -39,7 +39,7 @@
     {
       "id": 153,
       "username": "h33_5",
-      "password": "123",
+      "password": "$2b$10$Yr35Rt4mSRt9Bd5HTGSdDev4DnL0jkXA5DG7KoVNRaK4qTwUSIt9O",
       "name": "عبدالكريم عبدالرحمن كريم الطيب",
       "role": "hospital",
       "hospital_id": 33,
@@ -51,7 +51,7 @@
     {
       "id": 152,
       "username": "h33_4",
-      "password": "123",
+      "password": "$2b$10$sNpoNY8OpprLZ8m4XWANJeRgl5PEZzqtOQfxdqwf/30pwESznRDy2",
       "name": "ابانوب صابر عطاالله ابراهيم",
       "role": "hospital",
       "hospital_id": 33,
@@ -63,7 +63,7 @@
     {
       "id": 151,
       "username": "h33_3",
-      "password": "123",
+      "password": "$2b$10$PAjji7ZAc0eVF0jDxzjem.Zgjsl.ET3mChQHBXfMAPksbZQBVYSMu",
       "name": "فاطمه سليمان عباس سليمان",
       "role": "hospital",
       "hospital_id": 33,
@@ -75,7 +75,7 @@
     {
       "id": 150,
       "username": "h33_2",
-      "password": "123",
+      "password": "$2b$10$fDKtK3tcl7qZWsRaeH4iyODXFSEgYDkPjlzJo3M6kXdgbY/gevoPu",
       "name": "محمود احمد عطا على",
       "role": "hospital",
       "hospital_id": 33,
@@ -87,7 +87,7 @@
     {
       "id": 149,
       "username": "h33_1",
-      "password": "123",
+      "password": "$2b$10$6q6gvozabTWKr8dyczftOu4sQKhFUhisGCMfTmBY/fztIj4QKEev6",
       "name": "مروه محمد امين بغدادى",
       "role": "hospital",
       "hospital_id": 33,
@@ -99,7 +99,7 @@
     {
       "id": 148,
       "username": "h8_4",
-      "password": "123",
+      "password": "$2b$10$d2jXs/9nKPefIZ9qG4A3c.kwqpFERdtY71QbQMyVCp/jcbg5wYWni",
       "name": "محمد محمد مسعد",
       "role": "hospital",
       "hospital_id": 8,
@@ -111,7 +111,7 @@
     {
       "id": 147,
       "username": "h8_3",
-      "password": "123",
+      "password": "$2b$10$dlzuVXWCkYAke2LS/b2Z2OEcN81Ve.knbaK.tL3yysVIidCYsZ8sS",
       "name": "آيه عدلو عبدالحميد",
       "role": "hospital",
       "hospital_id": 8,
@@ -123,7 +123,7 @@
     {
       "id": 146,
       "username": "h8_2",
-      "password": "123",
+      "password": "$2b$10$aAi0sxItyNt6oaXIan6FgOd3zgWAG.tf6GgEfKF/Es3qMPLOaI60G",
       "name": "محمد الامين السيد",
       "role": "hospital",
       "hospital_id": 8,
@@ -135,7 +135,7 @@
     {
       "id": 145,
       "username": "h8_1",
-      "password": "123",
+      "password": "$2b$10$PvjZzt48mpNpm8YWL1D5r.KIgVb3MjMK8alyL8aZfbZwSXw9e7opy",
       "name": "محمد عبدالمنعم حسن",
       "role": "hospital",
       "hospital_id": 8,
@@ -147,7 +147,7 @@
     {
       "id": 144,
       "username": "h2_12",
-      "password": "123",
+      "password": "$2b$10$LZ0ZbMRg8nsC8K5FH8qznO6OS3Z9oQNrun1lQ81kpHR54T8tiAwiu",
       "name": "ندى طارق محمد نصر الدين",
       "role": "hospital",
       "hospital_id": 2,
@@ -159,7 +159,7 @@
     {
       "id": 143,
       "username": "h2_11",
-      "password": "123",
+      "password": "$2b$10$foI4rjujn5A.3sPym4z41euRk9iMkiirK1EbFrFGAx.jsS66ApNLO",
       "name": "انسام سعد الدين علام",
       "role": "hospital",
       "hospital_id": 2,
@@ -171,7 +171,7 @@
     {
       "id": 142,
       "username": "h2_10",
-      "password": "123",
+      "password": "$2b$10$56lou/rILN3MRzalHFi0J./yTZhGw5tgcftiGYUk20E66TOqbZo2a",
       "name": "انتصار محمد جمعة",
       "role": "hospital",
       "hospital_id": 2,
@@ -183,7 +183,7 @@
     {
       "id": 141,
       "username": "h2_9",
-      "password": "123",
+      "password": "$2b$10$esy6cqcOFdRC./hMpJo5le42BeGnO5aPuVLQl1Up4jsyld9jSGB/.",
       "name": "جورج كارميل صموئيل متى",
       "role": "hospital",
       "hospital_id": 2,
@@ -195,7 +195,7 @@
     {
       "id": 140,
       "username": "h2_8",
-      "password": "123",
+      "password": "$2b$10$wX4pAq1cIYjVumjL7OfPV.ySvTGQgU9GYLapZZqCLixqRAPl8xeQK",
       "name": "سحر السيد محمد سلطان",
       "role": "hospital",
       "hospital_id": 2,
@@ -207,7 +207,7 @@
     {
       "id": 139,
       "username": "h2_7",
-      "password": "123",
+      "password": "$2b$10$EEcxvVTG1Wv15Lhz4ZxFDegR5piVlDWFsdr22MaFPH1ozjsVCI4ea",
       "name": "خالد فريد عبد الحافظ",
       "role": "hospital",
       "hospital_id": 2,
@@ -219,7 +219,7 @@
     {
       "id": 138,
       "username": "h2_6",
-      "password": "123",
+      "password": "$2b$10$bR1KBxS5GkZxDNGpAVTkluN/4JK.DQRGOjFnXAtZQjKhPK6kRRAuO",
       "name": "مي خالد محمودعلي الزند",
       "role": "hospital",
       "hospital_id": 2,
@@ -231,7 +231,7 @@
     {
       "id": 137,
       "username": "h2_5",
-      "password": "123",
+      "password": "$2b$10$0S4Ehts2YpJ8JVssZ.Tf9.q1Wg/fBFEDmERInxMu56LLdhrbL4Yc.",
       "name": "شريف محمد حنفي مقلد",
       "role": "hospital",
       "hospital_id": 2,
@@ -243,7 +243,7 @@
     {
       "id": 136,
       "username": "h2_4",
-      "password": "123",
+      "password": "$2b$10$lKfYLMiOJ6QrxnmF3kZZHuWsYVIHiCVfydfFKj03coWWzrSqm8ruS",
       "name": "شيماء جمال الغريب عوض",
       "role": "hospital",
       "hospital_id": 2,
@@ -255,7 +255,7 @@
     {
       "id": 135,
       "username": "h2_3",
-      "password": "123",
+      "password": "$2b$10$0aMt1M1F6tSCLWuRgf9kgORLXUfXHjXISekzA53yBuGmeJ9cQxLAq",
       "name": "بسمه علي محمود محمد",
       "role": "hospital",
       "hospital_id": 2,
@@ -267,7 +267,7 @@
     {
       "id": 134,
       "username": "h2_2",
-      "password": "123",
+      "password": "$2b$10$snaSF.Galtd0yEJhMU609uL8arlNjNIndP8U7fnLWdXdDcCLjs5fG",
       "name": "امل محمد ابراهيم محمد",
       "role": "hospital",
       "hospital_id": 2,
@@ -279,7 +279,7 @@
     {
       "id": 133,
       "username": "h2_1",
-      "password": "123",
+      "password": "$2b$10$7NEc/EO4BRhRg8J1L9P9TOjNzIuGm3.6xZbeOr0TaIpeYsbzNI/DK",
       "name": "محمد السيد الحسانين محمد",
       "role": "hospital",
       "hospital_id": 2,
@@ -487,7 +487,7 @@
     {
       "id": 56,
       "username": "mgr2",
-      "password": "123",
+      "password": "$2b$10$gE3BtiPgBn2Jq/HQMM3HqOUuENyh77NsaXY0qqSzU3RoEMiKARgxS",
       "name": "مستخدم الحياة بورفؤاد *",
       "role": "hospital_manager",
       "hospital_id": 3,
@@ -501,7 +501,7 @@
     {
       "id": 57,
       "username": "mgr3",
-      "password": "123",
+      "password": "$2b$10$cOdf693cpN1nQ5gFknmJ0OLdnwS4zZ2RQGAsWSfmEcdaqn7mArn3q",
       "name": "مستخدم الزهور",
       "role": "hospital_manager",
       "hospital_id": 4,
@@ -515,7 +515,7 @@
     {
       "id": 58,
       "username": "mgr4",
-      "password": "123",
+      "password": "$2b$10$96zrbkOi0hLYriN4Ct0Q9uAapTfI/aGS1v.I2e3SfGNupVGZ4RBW2",
       "name": "مستخدم ٣٠ يونيو",
       "role": "hospital_manager",
       "hospital_id": 5,
@@ -529,7 +529,7 @@
     {
       "id": 59,
       "username": "mgr5",
-      "password": "123",
+      "password": "$2b$10$QZ3q/vAXB1PqtWRUA7Eg2Ofv.ovvJv8qhxYGoqLh/FAlThimhdtxW",
       "name": "مستخدم السلام",
       "role": "hospital_manager",
       "hospital_id": 6,
@@ -543,7 +543,7 @@
     {
       "id": 60,
       "username": "mgr6",
-      "password": "123",
+      "password": "$2b$10$PtyMbz7LkOocPfF6wG.d7OzuaueRgD9lU.jwPDNlCYlmsCG6x80pi",
       "name": "مستخدم التضامن (مجمع الشفاء)*",
       "role": "hospital_manager",
       "hospital_id": 1,
@@ -557,7 +557,7 @@
     {
       "id": 61,
       "username": "mgr7",
-      "password": "123",
+      "password": "$2b$10$WbbcIZrQhZL3dMrhGeTarOiml9qrpXe7MwUHWVyY34ThTWeAzW6wy",
       "name": "مستخدم المجمع الطبي *",
       "role": "hospital_manager",
       "hospital_id": 7,
@@ -571,7 +571,7 @@
     {
       "id": 62,
       "username": "mgr8",
-      "password": "123",
+      "password": "$2b$10$ENklZMiRAHsHLHT1OK1nlebW97MTWiLH2u5StY10kDmfuaxYXKiAu",
       "name": "مستخدم طوارئ ابو خليفه",
       "role": "hospital_manager",
       "hospital_id": 8,
@@ -585,7 +585,7 @@
     {
       "id": 63,
       "username": "mgr9",
-      "password": "123",
+      "password": "$2b$10$ewpaf/eP6ylxIc7bkNY20e.Mxky1UkZiCEiUWH2Wx/NfMMBUzsGaO",
       "name": "مستخدم مركز 30 يونيو",
       "role": "hospital_manager",
       "hospital_id": 9,
@@ -599,7 +599,7 @@
     {
       "id": 64,
       "username": "mgr10",
-      "password": "123",
+      "password": "$2b$10$HPuGfaojtHKgaSzTKSSnpuj5lu0WbaRnyvJbtM9ekDyK9gE6pTu1C",
       "name": "مستخدم فايد التخصصي",
       "role": "hospital_manager",
       "hospital_id": 10,
@@ -613,7 +613,7 @@
     {
       "id": 65,
       "username": "mgr11",
-      "password": "123",
+      "password": "$2b$10$7c2HnYKOncO1iHP452UbC.oC7IgcOCJeQ1BJEzyylanLk/UKKT1FK",
       "name": "مستخدم القصاصين التخصصي",
       "role": "hospital_manager",
       "hospital_id": 11,
@@ -627,7 +627,7 @@
     {
       "id": 66,
       "username": "mgr12",
-      "password": "123",
+      "password": "$2b$10$CYhVVrSyLkxbsYlIzZ1vl.zXQielO6UXx5cQKpCxPVDAQMhimFNO2",
       "name": "مستخدم القنطرة غرب التخصصي",
       "role": "hospital_manager",
       "hospital_id": 12,
@@ -641,7 +641,7 @@
     {
       "id": 67,
       "username": "mgr13",
-      "password": "123",
+      "password": "$2b$10$zrQEWuf5pZFm9Zlgz5CMeeo6yIyfGRwZvNDYdoi2us.AnyEBO7HCC",
       "name": "مستخدم القنطرة شرق التخصصي",
       "role": "hospital_manager",
       "hospital_id": 13,
@@ -655,7 +655,7 @@
     {
       "id": 68,
       "username": "mgr14",
-      "password": "123",
+      "password": "$2b$10$NzVScsFrh9aUhVPBoHfEmeyoH87rWBpNzsvdeuCyqF5TJMlGwzfia",
       "name": "مستخدم التل الكبيرالتخصصي",
       "role": "hospital_manager",
       "hospital_id": 14,
@@ -669,7 +669,7 @@
     {
       "id": 69,
       "username": "mgr15",
-      "password": "123",
+      "password": "$2b$10$rXIFkZ/PHWoeP1meP7o9X.Ew8weEh48wfqb198UttqXtk68Elk1h6",
       "name": "مستخدم مجمع السويس الطبي *",
       "role": "hospital_manager",
       "hospital_id": 15,
@@ -683,7 +683,7 @@
     {
       "id": 70,
       "username": "mgr16",
-      "password": "123",
+      "password": "$2b$10$o03CYI/e3nBKJOBj3vTOTO2PdjOP1LvxYiy470Sz5Fc5swg/cyIka",
       "name": "مستخدم المرأه والطفل ( حوض الدرس )",
       "role": "hospital_manager",
       "hospital_id": 16,
@@ -697,7 +697,7 @@
     {
       "id": 71,
       "username": "mgr17",
-      "password": "123",
+      "password": "$2b$10$FZH6p7IH5thMaYRzvIqWM.8VvwpUFMOdnhDKani1Enf/T1g07m6u.",
       "name": "مستخدم المناظير و الجهاز الهضمي",
       "role": "hospital_manager",
       "hospital_id": 17,
@@ -711,7 +711,7 @@
     {
       "id": 72,
       "username": "mgr18",
-      "password": "123",
+      "password": "$2b$10$JrJp81go4/XUQzwXAiEp.uSOypcN2tg4nHpOiiQoo2HBJ9vPo2rNu",
       "name": "مستخدم طيبة التخصصي *",
       "role": "hospital_manager",
       "hospital_id": 18,
@@ -739,7 +739,7 @@
     {
       "id": 74,
       "username": "mgr20",
-      "password": "123",
+      "password": "$2b$10$mpC5spW01qVJ/Gy8IErTg.VCyPDHqgP4YwUaU5NLzkYe/Z0lIfqGW",
       "name": "مستخدم ايزيس التخصصي",
       "role": "hospital_manager",
       "hospital_id": 20,
@@ -753,7 +753,7 @@
     {
       "id": 75,
       "username": "mgr21",
-      "password": "123",
+      "password": "$2b$10$3Soa3nM1nLZV4hO0vPkGveydAan53nEsBCauaO6IbS..2luqfxfGu",
       "name": "مستخدم الاطفال التخصصي",
       "role": "hospital_manager",
       "hospital_id": 21,
@@ -767,7 +767,7 @@
     {
       "id": 76,
       "username": "mgr22",
-      "password": "123",
+      "password": "$2b$10$RjiVu/XgYBKu5tCBacafVOl0lHn.YUjI7kSwSi8TqDVc6zQg1Bo2.",
       "name": "مستخدم الكرنك الدولي *",
       "role": "hospital_manager",
       "hospital_id": 22,
@@ -795,7 +795,7 @@
     {
       "id": 78,
       "username": "mgr24",
-      "password": "123",
+      "password": "$2b$10$b.cQ1TRR4fZH.7YzyZsvKupv0hoipLnC99SLx6mHOli6xhSOugTG6",
       "name": "مستخدم راس سدر *",
       "role": "hospital_manager",
       "hospital_id": 24,
@@ -809,7 +809,7 @@
     {
       "id": 79,
       "username": "mgr25",
-      "password": "123",
+      "password": "$2b$10$yhnVt00XLwqz.tf/4HtBC.JMmiX30/wzXRzOOokzycczK4s1ZK0KG",
       "name": "مستخدم شرم الشيخ الدولي",
       "role": "hospital_manager",
       "hospital_id": 25,
@@ -823,7 +823,7 @@
     {
       "id": 80,
       "username": "mgr26",
-      "password": "123",
+      "password": "$2b$10$eQS/cMdNX.l25H6KT9yXNu9MNBaeYaJDZFlGUrucVeeSVGj2l9GJK",
       "name": "مستخدم طابا",
       "role": "hospital_manager",
       "hospital_id": 26,
@@ -837,7 +837,7 @@
     {
       "id": 81,
       "username": "mgr27",
-      "password": "123",
+      "password": "$2b$10$h3Oz49KC8phBRi9p8ndDSelNNN7i8lpJVLh/Y22oikYncfBLsoSny",
       "name": "مستخدم سانت كاترين",
       "role": "hospital_manager",
       "hospital_id": 27,
@@ -851,7 +851,7 @@
     {
       "id": 82,
       "username": "mgr28",
-      "password": "123",
+      "password": "$2b$10$f1uaH3k1v7syyueAthq8/.miwriljS2u4usdlcI6zoglbuHq3Lnqa",
       "name": "مستخدم مجمع الفيروز *",
       "role": "hospital_manager",
       "hospital_id": 28,
@@ -865,7 +865,7 @@
     {
       "id": 83,
       "username": "mgr29",
-      "password": "123",
+      "password": "$2b$10$dHkEYSxdpGX2KeML5UAXIeTQuPbLn2ocFcIVkn3l/AIJ6jwV7h25S",
       "name": "مستخدم النيل التخصصي*(حورس ادفو)",
       "role": "hospital_manager",
       "hospital_id": 30,
@@ -879,7 +879,7 @@
     {
       "id": 84,
       "username": "mgr30",
-      "password": "123",
+      "password": "$2b$10$iFLJ5cgos88uWD2bFz1voeE1247s59q7ak8/Vk8DRFmvF9egXyVc2",
       "name": "مستخدم اسوان التخصصي (الصداقه)",
       "role": "hospital_manager",
       "hospital_id": 31,
@@ -893,7 +893,7 @@
     {
       "id": 85,
       "username": "mgr31",
-      "password": "123",
+      "password": "$2b$10$raW/Wz7PpnyPoaFrGfKjK.Fq2TWIGpd6fCPgRtMpOUB8wDUCuxqOm",
       "name": "مستخدم كوم امبو *",
       "role": "hospital_manager",
       "hospital_id": 32,
@@ -907,7 +907,7 @@
     {
       "id": 86,
       "username": "mgr32",
-      "password": "123",
+      "password": "$2b$10$0dQlZU9RXScyHWdEKON8AOcIXmSe/v4U4PRHI9WQQtulaDi1ErJOy",
       "name": "مستخدم دراو",
       "role": "hospital_manager",
       "hospital_id": 33,
@@ -921,7 +921,7 @@
     {
       "id": 87,
       "username": "mgr33",
-      "password": "123",
+      "password": "$2b$10$U7a3qs24wDe15wxPLyE5VuQWjl01dNu/Q/aQhI0Cxjskm8k.H0uDu",
       "name": "مستخدم معهد الاورام",
       "role": "hospital_manager",
       "hospital_id": 34,
@@ -935,7 +935,7 @@
     {
       "id": 88,
       "username": "mgr34",
-      "password": "123",
+      "password": "$2b$10$WBBj9OniBcORscTgd0OenOZbhpHGs41NwKcj6z8.0P/oajv6jGW/6",
       "name": "مستخدم ابوسمبل الدولي",
       "role": "hospital_manager",
       "hospital_id": 35,
@@ -949,7 +949,7 @@
     {
       "id": 89,
       "username": "mgr35",
-      "password": "123",
+      "password": "$2b$10$DXGTO/KW70ql9b0KRkLFXuuBbRLDCWvhjdfUiHlghdlddTXRNeBAq",
       "name": "مستخدم المسلة التخصصي",
       "role": "hospital_manager",
       "hospital_id": 36,
@@ -963,7 +963,7 @@
     {
       "id": 90,
       "username": "mgr36",
-      "password": "123",
+      "password": "$2b$10$TvmpzkVTSB4M/tcJ2qgZ3usFnkd8Y57L5JeW8n1udK2L0zRyoK9E.",
       "name": "مستخدم السباعية التخصصي",
       "role": "hospital_manager",
       "hospital_id": 37,
@@ -977,7 +977,7 @@
     {
       "id": 91,
       "username": "emp1",
-      "password": "123",
+      "password": "$2b$10$7VnByjVc9Tp49cOk64EBXeZO8a15A0HY2ThA5pduwtF7pDDgyC.k.",
       "name": "مستخدم النصر *",
       "role": "hospital",
       "hospital_id": 2,
@@ -991,7 +991,7 @@
     {
       "id": 92,
       "username": "emp2",
-      "password": "123",
+      "password": "$2b$10$tNopvXNJDCPCqY2X0YpfQeHG/WQos8pG2euXZAMVGUWsE6cSZmvTa",
       "name": "مستخدم الحياة بورفؤاد *",
       "role": "hospital",
       "hospital_id": 3,
@@ -1005,7 +1005,7 @@
     {
       "id": 93,
       "username": "emp3",
-      "password": "123",
+      "password": "$2b$10$ZVNebxmyMKUyYUsbng2sSelr3kVGENnILSd6n4OriZH7YE2JE3H6q",
       "name": "مستخدم الزهور",
       "role": "hospital",
       "hospital_id": 4,
@@ -1019,7 +1019,7 @@
     {
       "id": 94,
       "username": "emp4",
-      "password": "123",
+      "password": "$2b$10$SL2HIeOUnxPntkYs3/kAVeXCeMA040w52IuzNOjDKmgzU9q3.JnwC",
       "name": "مستخدم ٣٠ يونيو",
       "role": "hospital",
       "hospital_id": 5,
@@ -1033,7 +1033,7 @@
     {
       "id": 95,
       "username": "emp5",
-      "password": "123",
+      "password": "$2b$10$cR9F9F0t/vUARKhOKRqoK.pitcevmrVLoemDFG/mAaazzWmsFX9o.",
       "name": "مستخدم السلام",
       "role": "hospital",
       "hospital_id": 6,
@@ -1047,7 +1047,7 @@
     {
       "id": 96,
       "username": "emp6",
-      "password": "123",
+      "password": "$2b$10$xSX7CdyOyKQ3b/CVH/hAJO8jQXOQFe1VMGUCnVoCUNYMXb0cJWEH6",
       "name": "مستخدم المجمع الطبي *",
       "role": "hospital",
       "hospital_id": 7,
@@ -1061,7 +1061,7 @@
     {
       "id": 97,
       "username": "emp7",
-      "password": "123",
+      "password": "$2b$10$kK1Z4XuCF9gCWIcsTa/guuhvmqPobGx1nZ63CXRFb.CblRPfrkCRu",
       "name": "مستخدم طوارئ ابو خليفه",
       "role": "hospital",
       "hospital_id": 8,
@@ -1075,7 +1075,7 @@
     {
       "id": 98,
       "username": "emp8",
-      "password": "123",
+      "password": "$2b$10$vn/SeLkgSeHhY2KeOP0wa.0kajkM4kgZx0ltm7UBUSj7xHLuC2fWG",
       "name": "مستخدم مركز 30 يونيو",
       "role": "hospital",
       "hospital_id": 9,
@@ -1089,7 +1089,7 @@
     {
       "id": 99,
       "username": "emp9",
-      "password": "123",
+      "password": "$2b$10$rLXcVnzB1RRbSywJURCLRuoU.2MS0ybAlU.Nj13qJIOjf3p4Yh37O",
       "name": "مستخدم فايد التخصصي",
       "role": "hospital",
       "hospital_id": 10,
@@ -1103,7 +1103,7 @@
     {
       "id": 100,
       "username": "emp10",
-      "password": "123",
+      "password": "$2b$10$l5NAnHzpn5vJZBwTwCm4dO1Zr84VtaB4WtC9TYe2OVhTEvGWvKrR.",
       "name": "مستخدم القصاصين التخصصي",
       "role": "hospital",
       "hospital_id": 11,
@@ -1117,7 +1117,7 @@
     {
       "id": 101,
       "username": "emp11",
-      "password": "123",
+      "password": "$2b$10$HFeVvvJW1nsiHLmWCKm2R.4tYAe5HUEzhqz54Fo87SORkR6XnXiC2",
       "name": "مستخدم القنطرة غرب التخصصي",
       "role": "hospital",
       "hospital_id": 12,
@@ -1131,7 +1131,7 @@
     {
       "id": 102,
       "username": "emp12",
-      "password": "123",
+      "password": "$2b$10$l1aoIr0HgWPdekIZheItb.EL96UIiUPOIthgXXkecr2TUlL0ypDGK",
       "name": "مستخدم القنطرة شرق التخصصي",
       "role": "hospital",
       "hospital_id": 13,
@@ -1145,7 +1145,7 @@
     {
       "id": 103,
       "username": "emp13",
-      "password": "123",
+      "password": "$2b$10$k.gJCV8QcWEXDroMUnbQyOZRnIcrLG9RfAnunx.kLyHOtEJM0L6t6",
       "name": "مستخدم التل الكبيرالتخصصي",
       "role": "hospital",
       "hospital_id": 14,
@@ -1159,7 +1159,7 @@
     {
       "id": 104,
       "username": "emp14",
-      "password": "123",
+      "password": "$2b$10$caoVUHTtU8HA3uZ3ZPsirO1ljklxypYEscGVICfJZWHWWbSYe8QWa",
       "name": "مستخدم مجمع السويس الطبي *",
       "role": "hospital",
       "hospital_id": 15,
@@ -1173,7 +1173,7 @@
     {
       "id": 105,
       "username": "emp15",
-      "password": "123",
+      "password": "$2b$10$VwCc9.BSlk0viSxrs.hdYORL470LKmkxCQr7UONrHc/k/hRFJihbi",
       "name": "مستخدم المرأه والطفل ( حوض الدرس )",
       "role": "hospital",
       "hospital_id": 16,
@@ -1187,7 +1187,7 @@
     {
       "id": 106,
       "username": "emp16",
-      "password": "123",
+      "password": "$2b$10$Dj9pMuwNCWhzHYU8wx9EeeP0W82kIbQ7eEBc3QdkfHu1fZKqpTTcm",
       "name": "مستخدم المناظير و الجهاز الهضمي",
       "role": "hospital",
       "hospital_id": 17,
@@ -1201,7 +1201,7 @@
     {
       "id": 107,
       "username": "emp17",
-      "password": "123",
+      "password": "$2b$10$GhotXSV55GttcwThNSrCPeKJgg/x5E/Gi0FyMGaWVXYJMxfOpEGTG",
       "name": "مستخدم طيبة التخصصي *",
       "role": "hospital",
       "hospital_id": 18,
@@ -1215,7 +1215,7 @@
     {
       "id": 108,
       "username": "emp18",
-      "password": "123",
+      "password": "$2b$10$Q9WW4ScaNoeCplQYa2HH8egoG3a83OY2j0WnQNgxYcygui9Ha4W3K",
       "name": "مستخدم المجمع الطبي الاقصر",
       "role": "hospital",
       "hospital_id": 19,
@@ -1229,7 +1229,7 @@
     {
       "id": 109,
       "username": "emp19",
-      "password": "123",
+      "password": "$2b$10$eKw5RD1z.s7K10wxB/8sveAK1Gz.gpeGU1Lh1wWE7hGfZXeqeoJ4i",
       "name": "مستخدم ايزيس التخصصي",
       "role": "hospital",
       "hospital_id": 20,
@@ -1243,7 +1243,7 @@
     {
       "id": 110,
       "username": "emp20",
-      "password": "123",
+      "password": "$2b$10$sS5nG.Z70F.bfOOZAGjNNukUjdw2OIT3CfWior.nhGx/..j9O87GO",
       "name": "مستخدم الاطفال التخصصي",
       "role": "hospital",
       "hospital_id": 21,
@@ -1257,7 +1257,7 @@
     {
       "id": 111,
       "username": "emp21",
-      "password": "123",
+      "password": "$2b$10$kJ.XeSLWW4wmGsmbwP8cO.fgcZtj86YG1rZom/bAEP.QdSl7nZozm",
       "name": "مستخدم الكرنك الدولي *",
       "role": "hospital",
       "hospital_id": 22,
@@ -1271,7 +1271,7 @@
     {
       "id": 112,
       "username": "emp22",
-      "password": "123",
+      "password": "$2b$10$/rMkf7M/GLxadIKI5XfZaeYmPZ6UapiKl3xeBZ5YkIYBJZPCkSc0S",
       "name": "مستخدم حورس",
       "role": "hospital",
       "hospital_id": 23,
@@ -1285,7 +1285,7 @@
     {
       "id": 113,
       "username": "emp23",
-      "password": "123",
+      "password": "$2b$10$r8jQJ5WVxNfIepOgWE0PV.zLUm.QB9HiH4CSHLT2PnlTmwOB68rGW",
       "name": "مستخدم راس سدر *",
       "role": "hospital",
       "hospital_id": 24,
@@ -1299,7 +1299,7 @@
     {
       "id": 114,
       "username": "emp24",
-      "password": "123",
+      "password": "$2b$10$UlfZkTL/JZWy/x/zGmvjzeYOMCiP0CX9KKVHFN9XbP4H2ZpQm/DdG",
       "name": "مستخدم شرم الشيخ الدولي",
       "role": "hospital",
       "hospital_id": 25,
@@ -1313,7 +1313,7 @@
     {
       "id": 115,
       "username": "emp25",
-      "password": "123",
+      "password": "$2b$10$7I9fjiFz8RSpKPtTjZWbzu10sOVCIIyVHaKLv40oQYBpxiZVtE2Mm",
       "name": "مستخدم طابا",
       "role": "hospital",
       "hospital_id": 26,
@@ -1327,7 +1327,7 @@
     {
       "id": 116,
       "username": "emp26",
-      "password": "123",
+      "password": "$2b$10$Cjxibo6sCoaGxiJz2X/.Cee/71gec1SRlie0cjPsMsl8Cq53Zs4uS",
       "name": "مستخدم سانت كاترين",
       "role": "hospital",
       "hospital_id": 27,
@@ -1341,7 +1341,7 @@
     {
       "id": 117,
       "username": "emp27",
-      "password": "123",
+      "password": "$2b$10$pKf7xTAlTL0Ks842lbuCBOaiX4WcZCboZYkzWA4Z80DwKp15dezsO",
       "name": "مستخدم مجمع الفيروز *",
       "role": "hospital",
       "hospital_id": 28,
@@ -1355,7 +1355,7 @@
     {
       "id": 118,
       "username": "emp28",
-      "password": "123",
+      "password": "$2b$10$AF9CSmE6QHIqXE0yCNZFi.tzV2gy3SKqcBFfBJcHdRistPi6COBOS",
       "name": "مستخدم النيل التخصصي*(حورس ادفو)",
       "role": "hospital",
       "hospital_id": 30,
@@ -1369,7 +1369,7 @@
     {
       "id": 119,
       "username": "emp29",
-      "password": "123",
+      "password": "$2b$10$bXicU1v63tRovhWMjDYnZuoJBtr4FvA7rVcTyQumObkWMEVCgQnnO",
       "name": "مستخدم اسوان التخصصي (الصداقه)",
       "role": "hospital",
       "hospital_id": 31,
@@ -1383,7 +1383,7 @@
     {
       "id": 120,
       "username": "emp30",
-      "password": "123",
+      "password": "$2b$10$IQvCTfuSFaySWhVRY/TvROYDIvR.E.pZb//J4M1L77UzgqXWJOrZC",
       "name": "مستخدم كوم امبو *",
       "role": "hospital",
       "hospital_id": 32,
@@ -1397,7 +1397,7 @@
     {
       "id": 121,
       "username": "emp31",
-      "password": "123",
+      "password": "$2b$10$q.uu/q1JgcNzFUXwb6BOcu7I48n4ex9lhEuSEAhR/XVgB98oHvaN2",
       "name": "مستخدم دراو",
       "role": "hospital",
       "hospital_id": 33,
@@ -1411,7 +1411,7 @@
     {
       "id": 122,
       "username": "emp32",
-      "password": "123",
+      "password": "$2b$10$R.mobyBGSftLO4NM.sEZFOjVZ.wgFxz/yF/VbaQ1z6ulDmDwx.O9G",
       "name": "مستخدم معهد الاورام",
       "role": "hospital",
       "hospital_id": 34,
@@ -1425,7 +1425,7 @@
     {
       "id": 123,
       "username": "emp33",
-      "password": "123",
+      "password": "$2b$10$.B4XAdQGhS13RL82C1pD0.QnQxlWENV8dMSzqRxtxVS0oltDFQXb6",
       "name": "مستخدم ابوسمبل الدولي",
       "role": "hospital",
       "hospital_id": 35,
@@ -1439,7 +1439,7 @@
     {
       "id": 124,
       "username": "emp34",
-      "password": "123",
+      "password": "$2b$10$0FBD4RnyxnimTRYZpezQOuBLANqFaIvCg7PUq3mXcQHVCY3yc1sHS",
       "name": "مستخدم المسلة التخصصي",
       "role": "hospital",
       "hospital_id": 36,
@@ -1453,7 +1453,7 @@
     {
       "id": 125,
       "username": "emp35",
-      "password": "123",
+      "password": "$2b$10$qD6wiWtebMf0S4H6WtWrYu51tiCWSgBrYalwn3gGKBpIV30jhF4QG",
       "name": "مستخدم السباعية التخصصي",
       "role": "hospital",
       "hospital_id": 37,
