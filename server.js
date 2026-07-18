@@ -2107,14 +2107,14 @@ app.get('/api/readiness-notifications', requireAuth(), requirePerm('readiness', 
     if (occResult.rows.length === 0) continue;
     const occasion = occResult.rows[0];
     const occReports = await query('SELECT hospital_id FROM readiness_reports WHERE occasion_id = $1', [n.occasion_id]);
-    const allHospitals = await query('SELECT id, name FROM hospitals');
+    const allHospitals = await query('SELECT id, name, governorate FROM hospitals');
     const reportHospIds = new Set(occReports.rows.map(r => r.hospital_id));
     const missing = allHospitals.rows.filter(h => !reportHospIds.has(h.id));
     if (missing.length === 0) {
       await query('UPDATE readiness_notifications SET dismissed = true WHERE id = $1', [n.id]);
     } else {
       n.message = `جاهزية بنوك الدم بمناسبة "${occasion.name}" من ${occasion.date_from} إلى ${occasion.date_to} - ${missing.length} بنك دم لم يدخل الجاهزية`;
-      n._missingHospitals = missing.map(h => h.name);
+      n._missingHospitals = missing.map(h => ({name: h.name, gov: h.governorate}));
       rows.push(n);
     }
   }

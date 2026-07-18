@@ -147,7 +147,7 @@ async function checkAlerts() {
     const todayIds = reports.filter(r => r.date === today).map(r => r.hospital_id);
     const missStock = myHospitals.filter(h => !todayIds.includes(h.id));
     if (missStock.length > 0) {
-      alerts.push({ icon: 'fa-chart-bar', color: '#e74c3c', title: 'لم يتم تحديث STOCK Mang', detail: missStock.slice(0,5).map(h => h.name).join('، ') + (missStock.length > 5 ? ' +' + (missStock.length - 5) : ''), all: missStock.map(h => h.name), _page: 'renderDailyStock' });
+      alerts.push({ icon: 'fa-chart-bar', color: '#e74c3c', title: 'لم يتم تحديث STOCK Mang', detail: missStock.slice(0,5).map(h => h.name).join('، ') + (missStock.length > 5 ? ' +' + (missStock.length - 5) : ''), all: missStock.map(h => ({name: h.name, gov: h.governorate})), _page: 'renderDailyStock' });
     }
     const prevConsumed = consumption.filter(r => r.year === prevYear && r.month === prevMonth).map(r => r.hospital_id);
     archiveItems.filter(a => a.type === 'منصرف فصائل الدم').forEach(a => {
@@ -158,7 +158,7 @@ async function checkAlerts() {
     });
     const missCons = myHospitals.filter(h => !prevConsumed.includes(h.id));
     if (missCons.length > 0) {
-      alerts.push({ icon: 'fa-droplet', color: '#e91e63', title: 'لم يتم إدخال منصرف فصائل ' + months[prevMonth] + ' ' + prevYear, detail: missCons.slice(0,5).map(h => h.name).join('، ') + (missCons.length > 5 ? ' +' + (missCons.length - 5) : ''), all: missCons.map(h => h.name), _page: 'renderBloodConsumption' });
+      alerts.push({ icon: 'fa-droplet', color: '#e91e63', title: 'لم يتم إدخال منصرف فصائل ' + months[prevMonth] + ' ' + prevYear, detail: missCons.slice(0,5).map(h => h.name).join('، ') + (missCons.length > 5 ? ' +' + (missCons.length - 5) : ''), all: missCons.map(h => ({name: h.name, gov: h.governorate})), _page: 'renderBloodConsumption' });
     }
     const bigInd = await api('GET', '/monthly-big-indicators');
     const smallInd = await api('GET', '/monthly-small-indicators');
@@ -172,11 +172,11 @@ async function checkAlerts() {
     });
     const missBig = myHospitals.filter(h => h.type === 'تجميعي' && !prevBig.includes(h.id));
     if (missBig.length > 0) {
-      alerts.push({ icon: 'fa-chart-line', color: '#3f51b5', title: 'لم يتم إدخال مؤشرات تجميعي ' + months[prevMonth] + ' ' + prevYear, detail: missBig.slice(0,5).map(h => h.name).join('، ') + (missBig.length > 5 ? ' +' + (missBig.length - 5) : ''), all: missBig.map(h => h.name), _page: 'renderBigIndicators' });
+      alerts.push({ icon: 'fa-chart-line', color: '#3f51b5', title: 'لم يتم إدخال مؤشرات تجميعي ' + months[prevMonth] + ' ' + prevYear, detail: missBig.slice(0,5).map(h => h.name).join('، ') + (missBig.length > 5 ? ' +' + (missBig.length - 5) : ''), all: missBig.map(h => ({name: h.name, gov: h.governorate})), _page: 'renderBigIndicators' });
     }
     const missSmall = myHospitals.filter(h => h.type === 'تخزيني' && !prevSmall.includes(h.id));
     if (missSmall.length > 0) {
-      alerts.push({ icon: 'fa-chart-simple', color: '#17a2b8', title: 'لم يتم إدخال مؤشرات تخزيني ' + months[prevMonth] + ' ' + prevYear, detail: missSmall.slice(0,5).map(h => h.name).join('، ') + (missSmall.length > 5 ? ' +' + (missSmall.length - 5) : ''), all: missSmall.map(h => h.name), _page: 'renderSmallIndicators' });
+      alerts.push({ icon: 'fa-chart-simple', color: '#17a2b8', title: 'لم يتم إدخال مؤشرات تخزيني ' + months[prevMonth] + ' ' + prevYear, detail: missSmall.slice(0,5).map(h => h.name).join('، ') + (missSmall.length > 5 ? ' +' + (missSmall.length - 5) : ''), all: missSmall.map(h => ({name: h.name, gov: h.governorate})), _page: 'renderSmallIndicators' });
     }
     try {
       const empRes = await api('GET', '/employee-statements');
@@ -187,7 +187,7 @@ async function checkAlerts() {
       } else {
         const overdueEmp = (empRes.hospitalStatus||[]).filter(h => h.employeeCount > 0 && (!h.lastUpdate || new Date(h.lastUpdate) < curMonthStart));
         if (overdueEmp.length > 0) {
-          alerts.push({ icon: 'fa-users', color: '#dc3545', title: 'بيان العاملين: ' + overdueEmp.length + ' بنك لم يحدث هذا الشهر', detail: overdueEmp.slice(0,5).map(h => h.name).join('، ') + (overdueEmp.length > 5 ? ' +' + (overdueEmp.length - 5) : ''), all: overdueEmp.map(h => h.name), _page: 'renderEmployeeStatement' });
+          alerts.push({ icon: 'fa-users', color: '#dc3545', title: 'بيان العاملين: ' + overdueEmp.length + ' بنك لم يحدث هذا الشهر', detail: overdueEmp.slice(0,5).map(h => h.name).join('، ') + (overdueEmp.length > 5 ? ' +' + (overdueEmp.length - 5) : ''), all: overdueEmp.map(h => ({name: h.name, gov: h.governorate})), _page: 'renderEmployeeStatement' });
         }
         const nowCD = getCairoDate(); const curMonthCode = nowCD.getUTCFullYear() * 100 + nowCD.getUTCMonth() + 1;
         const unreviewed = (empRes.rows||[]).filter(r => !r.reviewed || r.review_month != curMonthCode);
@@ -208,7 +208,7 @@ async function checkAlerts() {
         const curMonthCode = curMonthCairo();
         const unreviewedEq = eqHospitals.filter(h => !h.reviewed || h.review_month != curMonthCode);
         if (unreviewedEq.length > 0) {
-          alerts.push({ icon: 'fa-microscope', color: '#8e44ad', title: 'الأجهزة: ' + unreviewedEq.length + ' مستشفى لم يُراجع أجهزته هذا الشهر', detail: unreviewedEq.slice(0,5).map(h => h.name).join('، ') + (unreviewedEq.length > 5 ? ' +' + (unreviewedEq.length - 5) : ''), all: unreviewedEq.map(h => h.name), _page: 'renderEquipment' });
+          alerts.push({ icon: 'fa-microscope', color: '#8e44ad', title: 'الأجهزة: ' + unreviewedEq.length + ' مستشفى لم يُراجع أجهزته هذا الشهر', detail: unreviewedEq.slice(0,5).map(h => h.name).join('، ') + (unreviewedEq.length > 5 ? ' +' + (unreviewedEq.length - 5) : ''), all: unreviewedEq.map(h => ({name: h.name, gov: h.governorate})), _page: 'renderEquipment' });
         }
       }
     } catch (e) { /* ignore */ }
@@ -330,10 +330,28 @@ function showAlertList(idx) {
     return sevMap.info;
   };
   const sev = getSev(a.title);
+  // Group by governorate preserving original order
+  const groups = [];
+  const flatItems = [];
+  const govMap = {};
+  a.all.forEach(item => {
+    if (typeof item === 'object' && item.gov) {
+      if (!govMap[item.gov]) { govMap[item.gov] = []; groups.push(item.gov); }
+      govMap[item.gov].push(item.name);
+    } else {
+      flatItems.push(item);
+    }
+  });
+  let html = `<div style="font-size:11px;color:#666;margin-bottom:8px">إجمالي: <strong>${a.all.length}</strong></div>`;
+  if (flatItems.length > 0) {
+    html += `<div style="margin-bottom:6px">${flatItems.map(f => `<div style="padding:4px 0;font-size:12px;color:#666;border-bottom:1px solid #f0f0f0">${esc(typeof f === 'string' ? f : f.name)}</div>`).join('')}</div>`;
+  }
+  groups.forEach(g => {
+    html += `<div style="margin-top:8px;font-weight:700;font-size:12px;color:${sev.dot};border-bottom:2px solid ${sev.dot}22;padding-bottom:2px;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};display:inline-block"></span>${esc(g)} <span style="font-weight:400;font-size:10px;color:#999">(${govMap[g].length})</span></div>`;
+    html += govMap[g].map(n => `<div style="padding:3px 12px;font-size:12px;border-bottom:1px solid #f0f0f0">${esc(n)}</div>`).join('');
+  });
   openModal(`<span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${sev.dot};display:inline-block"></span> ${a.title}</span>`,
-    `<div style="max-height:400px;overflow-y:auto">
-      <div style="font-size:11px;color:#666;margin-bottom:8px">إجمالي: <strong>${a.all.length}</strong></div>
-      <ol style="direction:rtl;text-align:right;font-size:13px;padding-right:20px;margin:0">${a.all.map(n => `<li style="padding:3px 0;border-bottom:1px solid #f0f0f0">${n}</li>`).join('')}</ol></div>`,
+    `<div style="max-height:400px;overflow-y:auto;direction:rtl;text-align:right">${html}</div>`,
     `<button class="btn btn-secondary" data-click="closeModal">إغلاق</button>`);
 }
 
