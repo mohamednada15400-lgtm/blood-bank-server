@@ -282,11 +282,28 @@ function toggleNotifDropdown() {
     dd.innerHTML = alerts.map((a, i) => {
       const sev = getSev(a.title);
       const count = a.all ? a.all.length : 0;
-      const page = a._page || '';
-      return `<div data-click="notifNavToPage" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="transparent" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border,#f0f0f0);transition:0.1s">
-        <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};flex-shrink:0"></span>
-        <span style="flex:1;font-size:10px;color:var(--text,#333)">${a.title}</span>
-        ${count > 0 ? `<span style="background:${sev.dot};color:#fff;border-radius:10px;padding:0 5px;font-size:8px;font-weight:700;line-height:15px;flex-shrink:0">${count}</span>` : ''}
+      // Compute governorate breakdown from all items
+      let govBreakdown = '';
+      if (count > 0) {
+        const govCount = {};
+        a.all.forEach(item => {
+          const g = typeof item === 'object' && item.gov ? item.gov : null;
+          if (g) govCount[g] = (govCount[g] || 0) + 1;
+        });
+        const gKeys = Object.keys(govCount);
+        if (gKeys.length > 0) {
+          govBreakdown = '<div style="font-size:8px;color:#888;margin-top:2px;padding-right:14px">' +
+            gKeys.map(g => `${esc(g)} <strong style="color:${sev.dot}">${govCount[g]}</strong>`).join(' · ') +
+            '</div>';
+        }
+      }
+      return `<div data-click="notifNavToPage" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="transparent" style="cursor:pointer;padding:6px 10px;border-bottom:1px solid var(--border,#f0f0f0);transition:0.1s">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};flex-shrink:0"></span>
+          <span style="flex:1;font-size:10px;color:var(--text,#333)">${a.title}</span>
+          ${count > 0 ? `<span style="background:${sev.dot};color:#fff;border-radius:10px;padding:0 5px;font-size:8px;font-weight:700;line-height:15px;flex-shrink:0">${count}</span>` : ''}
+        </div>
+        ${govBreakdown}
       </div>`;
     }).join('');
   }
