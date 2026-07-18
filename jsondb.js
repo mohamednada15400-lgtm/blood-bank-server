@@ -54,11 +54,10 @@ class JSONDB {
       readiness_occasions: [],
       readiness_reports: [],
       readiness_notifications: [],
-      daily_report_audit: [],
       blood_bank_equipment: null,
       app_config: { time_offset: 2 },
       role_perms: Object.entries(DEF_PERMS).map(([role, perms]) => ({ role, permissions: JSON.parse(JSON.stringify(perms)) })),
-      _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1, daily_report_audit: 1 }
+      _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1 }
     };
   }
 
@@ -183,8 +182,6 @@ class JSONDB {
       this.data.blood_bank_equipment.types.forEach(t => { if (!t.category) t.category = catMap[t.id] || 'تجميعي'; });
       this.data.blood_bank_equipment.types.sort((a, b) => a.id - b.id);
     }
-    if (!this.data.daily_report_audit) this.data.daily_report_audit = [];
-    if (!this.data._counters.daily_report_audit) this.data._counters.daily_report_audit = this.data.daily_report_audit.length + 1 || 1;
     if (!this.data.hospital_types || !this.data.hospital_types.length) this.data.hospital_types = [{ id: 1, name: 'تجميعي' }, { id: 2, name: 'تخزيني' }];
     if (!this.data._counters.hospital_types) this.data._counters.hospital_types = this.data.hospital_types.length + 1;
     if (!this.data.app_config || typeof this.data.app_config.time_offset !== 'number') this.data.app_config = { time_offset: 2 };
