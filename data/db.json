@@ -2063,97 +2063,11 @@
     {
       "id": 4,
       "hospital_id": 1,
-      "date": "2026-07-06T00:00:00.000Z",
-      "time": "11:07",
+      "date": "2026-07-18",
+      "time": "12:47",
       "under_inspection": 0,
-      "blood_data": {
-        "A+": {
-          "disposal": 2,
-          "incoming": 1,
-          "outgoing": 10,
-          "previous": 10,
-          "available": -1
-        },
-        "A-": {
-          "disposal": 0,
-          "incoming": 5,
-          "outgoing": 2,
-          "previous": 2,
-          "available": 5
-        },
-        "B+": {
-          "disposal": 0,
-          "incoming": 0,
-          "outgoing": 4,
-          "previous": 12,
-          "available": 8
-        },
-        "B-": {
-          "disposal": 0,
-          "incoming": 4,
-          "outgoing": 2,
-          "previous": 2,
-          "available": 4
-        },
-        "O+": {
-          "disposal": 4,
-          "incoming": 17,
-          "outgoing": 10,
-          "previous": 25,
-          "available": 28
-        },
-        "O-": {
-          "disposal": 0,
-          "incoming": 1,
-          "outgoing": 0,
-          "previous": 7,
-          "available": 8
-        },
-        "AB+": {
-          "disposal": 0,
-          "incoming": 0,
-          "outgoing": 2,
-          "previous": 11,
-          "available": 9
-        },
-        "AB-": {
-          "disposal": 0,
-          "incoming": 0,
-          "outgoing": 0,
-          "previous": 0,
-          "available": 0
-        }
-      },
-      "plasma_data": {
-        "A": {
-          "disposal": 0,
-          "incoming": 8,
-          "outgoing": 8,
-          "previous": 5,
-          "available": 5
-        },
-        "B": {
-          "disposal": 0,
-          "incoming": 1,
-          "outgoing": 4,
-          "previous": 11,
-          "available": 8
-        },
-        "O": {
-          "disposal": 0,
-          "incoming": 1,
-          "outgoing": 6,
-          "previous": 37,
-          "available": 32
-        },
-        "AB": {
-          "disposal": 0,
-          "incoming": 2,
-          "outgoing": 1,
-          "previous": 18,
-          "available": 19
-        }
-      },
+      "blood_data": "{\"A-\":{\"previous\":2}}",
+      "plasma_data": "{\"A\":{\"previous\":5,\"incoming\":8,\"outgoing\":8,\"disposal\":0,\"available\":5},\"B\":{\"previous\":11,\"incoming\":1,\"outgoing\":4,\"disposal\":0,\"available\":8},\"AB\":{\"previous\":18,\"incoming\":2,\"outgoing\":1,\"disposal\":0,\"available\":19},\"O\":{\"previous\":37,\"incoming\":1,\"outgoing\":6,\"disposal\":0,\"available\":32}}",
       "platelets": 22,
       "cryo": 12,
       "license_type": "تخزيني",
@@ -2265,97 +2179,11 @@
     {
       "id": 6,
       "hospital_id": 3,
-      "date": "2026-07-14T00:00:00.000Z",
-      "time": "15:49",
+      "date": "2026-07-18",
+      "time": "12:47",
       "under_inspection": 2,
-      "blood_data": {
-        "A+": {
-          "disposal": 2,
-          "incoming": 12,
-          "outgoing": 4,
-          "previous": 11,
-          "available": 17
-        },
-        "A-": {
-          "disposal": 0,
-          "incoming": 1,
-          "outgoing": 2,
-          "previous": 1,
-          "available": 0
-        },
-        "B+": {
-          "disposal": 2,
-          "incoming": 5,
-          "outgoing": 5,
-          "previous": 22,
-          "available": 20
-        },
-        "B-": {
-          "disposal": 0,
-          "incoming": 0,
-          "outgoing": 1,
-          "previous": 6,
-          "available": 5
-        },
-        "O+": {
-          "disposal": 4,
-          "incoming": 18,
-          "outgoing": 1,
-          "previous": 21,
-          "available": 34
-        },
-        "O-": {
-          "disposal": 0,
-          "incoming": 3,
-          "outgoing": 1,
-          "previous": 2,
-          "available": 4
-        },
-        "AB+": {
-          "disposal": 0,
-          "incoming": 2,
-          "outgoing": 2,
-          "previous": 9,
-          "available": 9
-        },
-        "AB-": {
-          "disposal": 0,
-          "incoming": 0,
-          "outgoing": 0,
-          "previous": 0,
-          "available": 0
-        }
-      },
-      "plasma_data": {
-        "A": {
-          "disposal": 0,
-          "incoming": 4,
-          "outgoing": 0,
-          "previous": 19,
-          "available": 23
-        },
-        "B": {
-          "disposal": 0,
-          "incoming": 1,
-          "outgoing": 2,
-          "previous": 32,
-          "available": 31
-        },
-        "O": {
-          "disposal": 0,
-          "incoming": 3,
-          "outgoing": 7,
-          "previous": 31,
-          "available": 27
-        },
-        "AB": {
-          "disposal": 0,
-          "incoming": 4,
-          "outgoing": 0,
-          "previous": 24,
-          "available": 28
-        }
-      },
+      "blood_data": "{\"A+\":{\"previous\":20}}",
+      "plasma_data": "{\"A\":{\"previous\":19,\"incoming\":4,\"outgoing\":0,\"disposal\":0,\"available\":23},\"B\":{\"previous\":32,\"incoming\":1,\"outgoing\":2,\"disposal\":0,\"available\":31},\"AB\":{\"previous\":24,\"incoming\":4,\"outgoing\":0,\"disposal\":0,\"available\":28},\"O\":{\"previous\":31,\"incoming\":3,\"outgoing\":7,\"disposal\":0,\"available\":27}}",
       "platelets": 111,
       "cryo": 12,
       "license_type": "تخزيني",
@@ -3517,97 +3345,11 @@
     {
       "id": 19,
       "hospital_id": 2,
-      "date": "2026-07-06T00:00:00.000Z",
-      "time": "11:07",
+      "date": "2026-07-18",
+      "time": "12:47",
       "under_inspection": 0,
-      "blood_data": {
-        "A+": {
-          "disposal": 3,
-          "incoming": 1,
-          "outgoing": 8,
-          "previous": 7,
-          "available": -3
-        },
-        "A-": {
-          "disposal": 1,
-          "incoming": 3,
-          "outgoing": 0,
-          "previous": 0,
-          "available": 2
-        },
-        "B+": {
-          "disposal": 1,
-          "incoming": 9,
-          "outgoing": 0,
-          "previous": 14,
-          "available": 22
-        },
-        "B-": {
-          "disposal": 0,
-          "incoming": 2,
-          "outgoing": 2,
-          "previous": 8,
-          "available": 8
-        },
-        "O+": {
-          "disposal": 1,
-          "incoming": 13,
-          "outgoing": 8,
-          "previous": 10,
-          "available": 14
-        },
-        "O-": {
-          "disposal": 0,
-          "incoming": 4,
-          "outgoing": 1,
-          "previous": 9,
-          "available": 12
-        },
-        "AB+": {
-          "disposal": 0,
-          "incoming": 2,
-          "outgoing": 1,
-          "previous": 8,
-          "available": 9
-        },
-        "AB-": {
-          "disposal": 0,
-          "incoming": 0,
-          "outgoing": 0,
-          "previous": 0,
-          "available": 0
-        }
-      },
-      "plasma_data": {
-        "A": {
-          "disposal": 0,
-          "incoming": 9,
-          "outgoing": 0,
-          "previous": 6,
-          "available": 15
-        },
-        "B": {
-          "disposal": 0,
-          "incoming": 1,
-          "outgoing": 0,
-          "previous": 31,
-          "available": 32
-        },
-        "O": {
-          "disposal": 0,
-          "incoming": 10,
-          "outgoing": 6,
-          "previous": 58,
-          "available": 62
-        },
-        "AB": {
-          "disposal": 0,
-          "incoming": 3,
-          "outgoing": 0,
-          "previous": 26,
-          "available": 29
-        }
-      },
+      "blood_data": "{\"A+\":{\"previous\":3,\"incoming\":1,\"outgoing\":8,\"disposal\":3,\"available\":-7},\"A-\":{\"previous\":0,\"incoming\":3,\"outgoing\":0,\"disposal\":1,\"available\":2},\"B+\":{\"previous\":14,\"incoming\":9,\"outgoing\":0,\"disposal\":1,\"available\":22},\"B-\":{\"previous\":8,\"incoming\":2,\"outgoing\":2,\"disposal\":0,\"available\":8},\"O+\":{\"previous\":10,\"incoming\":13,\"outgoing\":8,\"disposal\":1,\"available\":14},\"O-\":{\"previous\":9,\"incoming\":4,\"outgoing\":1,\"disposal\":0,\"available\":12},\"AB+\":{\"previous\":8,\"incoming\":2,\"outgoing\":1,\"disposal\":0,\"available\":9},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "plasma_data": "{\"A\":{\"previous\":6,\"incoming\":9,\"outgoing\":0,\"disposal\":0,\"available\":15},\"B\":{\"previous\":31,\"incoming\":1,\"outgoing\":0,\"disposal\":0,\"available\":32},\"AB\":{\"previous\":26,\"incoming\":3,\"outgoing\":0,\"disposal\":0,\"available\":29},\"O\":{\"previous\":58,\"incoming\":10,\"outgoing\":6,\"disposal\":0,\"available\":62}}",
       "platelets": 21,
       "cryo": 10,
       "license_type": "تجميعي",
@@ -5482,6 +5224,38 @@
       "month": 6,
       "data": "{\"collect_total\":897,\"inc_blood\":12,\"inc_plasma\":20,\"inc_sdp\":0,\"inc_rdp\":0,\"out_blood_int\":731,\"out_blood_branch\":68,\"out_blood_auth\":23,\"out_blood_ext\":1,\"out_plasma_int\":439,\"out_plasma_ext\":0,\"out_sdp\":0,\"out_rdp\":20,\"blood_groups\":835,\"compatibility\":1427,\"ct\":1.9494535519125684,\"disp_exp_blood\":2,\"disp_exp_plasma\":21,\"disp_exp_sdp\":56,\"disp_exp_rdp\":1,\"refused_fatty\":15,\"refused_icteric\":6,\"refused_all\":7,\"virology_c\":1,\"virology_b\":1,\"virology_i\":0,\"virology_dollar\":0,\"disp_exp_blood2\":0,\"disp_exp_plasma2\":0,\"disp_exp_sdp2\":3,\"disp_exp_rdp2\":0,\"disp_returned\":1,\"disp_reaction\":\"7 dat\",\"tested\":817,\"ratio_uncompleted\":0.02346368715083799,\"ratio_refused\":0.06521739130434782,\"ratio_virus\":0.0073439412484700125,\"ratio_b\":0.008567931456548347,\"ratio_c\":0.0012239902080783353,\"ratio_i\":0.0012239902080783353,\"ratio_dollar\":0,\"ratio_exp\":0.004103967168262654,\"ratio_returned\":0,\"ratio_reaction\":0.0013679890560875513,\"ratio_open\":0,\"ratio_other\":0,\"disp_open\":0,\"disp_other\":0,\"uncompleted\":0,\"donation_therapeutic\":0}",
       "user_id": 1
+    },
+    {
+      "id": 349,
+      "hospital_id": 19,
+      "year": 2026,
+      "month": 3,
+      "data": "{\"collect_total\":0,\"inc_blood\":481,\"inc_plasma\":245,\"inc_sdp\":0,\"inc_rdp\":121,\"out_blood_int\":0,\"out_blood_branch\":0,\"out_blood_auth\":0,\"out_blood_ext\":443,\"out_plasma_int\":0,\"out_plasma_ext\":210,\"out_sdp\":0,\"out_rdp\":121,\"blood_groups\":436,\"compatibility\":445,\"ct\":1.0045146726862302,\"donation_therapeutic\":0,\"uncompleted\":0,\"refused_fatty\":0,\"refused_icteric\":0,\"disp_exp_blood\":0,\"disp_exp_plasma\":0,\"disp_exp_sdp\":0,\"disp_exp_rdp\":0,\"disp_returned\":0,\"disp_reaction\":0,\"disp_open\":0,\"disp_other\":1,\"virology_c\":0,\"virology_b\":0,\"virology_i\":0,\"virology_dollar\":0,\"tested\":0,\"ratio_uncompleted\":0,\"ratio_refused\":0,\"ratio_c\":0,\"ratio_b\":0,\"ratio_i\":0,\"ratio_dollar\":0,\"ratio_exp\":0,\"ratio_returned\":0,\"ratio_reaction\":0,\"ratio_open\":0,\"ratio_other\":0.00002257336343115124,\"child_inc_collected\":0,\"child_inc_regional\":0,\"child_out_blood\":0,\"child_blood_groups\":0,\"child_compatibility\":0,\"child_ct\":0,\"child_disp_exp\":0,\"child_disp_returned\":0,\"child_disp_reaction\":0,\"child_disp_open\":0,\"child_disp_other\":0,\"child_pct_exp\":0,\"child_pct_returned\":0,\"child_pct_reaction\":0,\"child_pct_open\":0,\"child_pct_other\":0}",
+      "user_id": 1
+    },
+    {
+      "id": 350,
+      "hospital_id": 20,
+      "year": 2026,
+      "month": 3,
+      "data": "{\"collect_total\":0,\"inc_blood\":147,\"inc_plasma\":84,\"inc_sdp\":86,\"inc_rdp\":83,\"out_blood_int\":0,\"out_blood_branch\":0,\"out_blood_auth\":0,\"out_blood_ext\":126,\"out_plasma_int\":0,\"out_plasma_ext\":42,\"out_sdp\":79,\"out_rdp\":82,\"blood_groups\":746,\"compatibility\":151,\"ct\":1.1984126984126984,\"donation_therapeutic\":0,\"uncompleted\":0,\"refused_fatty\":0,\"refused_icteric\":0,\"disp_exp_blood\":1,\"disp_exp_plasma\":0,\"disp_exp_sdp\":0,\"disp_exp_rdp\":0,\"disp_returned\":0,\"disp_reaction\":0,\"disp_open\":0,\"disp_other\":0,\"virology_c\":0,\"virology_b\":0,\"virology_i\":0,\"virology_dollar\":0,\"tested\":0,\"ratio_uncompleted\":0,\"ratio_refused\":0,\"ratio_c\":0,\"ratio_b\":0,\"ratio_i\":0,\"ratio_dollar\":0,\"ratio_exp\":0.00006802721088435374,\"ratio_returned\":0,\"ratio_reaction\":0,\"ratio_open\":0,\"ratio_other\":0,\"child_inc_collected\":0,\"child_inc_regional\":0,\"child_out_blood\":0,\"child_blood_groups\":0,\"child_compatibility\":0,\"child_ct\":0,\"child_disp_exp\":0,\"child_disp_returned\":0,\"child_disp_reaction\":0,\"child_disp_open\":0,\"child_disp_other\":0,\"child_pct_exp\":0,\"child_pct_returned\":0,\"child_pct_reaction\":0,\"child_pct_open\":0,\"child_pct_other\":0}",
+      "user_id": 1
+    },
+    {
+      "id": 351,
+      "hospital_id": 21,
+      "year": 2026,
+      "month": 3,
+      "data": "{\"collect_total\":0,\"inc_blood\":24,\"inc_plasma\":40,\"inc_sdp\":10,\"inc_rdp\":51,\"out_blood_int\":0,\"out_blood_branch\":0,\"out_blood_auth\":0,\"out_blood_ext\":21,\"out_plasma_int\":0,\"out_plasma_ext\":35,\"out_sdp\":10,\"out_rdp\":51,\"blood_groups\":30,\"compatibility\":37,\"ct\":1.7619047619047619,\"donation_therapeutic\":0,\"uncompleted\":0,\"refused_fatty\":0,\"refused_icteric\":0,\"disp_exp_blood\":1,\"disp_exp_plasma\":0,\"disp_exp_sdp\":0,\"disp_exp_rdp\":0,\"disp_returned\":0,\"disp_reaction\":0,\"disp_open\":0,\"disp_other\":0,\"virology_c\":0,\"virology_b\":0,\"virology_i\":0,\"virology_dollar\":0,\"tested\":0,\"ratio_uncompleted\":0,\"ratio_refused\":0,\"ratio_c\":0,\"ratio_b\":0,\"ratio_i\":0,\"ratio_dollar\":0,\"ratio_exp\":0.00041666666666666664,\"ratio_returned\":0,\"ratio_reaction\":0,\"ratio_open\":0,\"ratio_other\":0,\"child_inc_collected\":0,\"child_inc_regional\":0,\"child_out_blood\":0,\"child_blood_groups\":0,\"child_compatibility\":0,\"child_ct\":0,\"child_disp_exp\":0,\"child_disp_returned\":0,\"child_disp_reaction\":0,\"child_disp_open\":0,\"child_disp_other\":0,\"child_pct_exp\":0,\"child_pct_returned\":0,\"child_pct_reaction\":0,\"child_pct_open\":0,\"child_pct_other\":0}",
+      "user_id": 1
+    },
+    {
+      "id": 352,
+      "hospital_id": 23,
+      "year": 2026,
+      "month": 3,
+      "data": "{\"collect_total\":0,\"inc_blood\":271,\"inc_plasma\":130,\"inc_sdp\":64,\"inc_rdp\":84,\"out_blood_int\":0,\"out_blood_branch\":0,\"out_blood_auth\":0,\"out_blood_ext\":247,\"out_plasma_int\":0,\"out_plasma_ext\":116,\"out_sdp\":64,\"out_rdp\":84,\"blood_groups\":300,\"compatibility\":280,\"ct\":1.1336032388663968,\"donation_therapeutic\":0,\"uncompleted\":0,\"refused_fatty\":0,\"refused_icteric\":0,\"disp_exp_blood\":0,\"disp_exp_plasma\":0,\"disp_exp_sdp\":0,\"disp_exp_rdp\":0,\"disp_returned\":0,\"disp_reaction\":0,\"disp_open\":0,\"disp_other\":\"2 بلازما قطع بالقربه\",\"virology_c\":0,\"virology_b\":0,\"virology_i\":0,\"virology_dollar\":0,\"tested\":0,\"ratio_uncompleted\":0,\"ratio_refused\":0,\"ratio_c\":0,\"ratio_b\":0,\"ratio_i\":0,\"ratio_dollar\":0,\"ratio_exp\":0,\"ratio_returned\":0,\"ratio_reaction\":0,\"ratio_open\":0,\"ratio_other\":0,\"child_inc_collected\":0,\"child_inc_regional\":0,\"child_out_blood\":0,\"child_blood_groups\":0,\"child_compatibility\":0,\"child_ct\":0,\"child_disp_exp\":0,\"child_disp_returned\":0,\"child_disp_reaction\":0,\"child_disp_open\":0,\"child_disp_other\":0,\"child_pct_exp\":0,\"child_pct_returned\":0,\"child_pct_reaction\":0,\"child_pct_open\":0,\"child_pct_other\":0}",
+      "user_id": 1
     }
   ],
   "monthly_small_indicators": [
@@ -5712,6 +5486,38 @@
         "disp_exp_plasma": 0
       },
       "user_id": null
+    },
+    {
+      "id": 663,
+      "hospital_id": 19,
+      "year": 2026,
+      "month": 3,
+      "data": "{\"inc_collected\":0,\"inc_regional\":24,\"inc_plasma\":0,\"inc_sdp\":0,\"inc_rdp\":0,\"out_blood\":24,\"out_plasma\":0,\"out_sdp\":0,\"out_rdp\":0,\"blood_groups\":26,\"compatibility\":26,\"ct\":1.0833333333333333,\"disp_exp_blood\":0,\"disp_exp_plasma\":0,\"disp_exp_sdp\":0,\"disp_exp_rdp\":0,\"disp_returned\":0,\"disp_reaction\":0,\"disp_open\":0,\"disp_other\":0,\"pct_exp\":0,\"pct_returned\":0,\"pct_reaction\":0,\"pct_open\":0,\"pct_other\":0}",
+      "user_id": 1
+    },
+    {
+      "id": 664,
+      "hospital_id": 20,
+      "year": 2026,
+      "month": 3,
+      "data": "{\"inc_collected\":0,\"inc_regional\":11,\"inc_plasma\":0,\"inc_sdp\":0,\"inc_rdp\":0,\"out_blood\":11,\"out_plasma\":0,\"out_sdp\":0,\"out_rdp\":0,\"blood_groups\":22,\"compatibility\":22,\"ct\":2,\"disp_exp_blood\":0,\"disp_exp_plasma\":0,\"disp_exp_sdp\":0,\"disp_exp_rdp\":0,\"disp_returned\":0,\"disp_reaction\":0,\"disp_open\":0,\"disp_other\":0,\"pct_exp\":0,\"pct_returned\":0,\"pct_reaction\":0,\"pct_open\":0,\"pct_other\":0}",
+      "user_id": 1
+    },
+    {
+      "id": 665,
+      "hospital_id": 21,
+      "year": 2026,
+      "month": 3,
+      "data": "{\"inc_collected\":0,\"inc_regional\":120,\"inc_plasma\":0,\"inc_sdp\":0,\"inc_rdp\":0,\"out_blood\":100,\"out_plasma\":0,\"out_sdp\":0,\"out_rdp\":0,\"blood_groups\":75,\"compatibility\":83,\"ct\":0.83,\"disp_exp_blood\":1,\"disp_exp_plasma\":0,\"disp_exp_sdp\":0,\"disp_exp_rdp\":0,\"disp_returned\":0,\"disp_reaction\":0,\"disp_open\":0,\"disp_other\":0,\"pct_exp\":0,\"pct_returned\":0.00008333333333333333,\"pct_reaction\":0,\"pct_open\":0,\"pct_other\":0}",
+      "user_id": 1
+    },
+    {
+      "id": 666,
+      "hospital_id": 23,
+      "year": 2026,
+      "month": 3,
+      "data": "{\"inc_collected\":0,\"inc_regional\":20,\"inc_plasma\":0,\"inc_sdp\":0,\"inc_rdp\":0,\"out_blood\":22,\"out_plasma\":0,\"out_sdp\":0,\"out_rdp\":0,\"blood_groups\":42,\"compatibility\":23,\"ct\":1.0454545454545454,\"disp_exp_blood\":0,\"disp_exp_plasma\":0,\"disp_exp_sdp\":0,\"disp_exp_rdp\":0,\"disp_returned\":0,\"disp_reaction\":0,\"disp_open\":0,\"disp_other\":0,\"pct_exp\":0,\"pct_returned\":0,\"pct_reaction\":0,\"pct_open\":0,\"pct_other\":0}",
+      "user_id": 1
     }
   ],
   "consumption": [],
@@ -37111,536 +36917,6 @@
           },
           "year": 2026,
           "month": 2,
-          "period": "monthly",
-          "user_id": 1,
-          "governorate": "أسوان",
-          "hospital_id": 32,
-          "hospital_name": "كوم امبو *"
-        }
-      ],
-      "date": "2026-07-01T06:33:19.884Z",
-      "user_id": 1,
-      "user_name": "admin"
-    },
-    {
-      "id": 55,
-      "type": "مؤشرات تجميعيه",
-      "title": "مؤشرات تجميعيه - أرشيف 2026/3",
-      "data": [
-        {
-          "data": {
-            "inc_rdp": 3,
-            "inc_sdp": 66,
-            "out_rdp": 3,
-            "out_sdp": 66,
-            "disp_open": 1,
-            "inc_blood": 9,
-            "disp_other": 1,
-            "inc_plasma": 0,
-            "virology_b": 0,
-            "virology_c": 2,
-            "virology_i": 1,
-            "uncompleted": 0,
-            "blood_groups": 350,
-            "disp_exp_rdp": 0,
-            "disp_exp_sdp": 0,
-            "collect_total": 222,
-            "compatibility": 285,
-            "disp_reaction": 0,
-            "disp_returned": 0,
-            "out_blood_ext": 14,
-            "out_blood_int": 102,
-            "refused_fatty": 2,
-            "child_disp_exp": 0,
-            "disp_exp_blood": 0,
-            "out_blood_auth": 0,
-            "out_plasma_ext": 10,
-            "out_plasma_int": 18,
-            "child_disp_open": 0,
-            "child_out_blood": 0,
-            "disp_exp_plasma": 0,
-            "refused_icteric": 0,
-            "virology_dollar": 1,
-            "child_disp_other": 0,
-            "out_blood_branch": 97,
-            "child_blood_groups": 0,
-            "child_inc_regional": 0,
-            "child_compatibility": 0,
-            "child_disp_reaction": 0,
-            "child_disp_returned": 0,
-            "child_inc_collected": 0,
-            "donation_therapeutic": 0
-          },
-          "year": 2026,
-          "month": 3,
-          "period": "monthly",
-          "user_id": 1,
-          "governorate": "بورسعيد",
-          "hospital_id": 2,
-          "hospital_name": "النصر *"
-        },
-        {
-          "data": {
-            "inc_rdp": 0,
-            "inc_sdp": 0,
-            "out_rdp": 0,
-            "out_sdp": 0,
-            "disp_open": 0,
-            "inc_blood": 63,
-            "disp_other": 0,
-            "inc_plasma": 0,
-            "virology_b": 1,
-            "virology_c": 0,
-            "virology_i": 0,
-            "uncompleted": 3,
-            "blood_groups": 246,
-            "disp_exp_rdp": 0,
-            "disp_exp_sdp": 0,
-            "collect_total": 124,
-            "compatibility": 225,
-            "disp_reaction": 1,
-            "disp_returned": 1,
-            "out_blood_ext": 0,
-            "out_blood_int": 187,
-            "refused_fatty": 1,
-            "child_disp_exp": 0,
-            "disp_exp_blood": 2,
-            "out_blood_auth": 0,
-            "out_plasma_ext": 0,
-            "out_plasma_int": 81,
-            "child_disp_open": 0,
-            "child_out_blood": 0,
-            "disp_exp_plasma": 0,
-            "refused_icteric": 0,
-            "virology_dollar": 1,
-            "child_disp_other": 0,
-            "out_blood_branch": 22,
-            "child_blood_groups": 0,
-            "child_inc_regional": 0,
-            "child_compatibility": 0,
-            "child_disp_reaction": 0,
-            "child_disp_returned": 0,
-            "child_inc_collected": 0,
-            "donation_therapeutic": 0
-          },
-          "year": 2026,
-          "month": 3,
-          "period": "monthly",
-          "user_id": 1,
-          "governorate": "بورسعيد",
-          "hospital_id": 3,
-          "hospital_name": "الحياة بورفؤاد *"
-        },
-        {
-          "data": {
-            "inc_rdp": 112,
-            "inc_sdp": 0,
-            "out_rdp": 101,
-            "out_sdp": 57,
-            "disp_open": 1,
-            "inc_blood": 13,
-            "disp_other": 0,
-            "inc_plasma": 0,
-            "virology_b": 3,
-            "virology_c": 13,
-            "virology_i": 1,
-            "uncompleted": 30,
-            "blood_groups": 1143,
-            "disp_exp_rdp": 5,
-            "disp_exp_sdp": 0,
-            "collect_total": 1145,
-            "compatibility": 1050,
-            "disp_reaction": 0,
-            "disp_returned": 2,
-            "out_blood_ext": 9,
-            "out_blood_int": 596,
-            "refused_fatty": 0,
-            "child_disp_exp": 0,
-            "disp_exp_blood": 0,
-            "out_blood_auth": 0,
-            "out_plasma_ext": 320,
-            "out_plasma_int": 301,
-            "child_disp_open": 0,
-            "child_out_blood": 0,
-            "disp_exp_plasma": 0,
-            "refused_icteric": 0,
-            "virology_dollar": 7,
-            "child_disp_other": 0,
-            "out_blood_branch": 516,
-            "child_blood_groups": 0,
-            "child_inc_regional": 0,
-            "child_compatibility": 0,
-            "child_disp_reaction": 0,
-            "child_disp_returned": 0,
-            "child_inc_collected": 0,
-            "donation_therapeutic": 7
-          },
-          "year": 2026,
-          "month": 3,
-          "period": "monthly",
-          "user_id": 1,
-          "governorate": "الإسماعيلية",
-          "hospital_id": 7,
-          "hospital_name": "المجمع الطبي *"
-        },
-        {
-          "data": {
-            "inc_rdp": 0,
-            "inc_sdp": 12,
-            "out_rdp": 12,
-            "out_sdp": 40,
-            "disp_open": 0,
-            "inc_blood": 4,
-            "disp_other": 7,
-            "inc_plasma": 66,
-            "virology_b": 1,
-            "virology_c": 6,
-            "virology_i": 1,
-            "uncompleted": 23,
-            "blood_groups": 887,
-            "disp_exp_rdp": 11,
-            "disp_exp_sdp": 0,
-            "collect_total": 901,
-            "compatibility": 1427,
-            "disp_reaction": 0,
-            "disp_returned": 0,
-            "out_blood_ext": 0,
-            "out_blood_int": 760,
-            "refused_fatty": 27,
-            "child_disp_exp": 0,
-            "disp_exp_blood": 0,
-            "out_blood_auth": 37,
-            "out_plasma_ext": 0,
-            "out_plasma_int": 473,
-            "child_disp_open": 0,
-            "child_out_blood": 0,
-            "disp_exp_plasma": 0,
-            "refused_icteric": 0,
-            "virology_dollar": 5,
-            "child_disp_other": 0,
-            "out_blood_branch": 45,
-            "child_blood_groups": 0,
-            "child_inc_regional": 0,
-            "child_compatibility": 0,
-            "child_disp_reaction": 0,
-            "child_disp_returned": 0,
-            "child_inc_collected": 0,
-            "donation_therapeutic": 0
-          },
-          "year": 2026,
-          "month": 3,
-          "period": "monthly",
-          "user_id": 1,
-          "governorate": "السويس",
-          "hospital_id": 15,
-          "hospital_name": "مجمع السويس الطبي *"
-        },
-        {
-          "data": {
-            "inc_rdp": 0,
-            "inc_sdp": 24,
-            "out_rdp": 79,
-            "out_sdp": 95,
-            "disp_open": 2,
-            "inc_blood": 6,
-            "disp_other": 2,
-            "inc_plasma": 0,
-            "virology_b": 4,
-            "virology_c": 6,
-            "virology_i": 1,
-            "uncompleted": 8,
-            "blood_groups": 728,
-            "disp_exp_rdp": 37,
-            "disp_exp_sdp": 0,
-            "collect_total": 802,
-            "compatibility": 770,
-            "disp_reaction": 0,
-            "disp_returned": 0,
-            "out_blood_ext": 0,
-            "out_blood_int": 592,
-            "refused_fatty": 3,
-            "child_disp_exp": 0,
-            "disp_exp_blood": 0,
-            "out_blood_auth": 0,
-            "out_plasma_ext": 19,
-            "out_plasma_int": 569,
-            "child_disp_open": 0,
-            "child_out_blood": 0,
-            "disp_exp_plasma": 0,
-            "refused_icteric": 0,
-            "virology_dollar": 0,
-            "child_disp_other": 0,
-            "out_blood_branch": 38,
-            "child_blood_groups": 0,
-            "child_inc_regional": 0,
-            "child_compatibility": 0,
-            "child_disp_reaction": 0,
-            "child_disp_returned": 0,
-            "child_inc_collected": 0,
-            "donation_therapeutic": 1
-          },
-          "year": 2026,
-          "month": 3,
-          "period": "monthly",
-          "user_id": 1,
-          "governorate": "الأقصر",
-          "hospital_id": 18,
-          "hospital_name": "طيبة التخصصي *"
-        },
-        {
-          "data": {
-            "inc_rdp": 68,
-            "inc_sdp": 0,
-            "out_rdp": 68,
-            "out_sdp": 0,
-            "disp_open": 0,
-            "inc_blood": 33,
-            "disp_other": 0,
-            "inc_plasma": 0,
-            "virology_b": 3,
-            "virology_c": 1,
-            "virology_i": 0,
-            "uncompleted": 1,
-            "blood_groups": 233,
-            "disp_exp_rdp": 0,
-            "disp_exp_sdp": 0,
-            "collect_total": 235,
-            "compatibility": 280,
-            "disp_reaction": 0,
-            "disp_returned": 0,
-            "out_blood_ext": 3,
-            "out_blood_int": 267,
-            "refused_fatty": 0,
-            "child_disp_exp": 0,
-            "disp_exp_blood": 0,
-            "out_blood_auth": 0,
-            "out_plasma_ext": 3,
-            "out_plasma_int": 71,
-            "child_disp_open": 0,
-            "child_out_blood": 5,
-            "disp_exp_plasma": 0,
-            "refused_icteric": 0,
-            "virology_dollar": 0,
-            "child_disp_other": 0,
-            "out_blood_branch": 16,
-            "child_blood_groups": 5,
-            "child_inc_regional": 0,
-            "child_compatibility": 5,
-            "child_disp_reaction": 0,
-            "child_disp_returned": 0,
-            "child_inc_collected": 5,
-            "donation_therapeutic": 2
-          },
-          "year": 2026,
-          "month": 3,
-          "period": "monthly",
-          "user_id": 1,
-          "governorate": "الأقصر",
-          "hospital_id": 22,
-          "hospital_name": "الكرنك الدولي *"
-        },
-        {
-          "data": {
-            "inc_rdp": 0,
-            "inc_sdp": 60,
-            "out_rdp": 0,
-            "out_sdp": 0,
-            "disp_open": 0,
-            "inc_blood": 31,
-            "disp_other": 0,
-            "inc_plasma": 0,
-            "virology_b": 2,
-            "virology_c": 1,
-            "virology_i": 1,
-            "uncompleted": 1,
-            "blood_groups": 59,
-            "disp_exp_rdp": 0,
-            "disp_exp_sdp": 0,
-            "collect_total": 99,
-            "compatibility": 71,
-            "disp_reaction": 0,
-            "disp_returned": 0,
-            "out_blood_ext": 0,
-            "out_blood_int": 59,
-            "refused_fatty": 0,
-            "child_disp_exp": 0,
-            "disp_exp_blood": 1,
-            "out_blood_auth": 23,
-            "out_plasma_ext": 14,
-            "out_plasma_int": 12,
-            "child_disp_open": 0,
-            "child_out_blood": 0,
-            "disp_exp_plasma": 0,
-            "refused_icteric": 0,
-            "virology_dollar": 0,
-            "child_disp_other": 0,
-            "out_blood_branch": 5,
-            "child_blood_groups": 0,
-            "child_inc_regional": 0,
-            "child_compatibility": 0,
-            "child_disp_reaction": 0,
-            "child_disp_returned": 0,
-            "child_inc_collected": 0,
-            "donation_therapeutic": 0
-          },
-          "year": 2026,
-          "month": 3,
-          "period": "monthly",
-          "user_id": 1,
-          "governorate": "جنوب سيناء",
-          "hospital_id": 24,
-          "hospital_name": "راس سدر *"
-        },
-        {
-          "data": {
-            "inc_rdp": 0,
-            "inc_sdp": 0,
-            "out_rdp": 0,
-            "out_sdp": 0,
-            "disp_open": 0,
-            "inc_blood": 14,
-            "disp_other": 0,
-            "inc_plasma": 27,
-            "virology_b": 0,
-            "virology_c": 1,
-            "virology_i": 0,
-            "uncompleted": 1,
-            "blood_groups": 84,
-            "disp_exp_rdp": 0,
-            "disp_exp_sdp": 0,
-            "collect_total": 93,
-            "compatibility": 154,
-            "disp_reaction": 0,
-            "disp_returned": 0,
-            "out_blood_ext": 23,
-            "out_blood_int": 84,
-            "refused_fatty": 1,
-            "child_disp_exp": 0,
-            "disp_exp_blood": 1,
-            "out_blood_auth": 0,
-            "out_plasma_ext": 0,
-            "out_plasma_int": 48,
-            "child_disp_open": 0,
-            "child_out_blood": 0,
-            "disp_exp_plasma": 0,
-            "refused_icteric": 0,
-            "virology_dollar": 0,
-            "child_disp_other": 0,
-            "out_blood_branch": 0,
-            "child_blood_groups": 0,
-            "child_inc_regional": 0,
-            "child_compatibility": 0,
-            "child_disp_reaction": 0,
-            "child_disp_returned": 0,
-            "child_inc_collected": 0,
-            "donation_therapeutic": 1
-          },
-          "year": 2026,
-          "month": 3,
-          "period": "monthly",
-          "user_id": 1,
-          "governorate": "جنوب سيناء",
-          "hospital_id": 28,
-          "hospital_name": "مجمع الفيروز *"
-        },
-        {
-          "data": {
-            "inc_rdp": 11,
-            "inc_sdp": 0,
-            "out_rdp": 11,
-            "out_sdp": 0,
-            "disp_open": 0,
-            "inc_blood": 6,
-            "disp_other": 1,
-            "inc_plasma": 0,
-            "virology_b": 5,
-            "virology_c": 6,
-            "virology_i": 0,
-            "uncompleted": 0,
-            "blood_groups": 225,
-            "disp_exp_rdp": 0,
-            "disp_exp_sdp": 0,
-            "collect_total": 393,
-            "compatibility": 354,
-            "disp_reaction": 2,
-            "disp_returned": 1,
-            "out_blood_ext": 40,
-            "out_blood_int": 280,
-            "refused_fatty": 3,
-            "child_disp_exp": 0,
-            "disp_exp_blood": 0,
-            "out_blood_auth": 0,
-            "out_plasma_ext": 24,
-            "out_plasma_int": 63,
-            "child_disp_open": 0,
-            "child_out_blood": 0,
-            "disp_exp_plasma": 0,
-            "refused_icteric": 0,
-            "virology_dollar": 0,
-            "child_disp_other": 0,
-            "out_blood_branch": 68,
-            "child_blood_groups": 0,
-            "child_inc_regional": 0,
-            "child_compatibility": 0,
-            "child_disp_reaction": 0,
-            "child_disp_returned": 0,
-            "child_inc_collected": 0,
-            "donation_therapeutic": 2
-          },
-          "year": 2026,
-          "month": 3,
-          "period": "monthly",
-          "user_id": 1,
-          "governorate": "أسوان",
-          "hospital_id": 30,
-          "hospital_name": "النيل التخصصي*(حورس ادفو)"
-        },
-        {
-          "data": {
-            "inc_rdp": 0,
-            "inc_sdp": 15,
-            "out_rdp": 0,
-            "out_sdp": 15,
-            "disp_open": 4,
-            "inc_blood": 28,
-            "disp_other": 1,
-            "inc_plasma": 0,
-            "virology_b": 0,
-            "virology_c": 2,
-            "virology_i": 0,
-            "uncompleted": 3,
-            "blood_groups": 450,
-            "disp_exp_rdp": 0,
-            "disp_exp_sdp": 0,
-            "collect_total": 199,
-            "compatibility": 280,
-            "disp_reaction": 2,
-            "disp_returned": 2,
-            "out_blood_ext": 13,
-            "out_blood_int": 233,
-            "refused_fatty": 2,
-            "child_disp_exp": 0,
-            "disp_exp_blood": 1,
-            "out_blood_auth": 23,
-            "out_plasma_ext": 36,
-            "out_plasma_int": 122,
-            "child_disp_open": 0,
-            "child_out_blood": 0,
-            "disp_exp_plasma": 0,
-            "refused_icteric": 0,
-            "virology_dollar": 0,
-            "child_disp_other": 0,
-            "out_blood_branch": 0,
-            "child_blood_groups": 26,
-            "child_inc_regional": 26,
-            "child_compatibility": 0,
-            "child_disp_reaction": 0,
-            "child_disp_returned": 0,
-            "child_inc_collected": 0,
-            "donation_therapeutic": 0
-          },
-          "year": 2026,
-          "month": 3,
           "period": "monthly",
           "user_id": 1,
           "governorate": "أسوان",
@@ -72880,40 +72156,142 @@
       "created_at": "2026-07-15T13:32:04.273Z",
       "dismissed": false,
       "_missingHospitals": [
-        "التضامن (مجمع الشفاء)*",
-        "الحياة بورفؤاد *",
-        "الزهور",
-        "٣٠ يونيو",
-        "السلام",
-        "المجمع الطبي *",
-        "مركز 30 يونيو",
-        "فايد التخصصي",
-        "القصاصين التخصصي",
-        "القنطرة غرب التخصصي",
-        "القنطرة شرق التخصصي",
-        "التل الكبيرالتخصصي",
-        "مجمع السويس الطبي *",
-        "المرأه والطفل ( حوض الدرس )",
-        "المناظير و الجهاز الهضمي",
-        "طيبة التخصصي *",
-        "المجمع الطبي الاقصر",
-        "ايزيس التخصصي",
-        "الاطفال التخصصي",
-        "الكرنك الدولي *",
-        "حورس",
-        "راس سدر *",
-        "شرم الشيخ الدولي",
-        "طابا",
-        "سانت كاترين",
-        "مجمع الفيروز *",
-        "النيل التخصصي*(حورس ادفو)",
-        "اسوان التخصصي (الصداقه)",
-        "كوم امبو *",
-        "دراو",
-        "معهد الاورام",
-        "ابوسمبل الدولي",
-        "المسلة التخصصي",
-        "السباعية التخصصي"
+        {
+          "name": "التضامن (مجمع الشفاء)*",
+          "gov": "بورسعيد"
+        },
+        {
+          "name": "الحياة بورفؤاد *",
+          "gov": "بورسعيد"
+        },
+        {
+          "name": "الزهور",
+          "gov": "بورسعيد"
+        },
+        {
+          "name": "٣٠ يونيو",
+          "gov": "بورسعيد"
+        },
+        {
+          "name": "السلام",
+          "gov": "بورسعيد"
+        },
+        {
+          "name": "المجمع الطبي *",
+          "gov": "الإسماعيلية"
+        },
+        {
+          "name": "مركز 30 يونيو",
+          "gov": "الإسماعيلية"
+        },
+        {
+          "name": "فايد التخصصي",
+          "gov": "الإسماعيلية"
+        },
+        {
+          "name": "القصاصين التخصصي",
+          "gov": "الإسماعيلية"
+        },
+        {
+          "name": "القنطرة غرب التخصصي",
+          "gov": "الإسماعيلية"
+        },
+        {
+          "name": "القنطرة شرق التخصصي",
+          "gov": "الإسماعيلية"
+        },
+        {
+          "name": "التل الكبيرالتخصصي",
+          "gov": "الإسماعيلية"
+        },
+        {
+          "name": "مجمع السويس الطبي *",
+          "gov": "السويس"
+        },
+        {
+          "name": "المرأه والطفل ( حوض الدرس )",
+          "gov": "السويس"
+        },
+        {
+          "name": "المناظير و الجهاز الهضمي",
+          "gov": "السويس"
+        },
+        {
+          "name": "طيبة التخصصي *",
+          "gov": "الأقصر"
+        },
+        {
+          "name": "المجمع الطبي الاقصر",
+          "gov": "الأقصر"
+        },
+        {
+          "name": "ايزيس التخصصي",
+          "gov": "الأقصر"
+        },
+        {
+          "name": "الاطفال التخصصي",
+          "gov": "الأقصر"
+        },
+        {
+          "name": "الكرنك الدولي *",
+          "gov": "الأقصر"
+        },
+        {
+          "name": "حورس",
+          "gov": "الأقصر"
+        },
+        {
+          "name": "راس سدر *",
+          "gov": "جنوب سيناء"
+        },
+        {
+          "name": "شرم الشيخ الدولي",
+          "gov": "جنوب سيناء"
+        },
+        {
+          "name": "طابا",
+          "gov": "جنوب سيناء"
+        },
+        {
+          "name": "سانت كاترين",
+          "gov": "جنوب سيناء"
+        },
+        {
+          "name": "مجمع الفيروز *",
+          "gov": "جنوب سيناء"
+        },
+        {
+          "name": "النيل التخصصي*(حورس ادفو)",
+          "gov": "أسوان"
+        },
+        {
+          "name": "اسوان التخصصي (الصداقه)",
+          "gov": "أسوان"
+        },
+        {
+          "name": "كوم امبو *",
+          "gov": "أسوان"
+        },
+        {
+          "name": "دراو",
+          "gov": "أسوان"
+        },
+        {
+          "name": "معهد الاورام",
+          "gov": "أسوان"
+        },
+        {
+          "name": "ابوسمبل الدولي",
+          "gov": "أسوان"
+        },
+        {
+          "name": "المسلة التخصصي",
+          "gov": "أسوان"
+        },
+        {
+          "name": "السباعية التخصصي",
+          "gov": "أسوان"
+        }
       ]
     }
   ],
@@ -74449,8 +73827,8 @@
     "governorates": 8,
     "hospital_types": 3,
     "daily_reports": 38,
-    "monthly_big_indicators": 346,
-    "monthly_small_indicators": 663,
+    "monthly_big_indicators": 353,
+    "monthly_small_indicators": 667,
     "archives": 135,
     "employee_statements": 438,
     "equipment_types": 2,
