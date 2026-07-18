@@ -49,7 +49,7 @@ function hasPerm(section, action) {
 }
 
 function openModal(title, body, footer) {
-  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalTitle').innerHTML = title;
   document.getElementById('modalBody').innerHTML = body;
   document.getElementById('modalFooter').innerHTML = footer || '';
   document.getElementById('modalOverlay').classList.add('active');
