@@ -54,10 +54,11 @@ class JSONDB {
       readiness_occasions: [],
       readiness_reports: [],
       readiness_notifications: [],
+      daily_report_audit: [],
       blood_bank_equipment: null,
       app_config: { time_offset: 2 },
       role_perms: Object.entries(DEF_PERMS).map(([role, perms]) => ({ role, permissions: JSON.parse(JSON.stringify(perms)) })),
-      _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1 }
+      _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1, daily_report_audit: 1 }
     };
   }
 

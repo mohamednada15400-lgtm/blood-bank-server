@@ -252,6 +252,17 @@ const PG_TABLES = [
   `CREATE TABLE IF NOT EXISTS kv_store (
     key VARCHAR(100) PRIMARY KEY,
     value JSONB DEFAULT '{}'
+  )`,
+  `CREATE TABLE IF NOT EXISTS daily_report_audit (
+    id SERIAL PRIMARY KEY,
+    report_id INTEGER NOT NULL,
+    hospital_id INTEGER,
+    report_date DATE,
+    field_key VARCHAR(200) DEFAULT '',
+    old_value TEXT DEFAULT '',
+    new_value TEXT DEFAULT '',
+    user_name VARCHAR(200) DEFAULT '',
+    created_at TIMESTAMP DEFAULT NOW()
   )`
 ];
 

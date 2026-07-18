@@ -796,6 +796,13 @@ const EMPTY_REPORT = () => {
   return { under_inspection: 0, blood: bt, plasma: pl, platelets: 0, cryo: 0, license_type: 'تخزيني', license_status: '' };
 };
 
+async function logAudit(reportId, hospitalId, reportDate, fieldKey, oldVal, newVal, userName) {
+  try {
+    await query('INSERT INTO daily_report_audit (report_id, hospital_id, report_date, field_key, old_value, new_value, user_name) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+      [reportId, hospitalId, reportDate, fieldKey, oldVal, newVal, userName || 'غير معروف']);
+  } catch (e) { /* silently ignore audit failures */ }
+}
+
 const GOV_ORDER = ['بورسعيد', 'الإسماعيلية', 'السويس', 'الأقصر', 'جنوب سيناء', 'أسوان'];
 const HOSP_ORDER = {
   'بورسعيد': ['التضامن (مجمع الشفاء)', 'النصر *', 'الحياة بورفؤاد *', 'صحة المرأة', 'الزهور', '٣٠ يونيو', 'السلام'],
@@ -851,6 +858,7 @@ app.post('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'edit')
 });
 
 app.put('/api/daily-reports/:id', requireAuth(), requirePerm('daily_stock', 'edit'), async (req, res) => {
+  const user = req.session.user;
   const { date, time, underInspection, blood, plasma, platelets, cryo, licenseType, licenseStatus, platData, strategicReserve } = req.body;
   const sets = []; const vals = []; let idx = 1;
   if (date !== undefined) { sets.push(`date = $${idx++}`); vals.push(date); }
@@ -864,30 +872,68 @@ app.put('/api/daily-reports/:id', requireAuth(), requirePerm('daily_stock', 'edi
   if (licenseStatus !== undefined) { sets.push(`license_status = $${idx++}`); vals.push(licenseStatus); }
   if (platData !== undefined) { sets.push(`plat_data = $${idx++}`); vals.push(JSON.stringify(platData)); }
   if (sets.length === 0) return res.json({ ok: true });
+  // Read old values before update
+  const oldResult = await query('SELECT * FROM daily_reports WHERE id = $1', [parseInt(req.params.id)]);
+  const oldRow = oldResult.rows[0];
+  if (!oldRow) return res.status(404).json({ error: 'غير موجود' });
   vals.push(parseInt(req.params.id));
   const result = await query(`UPDATE daily_reports SET ${sets.join(', ')} WHERE id = $${idx} RETURNING *`, vals);
   if (result.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
-  res.json(result.rows[0]);
+  // Log changes to audit
+  const newRow = result.rows[0];
+  const reportDate = newRow.date || oldRow.date;
+  const fields = [
+    { k: 'date', lbl: 'التاريخ' }, { k: 'time', lbl: 'الوقت' },
+    { k: 'under_inspection', lbl: 'تحت الفحص' },
+    { k: 'platelets', lbl: 'الصفائح' }, { k: 'cryo', lbl: 'الكرايو' },
+    { k: 'license_type', lbl: 'نوع الترخيص' }, { k: 'license_status', lbl: 'حالة الترخيص' }
+  ];
+  for (const f of fields) {
+    if (JSON.stringify(newRow[f.k]) !== JSON.stringify(oldRow[f.k])) {
+      await logAudit(newRow.id, newRow.hospital_id, reportDate, f.lbl, String(oldRow[f.k] ?? ''), String(newRow[f.k] ?? ''), user.name);
+    }
+  }
+  // Also log blood_data changes as a single entry
+  if (blood !== undefined && JSON.stringify(blood) !== JSON.stringify(oldRow.blood_data)) {
+    await logAudit(newRow.id, newRow.hospital_id, reportDate, 'بيانات الدم', 'تغير', 'تغير', user.name);
+  }
+  if (plasma !== undefined && JSON.stringify(plasma) !== JSON.stringify(oldRow.plasma_data)) {
+    await logAudit(newRow.id, newRow.hospital_id, reportDate, 'بيانات البلازما', 'تغير', 'تغير', user.name);
+  }
+  if (platData !== undefined && JSON.stringify(platData) !== JSON.stringify(oldRow.plat_data)) {
+    await logAudit(newRow.id, newRow.hospital_id, reportDate, 'بيانات الصفائح', 'تغير', 'تغير', user.name);
+  }
+  res.json(newRow);
 });
 
 // Auto-save individual cell in daily stock table
 app.patch('/api/daily-reports/:id/cell', requireAuth(), requirePerm('daily_stock', 'edit'), async (req, res) => {
+  const user = req.session.user;
   const { group, type, sub, value } = req.body;
   const result = await query('SELECT * FROM daily_reports WHERE id = $1', [parseInt(req.params.id)]);
   if (!result.rows.length) return res.status(404).json({ error: 'غير موجود' });
   const r = result.rows[0];
+  let fieldKey = '';
+  let oldVal = '';
   if (group === 'license') {
     const f = sub === 'type' ? 'license_type' : 'license_status';
+    oldVal = String(r[f] ?? '');
+    fieldKey = sub === 'type' ? 'نوع الترخيص' : 'حالة الترخيص';
     await query(`UPDATE daily_reports SET ${f} = $1 WHERE id = $2`, [value, parseInt(req.params.id)]);
   } else if (group === 'plat_cryo') {
+    oldVal = String(r[sub] ?? '0');
+    fieldKey = sub === 'platelets' ? 'الصفائح' : 'الكرايو';
     await query(`UPDATE daily_reports SET ${sub} = $1 WHERE id = $2`, [parseInt(value) || 0, parseInt(req.params.id)]);
   } else {
     const field = group === 'plasma' ? 'plasma_data' : 'blood_data';
+    fieldKey = (group === 'plasma' ? 'بلازما' : 'دم') + ' ' + (type || '') + ' - ' + (sub || '');
     const data = typeof r[field] === 'object' && r[field] ? r[field] : {};
+    oldVal = String((data[type] && data[type][sub]) ?? '0');
     if (!data[type]) data[type] = {};
     data[type][sub] = parseInt(value) || 0;
     await query(`UPDATE daily_reports SET ${field} = $1 WHERE id = $2`, [JSON.stringify(data), parseInt(req.params.id)]);
   }
+  await logAudit(r.id, r.hospital_id, r.date, fieldKey, oldVal, String(value ?? ''), user.name);
   res.json({ ok: true });
 });
 
@@ -907,6 +953,21 @@ app.patch('/api/daily-reports/:id/pc', requireAuth(), async (req, res) => {
 app.delete('/api/daily-reports/:id', requireAuth(), requirePerm('daily_stock', 'edit'), async (req, res) => {
   await query('DELETE FROM daily_reports WHERE id = $1', [parseInt(req.params.id)]);
   res.json({ ok: true });
+});
+
+// Stock change history
+app.get('/api/daily-reports/audit', requireAuth(), requirePerm('daily_stock', 'view'), async (req, res) => {
+  const user = req.session.user;
+  const { hospitalId, from, to } = req.query;
+  if (!hospitalId) return res.status(400).json({ error: 'hospitalId مطلوب' });
+  let sql = 'SELECT * FROM daily_report_audit WHERE hospital_id = $1';
+  const vals = [parseInt(hospitalId)];
+  let idx = 2;
+  if (from) { sql += ` AND report_date >= $${idx++}`; vals.push(from); }
+  if (to) { sql += ` AND report_date <= $${idx++}`; vals.push(to); }
+  sql += ' ORDER BY created_at DESC';
+  const result = await query(sql, vals);
+  res.json(result.rows);
 });
 
 app.post('/api/daily-statement', requireAuth(), requirePerm('daily_statement', 'edit'), async (req, res) => {

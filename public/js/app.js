@@ -21,6 +21,8 @@ _dh('saveEditIndicatorArchive',function(aid,hid,y,m,p){saveEditIndicatorArchive(
 _dh('showAddIndModal',function(hid,t){showAddIndModal(hid,t);});
 _dh('eqOpenForm',function(n){eqOpenForm(n);});
 _dh('eqReviewHospital',function(n){eqReviewHospital(n);});
+_dh('showStockHistory',function(hid){showStockHistory(hid);});
+_dh('loadStockAudit',function(hid){loadStockAudit(hid);});
 _dh('eqRemoveSingleRow',function(tid){eqRemoveSingleRow(tid,this);});
 _dh('eqDeleteHosp',function(){eqDeleteHosp(document.getElementById('eqDelHospSelect').value);});
 _dh('windowPrint',function(){window.print();});
@@ -140,7 +142,7 @@ async function renderDailyStock() {
         if (idx === 0) h += `<td class="gov-cell" rowspan="${reps.length}">${gov}</td>`;
         const todayStr = fmtCairoDate('date');
         const dateStyle = r.date && r.date !== todayStr ? ' style="color:red;font-weight:700"' : '';
-        h += `<td>${r.hospital_name || ''}</td><td data-role="date"${dateStyle}>${r.date || ''}</td><td data-role="time">${r.time || ''}</td>`;
+        h += `<td><span class="hosp-link" data-click="showStockHistory" data-args="${r.hospital_id}" style="cursor:pointer;color:#2980b9;font-weight:600;text-decoration:underline dotted">${r.hospital_name || ''}</span></td><td data-role="date"${dateStyle}>${r.date || ''}</td><td data-role="time">${r.time || ''}</td>`;
         h += `<td class="${canEdit ? 'editable' : ''}" data-group="meta" data-sub="under_inspection" data-rid="${r.id}">${r.under_inspection || 0}</td>`;
         BTYPES.forEach(t => {
           const d = bd[t] || {};
@@ -192,6 +194,62 @@ function exportStockExcel() {
     ${html}
     <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
   downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'stock-management-' + fmtCairoDate('date') + '.xls');
+}
+
+async function showStockHistory(hospitalId) {
+  const me = (await api('GET', '/me')).user;
+  const hospitals = await api('GET', '/hospitals');
+  const hosp = hospitals.find(h => h.id === hospitalId);
+  const hospName = hosp ? hosp.name : 'المستشفى';
+  pushNav(renderDailyStock);
+  const el = document.getElementById('mainContent');
+  const today = fmtCairoDate('date');
+  const firstDay = fmtCairoDate('year') + '-01-01';
+  el.innerHTML = `<div class="page-actions">
+    <button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> رجوع</button>
+    <span style="font-size:16px;font-weight:700;margin-right:12px;color:var(--text,#333)"><i class="fas fa-history" style="color:#2980b9"></i> سجل تغييرات ${esc(hospName)}</span>
+  </div>
+  <div class="card-body">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <label style="font-size:11px;color:#666">من:</label>
+      <input type="date" id="auditFrom" value="${firstDay}" style="font-size:11px;padding:4px 8px;border:1px solid #ddd;border-radius:4px">
+      <label style="font-size:11px;color:#666">إلى:</label>
+      <input type="date" id="auditTo" value="${today}" style="font-size:11px;padding:4px 8px;border:1px solid #ddd;border-radius:4px">
+      <button class="btn btn-primary btn-sm" data-click="loadStockAudit" data-args="${hospitalId}" style="font-size:10px"><i class="fas fa-search"></i> عرض</button>
+    </div>
+    <div id="stockAuditWrap" style="font-size:12px;color:#888;text-align:center;padding:40px 0">اضغط "عرض" لتحميل السجل</div>
+  </div>`;
+}
+
+async function loadStockAudit(hospitalId) {
+  const from = document.getElementById('auditFrom').value;
+  const to = document.getElementById('auditTo').value;
+  const wrap = document.getElementById('stockAuditWrap');
+  try {
+    const rows = await api('GET', '/daily-reports/audit?hospitalId=' + hospitalId + '&from=' + from + '&to=' + to);
+    if (!rows.length) {
+      wrap.innerHTML = '<div style="padding:40px 0;text-align:center;color:#999"><i class="fas fa-inbox" style="font-size:24px;display:block;margin-bottom:8px"></i>لا توجد تغييرات في هذه الفترة</div>';
+      return;
+    }
+    let h = '<table class="data-table" style="font-size:10px"><thead><tr><th>#</th><th>التاريخ</th><th>الوقت</th><th>الحقل</th><th>القيمة القديمة</th><th>القيمة الجديدة</th><th>تم بواسطة</th></tr></thead><tbody>';
+    rows.forEach((r, i) => {
+      const dt = r.created_at ? r.created_at.slice(0, 10) : '';
+      const tm = r.created_at ? r.created_at.slice(11, 16) : '';
+      h += `<tr>
+        <td>${i + 1}</td>
+        <td>${dt}</td>
+        <td>${tm}</td>
+        <td style="font-weight:600">${esc(r.field_key || '')}</td>
+        <td style="color:#e74c3c;max-width:150px;overflow:hidden;text-overflow:ellipsis">${esc(r.old_value || '')}</td>
+        <td style="color:#27ae60;max-width:150px;overflow:hidden;text-overflow:ellipsis">${esc(r.new_value || '')}</td>
+        <td>${esc(r.user_name || '')}</td>
+      </tr>`;
+    });
+    h += '</tbody></table>';
+    wrap.innerHTML = h;
+  } catch (e) {
+    wrap.innerHTML = '<div style="color:#e74c3c;padding:20px">' + sanitize(e.message) + '</div>';
+  }
 }
 
 function setupInlineEdit() {
