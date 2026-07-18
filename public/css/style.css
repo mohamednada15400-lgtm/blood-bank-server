@@ -393,7 +393,6 @@ textarea.form-control { min-height: 80px; resize: vertical; }
 .data-table .avail-cell { background: var(--success-light); font-weight: 600; color: #1e8449; }
 .data-table .editable { cursor: pointer; }
 .data-table .editable:hover { outline: 1px solid var(--secondary); outline-offset: -1px; }
-.data-table .prev-cell { background: var(--bg-alt); color: var(--text-soft); cursor: default; }
 .data-table .total-cell { font-weight: 700; background: var(--warning-light); }
 .data-table .agg-row { background: #fff5f5; outline: 2px solid var(--secondary); outline-offset: -1px; }
 .data-table .blood-header { background: #c0392b !important; color: #fff; }

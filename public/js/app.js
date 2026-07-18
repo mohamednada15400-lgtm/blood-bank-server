@@ -148,7 +148,7 @@ async function renderDailyStock() {
           bTot.previous += d.previous || 0; bTot.incoming += d.incoming || 0;
           bTot.outgoing += d.outgoing || 0; bTot.disposal += d.disposal || 0;
           const av = calcAvail(bd, t); bTot.available += av;
-          h += `<td data-group="blood" data-type="${t}" data-sub="previous" data-rid="${r.id}" class="prev-cell">${d.previous || 0}</td>`;
+          h += `<td class="${canEdit ? 'editable' : ''}" data-group="blood" data-type="${t}" data-sub="previous" data-rid="${r.id}">${d.previous || 0}</td>`;
           h += `<td class="${canEdit ? 'editable' : ''}" data-group="blood" data-type="${t}" data-sub="incoming" data-rid="${r.id}">${d.incoming || 0}</td>`;
           h += `<td class="${canEdit ? 'editable' : ''}" data-group="blood" data-type="${t}" data-sub="outgoing" data-rid="${r.id}">${d.outgoing || 0}</td>`;
           h += `<td class="${canEdit ? 'editable' : ''}" data-group="blood" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
@@ -160,7 +160,7 @@ async function renderDailyStock() {
           pTot.previous += d.previous || 0; pTot.incoming += d.incoming || 0;
           pTot.outgoing += d.outgoing || 0; pTot.disposal += d.disposal || 0;
           const av = calcAvail(pd, t); pTot.available += av;
-          h += `<td data-group="plasma" data-type="${t}" data-sub="previous" data-rid="${r.id}" class="prev-cell">${d.previous || 0}</td>`;
+          h += `<td class="${canEdit ? 'editable' : ''}" data-group="plasma" data-type="${t}" data-sub="previous" data-rid="${r.id}">${d.previous || 0}</td>`;
           h += `<td class="${canEdit ? 'editable' : ''}" data-group="plasma" data-type="${t}" data-sub="incoming" data-rid="${r.id}">${d.incoming || 0}</td>`;
           h += `<td class="${canEdit ? 'editable' : ''}" data-group="plasma" data-type="${t}" data-sub="outgoing" data-rid="${r.id}">${d.outgoing || 0}</td>`;
           h += `<td class="${canEdit ? 'editable' : ''}" data-group="plasma" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
