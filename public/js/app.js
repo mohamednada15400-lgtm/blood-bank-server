@@ -3454,19 +3454,26 @@ function exportPDF() {
   downloadPdf(bodyHtml, 'consumption-archive.pdf');
 }
 
+const DEFAULT_ROLES = ['admin','hospital_manager','hospital','branch_supervisor','org_supervisor','visitor'];
+const DEFAULT_ROLE_LABELS = { admin:'مدير عام', hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
+const DEFAULT_ROLE_COLORS = { admin:'#dc3545', hospital_manager:'#6f42c1', hospital:'#17a2b8', branch_supervisor:'#fd7e14', org_supervisor:'#28a745', visitor:'#6c757d' };
+async function getRoleList() {
+  try {
+    const rps = await api('GET', '/role-permissions');
+    return (rps || []).map(rp => ({ key: rp.role, label: (rp.permissions && rp.permissions._label) || DEFAULT_ROLE_LABELS[rp.role] || rp.role }));
+  } catch(e) { return DEFAULT_ROLES.map(r => ({ key: r, label: DEFAULT_ROLE_LABELS[r] || r })); }
+}
 async function renderUsers() {
   const el = document.getElementById('mainContent');
   try {
     const me = (await api('GET', '/me')).user;
     const isMaster = me.id === 1;
-    const roles = ['admin','hospital_manager','hospital','branch_supervisor','org_supervisor','visitor'];
-    const roleLabels = { admin:'مدير عام', hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
-    const roleColors = { admin:'#dc3545', hospital_manager:'#6f42c1', hospital:'#17a2b8', branch_supervisor:'#fd7e14', org_supervisor:'#28a745', visitor:'#6c757d' };
+    const roleOpts = await getRoleList();
     el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
       <div class="search-input-wrap" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <input class="search-input" id="userSearchName" placeholder="بحث بالاسم..." data-input="filterUserTable" style="min-width:150px">
         <input class="search-input" id="userSearchUser" placeholder="اسم المستخدم..." data-input="filterUserTable" style="min-width:150px">
-        <select class="form-control" id="userFilterRole" data-change="filterUserTable" style="min-width:150px"><option value="">كل الأدوار</option>${roles.map(r => `<option value="${r}">${roleLabels[r]}</option>`).join('')}</select>
+        <select class="form-control" id="userFilterRole" data-change="filterUserTable" style="min-width:150px"><option value="">كل الأدوار</option>${roleOpts.map(r => `<option value="${r.key}">${r.label}</option>`).join('')}</select>
         <select class="form-control" id="userFilterGov" data-change="filterUserTable" style="min-width:150px"><option value="">كل المحافظات</option></select>
         <select class="form-control" id="userFilterHosp" data-change="filterUserTable" style="min-width:180px"><option value="">كل المستشفيات</option></select>
       </div>
@@ -3488,8 +3495,8 @@ async function renderUsers() {
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
 }
 function renderUserRows(users, isMaster, me) {
+  const roleColors = DEFAULT_ROLE_COLORS;
   const roleLabels = { admin:'مدير عام', hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
-  const roleColors = { admin:'#dc3545', hospital_manager:'#6f42c1', hospital:'#17a2b8', branch_supervisor:'#fd7e14', org_supervisor:'#28a745', visitor:'#6c757d' };
   const hospMap = {}; window._hospitalsCache.forEach(h => hospMap[h.id] = h.name);
   document.getElementById('usersBody').innerHTML = users.map((u, i) => {
     const canEdit = isMaster || (me.role === 'branch_supervisor' && u.role === 'hospital' && u.governorate === me.governorate);
@@ -3578,17 +3585,15 @@ function exportUsersPdf() {
   </style></head><body><h2 style="text-align:center">قائمة المستخدمين</h2>${clone.outerHTML}</body></html>`;
   const win = window.open('', '_blank'); win.document.write(html); win.document.close(); win.print();
 }
-function showAddUserModal() {
-  api('GET', '/hospitals').then(hospitals => {
-    api('GET', '/governorates').then(govs => {
-      const roles = ['hospital_manager','hospital','branch_supervisor','org_supervisor','visitor'];
-      const roleLabels = { hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
-      openModal('إضافة مستخدم',
-        `<div class="form-group"><label>الاسم</label><div style="display:flex;gap:6px"><input class="form-control" id="auName" style="flex:1"> <button class="btn btn-sm btn-outline" data-click="pickEmpName" data-args="'auName','auHosp'" title="اختيار الاسم من بيان العاملين" style="white-space:nowrap"><i class="fas fa-user-tie"></i></button></div></div>
-        <div class="form-group"><label>اسم المستخدم</label><input class="form-control" id="auUsername"></div>
-        <div class="form-group" style="position:relative"><label>كلمة المرور</label><input class="form-control" id="auPassword" value="123" style="padding-left:36px"><span data-click="togglePasswordVisibility" data-args="'auPassword'" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
-        <div class="form-group"><label>الدور</label><select class="form-control" id="auRole" data-change="toggleUserFields">
-          ${roles.map(r => `<option value="${r}">${roleLabels[r]}</option>`).join('')}</select></div>
+async function showAddUserModal() {
+  const [hospitals, govs, roleOpts] = await Promise.all([api('GET', '/hospitals'), api('GET', '/governorates'), getRoleList()]);
+  const roles = roleOpts.filter(r => r.key !== 'admin');
+  openModal('إضافة مستخدم',
+    `<div class="form-group"><label>الاسم</label><div style="display:flex;gap:6px"><input class="form-control" id="auName" style="flex:1"> <button class="btn btn-sm btn-outline" data-click="pickEmpName" data-args="'auName','auHosp'" title="اختيار الاسم من بيان العاملين" style="white-space:nowrap"><i class="fas fa-user-tie"></i></button></div></div>
+    <div class="form-group"><label>اسم المستخدم</label><input class="form-control" id="auUsername"></div>
+    <div class="form-group" style="position:relative"><label>كلمة المرور</label><input class="form-control" id="auPassword" value="123" style="padding-left:36px"><span data-click="togglePasswordVisibility" data-args="'auPassword'" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
+    <div class="form-group"><label>الدور</label><select class="form-control" id="auRole" data-change="toggleUserFields">
+      ${roles.map(r => `<option value="${r.key}">${r.label}</option>`).join('')}</select></div>
         <div class="form-group" id="auGovGroup" style="display:none"><label>الفرع</label><select class="form-control" id="auGov">
           ${Array.isArray(govs) ? govs.map(g => { const n = typeof g === 'string' ? g : g.name; return `<option value="${n}">${n}</option>`; }).join('') : ''}</select></div>
         <div class="form-group" id="auHospGroup" style="display:none"><label>المستشفى</label><select class="form-control" id="auHosp" data-change="autoFillEmpNameAdd">
@@ -3599,8 +3604,6 @@ function showAddUserModal() {
         `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
         <button class="btn btn-primary" data-click="createUser">حفظ</button>`);
       toggleUserFields();
-    });
-  });
 }
 async function autoFillEmpName(nameFieldId, hospSelectId) {
   const hospId = parseInt(document.getElementById(hospSelectId).value);
@@ -3750,17 +3753,15 @@ async function batchCreateAllEmployeeAccounts() {
     if (res.created > 0) renderEmployeeAccounts();
   } catch(e) { showToast('❌ ' + e.message); }
 }
-function editUser(id) {
-  Promise.all([api('GET', '/me'), api('GET', '/users'), api('GET', '/hospitals'), api('GET', '/governorates')]).then(([me, users, hospitals, govs]) => {
-    const u = users.find(x => x.id === id); if (!u) return;
-    const isMaster = me.user.id === 1;
-    const roles = ['admin','hospital_manager','hospital','branch_supervisor','org_supervisor','visitor'];
-    const roleLabels = { admin:'مدير عام', hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
-    const govArr = Array.isArray(govs) ? govs : [];
-    openModal('تعديل المستخدم - ' + u.name,
-      `<div class="form-group"><label>الاسم</label><div style="display:flex;gap:6px"><input class="form-control" id="euName" value="${String(u.name||'').replace(/"/g,'"')}" style="flex:1"> <button class="btn btn-sm btn-outline" data-click="pickEmpName" data-args="'euName','euHosp'" title="اختيار الاسم من بيان العاملين" style="white-space:nowrap"><i class="fas fa-user-tie"></i></button></div></div>
-      ${isMaster ? `<div class="form-group"><label>الدور</label><select class="form-control" id="euRole" data-change="toggleEditUserFields">
-        ${roles.map(r => `<option value="${r}" ${r===u.role?'selected':''}>${roleLabels[r]}</option>`).join('')}</select></div>` : ''}
+async function editUser(id) {
+  const [me, users, hospitals, govs, roleOpts] = await Promise.all([api('GET', '/me'), api('GET', '/users'), api('GET', '/hospitals'), api('GET', '/governorates'), getRoleList()]);
+  const u = users.find(x => x.id === id); if (!u) return;
+  const isMaster = me.user.id === 1;
+  const govArr = Array.isArray(govs) ? govs : [];
+  openModal('تعديل المستخدم - ' + u.name,
+    `<div class="form-group"><label>الاسم</label><div style="display:flex;gap:6px"><input class="form-control" id="euName" value="${String(u.name||'').replace(/"/g,'"')}" style="flex:1"> <button class="btn btn-sm btn-outline" data-click="pickEmpName" data-args="'euName','euHosp'" title="اختيار الاسم من بيان العاملين" style="white-space:nowrap"><i class="fas fa-user-tie"></i></button></div></div>
+    ${isMaster ? `<div class="form-group"><label>الدور</label><select class="form-control" id="euRole" data-change="toggleEditUserFields">
+      ${roleOpts.map(r => `<option value="${r.key}" ${r.key===u.role?'selected':''}>${r.label}</option>`).join('')}</select></div>` : ''}
       <div class="form-group" style="position:relative"><label>كلمة المرور</label><input class="form-control" id="euPassword" value="123" style="padding-left:36px"><span data-click="togglePasswordVisibility" data-args="'euPassword'" style="position:absolute;left:10px;bottom:8px;cursor:pointer;color:#999;font-size:16px"><i class="fas fa-eye"></i></span></div>
       ${isMaster ? `<div class="form-group" id="euGovGroup" style="${u.role==='branch_supervisor'?'':'display:none'}"><label>الفرع</label><select class="form-control" id="euGov">${govArr.map(g => `<option value="${g}" ${g===u.governorate?'selected':''}>${g}</option>`).join('')}</select></div>` : ''}
       ${isMaster ? `<div class="form-group" id="euHospGroup" style="${(u.role==='hospital' || u.role==='hospital_manager')?'':'display:none'}"><label>المستشفى</label><select class="form-control" id="euHosp" data-change="autoFillEmpNameEdit">${hospitals.map(h => `<option value="${h.id}" ${h.id===u.hospital_id?'selected':''}>${h.name}</option>`).join('')}</select></div>` : ''}
@@ -3770,7 +3771,6 @@ function editUser(id) {
       ${isMaster ? `<div style="margin-top:8px;padding:8px 10px;background:#e8f5e9;border-radius:8px;font-size:12px;color:#2e7d32"><i class="fas fa-info-circle"></i> الصلاحيات تتحكم فيها من <strong>صلاحيات الأدوار</strong></div>` : ''}`,
       `<button class="btn btn-secondary" data-click="closeModal">إلغاء</button>
       <button class="btn btn-primary" data-click="saveUser" data-args="${id}">حفظ</button>`);
-  });
 }
 function toggleEditUserFields() {
   const r = document.getElementById('euRole').value;
@@ -4038,7 +4038,7 @@ async function addNewRole() {
   if (!key) { showToast('⚠ اسم الدور مطلوب'); return; }
   if (!label) { showToast('⚠ الاسم المعروض مطلوب'); return; }
   try {
-    await api('PUT', '/role-permissions', { role: key, permissions: {} });
+    await api('PUT', '/role-permissions', { role: key, permissions: {}, label: label });
     closeModal();
     renderRolePerms();
     showToast('تم إضافة الدور "' + label + '" بنجاح');

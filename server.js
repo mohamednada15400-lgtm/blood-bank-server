@@ -530,17 +530,24 @@ app.get('/api/role-permissions', requireAuth(), requireMaster(), async (req, res
 });
 
 app.put('/api/role-permissions', requireAuth(), requireMaster(), async (req, res) => {
-  const { role, permissions } = req.body;
+  const { role, permissions, label } = req.body;
+  const perms = { ...(permissions || {}), _label: label || role };
   const exist = await query('SELECT * FROM role_perms WHERE role = $1', [role]);
   if (exist.rows.length > 0) {
-    await query('UPDATE role_perms SET permissions = $1 WHERE role = $2', [JSON.stringify(permissions), role]);
+    await query('UPDATE role_perms SET permissions = $1 WHERE role = $2', [JSON.stringify(perms), role]);
   } else {
-    await query('INSERT INTO role_perms (role, permissions) VALUES ($1, $2)', [role, JSON.stringify(permissions)]);
+    await query('INSERT INTO role_perms (role, permissions) VALUES ($1, $2)', [role, JSON.stringify(perms)]);
   }
-  // Update current user's session if role matches
   if (req.session.user && req.session.user.role === role) {
-    req.session.user.permissions = permissions;
+    req.session.user.permissions = perms;
   }
+  res.json({ ok: true });
+});
+
+app.delete('/api/role-permissions/:role', requireAuth(), requireMaster(), async (req, res) => {
+  const { role } = req.params;
+  if (role === 'admin') return res.status(400).json({ error: 'لا يمكن حذف دور المدير' });
+  await query('DELETE FROM role_perms WHERE role = $1', [role]);
   res.json({ ok: true });
 });
 
