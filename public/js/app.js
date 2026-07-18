@@ -142,7 +142,7 @@ async function renderDailyStock() {
         if (idx === 0) h += `<td class="gov-cell" rowspan="${reps.length}">${gov}</td>`;
         const todayStr = fmtCairoDate('date');
         const dateStyle = r.date && r.date !== todayStr ? ' style="color:red;font-weight:700"' : '';
-        h += `<td><span class="hosp-link" data-click="showStockHistory" data-args="${r.hospital_id}" style="cursor:pointer;color:#2980b9;font-weight:600;text-decoration:underline dotted">${r.hospital_name || ''}</span></td><td data-role="date"${dateStyle}>${r.date || ''}</td><td data-role="time">${r.time || ''}</td>`;
+        h += `<td data-click="showStockHistory" data-args="${r.hospital_id}" style="cursor:pointer">${r.hospital_name || ''}</td><td data-role="date"${dateStyle}>${r.date || ''}</td><td data-role="time">${r.time || ''}</td>`;
         h += `<td class="${canEdit ? 'editable' : ''}" data-group="meta" data-sub="under_inspection" data-rid="${r.id}">${r.under_inspection || 0}</td>`;
         BTYPES.forEach(t => {
           const d = bd[t] || {};

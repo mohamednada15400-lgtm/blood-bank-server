@@ -183,6 +183,8 @@ class JSONDB {
       this.data.blood_bank_equipment.types.forEach(t => { if (!t.category) t.category = catMap[t.id] || 'تجميعي'; });
       this.data.blood_bank_equipment.types.sort((a, b) => a.id - b.id);
     }
+    if (!this.data.daily_report_audit) this.data.daily_report_audit = [];
+    if (!this.data._counters.daily_report_audit) this.data._counters.daily_report_audit = this.data.daily_report_audit.length + 1 || 1;
     if (!this.data.hospital_types || !this.data.hospital_types.length) this.data.hospital_types = [{ id: 1, name: 'تجميعي' }, { id: 2, name: 'تخزيني' }];
     if (!this.data._counters.hospital_types) this.data._counters.hospital_types = this.data.hospital_types.length + 1;
     if (!this.data.app_config || typeof this.data.app_config.time_offset !== 'number') this.data.app_config = { time_offset: 2 };
