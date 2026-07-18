@@ -843,6 +843,19 @@ app.post('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'edit')
   const d = date || getOffsetDate(to).toISOString().slice(0, 10);
   const t = time || getOffsetDate(to).toISOString().slice(11, 16);
   const def = EMPTY_REPORT();
+  // Auto-fill previous balance from last report's available balance (shift handover)
+  const prevRes = await query('SELECT blood_data, plasma_data FROM daily_reports WHERE hospital_id = $1 ORDER BY id DESC LIMIT 1', [hospitalId]);
+  if (prevRes.rows.length) {
+    const prev = prevRes.rows[0];
+    const prevBlood = typeof prev.blood_data === 'string' ? JSON.parse(prev.blood_data) : (prev.blood_data || {});
+    const prevPlasma = typeof prev.plasma_data === 'string' ? JSON.parse(prev.plasma_data) : (prev.plasma_data || {});
+    ['A+','A-','B+','B-','AB+','AB-','O+','O-'].forEach(t => {
+      if (prevBlood[t] && prevBlood[t].available !== undefined) def.blood[t].previous = prevBlood[t].available;
+    });
+    ['A','B','AB','O'].forEach(t => {
+      if (prevPlasma[t] && prevPlasma[t].available !== undefined) def.plasma[t].previous = prevPlasma[t].available;
+    });
+  }
   const result = await query(
     'INSERT INTO daily_reports (hospital_id, date, time, under_inspection, blood_data, plasma_data, platelets, cryo, license_type, license_status, user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *',
     [hospitalId, d, t, def.under_inspection, JSON.stringify(def.blood), JSON.stringify(def.plasma), def.platelets, def.cryo, def.license_type, def.license_status, user.id]
@@ -873,6 +886,7 @@ app.put('/api/daily-reports/:id', requireAuth(), requirePerm('daily_stock', 'edi
 // Auto-save individual cell in daily stock table
 app.patch('/api/daily-reports/:id/cell', requireAuth(), requirePerm('daily_stock', 'edit'), async (req, res) => {
   const { group, type, sub, value } = req.body;
+  if (sub === 'previous') return res.json({ ok: true }); // read-only auto-filled from last report
   const result = await query('SELECT * FROM daily_reports WHERE id = $1', [parseInt(req.params.id)]);
   if (!result.rows.length) return res.status(404).json({ error: 'غير موجود' });
   const r = result.rows[0];
