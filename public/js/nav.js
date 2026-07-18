@@ -282,33 +282,10 @@ function toggleNotifDropdown() {
     dd.innerHTML = alerts.map((a, i) => {
       const sev = getSev(a.title);
       const count = a.all ? a.all.length : 0;
-      // Build governorate groups with hospital names
-      let govHtml = '';
-      if (count > 0) {
-        const groups = [];
-        const govMap = {};
-        a.all.forEach(item => {
-          if (typeof item === 'object' && item.gov) {
-            if (!govMap[item.gov]) { govMap[item.gov] = []; groups.push(item.gov); }
-            govMap[item.gov].push(item.name);
-          }
-        });
-        if (groups.length > 0) {
-          govHtml = '<div style="margin-top:4px;padding-right:14px">';
-          groups.forEach(g => {
-            govHtml += `<div style="font-size:9px;font-weight:600;color:${sev.dot};margin-top:3px">${esc(g)} <span style="font-weight:400;color:#999;font-size:8px">(${govMap[g].length})</span></div>`;
-            govHtml += govMap[g].map(n => `<div style="font-size:9px;color:#555;padding-right:8px;line-height:1.6">${esc(n)}</div>`).join('');
-          });
-          govHtml += '</div>';
-        }
-      }
-      return `<div data-click="notifNavToPage" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="transparent" style="cursor:pointer;padding:6px 10px;border-bottom:1px solid var(--border,#f0f0f0);transition:0.1s">
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};flex-shrink:0"></span>
-          <span style="flex:1;font-size:10px;color:var(--text,#333)">${a.title}</span>
-          ${count > 0 ? `<span style="background:${sev.dot};color:#fff;border-radius:10px;padding:0 5px;font-size:8px;font-weight:700;line-height:15px;flex-shrink:0">${count}</span>` : ''}
-        </div>
-        ${govHtml}
+      return `<div data-click="notifNavToPage" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="transparent" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border,#f0f0f0);transition:0.1s">
+        <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};flex-shrink:0"></span>
+        <span style="flex:1;font-size:10px;color:var(--text,#333)">${a.title}</span>
+        ${count > 0 ? `<span style="background:${sev.dot};color:#fff;border-radius:10px;padding:0 5px;font-size:8px;font-weight:700;line-height:15px;flex-shrink:0">${count}</span>` : ''}
       </div>`;
     }).join('');
   }
