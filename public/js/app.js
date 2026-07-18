@@ -203,11 +203,6 @@ function setupInlineEdit() {
     if (!td || td.contentEditable === 'true') return;
     const orig = td.textContent.trim();
     const isText = td.dataset.group === 'license';
-    const isPrev = td.dataset.sub === 'previous';
-    if (isPrev) {
-      showToast('⚠ غير مسموح بتغيير الرصيد السابق، هذا هو الرصيد المتاح من الشيفت السابق', 'warning');
-      return;
-    }
     td.contentEditable = true;
     td.focus();
     const sel = window.getSelection();

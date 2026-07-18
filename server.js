@@ -893,7 +893,6 @@ app.put('/api/daily-reports/:id', requireAuth(), requirePerm('daily_stock', 'edi
 // Auto-save individual cell in daily stock table
 app.patch('/api/daily-reports/:id/cell', requireAuth(), requirePerm('daily_stock', 'edit'), async (req, res) => {
   const { group, type, sub, value } = req.body;
-  if (sub === 'previous') return res.json({ ok: true });
   const result = await query('SELECT * FROM daily_reports WHERE id = $1', [parseInt(req.params.id)]);
   if (!result.rows.length) return res.status(404).json({ error: 'غير موجود' });
   const r = result.rows[0];
