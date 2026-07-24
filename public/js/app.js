@@ -7736,8 +7736,19 @@ async function loadIndicatorAnalysis() {
 
     let html = '';
     const iaType = document.getElementById('iaType')?.value || 'all';
-    if (iaType !== 'small' && result.big) html += _iaBuildBigComparison(result.big.period1, result.big.period2);
-    if (iaType !== 'big' && result.small) html += _iaBuildSection('مؤشرات أداء البنوك التخزينية', result.small.period1, result.small.period2, _iaSmallCols, 'small');
+    const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
+    const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
+    if (iaType !== 'small' && result.big) {
+      html += _iaBuildBigComparison(result.big.period1, result.big.period2);
+      html += _iaBuildVirusRates(result.big.period1, result.big.period2);
+      html += _iaBuildSupplyMetrics(result.big.period1, result.big.period2);
+    }
+    if (iaType !== 'big' && result.small) {
+      html += _iaBuildSection('مؤشرات أداء البنوك التخزينية', result.small.period1, result.small.period2, _iaSmallCols, 'small');
+    }
+    if (result.big || result.small) {
+      html += _iaBuildAnalysisText(result.big || null, result.small || null, pL1, pL2);
+    }
     if (!html) html = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
     wrap.innerHTML = html;
   } catch (err) {
@@ -8017,6 +8028,271 @@ function _iaBuildCharts(cols, totals1, totals2, type) {
     </div>
     ${bars}
   </div></div>`;
+}
+
+// Virus rates with WHO benchmarks
+const _iaBenchmarks = [
+  { key: 'virology_c', label: 'HCV', max: 3 },
+  { key: 'virology_b', label: 'HBV', max: 1 },
+  { key: 'virology_i', label: 'HIV', max: 0.5 },
+  { key: 'virology_dollar', label: 'Syphilis', max: 0.5 }
+];
+
+function _iaBuildVirusRates(p1Data, p2Data) {
+  const allHospitals = new Map();
+  for (const h of p1Data) allHospitals.set(h.hospital_id, { hospital_name: h.hospital_name, governorate: h.governorate });
+  for (const h of p2Data) if (!allHospitals.has(h.hospital_id)) allHospitals.set(h.hospital_id, { hospital_name: h.hospital_name, governorate: h.governorate });
+  const p1Map = new Map(p1Data.map(h => [h.hospital_id, h.data]));
+  const p2Map = new Map(p2Data.map(h => [h.hospital_id, h.data]));
+  const govGroups = new Map();
+  for (const [hid, info] of allHospitals) {
+    const g = info.governorate || 'غير محدد';
+    if (!govGroups.has(g)) govGroups.set(g, []);
+    govGroups.get(g).push({ hid, ...info });
+  }
+
+  const sortedGovs = [...govGroups.entries()].sort((a, b) => a[0].localeCompare(b[0], 'ar'));
+  const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
+  const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
+
+  let html = `<div class="card" style="margin-bottom:20px"><div class="card-header" style="background:linear-gradient(135deg,#880e4f,#ad1457);color:#fff">
+    <h3 style="margin:0;font-size:15px"><i class="fa-solid fa-virus"></i> نسبة النتائج الإيجابية للفيروسات — benchmarks مقارنة</h3>
+  </div><div class="card-body" style="overflow-x:auto;font-size:11px">
+    <table class="data-table" style="width:100%;border-collapse:collapse;min-width:900px">
+      <thead>
+        <tr style="background:#fce4ec">
+          <th rowspan="2" style="padding:6px;border:1px solid #ccc">المحافظة</th>
+          <th rowspan="2" style="padding:6px;border:1px solid #ccc">بنك الدم</th>
+          <th rowspan="2" style="padding:6px;border:1px solid #ccc">المفحوصين</th>`;
+  _iaBenchmarks.forEach(b => {
+    html += `<th colspan="3" style="padding:6px;border:1px solid #ccc;text-align:center;background:#ffebee">${b.label} (≤${b.max}%)</th>`;
+  });
+  html += `<th colspan="3" style="padding:6px;border:1px solid #ccc;text-align:center;background:#f3e5f5">الاجمالي</th></tr>
+      <tr style="background:#f8f8f8">
+        <th style="padding:3px;border:1px solid #ccc">عدد</th><th style="padding:3px;border:1px solid #ccc">نسبة</th><th style="padding:3px;border:1px solid #ccc">الحالة</th>
+        <th style="padding:3px;border:1px solid #ccc">عدد</th><th style="padding:3px;border:1px solid #ccc">نسبة</th><th style="padding:3px;border:1px solid #ccc">الحالة</th>
+        <th style="padding:3px;border:1px solid #ccc">عدد</th><th style="padding:3px;border:1px solid #ccc">نسبة</th><th style="padding:3px;border:1px solid #ccc">الحالة</th>
+        <th style="padding:3px;border:1px solid #ccc">عدد</th><th style="padding:3px;border:1px solid #ccc">نسبة</th><th style="padding:3px;border:1px solid #ccc">الحالة</th>
+        <th style="padding:3px;border:1px solid #ccc">عدد</th><th style="padding:3px;border:1px solid #ccc">نسبة</th><th style="padding:3px;border:1px solid #ccc">متوسط</th>
+      </tr></thead><tbody>`;
+
+  const sGov = { tested: 0 };
+  _iaBenchmarks.forEach(b => { sGov[b.key] = 0; });
+  const gt = { ...sGov };
+
+  function statusCell(pctVal, maxVal) {
+    const pct = parseFloat(pctVal);
+    if (pct > maxVal) return `<td style="padding:3px 6px;border:1px solid #ccc;text-align:center;background:#ffebee;color:#c62828;font-weight:700">يتجاوز ⚠</td>`;
+    return `<td style="padding:3px 6px;border:1px solid #ccc;text-align:center;background:#e8f5e9;color:#2e7d32">مطابق ✓</td>`;
+  }
+
+  function addVirusRow(name, tested, virusCounts, isSubtotal, govLabel) {
+    const bg = isSubtotal ? 'background:#e8f5e9;font-weight:700' : '';
+    const prefix = isSubtotal ? `<td style="padding:4px 6px;border:1px solid #ccc;font-weight:700">${esc(govLabel)}</td>` : '<td style="padding:4px 6px;border:1px solid #ccc"></td>';
+    html += `<tr style="${bg}">
+      ${prefix}
+      <td style="padding:4px 6px;border:1px solid #ccc">${esc(name)}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center;font-weight:600">${_iaFmt(tested)}</td>`;
+    let totalVirus = 0;
+    _iaBenchmarks.forEach(b => {
+      const count = virusCounts[b.key] || 0;
+      totalVirus += count;
+      const pct = tested ? ((count / tested) * 100).toFixed(2) : '0.00';
+      const overLimit = parseFloat(pct) > b.max;
+      html += `<td style="padding:3px 6px;border:1px solid #ccc;text-align:center;${overLimit?'color:#c62828;font-weight:700':''}">${_iaFmt(count)}</td>
+        <td style="padding:3px 6px;border:1px solid #ccc;text-align:center;${overLimit?'color:#c62828;font-weight:700':''}">${pct}%</td>`;
+      html += statusCell(pct, b.max);
+    });
+    const avgPct = tested ? ((totalVirus / tested) * 100).toFixed(2) : '0.00';
+    html += `<td style="padding:3px 6px;border:1px solid #ccc;text-align:center;font-weight:700">${_iaFmt(totalVirus)}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center;font-weight:700">${avgPct}%</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${tested > 0 ? ((totalVirus / tested) * 100).toFixed(2) : '0.00'}%</td></tr>`;
+  }
+
+  for (const [gov, hosps] of sortedGovs) {
+    const sorted = hosps.sort((a, b) => a.hospital_name.localeCompare(b.hospital_name, 'ar'));
+    for (const h of sorted) {
+      const d1 = p1Map.get(h.hid) || {};
+      const d2 = p2Map.get(h.hid) || {};
+      const ts = (d1.tested || 0) + (d2.tested || 0);
+      const vc = {};
+      _iaBenchmarks.forEach(b => { vc[b.key] = (d1[b.key] || 0) + (d2[b.key] || 0); });
+      addVirusRow(h.hospital_name, ts, vc, false, '');
+      sGov.tested += ts;
+      _iaBenchmarks.forEach(b => { sGov[b.key] += vc[b.key]; });
+    }
+    addVirusRow(`اجمالي ${gov}`, sGov.tested, sGov, true, gov);
+    gt.tested += sGov.tested;
+    _iaBenchmarks.forEach(b => { gt[b.key] += sGov[b.key]; sGov[b.key] = 0; });
+    sGov.tested = 0;
+  }
+  addVirusRow('الاجمالي العام', gt.tested, gt, true, '');
+
+  html += '</tbody></table></div></div>';
+  return html;
+}
+
+// Supply / dispensing metrics
+function _iaBuildSupplyMetrics(p1Data, p2Data) {
+  const allHospitals = new Map();
+  for (const h of p1Data) allHospitals.set(h.hospital_id, { hospital_name: h.hospital_name, governorate: h.governorate });
+  for (const h of p2Data) if (!allHospitals.has(h.hospital_id)) allHospitals.set(h.hospital_id, { hospital_name: h.hospital_name, governorate: h.governorate });
+  const p1Map = new Map(p1Data.map(h => [h.hospital_id, h.data]));
+  const p2Map = new Map(p2Data.map(h => [h.hospital_id, h.data]));
+  const govGroups = new Map();
+  for (const [hid, info] of allHospitals) {
+    const g = info.governorate || 'غير محدد';
+    if (!govGroups.has(g)) govGroups.set(g, []);
+    govGroups.get(g).push({ hid, ...info });
+  }
+  const sortedGovs = [...govGroups.entries()].sort((a, b) => a[0].localeCompare(b[0], 'ar'));
+  const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
+  const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
+
+  const cols = [
+    { key: 'collect_total', label: 'التجميع' },
+    { key: 'totalOut', label: 'اجمالي الصرف' },
+    { key: 'out_blood_int', label: 'منصرف (داخلي)' },
+    { key: 'out_blood_branch', label: 'منصرف (فرع)' },
+    { key: 'out_blood_auth', label: 'منصرف (معتمد)' },
+    { key: 'out_blood_ext', label: 'منصرف (خارجي)' },
+    { key: 'dispExp', label: 'اجمالي الادخار' },
+    { key: 'disp_open', label: 'نظام مفتوح' },
+    { key: 'disp_returned', label: 'مرتجع' },
+    { key: 'disp_reaction', label: 'تفاعل' },
+    { key: 'ct', label: 'C/T' }
+  ];
+
+  let html = `<div class="card" style="margin-bottom:20px"><div class="card-header" style="background:linear-gradient(135deg,#1565c0,#1976d2);color:#fff">
+    <h3 style="margin:0;font-size:15px"><i class="fa-solid fa-truck-medical"></i> مؤشرات الصرف — ${esc(pL1)} vs ${esc(pL2)}</h3>
+  </div><div class="card-body" style="overflow-x:auto;font-size:11px">
+    <table class="data-table" style="width:100%;border-collapse:collapse;min-width:1000px">
+      <thead><tr style="background:#e3f2fd">
+        <th rowspan="2" style="padding:6px;border:1px solid #ccc">المحافظة</th>
+        <th rowspan="2" style="padding:6px;border:1px solid #ccc">بنك الدم</th>`;
+  cols.forEach(c => {
+    html += `<th colspan="2" style="padding:6px;border:1px solid #ccc;text-align:center">${c.label}</th>`;
+  });
+  html += `</tr><tr style="background:#f0f0f0">`;
+  cols.forEach(() => { html += `<th style="padding:3px;border:1px solid #ccc">ف1</th><th style="padding:3px;border:1px solid #ccc">ف2</th>`; });
+  html += `</tr></thead><tbody>`;
+
+  function supplyVals(d) {
+    const ct = d.collect_total || 0;
+    const bi = d.out_blood_int || 0, bb = d.out_blood_branch || 0, ba = d.out_blood_auth || 0, be = d.out_blood_ext || 0;
+    const totalOut = bi + bb + ba + be;
+    const dispExp = (d.disp_exp_blood || 0);
+    const dispOpen = d.disp_open || 0;
+    const dispRet = d.disp_returned || 0;
+    const dispReac = d.disp_reaction || 0;
+    const ratio = ct > 0 ? (totalOut / ct).toFixed(2) : '0.00';
+    return { collect_total: ct, totalOut, out_blood_int: bi, out_blood_branch: bb, out_blood_auth: ba, out_blood_ext: be, dispExp, disp_open: dispOpen, disp_returned: dispRet, disp_reaction: dispReac, ct: ratio };
+  }
+
+  const sGov = {}, gt = {};
+  cols.forEach(c => { sGov[c.key + '_1'] = 0; sGov[c.key + '_2'] = 0; gt[c.key + '_1'] = 0; gt[c.key + '_2'] = 0; });
+
+  function addSupplyRow(name, v1, v2, isSubtotal, govLabel) {
+    const bg = isSubtotal ? 'background:#e8f5e9;font-weight:700' : '';
+    const prefix = isSubtotal ? `<td style="padding:4px 6px;border:1px solid #ccc;font-weight:700">${esc(govLabel)}</td>` : '<td style="padding:4px 6px;border:1px solid #ccc"></td>';
+    html += `<tr style="${bg}">
+      ${prefix}
+      <td style="padding:4px 6px;border:1px solid #ccc">${esc(name)}</td>`;
+    cols.forEach(c => {
+      const val1 = v1[c.key], val2 = v2[c.key];
+      const isRatio = c.key === 'ct';
+      const fmt1 = isRatio ? val1 : _iaFmt(val1);
+      const fmt2 = isRatio ? val2 : _iaFmt(val2);
+      html += `<td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${fmt1}</td><td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${fmt2}</td>`;
+    });
+    html += '</tr>';
+  }
+
+  for (const [gov, hosps] of sortedGovs) {
+    const sorted = hosps.sort((a, b) => a.hospital_name.localeCompare(b.hospital_name, 'ar'));
+    for (const h of sorted) {
+      const v1 = supplyVals(p1Map.get(h.hid) || {});
+      const v2 = supplyVals(p2Map.get(h.hid) || {});
+      addSupplyRow(h.hospital_name, v1, v2, false, '');
+      cols.forEach(c => { sGov[c.key + '_1'] += parseFloat(v1[c.key]) || 0; sGov[c.key + '_2'] += parseFloat(v2[c.key]) || 0; });
+    }
+    const sv1 = {}, sv2 = {};
+    cols.forEach(c => { sv1[c.key] = sGov[c.key + '_1']; sv2[c.key] = sGov[c.key + '_2']; });
+    addSupplyRow(`اجمالي ${gov}`, sv1, sv2, true, gov);
+    cols.forEach(c => { gt[c.key + '_1'] += sGov[c.key + '_1']; gt[c.key + '_2'] += sGov[c.key + '_2']; sGov[c.key + '_1'] = 0; sGov[c.key + '_2'] = 0; });
+  }
+  const gv1 = {}, gv2 = {};
+  cols.forEach(c => { gv1[c.key] = gt[c.key + '_1']; gv2[c.key] = gt[c.key + '_2']; });
+  addSupplyRow('الاجمالي العام', gv1, gv2, true, '');
+
+  html += '</tbody></table></div></div>';
+  return html;
+}
+
+// Auto-generated analysis text
+function _iaBuildAnalysisText(bigResult, smallResult, pL1, pL2) {
+  const findings = [];
+
+  function analyzeData(data, label) {
+    for (const h of data) {
+      const d = h.data || {};
+      const ct = d.collect_total || 0;
+      const ts = d.tested || 0;
+      const un = d.uncompleted || 0;
+      const hc = d.virology_c || 0;
+      const hb = d.virology_b || 0;
+      const hi = d.virology_i || 0;
+      const hs = d.virology_dollar || 0;
+      const totalVirus = hc + hb + hi + hs;
+      const rf = (d.refused_fatty || 0) + (d.refused_icteric || 0);
+      const dt = d.donation_therapeutic || 0;
+      const unscreened = rf + dt + un;
+      const bi = d.out_blood_int || 0, bb = d.out_blood_branch || 0, ba = d.out_blood_auth || 0, be = d.out_blood_ext || 0;
+      const totalOut = bi + bb + ba + be;
+      const dispOpen = d.disp_open || 0;
+
+      if (ts > 0) {
+        const hcvPct = (hc / ts * 100);
+        if (hcvPct > 3) findings.push({ type: 'warning', text: `⚠ ${h.hospital_name} (${h.governorate}): نسبة HCV ${hcvPct.toFixed(2)}% تتجاوز الحد المسموح (≤3%)` });
+        const hbvPct = (hb / ts * 100);
+        if (hbvPct > 1) findings.push({ type: 'warning', text: `⚠ ${h.hospital_name} (${h.governorate}): نسبة HBV ${hbvPct.toFixed(2)}% تتجاوز الحد المسموح (≤1%)` });
+        const hivPct = (hi / ts * 100);
+        if (hivPct > 0.5) findings.push({ type: 'danger', text: `🔴 ${h.hospital_name} (${h.governorate}): نسبة HIV ${hivPct.toFixed(2)}% تتجاوز الحد المسموح (≤0.5%)` });
+        const syphPct = (hs / ts * 100);
+        if (syphPct > 0.5) findings.push({ type: 'warning', text: `⚠ ${h.hospital_name} (${h.governorate}): نسبة Syphilis ${syphPct.toFixed(2)}% تتجاوز الحد المسموح (≤0.5%)` });
+      }
+      if (ct > 0) {
+        const unPct = (un / ct * 100);
+        if (unPct > 3) findings.push({ type: 'warning', text: `⚠ ${h.hospital_name} (${h.governorate}): نسبة الغير مكتمل ${unPct.toFixed(1)}% تتجاوز 3%` });
+      }
+      if (totalOut > 0) {
+        const openPct = (dispOpen / totalOut * 100);
+        if (openPct > 2) findings.push({ type: 'info', text: `ℹ ${h.hospital_name} (${h.governorate}): نسبة النظام المفتوح ${openPct.toFixed(1)}%` });
+      }
+    }
+  }
+
+  if (bigResult?.period1) analyzeData(bigResult.period1, 'تجميعي');
+  if (bigResult?.period2) analyzeData(bigResult.period2, 'تجميعي');
+  if (smallResult?.period1) analyzeData(smallResult.period1, 'تخزيني');
+  if (smallResult?.period2) analyzeData(smallResult.period2, 'تخزيني');
+
+  if (findings.length === 0) {
+    findings.push({ type: 'success', text: '✅ جميع المؤشرات ضمن النسب المسموح بها — لا توجد ملاحظات' });
+  }
+
+  const iconMap = { danger: '#c62828', warning: '#e65100', info: '#1565c0', success: '#2e7d32' };
+  const bgMap = { danger: '#ffebee', warning: '#fff3e0', info: '#e3f2fd', success: '#e8f5e9' };
+
+  let html = `<div class="card" style="margin-bottom:20px"><div class="card-header" style="background:linear-gradient(135deg,#37474f,#455a64);color:#fff">
+    <h3 style="margin:0;font-size:15px"><i class="fa-solid fa-clipboard-check"></i> تحليل النتائج — ${esc(pL1)} vs ${esc(pL2)}</h3>
+  </div><div class="card-body">`;
+  html += `<div style="display:flex;flex-direction:column;gap:8px">`;
+  findings.forEach(f => {
+    html += `<div style="padding:10px 14px;border-radius:8px;background:${bgMap[f.type]};border-right:4px solid ${iconMap[f.type]};font-size:13px;color:#333">${esc(f.text)}</div>`;
+  });
+  html += `</div></div></div>`;
+  return html;
 }
 
 async function exportIndicatorAnalysisExcel() {
