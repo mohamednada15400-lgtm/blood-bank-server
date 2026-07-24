@@ -7615,22 +7615,21 @@ const _iaSmallCols = [
   { key:'open',  group:'إعدام',    label:'نظام مفتوح',    col:1 },
 ];
 function _iaGetCols(prefix) {
-  const cols = prefix === 'big' ? _iaBigCols : _iaSmallCols;
-  return cols.filter(c => { const el = document.getElementById('ia_col_' + prefix + '_' + c.key); return !el || el.checked; }).map(c => c.key);
+  const cls = prefix === 'big' ? '.iaBigColChk' : '.iaSmallColChk';
+  const els = document.querySelectorAll(cls);
+  if (!els.length) return (prefix === 'big' ? _iaBigCols : _iaSmallCols).map(c => c.key);
+  return Array.from(els).filter(e => e.checked).map(e => e.value);
+}
+function toggleIaPicker() {
+  const body = document.getElementById('iaPickerBody');
+  const chevron = document.getElementById('iaPickerChevron');
+  if (!body) return;
+  const show = body.style.display === 'none';
+  body.style.display = show ? '' : 'none';
+  if (chevron) chevron.style.transform = show ? 'rotate(180deg)' : '';
 }
 function _iaColChkboxes(prefix, colDefs) {
-  const groups = {};
-  for (const c of colDefs) { if (!groups[c.group]) groups[c.group] = []; groups[c.group].push(c); }
-  let h = '';
-  for (const [grp, items] of Object.entries(groups)) {
-    h += `<div style="margin-bottom:6px"><span style="font-size:11px;font-weight:600;color:#888;margin-right:4px">${grp}:</span>`;
-    for (const c of items) {
-      const id = 'ia_col_' + prefix + '_' + c.key;
-      h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;margin:2px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap"><input type="checkbox" id="${id}" checked style="accent-color:var(--primary);width:14px;height:14px">${c.label}</label>`;
-    }
-    h += '</div>';
-  }
-  return h;
+  return '';
 }
 function _iaBuildGovGroups(p1Data, p2Data, allGovs) {
   const all = new Map();
@@ -7717,6 +7716,23 @@ async function renderIndicatorAnalysis() {
       <div id="iaPeriod1Label" style="display:inline-block;padding:4px 12px;background:#e3f2fd;border-radius:6px;font-size:12px;margin-right:8px"></div>
       <div id="iaPeriod2Label" style="display:inline-block;padding:4px 12px;background:#fce4ec;border-radius:6px;font-size:12px"></div>
     </div></div>
+    <div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#37474f,#455a64);color:#fff;padding:10px 16px;cursor:pointer" data-click="toggleIaPicker">
+      <h3 style="margin:0;font-size:15px;display:flex;align-items:center;gap:8px"><i class="fa-solid fa-sliders"></i> اختر المؤشرات اللي تتعرض <span style="margin-right:auto;font-size:12px;font-weight:400;opacity:.7">(اضغط لاختيار الأعمدة)</span><i class="fa-solid fa-chevron-down" id="iaPickerChevron" style="font-size:12px;transition:transform .2s"></i></h3>
+    </div><div class="card-body" id="iaPickerBody" style="padding:14px;display:none">
+      <div id="iaBigColsSection" style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:8px"><i class="fa-solid fa-circle" style="font-size:8px;margin-left:4px"></i>تجميعي — جدول المقارنة</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaBigCols.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;transition:all .15s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" class="iaBigColChk" value="${c.key}" checked style="accent-color:var(--primary);width:14px;height:14px">${c.label}</label>`).join('')}</div>
+      </div>
+      <div id="iaSmallColsSection">
+        <div style="font-size:13px;font-weight:700;color:#00695c;margin-bottom:8px"><i class="fa-solid fa-circle" style="font-size:8px;margin-left:4px"></i>تخزيني — جدول النظرة العامة</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaSmallCols.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;transition:all .15s" onmouseover="this.style.borderColor='#00695c'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" class="iaSmallColChk" value="${c.key}" checked style="accent-color:#00695c;width:14px;height:14px">${c.label}</label>`).join('')}</div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+        <button onclick="document.querySelectorAll('.iaBigColChk,.iaSmallColChk').forEach(c=>c.checked=true)" style="padding:6px 16px;background:#e3f2fd;border:1px solid #90caf9;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">تحديد الكل</button>
+        <button onclick="document.querySelectorAll('.iaBigColChk,.iaSmallColChk').forEach(c=>c.checked=false)" style="padding:6px 16px;background:#ffebee;border:1px solid #ef9a9a;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">إلغاء الكل</button>
+        <button data-click="loadIndicatorAnalysis" style="padding:6px 20px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px"><i class="fa-solid fa-rotate"></i> تحديث</button>
+      </div>
+    </div></div>
     <div id="iaResults"></div>`;
   document.getElementById('iaPeriod1').addEventListener('change', function() { document.getElementById('iaMonth1').style.display = this.value === 'monthly' ? '' : 'none'; });
   document.getElementById('iaPeriod2').addEventListener('change', function() { document.getElementById('iaMonth2').style.display = this.value === 'monthly' ? '' : 'none'; });
@@ -7724,6 +7740,11 @@ async function renderIndicatorAnalysis() {
     const h = document.getElementById('iaHosp'), g = this.value;
     h.innerHTML = '<option value="">كل المستشفيات</option>';
     (Array.isArray(hospList) ? hospList : []).filter(x => !g || x.governorate === g).forEach(x => { h.innerHTML += `<option value="${x.id}">${esc(x.name)}</option>`; });
+  });
+  document.getElementById('iaType').addEventListener('change', function() {
+    const v = this.value;
+    document.getElementById('iaBigColsSection').style.display = (v === 'all' || v === 'big') ? '' : 'none';
+    document.getElementById('iaSmallColsSection').style.display = (v === 'all' || v === 'small') ? '' : 'none';
   });
   loadIndicatorAnalysis();
 }
@@ -7743,17 +7764,17 @@ async function loadIndicatorAnalysis() {
     if (hosp) params.set('hospitalId', hosp);
     const [result, allGovsRaw] = await Promise.all([api('GET', '/indicator-analysis?' + params.toString()), api('GET', '/governorates')]);
     const allGovs = allGovsRaw.map(g => typeof g === 'string' ? g : g.name);
-    const allBigCols = _iaBigCols.map(c => c.key);
-    const allSmallCols = _iaSmallCols.map(c => c.key);
+    const bigCols = _iaGetCols('big');
+    const smallCols = _iaGetCols('small');
     const iaType = document.getElementById('iaType')?.value || 'all';
     const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
     const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
     let tablesHtml = '';
-    if (iaType !== 'small' && result.big) {
-      tablesHtml += _iaBigComparison(result.big.period1, result.big.period2, pL1, pL2, allGovs, allBigCols);
+    if (iaType !== 'small' && result.big && bigCols.length) {
+      tablesHtml += _iaBigComparison(result.big.period1, result.big.period2, pL1, pL2, allGovs, bigCols);
     }
-    if (iaType !== 'big' && result.small) {
-      tablesHtml += _iaSmallSection(result.small.period1, result.small.period2, pL1, pL2, allGovs, allSmallCols);
+    if (iaType !== 'big' && result.small && smallCols.length) {
+      tablesHtml += _iaSmallSection(result.small.period1, result.small.period2, pL1, pL2, allGovs, smallCols);
     }
     if (!tablesHtml) tablesHtml = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
     wrap.innerHTML = tablesHtml;
