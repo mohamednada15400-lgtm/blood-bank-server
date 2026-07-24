@@ -7717,15 +7717,32 @@ async function renderIndicatorAnalysis() {
       <div id="iaPeriod1Label" style="display:inline-block;padding:4px 12px;background:#e3f2fd;border-radius:6px;font-size:12px;margin-right:8px"></div>
       <div id="iaPeriod2Label" style="display:inline-block;padding:4px 12px;background:#fce4ec;border-radius:6px;font-size:12px"></div>
     </div></div>
-    <div class="card" style="margin-bottom:16px"><div class="card-header" style="background:#37474f;color:#fff;cursor:pointer" onclick="document.getElementById('iaOptsBody').style.display=document.getElementById('iaOptsBody').style.display==='none'?'':'none'">
-      <h3 style="margin:0;font-size:14px"><i class="fa-solid fa-sliders"></i> خيارات العرض <i class="fa-solid fa-chevron-down" style="float:left;font-size:12px"></i></h3>
-    </div><div class="card-body" id="iaOptsBody" style="display:none;padding:12px">
-      <div id="iaBigOpts" style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:6px"><i class="fa-solid fa-circle" style="font-size:8px;margin-left:4px"></i>التجميعي</div><div style="display:flex;flex-wrap:wrap;gap:6px">${bigOpts.map(chkRow).join('')}</div></div>
-      <div id="iaSmallOpts" style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#00695c;margin-bottom:6px"><i class="fa-solid fa-circle" style="font-size:8px;margin-left:4px"></i>التخزيني</div><div style="display:flex;flex-wrap:wrap;gap:6px">${smallOpts.map(chkRow).join('')}</div></div>
-      <div><div style="font-size:12px;font-weight:700;color:#666;margin-bottom:6px"><i class="fa-solid fa-circle" style="font-size:8px;margin-left:4px"></i>عام</div><div style="display:flex;flex-wrap:wrap;gap:6px">${commonOpts.map(chkRow).join('')}</div></div>
-      <hr style="margin:12px 0;border-color:var(--border)">
-      <div id="iaBigColsSection"><div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:6px"><i class="fa-solid fa-table-columns" style="font-size:10px;margin-left:4px"></i>أعمدة جدول المقارنة (تجميعي)</div>${_iaColChkboxes('big', _iaBigCols)}</div>
-      <div id="iaSmallColsSection"><div style="font-size:12px;font-weight:700;color:#00695c;margin-bottom:6px"><i class="fa-solid fa-table-columns" style="font-size:10px;margin-left:4px"></i>أعمدة جدول النظرة العامة (تخزيني)</div>${_iaColChkboxes('small', _iaSmallCols)}</div>
+    <div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#37474f,#455a64);color:#fff;padding:12px 16px">
+      <h3 style="margin:0;font-size:15px"><i class="fa-solid fa-sliders"></i> اختر المؤشرات اللي تتعرض</h3>
+    </div><div class="card-body" id="iaOptsBody" style="padding:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div id="iaBigColsSection" style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:12px">
+          <div style="font-size:14px;font-weight:700;color:var(--primary);margin-bottom:10px;border-bottom:2px solid var(--primary);padding-bottom:6px"><i class="fa-solid fa-table-columns"></i> جدول المقارنة الرئيسي (تجميعي)</div>
+          ${_iaColChkboxes('big', _iaBigCols)}
+          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+            <div style="font-size:12px;font-weight:700;color:#666;margin-bottom:6px">الجداول الإضافية</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">${bigOpts.filter(o=>o.id!=='ia_chk_cmp').map(chkRow).join('')}</div>
+          </div>
+        </div>
+        <div id="iaSmallColsSection" style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:12px">
+          <div style="font-size:14px;font-weight:700;color:#00695c;margin-bottom:10px;border-bottom:2px solid #00695c;padding-bottom:6px"><i class="fa-solid fa-warehouse"></i> جدول النظرة العامة (تخزيني)</div>
+          ${_iaColChkboxes('small', _iaSmallCols)}
+          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+            <div style="font-size:12px;font-weight:700;color:#666;margin-bottom:6px">الجداول الإضافية</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">${smallOpts.map(chkRow).join('')}</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+        <span style="font-size:12px;font-weight:700;color:#666">عام:</span>
+        ${commonOpts.map(chkRow).join('')}
+        <button data-click="loadIndicatorAnalysis" style="padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;margin-left:auto"><i class="fa-solid fa-rotate"></i> تحديث</button>
+      </div>
     </div></div>
     <div id="iaResults"></div>`;
   document.getElementById('iaPeriod1').addEventListener('change', function() { document.getElementById('iaMonth1').style.display = this.value === 'monthly' ? '' : 'none'; });
@@ -7737,8 +7754,6 @@ async function renderIndicatorAnalysis() {
   });
   document.getElementById('iaType').addEventListener('change', function() {
     const v = this.value;
-    document.getElementById('iaBigOpts').style.display = (v === 'all' || v === 'big') ? '' : 'none';
-    document.getElementById('iaSmallOpts').style.display = (v === 'all' || v === 'small') ? '' : 'none';
     document.getElementById('iaBigColsSection').style.display = (v === 'all' || v === 'big') ? '' : 'none';
     document.getElementById('iaSmallColsSection').style.display = (v === 'all' || v === 'small') ? '' : 'none';
   });
