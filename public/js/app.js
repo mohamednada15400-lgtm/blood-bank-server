@@ -7589,13 +7589,32 @@ function _iaCalcSmall(d) {
 }
 function _iaPct(num, den) { return den ? ((num / den) * 100).toFixed(2) : '0.00'; }
 function _iaFmt(v) { if (v === 0 || v === null || v === undefined) return '0'; if (typeof v === 'number') return v % 1 !== 0 ? v.toFixed(2) : v.toLocaleString('ar-EG'); return String(v); }
-function _iaBuildGovGroups(p1Data, p2Data) {
+function _iaBuildGovGroups(p1Data, p2Data, allGovs) {
   const all = new Map();
   for (const h of p1Data) all.set(h.hospital_id, { name: h.hospital_name, gov: h.governorate });
   for (const h of p2Data) if (!all.has(h.hospital_id)) all.set(h.hospital_id, { name: h.hospital_name, gov: h.governorate });
   const govG = new Map();
+  if (Array.isArray(allGovs)) allGovs.forEach(g => { if (!govG.has(g)) govG.set(g, []); });
   for (const [hid, info] of all) { const g = info.gov || 'غير محدد'; if (!govG.has(g)) govG.set(g, []); govG.get(g).push({ hid, ...info }); }
   return { all, govG: [...govG.entries()].sort((a,b) => a[0].localeCompare(b[0], 'ar')), p1M: new Map(p1Data.map(h => [h.hospital_id, h.data||{}])), p2M: new Map(p2Data.map(h => [h.hospital_id, h.data||{}])) };
+}
+
+const _iaOptions = [
+  { id:'ia_chk_cmp',    label:'المقارنة الرئيسية',       type:'big',   icon:'fa-table' },
+  { id:'ia_chk_virus',   label:'نسب الفيروسات',          type:'big',   icon:'fa-virus' },
+  { id:'ia_chk_short',   label:'العجز والمستهدف',        type:'big',   icon:'fa-chart-bar' },
+  { id:'ia_chk_disp_b',  label:'مؤشرات الإعدام (تجميعي)', type:'big',   icon:'fa-trash-can' },
+  { id:'ia_chk_blood',   label:'منصرف الفصائل',          type:'big',   icon:'fa-droplet' },
+  { id:'ia_chk_smov',    label:'نظرة عامة التخزيني',      type:'small', icon:'fa-warehouse' },
+  { id:'ia_chk_ct',      label:'نسبة C/T',               type:'small', icon:'fa-scale-balanced' },
+  { id:'ia_chk_disp_s',  label:'مؤشرات الإعدام (تخزيني)', type:'small', icon:'fa-trash-can' },
+  { id:'ia_chk_chart',   label:'الرسم البياني',           type:'all',   icon:'fa-chart-pie' },
+  { id:'ia_chk_analysis', label:'التحليل التلقائي',        type:'all',   icon:'fa-clipboard-check' },
+];
+function _iaGetOpts() {
+  const o = {};
+  for (const opt of _iaOptions) { const el = document.getElementById(opt.id); o[opt.id] = el ? el.checked : true; }
+  return o;
 }
 
 async function renderIndicatorAnalysis() {
@@ -7610,8 +7629,12 @@ async function renderIndicatorAnalysis() {
   if (Array.isArray(govs)) govs.forEach(g => { const n = typeof g === 'string' ? g : g.name; govOpts += `<option value="${esc(n)}">${esc(n)}</option>`; });
   let hospOpts = '<option value="">كل المستشفيات</option>';
   if (Array.isArray(hospList)) hospList.forEach(h => { hospOpts += `<option value="${h.id}">${esc(h.name)} (${esc(h.governorate)})</option>`; });
+  const bigOpts = _iaOptions.filter(o => o.type === 'big');
+  const smallOpts = _iaOptions.filter(o => o.type === 'small');
+  const commonOpts = _iaOptions.filter(o => o.type === 'all');
+  function chkRow(o) { return `<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap;transition:all .15s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" id="${o.id}" checked style="accent-color:var(--primary);width:16px;height:16px"><i class="fa-solid ${o.icon}" style="color:var(--primary);font-size:12px"></i>${o.label}</label>`; }
   c.innerHTML = `
-    <div class="card"><div class="card-header" style="background:linear-gradient(135deg,#ff6f00,#ff8f00);color:#fff">
+    <div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#ff6f00,#ff8f00);color:#fff">
       <h2 style="margin:0;font-size:18px"><i class="fa-solid fa-magnifying-glass-chart"></i> تحليل مؤشرات الأداء</h2>
     </div><div class="card-body">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
@@ -7650,13 +7673,26 @@ async function renderIndicatorAnalysis() {
       </div>
       <div id="iaPeriod1Label" style="display:inline-block;padding:4px 12px;background:#e3f2fd;border-radius:6px;font-size:12px;margin-right:8px"></div>
       <div id="iaPeriod2Label" style="display:inline-block;padding:4px 12px;background:#fce4ec;border-radius:6px;font-size:12px"></div>
-    </div></div><div id="iaResults"></div>`;
+    </div></div>
+    <div class="card" style="margin-bottom:16px"><div class="card-header" style="background:#37474f;color:#fff;cursor:pointer" onclick="document.getElementById('iaOptsBody').style.display=document.getElementById('iaOptsBody').style.display==='none'?'':'none'">
+      <h3 style="margin:0;font-size:14px"><i class="fa-solid fa-sliders"></i> خيارات العرض <i class="fa-solid fa-chevron-down" style="float:left;font-size:12px"></i></h3>
+    </div><div class="card-body" id="iaOptsBody" style="display:none;padding:12px">
+      <div id="iaBigOpts" style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:6px"><i class="fa-solid fa-circle" style="font-size:8px;margin-left:4px"></i>التجميعي</div><div style="display:flex;flex-wrap:wrap;gap:6px">${bigOpts.map(chkRow).join('')}</div></div>
+      <div id="iaSmallOpts" style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#00695c;margin-bottom:6px"><i class="fa-solid fa-circle" style="font-size:8px;margin-left:4px"></i>التخزيني</div><div style="display:flex;flex-wrap:wrap;gap:6px">${smallOpts.map(chkRow).join('')}</div></div>
+      <div><div style="font-size:12px;font-weight:700;color:#666;margin-bottom:6px"><i class="fa-solid fa-circle" style="font-size:8px;margin-left:4px"></i>عام</div><div style="display:flex;flex-wrap:wrap;gap:6px">${commonOpts.map(chkRow).join('')}</div></div>
+    </div></div>
+    <div id="iaResults"></div>`;
   document.getElementById('iaPeriod1').addEventListener('change', function() { document.getElementById('iaMonth1').style.display = this.value === 'monthly' ? '' : 'none'; });
   document.getElementById('iaPeriod2').addEventListener('change', function() { document.getElementById('iaMonth2').style.display = this.value === 'monthly' ? '' : 'none'; });
   document.getElementById('iaGov').addEventListener('change', function() {
     const h = document.getElementById('iaHosp'), g = this.value;
     h.innerHTML = '<option value="">كل المستشفيات</option>';
     (Array.isArray(hospList) ? hospList : []).filter(x => !g || x.governorate === g).forEach(x => { h.innerHTML += `<option value="${x.id}">${esc(x.name)}</option>`; });
+  });
+  document.getElementById('iaType').addEventListener('change', function() {
+    const v = this.value;
+    document.getElementById('iaBigOpts').style.display = (v === 'all' || v === 'big') ? '' : 'none';
+    document.getElementById('iaSmallOpts').style.display = (v === 'all' || v === 'small') ? '' : 'none';
   });
   loadIndicatorAnalysis();
 }
@@ -7674,32 +7710,121 @@ async function loadIndicatorAnalysis() {
     const params = new URLSearchParams({ year1: y1, months1, year2: y2, months2 });
     if (gov) params.set('governorate', gov);
     if (hosp) params.set('hospitalId', hosp);
-    const result = await api('GET', '/indicator-analysis?' + params.toString());
-    let html = '';
+    const [result, allGovsRaw] = await Promise.all([api('GET', '/indicator-analysis?' + params.toString()), api('GET', '/governorates')]);
+    const allGovs = allGovsRaw.map(g => typeof g === 'string' ? g : g.name);
+    const opt = _iaGetOpts();
     const iaType = document.getElementById('iaType')?.value || 'all';
     const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
     const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
+    let tablesHtml = '', chartsHtml = '', analysisHtml = '';
     if (iaType !== 'small' && result.big) {
-      html += _iaBigComparison(result.big.period1, result.big.period2, pL1, pL2);
-      html += _iaVirusRates(result.big.period1, result.big.period2, pL2);
-      html += _iaShortage(result.big.period1, result.big.period2, pL1, pL2);
-      html += _iaDisposal(result.big.period1, result.big.period2, pL2, 'big');
-      html += _iaBloodType(result.big.period1, result.big.period2, pL2);
+      if (opt.ia_chk_cmp)   tablesHtml += _iaBigComparison(result.big.period1, result.big.period2, pL1, pL2, allGovs);
+      if (opt.ia_chk_virus)  tablesHtml += _iaVirusRates(result.big.period1, result.big.period2, pL2, allGovs);
+      if (opt.ia_chk_short)  tablesHtml += _iaShortage(result.big.period1, result.big.period2, pL1, pL2, allGovs);
+      if (opt.ia_chk_disp_b) tablesHtml += _iaDisposal(result.big.period1, result.big.period2, pL2, 'big', allGovs);
+      if (opt.ia_chk_blood)  tablesHtml += _iaBloodType(result.big.period1, result.big.period2, pL2);
+      if (opt.ia_chk_chart)  chartsHtml += _iaChartsBig(result.big.period1, result.big.period2, pL1, pL2, allGovs);
     }
     if (iaType !== 'big' && result.small) {
-      html += _iaSmallSection(result.small.period1, result.small.period2, pL1, pL2);
-      html += _iaCTRatio(result.small.period1, result.small.period2, pL1, pL2);
-      html += _iaDisposal(result.small.period1, result.small.period2, pL2, 'small');
+      if (opt.ia_chk_smov)   tablesHtml += _iaSmallSection(result.small.period1, result.small.period2, pL1, pL2, allGovs);
+      if (opt.ia_chk_ct)     tablesHtml += _iaCTRatio(result.small.period1, result.small.period2, pL1, pL2, allGovs);
+      if (opt.ia_chk_disp_s) tablesHtml += _iaDisposal(result.small.period1, result.small.period2, pL2, 'small', allGovs);
+      if (opt.ia_chk_chart)  chartsHtml += _iaChartsSmall(result.small.period1, result.small.period2, pL1, pL2, allGovs);
     }
-    if (result.big || result.small) html += _iaAnalysis(result.big, result.small, pL1, pL2);
+    if (opt.ia_chk_analysis && (result.big || result.small)) analysisHtml = _iaAnalysis(result.big, result.small, pL1, pL2, allGovs);
+    let html = '';
+    if (tablesHtml) html += '<div id="iaTablesSection">' + tablesHtml + '</div>';
+    if (chartsHtml) html += '<div id="iaChartsSection" style="margin-top:20px">' + chartsHtml + '</div>';
+    if (analysisHtml) html += '<div id="iaAnalysisSection" style="margin-top:20px">' + analysisHtml + '</div>';
     if (!html) html = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
     wrap.innerHTML = html;
   } catch (err) { wrap.innerHTML = `<div style="color:red;padding:20px;text-align:center">خطأ: ${esc(err.message||'')}</div>`; }
 }
 
+/* ─── Charts Section (separate from tables) ─── */
+function _iaChartsBig(p1Data, p2Data, pL1, pL2, allGovs) {
+  const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
+  let govData = [];
+  for (const [gov, hosps] of G.govG) {
+    let s1 = { ct:0,hc:0,hb:0,hi:0,hs:0 }, s2 = { ct:0,hc:0,hb:0,hi:0,hs:0 };
+    for (const h of hosps) {
+      const d1 = _iaCalcBig(G.p1M.get(h.hid)||{}), d2 = _iaCalcBig(G.p2M.get(h.hid)||{});
+      s1.ct+=d1.ct;s1.hc+=d1.hc;s1.hb+=d1.hb;s1.hi+=d1.hi;s1.hs+=d1.hs;
+      s2.ct+=d2.ct;s2.hc+=d2.hc;s2.hb+=d2.hb;s2.hi+=d2.hi;s2.hs+=d2.hs;
+    }
+    if (s2.ct > 0) govData.push({ gov, s1, s2 });
+  }
+  if (!govData.length) return '';
+  const maxV = Math.max(...govData.flatMap(r => [r.s2.hc,r.s2.hb,r.s2.hi,r.s2.hs]), 1);
+  let h = '<div class="card"><div class="card-header" style="background:#1a237e;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-chart-pie"></i> الرسم البياني — التجميعي</h3></div><div class="card-body">';
+  h += '<div style="display:flex;gap:6px;margin-bottom:12px;font-size:12px;flex-wrap:wrap">';
+  h += '<span><span style="display:inline-block;width:12px;height:12px;background:#c62828;border-radius:2px;vertical-align:middle"></span> HCV</span>';
+  h += '<span><span style="display:inline-block;width:12px;height:12px;background:#e65100;border-radius:2px;vertical-align:middle"></span> HBV</span>';
+  h += '<span><span style="display:inline-block;width:12px;height:12px;background:#4a148c;border-radius:2px;vertical-align:middle"></span> HIV</span>';
+  h += '<span><span style="display:inline-block;width:12px;height:12px;background:#1565c0;border-radius:2px;vertical-align:middle"></span> Syphilis</span></div>';
+  for (const r of govData) {
+    const pcts = [
+      { label:'HCV', val:parseFloat(r.s2.hcR||_iaPct(r.s2.hc,r.s2.ct)), color:'#c62828', raw:r.s2.hc },
+      { label:'HBV', val:parseFloat(r.s2.hbR||_iaPct(r.s2.hb,r.s2.ct)), color:'#e65100', raw:r.s2.hb },
+      { label:'HIV', val:parseFloat(r.s2.hiR||_iaPct(r.s2.hi,r.s2.ct)), color:'#4a148c', raw:r.s2.hi },
+      { label:'Syphilis', val:parseFloat(r.s2.hsR||_iaPct(r.s2.hs,r.s2.ct)), color:'#1565c0', raw:r.s2.hs },
+    ];
+    h += `<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:600;margin-bottom:4px">${esc(r.gov)} <span style="font-weight:400;color:#888;font-size:11px">(التجميع: ${_iaFmt(r.s2.ct)})</span></div>`;
+    for (const p of pcts) {
+      const w = Math.max((p.raw / maxV) * 50, 1);
+      h += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+        <span style="width:60px;font-size:11px;text-align:left">${p.label}</span>
+        <div style="width:${w}%;height:18px;background:${p.color};border-radius:4px;min-width:2px;transition:width .3s"></div>
+        <span style="font-size:11px;font-weight:600">${p.raw} (${p.val}%)</span></div>`;
+    }
+    h += '</div>';
+  }
+  h += '</div></div>';
+  return h;
+}
+function _iaChartsSmall(p1Data, p2Data, pL1, pL2, allGovs) {
+  const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
+  let govData = [];
+  for (const [gov, hosps] of G.govG) {
+    let s = { inc:0, compat:0, out:0, vt:0 };
+    for (const h of hosps) {
+      const d = _iaCalcSmall(G.p2M.get(h.hid)||{});
+      s.inc+=d.inc;s.compat+=d.compat;s.out+=d.out;s.vt+=d.vt;
+    }
+    govData.push({ gov, ...s });
+  }
+  if (!govData.length) return '';
+  const maxInc = Math.max(...govData.map(r=>r.inc), 1);
+  let h = '<div class="card"><div class="card-header" style="background:#1a237e;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-chart-bar"></i> الرسم البياني — التخزيني</h3></div><div class="card-body">';
+  h += '<div style="display:flex;gap:6px;margin-bottom:12px;font-size:12px;flex-wrap:wrap">';
+  h += '<span><span style="display:inline-block;width:12px;height:12px;background:#2e7d32;border-radius:2px;vertical-align:middle"></span> الوارد</span>';
+  h += '<span><span style="display:inline-block;width:12px;height:12px;background:#1565c0;border-radius:2px;vertical-align:middle"></span> المنصرف</span>';
+  h += '<span><span style="display:inline-block;width:12px;height:12px;background:#c62828;border-radius:2px;vertical-align:middle"></span> الفيروسات</span></div>';
+  for (const r of govData) {
+    h += `<div style="margin-bottom:10px"><div style="font-size:13px;font-weight:600;margin-bottom:4px">${esc(r.gov)}</div>`;
+    const bars = [
+      { label:'وارد', val:r.inc, color:'#2e7d32' },
+      { label:'منصرف', val:r.out, color:'#1565c0' },
+      { label:'فيروسات', val:r.vt, color:'#c62828' },
+    ];
+    for (const b of bars) {
+      const w = Math.max((b.val / maxInc) * 50, b.val > 0 ? 1 : 0);
+      h += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+        <span style="width:50px;font-size:11px;text-align:left">${b.label}</span>
+        <div style="width:${w}%;height:18px;background:${b.color};border-radius:4px;min-width:${b.val>0?'2':'0'}px"></div>
+        <span style="font-size:11px;font-weight:600">${_iaFmt(b.val)}</span></div>`;
+    }
+    h += '</div>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
+/* ─── Table 4: المقارنة الرئيسية ─── */
+
 /* ─── Table 4: المقارنة الرئيسية (16 leaf columns matching Word doc) ─── */
-function _iaBigComparison(p1Data, p2Data, pL1, pL2) {
-  const G = _iaBuildGovGroups(p1Data, p2Data);
+function _iaBigComparison(p1Data, p2Data, pL1, pL2, allGovs) {
+  const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
   let thtml = '<div class="card"><div class="card-header" style="background:#1565c0;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-table"></i> جدول المقارنة الرئيسي — التجميعي</h3></div><div class="card-body" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:1100px">';
   thtml += `<thead><tr>
     <th rowspan="3" style="background:#1565c0;color:#fff;padding:6px;border:1px solid #ccc">المحافظة</th>
@@ -7804,8 +7929,8 @@ function _iaBigComparison(p1Data, p2Data, pL1, pL2) {
 }
 
 /* ─── Table 5: نسب الفيروسات + Bar Chart ─── */
-function _iaVirusRates(p1Data, p2Data, pL2) {
-  const G = _iaBuildGovGroups(p1Data, p2Data);
+function _iaVirusRates(p1Data, p2Data, pL2, allGovs) {
+  const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
   let rows = [];
   for (const [gov, hosps] of G.govG) {
     let s = { ct:0, hc:0, hb:0, hi:0, hs:0 };
@@ -7863,8 +7988,8 @@ function _iaVirusRates(p1Data, p2Data, pL2) {
 function _iaBigDispensed(d) {
   return (d.out_blood_int||0)+(d.out_blood_branch||0)+(d.out_blood_auth||0)+(d.out_blood_ext||0);
 }
-function _iaShortage(p1Data, p2Data, pL1, pL2) {
-  const G = _iaBuildGovGroups(p1Data, p2Data);
+function _iaShortage(p1Data, p2Data, pL1, pL2, allGovs) {
+  const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
   let rows = [];
   for (const [gov, hosps] of G.govG) {
     let s1 = { ct:0, out:0 }, s2 = { ct:0, out:0 };
@@ -7914,8 +8039,8 @@ function _iaShortage(p1Data, p2Data, pL1, pL2) {
 }
 
 /* ─── Table 10: مؤشرات الإعدام ─── */
-function _iaDisposal(p1Data, p2Data, pL2, type) {
-  const G = _iaBuildGovGroups(p1Data, p2Data);
+function _iaDisposal(p1Data, p2Data, pL2, type, allGovs) {
+  const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
   const isBig = type === 'big';
   let h = '<div class="card"><div class="card-header" style="background:#6a1b9a;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-trash-can"></i> مؤشرات الإعدام — ' + (isBig ? 'التجميعي' : 'التخزيني') + ' — ' + esc(pL2) + '</h3></div><div class="card-body" style="overflow-x:auto">';
   h += '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px"><thead><tr>';
@@ -7954,8 +8079,8 @@ function _iaBloodType(p1Data, p2Data, pL2) {
 }
 
 /* ─── Small Indicators Overview (التخزيني) ─── */
-function _iaSmallSection(p1Data, p2Data, pL1, pL2) {
-  const G = _iaBuildGovGroups(p1Data, p2Data);
+function _iaSmallSection(p1Data, p2Data, pL1, pL2, allGovs) {
+  const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
   let h = '<div class="card"><div class="card-header" style="background:#00695c;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-warehouse"></i> نظرة عامة — التخزيني</h3></div><div class="card-body" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px"><thead><tr>';
   for (const th of ['المحافظة','بنك الدم','وارد '+esc(pL1),'وارد '+esc(pL2),'المنصرف '+esc(pL1),'المنصرف '+esc(pL2),'ال compatibility '+esc(pL2),'اجمالي الفيروسات '+esc(pL2)]) {
     h += `<th style="background:#1565c0;color:#fff;padding:5px;border:1px solid #ccc;font-size:11px">${th}</th>`;
@@ -7987,8 +8112,8 @@ function _iaSmallSection(p1Data, p2Data, pL1, pL2) {
 }
 
 /* ─── C/T Ratio Table (التخزيني) ─── */
-function _iaCTRatio(p1Data, p2Data, pL1, pL2) {
-  const G = _iaBuildGovGroups(p1Data, p2Data);
+function _iaCTRatio(p1Data, p2Data, pL1, pL2, allGovs) {
+  const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
   let h = '<div class="card"><div class="card-header" style="background:#283593;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-scale-balanced"></i> نسبة C/T — ' + esc(pL2) + ' <span style="font-size:12px;font-weight:400">(C/T ≥ 2)</span></h3></div><div class="card-body" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;min-width:500px"><thead><tr>';
   for (const th of ['المحافظة','بنك الدم','Cross-match (compatibility)','Transfused (out_blood)','C/T Ratio']) {
     h += `<th style="background:#1565c0;color:#fff;padding:6px;border:1px solid #ccc;font-size:12px">${th}</th>`;
@@ -8011,11 +8136,11 @@ function _iaCTRatio(p1Data, p2Data, pL1, pL2) {
 }
 
 /* ─── Auto Analysis Text ─── */
-function _iaAnalysis(big, small, pL1, pL2) {
+function _iaAnalysis(big, small, pL1, pL2, allGovs) {
   if (!big && !small) return '';
   let cards = [];
   if (big) {
-    const G = _iaBuildGovGroups(big.period1||[], big.period2||[]);
+    const G = _iaBuildGovGroups(big.period1||[], big.period2||[], allGovs);
     for (const [gov, hosps] of G.govG) {
       let tot = { hc:0, hb:0, hi:0, hs:0, ct:0, un:0, rf:0 };
       for (const h of hosps) {
