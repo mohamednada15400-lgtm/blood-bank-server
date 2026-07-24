@@ -7620,7 +7620,7 @@ const _iaSmallFormulas = [
 
 async function renderIndicatorAnalysis() {
   pushNav(renderIndicatorAnalysis);
-  const c = document.getElementById('content');
+  const c = document.getElementById('mainContent');
   const now = new Date();
   const curYear = now.getFullYear();
   const years = [curYear, curYear - 1, curYear - 2];
