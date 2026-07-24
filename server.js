@@ -2651,7 +2651,7 @@ app.post('/api/csp-violation', (req, res) => {
 });
 
 // ============== Indicator Analysis (تحليل مؤشرات الأداء) ==============
-app.get('/api/indicator-analysis', requireAuth(), requirePerm('monthly_big', 'view'), async (req, res) => {
+app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysis', 'view'), async (req, res) => {
   try {
     const { year1, months1, year2, months2, governorate, hospitalId } = req.query;
     if (!year1 || !months1 || !year2 || !months2) return res.status(400).json({ error: 'يجب تحديد الفترتين' });
