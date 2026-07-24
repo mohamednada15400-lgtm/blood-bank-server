@@ -7677,6 +7677,14 @@ async function renderIndicatorAnalysis() {
           <label style="font-size:12px;font-weight:600">المستشفى</label>
           <select id="iaHosp" class="form-control" style="width:100%">${hospOpts}</select>
         </div>
+        <div style="flex:0.8;min-width:120px">
+          <label style="font-size:12px;font-weight:600">النوع</label>
+          <select id="iaType" class="form-control" style="width:100%">
+            <option value="all">الكل</option>
+            <option value="big">تجميعي</option>
+            <option value="small">تخزيني</option>
+          </select>
+        </div>
         <button data-click="loadIndicatorAnalysis" style="padding:10px 24px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-search"></i> عرض</button>
         <button data-click="exportIndicatorAnalysisExcel" style="padding:10px 16px;background:#28a745;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer"><i class="fa-solid fa-file-excel"></i> Excel</button>
       </div>
@@ -7727,8 +7735,9 @@ async function loadIndicatorAnalysis() {
     const result = await api('GET', '/indicator-analysis?' + params.toString());
 
     let html = '';
-    if (result.big) html += _iaBuildSection('مؤشرات أداء البنوك التجميعية', result.big.period1, result.big.period2, _iaSummaryCols, 'big');
-    if (result.small) html += _iaBuildSection('مؤشرات أداء البنوك التخزينية', result.small.period1, result.small.period2, _iaSmallCols, 'small');
+    const iaType = document.getElementById('iaType')?.value || 'all';
+    if (iaType !== 'small' && result.big) html += _iaBuildSection('مؤشرات أداء البنوك التجميعية', result.big.period1, result.big.period2, _iaSummaryCols, 'big');
+    if (iaType !== 'big' && result.small) html += _iaBuildSection('مؤشرات أداء البنوك التخزينية', result.small.period1, result.small.period2, _iaSmallCols, 'small');
     if (!html) html = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
     wrap.innerHTML = html;
   } catch (err) {
