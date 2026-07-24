@@ -2659,17 +2659,6 @@ app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysi
     const m2 = months2.split(',').map(Number);
     const y1 = parseInt(year1), y2 = parseInt(year2);
 
-    async function fetchIndicator(table, year, months) {
-      let sql = `SELECT mi.hospital_id, mi.data, h.name as hospital_name, h.governorate
-        FROM ${table} mi JOIN hospitals h ON h.id = mi.hospital_id
-        WHERE mi.year = $1 AND mi.month = ANY($2)`;
-      const params = [year, months];
-      if (governorate) { sql += ` AND h.governorate = $3`; params.push(governorate); }
-      if (hospitalId) { sql += ` AND mi.hospital_id = $4`; params.push(parseInt(hospitalId)); }
-      sql += ' ORDER BY h.governorate, h.name, mi.month';
-      return (await query(sql, params)).rows;
-    }
-
     function aggregateByHospital(rows) {
       const map = {};
       for (const r of rows) {
@@ -2693,11 +2682,62 @@ app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysi
       return Object.values(map);
     }
 
+    async function fetchFromArchive(archiveType, year, months) {
+      try {
+        let sql = `SELECT (elem->>'hospital_id')::int as hospital_id,
+          elem->>'hospital_name' as hospital_name,
+          elem->>'governorate' as governorate,
+          (elem->>'year')::int as rec_year,
+          (elem->>'month')::int as rec_month,
+          elem->'data' as data
+          FROM archives, jsonb_array_elements(data) AS elem
+          WHERE type = $1
+          AND (elem->>'year')::int = $2
+          AND (elem->>'month')::int = ANY($3)`;
+        const params = [archiveType, year, months];
+        if (governorate) { sql += ` AND elem->>'governorate' = $4`; params.push(governorate); }
+        if (hospitalId) { sql += ` AND (elem->>'hospital_id')::int = $5`; params.push(parseInt(hospitalId)); }
+        sql += ' ORDER BY elem->>\'governorate\', elem->>\'hospital_name\', (elem->>\'month\')::int';
+        const rows = (await query(sql, params)).rows;
+        return rows.map(r => ({ hospital_id: r.hospital_id, hospital_name: r.hospital_name, governorate: r.governorate, rec_year: r.rec_year, rec_month: r.rec_month, data: r.data }));
+      } catch (e) { return []; }
+    }
+
+    async function fetchFromTable(table, year, months) {
+      let sql = `SELECT mi.hospital_id, mi.data, h.name as hospital_name, h.governorate
+        FROM ${table} mi JOIN hospitals h ON h.id = mi.hospital_id
+        WHERE mi.year = $1 AND mi.month = ANY($2)`;
+      const params = [year, months];
+      if (governorate) { sql += ` AND h.governorate = $3`; params.push(governorate); }
+      if (hospitalId) { sql += ` AND mi.hospital_id = $4`; params.push(parseInt(hospitalId)); }
+      sql += ' ORDER BY h.governorate, h.name, mi.month';
+      return (await query(sql, params)).rows;
+    }
+
+    async function mergeSources(archiveType, table, year, months) {
+      const [archRows, tblRows] = await Promise.all([
+        fetchFromArchive(archiveType, year, months),
+        fetchFromTable(table, year, months)
+      ]);
+      const tblKeys = new Set();
+      for (const r of tblRows) {
+        const d = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
+        tblKeys.add(r.hospital_id + ':' + (d.year || year) + ':' + (d.month || 0));
+      }
+      const merged = [];
+      for (const r of archRows) {
+        const key = r.hospital_id + ':' + r.rec_year + ':' + r.rec_month;
+        if (!tblKeys.has(key)) merged.push(r);
+      }
+      for (const r of tblRows) merged.push(r);
+      return merged;
+    }
+
     const [bigP1, bigP2, smallP1, smallP2] = await Promise.all([
-      fetchIndicator('monthly_big_indicators', y1, m1),
-      fetchIndicator('monthly_big_indicators', y2, m2),
-      fetchIndicator('monthly_small_indicators', y1, m1),
-      fetchIndicator('monthly_small_indicators', y2, m2)
+      mergeSources('مؤشرات تجميعيه', 'monthly_big_indicators', y1, m1),
+      mergeSources('مؤشرات تجميعيه', 'monthly_big_indicators', y2, m2),
+      mergeSources('مؤشرات تخزينيه', 'monthly_small_indicators', y1, m1),
+      mergeSources('مؤشرات تخزينيه', 'monthly_small_indicators', y2, m2)
     ]);
 
     res.json({
