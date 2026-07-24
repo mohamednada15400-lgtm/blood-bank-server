@@ -7717,23 +7717,6 @@ async function renderIndicatorAnalysis() {
       <div id="iaPeriod1Label" style="display:inline-block;padding:4px 12px;background:#e3f2fd;border-radius:6px;font-size:12px;margin-right:8px"></div>
       <div id="iaPeriod2Label" style="display:inline-block;padding:4px 12px;background:#fce4ec;border-radius:6px;font-size:12px"></div>
     </div></div>
-    <div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#37474f,#455a64);color:#fff;padding:12px 16px">
-      <h3 style="margin:0;font-size:15px"><i class="fa-solid fa-sliders"></i> اختر المؤشرات اللي تتعرض</h3>
-    </div><div class="card-body" id="iaOptsBody" style="padding:14px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div id="iaBigColsSection" style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:12px">
-          <div style="font-size:14px;font-weight:700;color:var(--primary);margin-bottom:10px;border-bottom:2px solid var(--primary);padding-bottom:6px"><i class="fa-solid fa-table-columns"></i> جدول المقارنة (تجميعي)</div>
-          ${_iaColChkboxes('big', _iaBigCols)}
-        </div>
-        <div id="iaSmallColsSection" style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:12px">
-          <div style="font-size:14px;font-weight:700;color:#00695c;margin-bottom:10px;border-bottom:2px solid #00695c;padding-bottom:6px"><i class="fa-solid fa-warehouse"></i> جدول النظرة العامة (تخزيني)</div>
-          ${_iaColChkboxes('small', _iaSmallCols)}
-        </div>
-      </div>
-      <div style="margin-top:12px;text-align:center">
-        <button data-click="loadIndicatorAnalysis" style="padding:10px 30px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px"><i class="fa-solid fa-rotate"></i> عرض النتائج</button>
-      </div>
-    </div></div>
     <div id="iaResults"></div>`;
   document.getElementById('iaPeriod1').addEventListener('change', function() { document.getElementById('iaMonth1').style.display = this.value === 'monthly' ? '' : 'none'; });
   document.getElementById('iaPeriod2').addEventListener('change', function() { document.getElementById('iaMonth2').style.display = this.value === 'monthly' ? '' : 'none'; });
@@ -7741,11 +7724,6 @@ async function renderIndicatorAnalysis() {
     const h = document.getElementById('iaHosp'), g = this.value;
     h.innerHTML = '<option value="">كل المستشفيات</option>';
     (Array.isArray(hospList) ? hospList : []).filter(x => !g || x.governorate === g).forEach(x => { h.innerHTML += `<option value="${x.id}">${esc(x.name)}</option>`; });
-  });
-  document.getElementById('iaType').addEventListener('change', function() {
-    const v = this.value;
-    document.getElementById('iaBigColsSection').style.display = (v === 'all' || v === 'big') ? '' : 'none';
-    document.getElementById('iaSmallColsSection').style.display = (v === 'all' || v === 'small') ? '' : 'none';
   });
   loadIndicatorAnalysis();
 }
@@ -7765,17 +7743,17 @@ async function loadIndicatorAnalysis() {
     if (hosp) params.set('hospitalId', hosp);
     const [result, allGovsRaw] = await Promise.all([api('GET', '/indicator-analysis?' + params.toString()), api('GET', '/governorates')]);
     const allGovs = allGovsRaw.map(g => typeof g === 'string' ? g : g.name);
-    const bigCols = _iaGetCols('big');
-    const smallCols = _iaGetCols('small');
+    const allBigCols = _iaBigCols.map(c => c.key);
+    const allSmallCols = _iaSmallCols.map(c => c.key);
     const iaType = document.getElementById('iaType')?.value || 'all';
     const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
     const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
     let tablesHtml = '';
-    if (iaType !== 'small' && result.big && bigCols.length) {
-      tablesHtml += _iaBigComparison(result.big.period1, result.big.period2, pL1, pL2, allGovs, bigCols);
+    if (iaType !== 'small' && result.big) {
+      tablesHtml += _iaBigComparison(result.big.period1, result.big.period2, pL1, pL2, allGovs, allBigCols);
     }
-    if (iaType !== 'big' && result.small && smallCols.length) {
-      tablesHtml += _iaSmallSection(result.small.period1, result.small.period2, pL1, pL2, allGovs, smallCols);
+    if (iaType !== 'big' && result.small) {
+      tablesHtml += _iaSmallSection(result.small.period1, result.small.period2, pL1, pL2, allGovs, allSmallCols);
     }
     if (!tablesHtml) tablesHtml = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
     wrap.innerHTML = tablesHtml;
