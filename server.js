@@ -2683,24 +2683,40 @@ app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysi
     }
 
     async function fetchFromArchive(archiveType, year, months) {
-      try {
-        let sql = `SELECT (elem->>'hospital_id')::int as hospital_id,
-          elem->>'hospital_name' as hospital_name,
-          elem->>'governorate' as governorate,
-          (elem->>'year')::int as rec_year,
-          (elem->>'month')::int as rec_month,
-          elem->'data' as data
-          FROM archives, jsonb_array_elements(data) AS elem
-          WHERE type = $1
-          AND (elem->>'year')::int = $2
-          AND (elem->>'month')::int = ANY($3)`;
-        const params = [archiveType, year, months];
-        if (governorate) { sql += ` AND elem->>'governorate' = $4`; params.push(governorate); }
-        if (hospitalId) { sql += ` AND (elem->>'hospital_id')::int = $5`; params.push(parseInt(hospitalId)); }
-        sql += ' ORDER BY elem->>\'governorate\', elem->>\'hospital_name\', (elem->>\'month\')::int';
-        const rows = (await query(sql, params)).rows;
-        return rows.map(r => ({ hospital_id: r.hospital_id, hospital_name: r.hospital_name, governorate: r.governorate, rec_year: r.rec_year, rec_month: r.rec_month, data: r.data }));
-      } catch (e) { return []; }
+      const isPG = db.mode === 'pg';
+      if (isPG) {
+        try {
+          let sql = `SELECT (elem->>'hospital_id')::int as hospital_id,
+            elem->>'hospital_name' as hospital_name,
+            elem->>'governorate' as governorate,
+            (elem->>'year')::int as rec_year,
+            (elem->>'month')::int as rec_month,
+            elem->'data' as data
+            FROM archives, jsonb_array_elements(data) AS elem
+            WHERE type = $1
+            AND (elem->>'year')::int = $2
+            AND (elem->>'month')::int = ANY($3)`;
+          const params = [archiveType, year, months];
+          if (governorate) { sql += ` AND elem->>'governorate' = $4`; params.push(governorate); }
+          if (hospitalId) { sql += ` AND (elem->>'hospital_id')::int = $5`; params.push(parseInt(hospitalId)); }
+          sql += ' ORDER BY elem->>\'governorate\', elem->>\'hospital_name\', (elem->>\'month\')::int';
+          const rows = (await query(sql, params)).rows;
+          if (rows.length > 0) return rows.map(r => ({ hospital_id: r.hospital_id, hospital_name: r.hospital_name, governorate: r.governorate, rec_year: r.rec_year, rec_month: r.rec_month, data: r.data }));
+        } catch (e) {}
+      }
+      const archives = await db.getTable('archives');
+      const results = [];
+      for (const arch of archives) {
+        if (arch.type !== archiveType) continue;
+        const items = Array.isArray(arch.data) ? arch.data : [];
+        for (const item of items) {
+          if (item.year !== year || !months.includes(item.month)) continue;
+          if (governorate && item.governorate !== governorate) continue;
+          if (hospitalId && String(item.hospital_id) !== String(parseInt(hospitalId))) continue;
+          results.push({ hospital_id: item.hospital_id, hospital_name: item.hospital_name, governorate: item.governorate, rec_year: item.year, rec_month: item.month, data: item.data || {} });
+        }
+      }
+      return results;
     }
 
     async function fetchFromTable(table, year, months) {
