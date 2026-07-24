@@ -3,7 +3,7 @@ const ITEM_COLORS = {
   monthly_indicators: '#0d7377', monthly_consumption: '#e91e63', monthly_big: '#dc3545', monthly_small: '#795548',
   archive: '#5d4037', strategic_stock: '#1565c0', employees: '#5d4037', readiness: '#7b1fa2', equipment: '#e65100',
   users: '#00695c', role_perms: '#4a148c', hospitals: '#c62828', governorates: '#37474f',
-  sync: '#1a73e8', emp_accounts: '#28a745', time_config: '#f39c12',
+  sync: '#1a73e8', emp_accounts: '#28a745', time_config: '#f39c12', indicator_analysis: '#ff6f00',
   about: '#6c757d'
 };
 
@@ -21,7 +21,8 @@ const MENU_CATS = [
       { key: 'monthly_indicators', label: 'مؤشرات الأداء', icon: 'fa-gauge-high',
         subitems: [
           { key: 'monthly_big', label: 'مؤشرات تجميعيه', icon: 'fa-chart-simple', page: 'renderBigIndicators' },
-          { key: 'monthly_small', label: 'مؤشرات تخزينيه', icon: 'fa-boxes-stacked', page: 'renderSmallIndicators' }
+          { key: 'monthly_small', label: 'مؤشرات تخزينيه', icon: 'fa-boxes-stacked', page: 'renderSmallIndicators' },
+          { key: 'indicator_analysis', label: 'تحليل مؤشرات الأداء', icon: 'fa-magnifying-glass-chart', page: 'renderIndicatorAnalysis' }
         ]
       },
       { key: 'monthly_consumption', label: 'منصرف فصائل الدم', icon: 'fa-hand-holding-droplet', page: 'renderBloodConsumption' }

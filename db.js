@@ -452,11 +452,11 @@ class Database {
     // Seed role_perms
     const DEF_PERMS = {
       admin: { v:1,a:1,e:1,d:1,x:1 },
-      org_supervisor: Object.fromEntries(['daily_stock','daily_total','daily_statement','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','employees','archive','strategic_stock','inventory','role_perms','readiness','equipment','time_config','emp_accounts'].map(k => [k, {v:1,a:0,e:0,d:0,x:1}])),
-      branch_supervisor: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','strategic_stock','readiness','equipment','time_config','emp_accounts','employees'].map(k => [k, {v:1,a:1,e:1,d:1,x:1}])),
-      hospital: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','readiness','time_config','emp_accounts'].map(k => [k, {v:1,a:1,e:1,d:1,x:1}])),
-      hospital_manager: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','readiness','time_config','emp_accounts'].map(k => [k, {v:1,a:1,e:1,d:1,x:1}])),
-      visitor: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','readiness','time_config','emp_accounts'].map(k => [k, {v:1,a:0,e:0,d:0,x:0}]))
+      org_supervisor: Object.fromEntries(['daily_stock','daily_total','daily_statement','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','indicator_analysis','employees','archive','strategic_stock','inventory','role_perms','readiness','equipment','time_config','emp_accounts'].map(k => [k, {v:1,a:0,e:0,d:0,x:1}])),
+      branch_supervisor: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','indicator_analysis','strategic_stock','readiness','equipment','time_config','emp_accounts','employees'].map(k => [k, {v:1,a:1,e:1,d:1,x:1}])),
+      hospital: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','indicator_analysis','readiness','time_config','emp_accounts'].map(k => [k, {v:1,a:1,e:1,d:1,x:1}])),
+      hospital_manager: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','indicator_analysis','readiness','time_config','emp_accounts'].map(k => [k, {v:1,a:1,e:1,d:1,x:1}])),
+      visitor: Object.fromEntries(['daily_stock','daily_total','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','indicator_analysis','readiness','time_config','emp_accounts'].map(k => [k, {v:1,a:0,e:0,d:0,x:0}]))
     };
     // Fix overrides
     DEF_PERMS.org_supervisor['users'] = {v:1,a:0,e:0,d:0,x:0};

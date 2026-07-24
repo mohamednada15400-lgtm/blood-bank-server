@@ -25,6 +25,8 @@ function curMonthCairo() {
 function updateClock() {
   const el = document.getElementById('clockDisplay');
   if (el) el.textContent = fmtCairoDate('time');
+  const dd = document.getElementById('dateDisplay');
+  if (dd) dd.textContent = fmtCairoDate('full');
 }
 async function toggleTime() {
   const prev = _timeOffset;

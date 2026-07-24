@@ -7,6 +7,7 @@ const PERM_PAGES = [
   { key: 'monthly_consumption', label: 'منصرف فصائل الدم', cat: 'monthly', icon: 'fa-droplet' },
   { key: 'monthly_big', label: 'مؤشرات تجميعيه', cat: 'monthly', icon: 'fa-chart-simple' },
   { key: 'monthly_small', label: 'مؤشرات تخزينيه', cat: 'monthly', icon: 'fa-boxes-stacked' },
+  { key: 'indicator_analysis', label: 'تحليل مؤشرات الأداء', cat: 'monthly', icon: 'fa-magnifying-glass-chart' },
   { key: 'employees', label: 'بيان العاملين', cat: 'other', icon: 'fa-user-tie' },
   { key: 'readiness', label: 'شيت الجاهزية', cat: 'other', icon: 'fa-clipboard-check' },
   { key: 'equipment', label: 'الأجهزة', cat: 'other', icon: 'fa-tools' },
@@ -89,7 +90,7 @@ function initApp(u) {
   }
   document.getElementById('dateDisplay').textContent = fmtCairoDate('full');
   if (_clockInterval) clearInterval(_clockInterval);
-  _clockInterval = setInterval(updateClock, 10000);
+  _clockInterval = setInterval(updateClock, 1000);
   updateClock();
   applyDarkMode(); showMenu();
   loadTimeConfig();

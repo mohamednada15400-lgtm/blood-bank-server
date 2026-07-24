@@ -2650,6 +2650,66 @@ app.post('/api/csp-violation', (req, res) => {
   res.status(204).end();
 });
 
+// ============== Indicator Analysis (تحليل مؤشرات الأداء) ==============
+app.get('/api/indicator-analysis', requireAuth(), requirePerm('monthly_big', 'view'), async (req, res) => {
+  try {
+    const { year1, months1, year2, months2, governorate, hospitalId } = req.query;
+    if (!year1 || !months1 || !year2 || !months2) return res.status(400).json({ error: 'يجب تحديد الفترتين' });
+    const m1 = months1.split(',').map(Number);
+    const m2 = months2.split(',').map(Number);
+    const y1 = parseInt(year1), y2 = parseInt(year2);
+
+    async function fetchIndicator(table, year, months) {
+      let sql = `SELECT mi.hospital_id, mi.data, h.name as hospital_name, h.governorate
+        FROM ${table} mi JOIN hospitals h ON h.id = mi.hospital_id
+        WHERE mi.year = $1 AND mi.month = ANY($2)`;
+      const params = [year, months];
+      if (governorate) { sql += ` AND h.governorate = $3`; params.push(governorate); }
+      if (hospitalId) { sql += ` AND mi.hospital_id = $4`; params.push(parseInt(hospitalId)); }
+      sql += ' ORDER BY h.governorate, h.name, mi.month';
+      return (await query(sql, params)).rows;
+    }
+
+    function aggregateByHospital(rows) {
+      const map = {};
+      for (const r of rows) {
+        const hid = r.hospital_id;
+        if (!map[hid]) map[hid] = { hospital_id: hid, hospital_name: r.hospital_name, governorate: r.governorate, records: [], data: {} };
+        map[hid].records.push(r);
+      }
+      for (const hid of Object.keys(map)) {
+        const h = map[hid];
+        const agg = {};
+        for (const r of h.records) {
+          const d = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
+          for (const [k, v] of Object.entries(d)) {
+            if (typeof v === 'number') agg[k] = (agg[k] || 0) + v;
+            else if (!agg[k]) agg[k] = v;
+          }
+        }
+        h.data = agg;
+        h.monthCount = h.records.length;
+      }
+      return Object.values(map);
+    }
+
+    const [bigP1, bigP2, smallP1, smallP2] = await Promise.all([
+      fetchIndicator('monthly_big_indicators', y1, m1),
+      fetchIndicator('monthly_big_indicators', y2, m2),
+      fetchIndicator('monthly_small_indicators', y1, m1),
+      fetchIndicator('monthly_small_indicators', y2, m2)
+    ]);
+
+    res.json({
+      big: { period1: aggregateByHospital(bigP1), period2: aggregateByHospital(bigP2) },
+      small: { period1: aggregateByHospital(smallP1), period2: aggregateByHospital(smallP2) }
+    });
+  } catch (err) {
+    console.error('indicator-analysis error:', err);
+    res.status(500).json({ error: errMsg(err) });
+  }
+});
+
 // Catch-all — serve index.html for SPA routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(BASE_DIR, 'public', 'index.html'));

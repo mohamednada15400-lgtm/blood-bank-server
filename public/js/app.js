@@ -7560,3 +7560,315 @@ async function getArchHospitals() {
 
 
 document.addEventListener('DOMContentLoaded', () => { applyDarkMode(); checkSession(); });
+
+// ============== Indicator Analysis (تحليل مؤشرات الأداء) ==============
+const _iaPeriodMonths = {
+  yearly: [1,2,3,4,5,6,7,8,9,10,11,12],
+  h1: [1,2,3,4,5,6], h2: [7,8,9,10,11,12],
+  q1: [1,2,3], q2: [4,5,6], q3: [7,8,9], q4: [10,11,12]
+};
+const _iaPeriodLabels = {
+  yearly: 'سنوي', h1: 'النصف الأول', h2: 'النصف الثاني',
+  q1: 'الربع الأول', q2: 'الربع الثاني', q3: 'الربع الثالث', q4: 'الربع الرابع', monthly: 'شهري'
+};
+
+const _iaSummaryCols = [
+  { key: 'collect_total', label: 'التجميع' },
+  { key: 'inc_blood', label: 'وارد الدم' },
+  { key: 'inc_plasma', label: 'وارد البلازما' },
+  { key: 'blood_groups', label: 'الفصائل' },
+  { key: 'compatibility', label: 'التوافق' },
+  { key: 'out_blood_int', label: 'منصرف الدم (داخلي)' },
+  { key: 'disp_exp_blood', label: 'إعدام (انتهاء صلاحيه)' },
+  { key: 'disp_open', label: 'إعدام (نظام مفتوح)' },
+  { key: 'disp_returned', label: 'مرتجع' },
+  { key: 'disp_reaction', label: 'تفاعل' },
+  { key: 'virology_c', label: 'فيروس C' },
+  { key: 'virology_b', label: 'فيروس B' },
+  { key: 'virology_total', label: 'إجمالي الفيروسات' }
+];
+
+const _iaSmallCols = [
+  { key: 'inc_collected', label: 'وارد (تجميعي)' },
+  { key: 'inc_regional', label: 'وارد (إقليمي)' },
+  { key: 'inc_plasma', label: 'وارد البلازما' },
+  { key: 'blood_groups', label: 'الفصائل' },
+  { key: 'compatibility', label: 'التوافق' },
+  { key: 'out_blood', label: 'منصرف الدم' },
+  { key: 'disp_exp_blood', label: 'إعدام (انتهاء صلاحيه)' },
+  { key: 'disp_exp_plasma', label: 'إعدام (بلازما)' },
+  { key: 'disp_open', label: 'إعدام (نظام مفتوح)' },
+  { key: 'disp_returned', label: 'مرتجع' },
+  { key: 'disp_reaction', label: 'تفاعل' }
+];
+
+async function renderIndicatorAnalysis() {
+  pushNav(renderIndicatorAnalysis);
+  const c = document.getElementById('content');
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const years = [curYear, curYear - 1, curYear - 2];
+  const govs = await api('GET', '/governorates');
+  const hospList = await api('GET', '/hospitals');
+
+  let govOpts = '<option value="">كل المحافظات</option>';
+  if (Array.isArray(govs)) govs.forEach(g => { const n = typeof g === 'string' ? g : g.name; govOpts += `<option value="${esc(n)}">${esc(n)}</option>`; });
+  let hospOpts = '<option value="">كل المستشفيات</option>';
+  if (Array.isArray(hospList)) hospList.forEach(h => { hospOpts += `<option value="${h.id}">${esc(h.name)} (${esc(h.governorate)})</option>`; });
+
+  c.innerHTML = `
+    <div class="card"><div class="card-header" style="background:linear-gradient(135deg,#ff6f00,#ff8f00);color:#fff">
+      <h2 style="margin:0;font-size:18px"><i class="fa-solid fa-magnifying-glass-chart"></i> تحليل مؤشرات الأداء</h2>
+    </div><div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <div style="font-weight:700;margin-bottom:10px;color:var(--primary)">الفترة الأولى</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="iaYear1" style="flex:1;min-width:80px" class="form-control">${years.map(y => `<option value="${y}" ${y===curYear?'selected':''}>${y}</option>`).join('')}</select>
+            <select id="iaPeriod1" style="flex:1;min-width:100px" class="form-control">
+              <option value="yearly">سنوي</option><option value="h1">النصف الأول</option><option value="h2">النصف الثاني</option>
+              <option value="q1">الربع الأول</option><option value="q2" selected>الربع الثاني</option>
+              <option value="q3">الربع الثالث</option><option value="q4">الربع الرابع</option>
+              <option value="monthly">شهري</option>
+            </select>
+            <select id="iaMonth1" style="flex:0.6;min-width:70px;display:none" class="form-control">
+              ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<option value="${m}">${m}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <div style="font-weight:700;margin-bottom:10px;color:#c0392b">الفترة الثانية</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="iaYear2" style="flex:1;min-width:80px" class="form-control">${years.map(y => `<option value="${y}" ${y===(curYear-1)?'selected':''}>${y}</option>`).join('')}</select>
+            <select id="iaPeriod2" style="flex:1;min-width:100px" class="form-control">
+              <option value="yearly">سنوي</option><option value="h1">النصف الأول</option><option value="h2">النصف الثاني</option>
+              <option value="q1">الربع الأول</option><option value="q2" selected>الربع الثاني</option>
+              <option value="q3">الربع الثالث</option><option value="q4">الربع الرابع</option>
+              <option value="monthly">شهري</option>
+            </select>
+            <select id="iaMonth2" style="flex:0.6;min-width:70px;display:none" class="form-control">
+              ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<option value="${m}">${m}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:16px">
+        <div style="flex:1;min-width:150px">
+          <label style="font-size:12px;font-weight:600">المحافظة</label>
+          <select id="iaGov" class="form-control" style="width:100%">${govOpts}</select>
+        </div>
+        <div style="flex:1.5;min-width:200px">
+          <label style="font-size:12px;font-weight:600">المستشفى</label>
+          <select id="iaHosp" class="form-control" style="width:100%">${hospOpts}</select>
+        </div>
+        <button onclick="loadIndicatorAnalysis()" style="padding:10px 24px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-search"></i> عرض</button>
+        <button onclick="exportIndicatorAnalysisExcel()" style="padding:10px 16px;background:#28a745;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer"><i class="fa-solid fa-file-excel"></i> Excel</button>
+      </div>
+      <div id="iaPeriod1Label" style="display:inline-block;padding:4px 12px;background:#e3f2fd;border-radius:6px;font-size:12px;margin-right:8px"></div>
+      <div id="iaPeriod2Label" style="display:inline-block;padding:4px 12px;background:#fce4ec;border-radius:6px;font-size:12px"></div>
+    </div></div>
+    <div id="iaResults"></div>`;
+
+  document.getElementById('iaPeriod1').addEventListener('change', function() {
+    document.getElementById('iaMonth1').style.display = this.value === 'monthly' ? '' : 'none';
+  });
+  document.getElementById('iaPeriod2').addEventListener('change', function() {
+    document.getElementById('iaMonth2').style.display = this.value === 'monthly' ? '' : 'none';
+  });
+  document.getElementById('iaGov').addEventListener('change', async function() {
+    const h = document.getElementById('iaHosp');
+    const g = this.value;
+    h.innerHTML = '<option value="">كل المستشفيات</option>';
+    const list = (Array.isArray(hospList) ? hospList : []).filter(x => !g || x.governorate === g);
+    list.forEach(x => { h.innerHTML += `<option value="${x.id}">${esc(x.name)}</option>`; });
+  });
+  loadIndicatorAnalysis();
+}
+
+async function loadIndicatorAnalysis() {
+  const y1 = document.getElementById('iaYear1').value;
+  const p1 = document.getElementById('iaPeriod1').value;
+  const m1 = document.getElementById('iaMonth1').value;
+  const y2 = document.getElementById('iaYear2').value;
+  const p2 = document.getElementById('iaPeriod2').value;
+  const m2 = document.getElementById('iaMonth2').value;
+  const gov = document.getElementById('iaGov').value;
+  const hosp = document.getElementById('iaHosp').value;
+
+  const months1 = p1 === 'monthly' ? m1 : _iaPeriodMonths[p1].join(',');
+  const months2 = p2 === 'monthly' ? m2 : _iaPeriodMonths[p2].join(',');
+
+  document.getElementById('iaPeriod1Label').innerHTML = `<strong>${y1}</strong> — ${_iaPeriodLabels[p1]}${p1==='monthly'?'/'+m1:''}`;
+  document.getElementById('iaPeriod2Label').innerHTML = `<strong>${y2}</strong> — ${_iaPeriodLabels[p2]}${p2==='monthly'?'/'+m2:''}`;
+
+  const wrap = document.getElementById('iaResults');
+  wrap.innerHTML = '<div style="text-align:center;padding:40px"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px;color:var(--primary)"></i><br>جاري تحميل البيانات...</div>';
+
+  try {
+    const params = new URLSearchParams({ year1: y1, months1, year2: y2, months2 });
+    if (gov) params.set('governorate', gov);
+    if (hosp) params.set('hospitalId', hosp);
+    const result = await api('GET', '/indicator-analysis?' + params.toString());
+
+    let html = '';
+    if (result.big) html += _iaBuildSection('مؤشرات أداء البنوك التجميعية', result.big.period1, result.big.period2, _iaSummaryCols, 'big');
+    if (result.small) html += _iaBuildSection('مؤشرات أداء البنوك التخزينية', result.small.period1, result.small.period2, _iaSmallCols, 'small');
+    if (!html) html = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
+    wrap.innerHTML = html;
+  } catch (err) {
+    wrap.innerHTML = `<div style="color:red;padding:20px;text-align:center">خطأ: ${esc(err.message||'')}</div>`;
+  }
+}
+
+function _iaBuildSection(title, p1Data, p2Data, cols, type) {
+  const allHospitals = new Map();
+  for (const h of p1Data) allHospitals.set(h.hospital_id, { hospital_name: h.hospital_name, governorate: h.governorate });
+  for (const h of p2Data) if (!allHospitals.has(h.hospital_id)) allHospitals.set(h.hospital_id, { hospital_name: h.hospital_name, governorate: h.governorate });
+
+  const p1Map = new Map(p1Data.map(h => [h.hospital_id, h.data]));
+  const p2Map = new Map(p2Data.map(h => [h.hospital_id, h.data]));
+
+  const govGroups = new Map();
+  for (const [hid, info] of allHospitals) {
+    const g = info.governorate || 'غير محدد';
+    if (!govGroups.has(g)) govGroups.set(g, []);
+    govGroups.get(g).push({ hid, ...info });
+  }
+
+  const displayCols = cols.slice(0, 13);
+  let html = `<div class="card" style="margin-bottom:20px"><div class="card-header" style="background:linear-gradient(135deg,${type==='big'?'#5A7A9A,#7A9ABA':'#795548,#8D6E63'});color:#fff">
+    <h3 style="margin:0;font-size:15px"><i class="fa-solid ${type==='big'?'fa-chart-simple':'fa-boxes-stacked'}"></i> ${title}</h3>
+  </div><div class="card-body" style="overflow-x:auto">
+    <table class="data-table" style="width:100%;font-size:12px;border-collapse:collapse">
+      <thead><tr style="background:#f0f0f0">
+        <th rowspan="2" style="padding:6px;border:1px solid #ddd">المحافظة</th>
+        <th rowspan="2" style="padding:6px;border:1px solid #ddd">بنك الدم</th>`;
+
+  displayCols.forEach(col => {
+    html += `<th colspan="2" style="padding:6px;border:1px solid #ddd;text-align:center;font-size:11px">${col.label}</th>`;
+  });
+  html += `<th rowspan="2" style="padding:6px;border:1px solid #ddd">الفترة 1<br><small style="font-weight:400">(${document.getElementById('iaPeriod1Label')?.textContent||''})</small></th>
+    <th rowspan="2" style="padding:6px;border:1px solid #ddd">الفترة 2<br><small style="font-weight:400">(${document.getElementById('iaPeriod2Label')?.textContent||''})</small></th></tr>`;
+  html += '<tr style="background:#f8f8f8">';
+  displayCols.forEach(() => { html += '<th style="padding:3px 6px;border:1px solid #ddd;font-size:10px">ف1</th><th style="padding:3px 6px;border:1px solid #ddd;font-size:10px">ف2</th>'; });
+  html += '</tr></thead><tbody>';
+
+  const govTotals1 = {}, govTotals2 = {};
+  let grandTotal1 = {}, grandTotal2 = {};
+
+  const sortedGovs = [...govGroups.entries()].sort((a, b) => a[0].localeCompare(b[0], 'ar'));
+  for (const [gov, hosps] of sortedGovs) {
+    const sortedHosps = hosps.sort((a, b) => a.hospital_name.localeCompare(b.hospital_name, 'ar'));
+    for (const h of sortedHosps) {
+      const d1 = p1Map.get(h.hid) || {};
+      const d2 = p2Map.get(h.hid) || {};
+      html += `<tr><td style="padding:5px 8px;border:1px solid #ddd;font-weight:600;font-size:11px">${esc(gov)}</td>
+        <td style="padding:5px 8px;border:1px solid #ddd;font-size:11px">${esc(h.hospital_name)}</td>`;
+      displayCols.forEach(col => {
+        const v1 = d1[col.key] || 0, v2 = d2[col.key] || 0;
+        govTotals1[gov] = govTotals1[gov] || {}; govTotals1[gov][col.key] = (govTotals1[gov][col.key] || 0) + v1;
+        govTotals2[gov] = govTotals2[gov] || {}; govTotals2[gov][col.key] = (govTotals2[gov][col.key] || 0) + v2;
+        grandTotal1[col.key] = (grandTotal1[col.key] || 0) + v1;
+        grandTotal2[col.key] = (grandTotal2[col.key] || 0) + v2;
+        const diff = v1 - v2;
+        const diffColor = diff > 0 ? '#28a745' : diff < 0 ? '#dc3545' : '#888';
+        html += `<td style="padding:3px 6px;border:1px solid #ddd;text-align:center;font-size:10px;font-weight:600">${_iaFmt(v1)}</td>
+          <td style="padding:3px 6px;border:1px solid #ddd;text-align:center;font-size:10px">${_iaFmt(v2)}</td>`;
+      });
+      const total1 = Object.values(d1).reduce((s, v) => typeof v === 'number' ? s + v : s, 0);
+      const total2 = Object.values(d2).reduce((s, v) => typeof v === 'number' ? s + v : s, 0);
+      html += `<td style="padding:3px 6px;border:1px solid #ddd;text-align:center;font-size:10px;background:#e3f2fd;font-weight:600">${_iaFmt(total1)}</td>
+        <td style="padding:3px 6px;border:1px solid #ddd;text-align:center;font-size:10px;background:#fce4ec;font-weight:600">${_iaFmt(total2)}</td></tr>`;
+    }
+    const gTotal1 = Object.values(govTotals1[gov] || {}).reduce((s, v) => s + v, 0);
+    const gTotal2 = Object.values(govTotals2[gov] || {}).reduce((s, v) => s + v, 0);
+    html += `<tr style="background:#e8f5e9;font-weight:700"><td colspan="2" style="padding:5px 8px;border:1px solid #ddd;font-size:11px">إجمالي ${esc(gov)}</td>`;
+    displayCols.forEach(col => {
+      const v1 = govTotals1[gov]?.[col.key] || 0, v2 = govTotals2[gov]?.[col.key] || 0;
+      html += `<td style="padding:3px 6px;border:1px solid #ddd;text-align:center;font-size:10px;font-weight:700">${_iaFmt(v1)}</td>
+        <td style="padding:3px 6px;border:1px solid #ddd;text-align:center;font-size:10px;font-weight:700">${_iaFmt(v2)}</td>`;
+    });
+    html += `<td style="padding:3px 6px;border:1px solid #ddd;text-align:center;font-size:10px;background:#c8e6c9">${_iaFmt(gTotal1)}</td>
+      <td style="padding:3px 6px;border:1px solid #ddd;text-align:center;font-size:10px;background:#c8e6c9">${_iaFmt(gTotal2)}</td></tr>`;
+  }
+
+  const grand1 = Object.values(grandTotal1).reduce((s, v) => s + v, 0);
+  const grand2 = Object.values(grandTotal2).reduce((s, v) => s + v, 0);
+  html += `<tr style="background:#fff3e0;font-weight:800"><td colspan="2" style="padding:8px;border:1px solid #ddd;font-size:12px">الإجمالي العام</td>`;
+  displayCols.forEach(col => {
+    const v1 = grandTotal1[col.key] || 0, v2 = grandTotal2[col.key] || 0;
+    html += `<td style="padding:4px 6px;border:1px solid #ddd;text-align:center;font-size:11px;font-weight:700">${_iaFmt(v1)}</td>
+      <td style="padding:4px 6px;border:1px solid #ddd;text-align:center;font-size:11px;font-weight:700">${_iaFmt(v2)}</td>`;
+  });
+  html += `<td style="padding:4px 6px;border:1px solid #ddd;text-align:center;font-size:11px;background:#ffe0b2">${_iaFmt(grand1)}</td>
+    <td style="padding:4px 6px;border:1px solid #ddd;text-align:center;font-size:11px;background:#ffe0b2">${_iaFmt(grand2)}</td></tr>`;
+  html += '</tbody></table></div></div>';
+
+  html += _iaBuildCharts(displayCols, grandTotal1, grandTotal2, type);
+  return html;
+}
+
+function _iaFmt(v) {
+  if (v === 0 || v === null || v === undefined) return '0';
+  if (typeof v === 'number') return v % 1 !== 0 ? v.toFixed(2) : v.toLocaleString('ar-EG');
+  return v;
+}
+
+function _iaBuildCharts(cols, totals1, totals2, type) {
+  const colors1 = type === 'big' ? '#5A7A9A' : '#795548';
+  const colors2 = type === 'big' ? '#E57373' : '#A1887F';
+  const chartCols = cols.filter(c => (totals1[c.key] || 0) + (totals2[c.key] || 0) > 0).slice(0, 8);
+  if (chartCols.length === 0) return '';
+  const maxVal = Math.max(...chartCols.map(c => Math.max(totals1[c.key] || 0, totals2[c.key] || 0)), 1);
+
+  let bars = '';
+  chartCols.forEach(col => {
+    const v1 = totals1[col.key] || 0, v2 = totals2[col.key] || 0;
+    const pct1 = (v1 / maxVal) * 100, pct2 = (v2 / maxVal) * 100;
+    bars += `<div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;margin-bottom:4px;color:var(--text)">${col.label}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+        <div style="width:30px;font-size:10px;text-align:left;color:#666">ف1</div>
+        <div style="flex:1;background:#f0f0f0;border-radius:4px;height:18px;overflow:hidden">
+          <div style="width:${pct1}%;background:${colors1};height:100%;border-radius:4px;transition:width 0.5s"></div>
+        </div>
+        <div style="width:50px;font-size:10px;text-align:right;font-weight:600">${_iaFmt(v1)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:30px;font-size:10px;text-align:left;color:#666">ف2</div>
+        <div style="flex:1;background:#f0f0f0;border-radius:4px;height:18px;overflow:hidden">
+          <div style="width:${pct2}%;background:${colors2};height:100%;border-radius:4px;transition:width 0.5s"></div>
+        </div>
+        <div style="width:50px;font-size:10px;text-align:right;font-weight:600">${_iaFmt(v2)}</div>
+      </div>
+    </div>`;
+  });
+
+  return `<div class="card" style="margin-bottom:20px"><div class="card-header" style="background:linear-gradient(135deg,#37474f,#546e7a);color:#fff">
+    <h3 style="margin:0;font-size:15px"><i class="fa-solid fa-chart-bar"></i> رسوم بيانية — ${type==='big'?'التجميعي':'التخزيني'}</h3>
+  </div><div class="card-body">
+    <div style="display:flex;gap:20px;margin-bottom:10px;font-size:11px">
+      <span><span style="display:inline-block;width:12px;height:12px;background:${colors1};border-radius:2px;margin-left:4px"></span>الفترة الأولى</span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:${colors2};border-radius:2px;margin-left:4px"></span>الفترة الثانية</span>
+    </div>
+    ${bars}
+  </div></div>`;
+}
+
+async function exportIndicatorAnalysisExcel() {
+  const table = document.querySelector('#iaResults .data-table');
+  if (!table) { showToast('لا توجد بيانات للتصدير', 'warning'); return; }
+  const wb = XLSX.utils.book_new();
+  const rows = [];
+  for (const tr of table.querySelectorAll('tr')) {
+    const row = [];
+    for (const td of tr.querySelectorAll('td, th')) {
+      row.push(td.textContent.trim());
+    }
+    if (row.length > 0) rows.push(row);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, 'تحليل المؤشرات');
+  XLSX.writeFile(wb, 'تحليل_مؤشرات_الأداء.xlsx');
+  showToast('تم التصدير بنجاح', 'success');
+}

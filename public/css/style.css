@@ -72,6 +72,7 @@ body.dark-mode .sub-nav-item:hover { background: var(--hover-bg); color: #e6edf3
 body.dark-mode .user-badge { background: var(--bg-alt); color: #8b949e; }
 body.dark-mode .date-display { color: #8b949e; }
 body.dark-mode .app-footer { background: var(--card-bg); border-color: var(--border); }
+body.dark-mode .content::before { opacity: 0.05; }
 body.dark-mode ::-webkit-scrollbar-track { background: #0d1117; }
 body.dark-mode ::-webkit-scrollbar-thumb { background: #30363d; }
 body.dark-mode ::-webkit-scrollbar-thumb:hover { background: #484f58; }
@@ -206,7 +207,8 @@ body.dark-mode .stock-summary-cards .stat-card .stat-label { color: #8b949e; }
 .header-icon-btn:hover { background: var(--hover-bg); color: var(--text); }
 .logout-btn { color: var(--danger) !important; }
 .logout-btn:hover { background: rgba(220,53,69,0.12) !important; color: #c82333 !important; }
-.content { padding: 20px; min-height: calc(100vh - var(--header-height) - 50px); max-width: 100%; }
+.content { padding: 20px; min-height: calc(100vh - var(--header-height) - 50px); max-width: 100%; position: relative; }
+.content::before { content: ''; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 22vw; min-width: 100px; max-width: 350px; aspect-ratio: 133/212; background: url('../img/watermark.png') no-repeat center; background-size: contain; opacity: 0.07; pointer-events: none; z-index: 0; }
 .page-card { background: var(--card-bg); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-soft); }
 .page-card-header { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
 .page-card-header i { font-size: 18px; }
@@ -1083,6 +1085,12 @@ body.dark-mode .btn:active::after { background: rgba(255,255,255,0.08); }
   background: linear-gradient(145deg, #0d7a72 0%, #1a9e8f 40%, #c0392b 100%);
   padding: 20px; position: relative; overflow: hidden;
 }
+.login-watermark {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 30vw; min-width: 120px; max-width: 380px; aspect-ratio: 133/212;
+  background: url('../img/watermark.png') no-repeat center; background-size: contain;
+  opacity: 0.15; pointer-events: none; z-index: 0;
+}
 .login-page::before {
   content: ''; position: absolute; inset: 0;
   background: radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.1) 0%, transparent 60%);
@@ -1215,6 +1223,7 @@ body.dark-mode #menuNotifDropdown > div { border-bottom-color: var(--border) !im
   .eq-pivot thead tr:last-child { display: none !important; }
   .card { box-shadow: none !important; border: none !important; margin: 0 !important; break-inside: avoid; }
   .content { padding: 0 !important; }
+  .content::before { display: none !important; }
   .report-table { min-width: auto; font-size: 7px; }
   .report-table th, .report-table td { padding: 2px 3px; }
   #totalTable { min-width: auto; font-size: 8px; }
