@@ -7677,8 +7677,8 @@ async function renderIndicatorAnalysis() {
           <label style="font-size:12px;font-weight:600">المستشفى</label>
           <select id="iaHosp" class="form-control" style="width:100%">${hospOpts}</select>
         </div>
-        <button onclick="loadIndicatorAnalysis()" style="padding:10px 24px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-search"></i> عرض</button>
-        <button onclick="exportIndicatorAnalysisExcel()" style="padding:10px 16px;background:#28a745;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer"><i class="fa-solid fa-file-excel"></i> Excel</button>
+        <button data-click="loadIndicatorAnalysis" style="padding:10px 24px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-search"></i> عرض</button>
+        <button data-click="exportIndicatorAnalysisExcel" style="padding:10px 16px;background:#28a745;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer"><i class="fa-solid fa-file-excel"></i> Excel</button>
       </div>
       <div id="iaPeriod1Label" style="display:inline-block;padding:4px 12px;background:#e3f2fd;border-radius:6px;font-size:12px;margin-right:8px"></div>
       <div id="iaPeriod2Label" style="display:inline-block;padding:4px 12px;background:#fce4ec;border-radius:6px;font-size:12px"></div>
