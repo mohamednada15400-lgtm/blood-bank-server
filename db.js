@@ -315,6 +315,23 @@ class Database {
         if (parseInt(userCount.rows[0].count) === 0) {
           await this._seedPG(client);
         }
+        // Migration: add missing pages to existing role_perms
+        const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','indicator_analysis','employees','archive','strategic_stock','users','hospitals','governorates','role_perms','readiness','equipment','time_config','emp_accounts'];
+        const rpResult = await client.query('SELECT role, permissions FROM role_perms');
+        for (const row of rpResult.rows) {
+          let perms = typeof row.permissions === 'string' ? JSON.parse(row.permissions) : row.permissions;
+          let changed = false;
+          for (const k of ALL_PAGES) {
+            if (perms[k] === undefined) {
+              perms[k] = { v: 1, a: 1, e: 1, d: 1, x: 1 };
+              changed = true;
+            }
+          }
+          if (changed) {
+            await client.query('UPDATE role_perms SET permissions = $1 WHERE role = $2', [JSON.stringify(perms), row.role]);
+            console.log(`🔧 Added missing pages to role_perms: ${row.role}`);
+          }
+        }
       } finally {
         client.release();
       }
