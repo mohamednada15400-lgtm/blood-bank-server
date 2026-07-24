@@ -21,10 +21,10 @@ const MENU_CATS = [
       { key: 'monthly_indicators', label: 'مؤشرات الأداء', icon: 'fa-gauge-high',
         subitems: [
           { key: 'monthly_big', label: 'مؤشرات تجميعيه', icon: 'fa-chart-simple', page: 'renderBigIndicators' },
-          { key: 'monthly_small', label: 'مؤشرات تخزينيه', icon: 'fa-boxes-stacked', page: 'renderSmallIndicators' },
-          { key: 'indicator_analysis', label: 'تحليل مؤشرات الأداء', icon: 'fa-magnifying-glass-chart', page: 'renderIndicatorAnalysis' }
+          { key: 'monthly_small', label: 'مؤشرات تخزينيه', icon: 'fa-boxes-stacked', page: 'renderSmallIndicators' }
         ]
       },
+      { key: 'indicator_analysis', label: 'تحليل مؤشرات الأداء', icon: 'fa-magnifying-glass-chart', page: 'renderIndicatorAnalysis' },
       { key: 'monthly_consumption', label: 'منصرف فصائل الدم', icon: 'fa-hand-holding-droplet', page: 'renderBloodConsumption' }
     ]
   },

@@ -7587,6 +7587,15 @@ const _iaSummaryCols = [
   { key: 'virology_b', label: 'فيروس B' },
   { key: 'virology_total', label: 'إجمالي الفيروسات' }
 ];
+const _iaBigFormulas = [
+  { key: 'ratio_ct', label: 'C/T', compute: d => { const tot=(d.out_blood_int||0)+(d.out_blood_branch||0)+(d.out_blood_auth||0)+(d.out_blood_ext||0); return tot ? ((d.compatibility||0)/tot).toFixed(2) : '0'; }},
+  { key: 'ratio_uncompleted', label: '% لم يكتمل', compute: d => { const t=(d.collect_total||0)-(d.donation_therapeutic||0); return t ? (((d.uncompleted||0)/t)*100).toFixed(1)+'%' : '0%'; }},
+  { key: 'ratio_c', label: '% فيروس C', compute: d => { const t=(d.collect_total||0)-(d.refused_icteric||0)-(d.refused_fatty||0)-(d.uncompleted||0)-(d.donation_therapeutic||0); return t ? (((d.virology_c||0)/t)*100).toFixed(2)+'%' : '0%'; }},
+  { key: 'ratio_b', label: '% فيروس B', compute: d => { const t=(d.collect_total||0)-(d.refused_icteric||0)-(d.refused_fatty||0)-(d.uncompleted||0)-(d.donation_therapeutic||0); return t ? (((d.virology_b||0)/t)*100).toFixed(2)+'%' : '0%'; }},
+  { key: 'ratio_open', label: '% نظام مفتوح', compute: d => { const tot=(d.out_blood_int||0)+(d.out_blood_branch||0)+(d.out_blood_auth||0)+(d.out_blood_ext||0); return tot ? (((d.disp_open||0)/tot)*100).toFixed(1)+'%' : '0%'; }},
+  { key: 'ratio_returned', label: '% مرتجع', compute: d => { const tot=(d.out_blood_int||0)+(d.out_blood_branch||0)+(d.out_blood_auth||0)+(d.out_blood_ext||0); return tot ? (((d.disp_returned||0)/tot)*100).toFixed(1)+'%' : '0%'; }},
+  { key: 'ratio_reaction', label: '% تفاعل', compute: d => { const tot=(d.out_blood_int||0)+(d.out_blood_branch||0)+(d.out_blood_auth||0)+(d.out_blood_ext||0); return tot ? (((d.disp_reaction||0)/tot)*100).toFixed(1)+'%' : '0%'; }}
+];
 
 const _iaSmallCols = [
   { key: 'inc_collected', label: 'وارد (تجميعي)' },
@@ -7600,6 +7609,13 @@ const _iaSmallCols = [
   { key: 'disp_open', label: 'إعدام (نظام مفتوح)' },
   { key: 'disp_returned', label: 'مرتجع' },
   { key: 'disp_reaction', label: 'تفاعل' }
+];
+const _iaSmallFormulas = [
+  { key: 'ratio_ct', label: 'C/T', compute: d => d.compatibility ? ((d.out_blood||0)/d.compatibility).toFixed(2) : '0' },
+  { key: 'ratio_exp', label: '% إعدام (انتهاء)', compute: d => { const t=(d.inc_collected||0)+(d.inc_regional||0); return t ? (((d.disp_exp_blood||0)/t)*100).toFixed(1)+'%' : '0%'; }},
+  { key: 'ratio_open', label: '% نظام مفتوح', compute: d => (d.out_blood||0) ? (((d.disp_open||0)/d.out_blood)*100).toFixed(1)+'%' : '0%' },
+  { key: 'ratio_returned', label: '% مرتجع', compute: d => (d.out_blood||0) ? (((d.disp_returned||0)/d.out_blood)*100).toFixed(1)+'%' : '0%' },
+  { key: 'ratio_reaction', label: '% تفاعل', compute: d => (d.out_blood||0) ? (((d.disp_reaction||0)/d.out_blood)*100).toFixed(1)+'%' : '0%' }
 ];
 
 async function renderIndicatorAnalysis() {
