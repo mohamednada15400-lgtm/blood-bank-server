@@ -7736,7 +7736,7 @@ async function loadIndicatorAnalysis() {
 
     let html = '';
     const iaType = document.getElementById('iaType')?.value || 'all';
-    if (iaType !== 'small' && result.big) html += _iaBuildSection('مؤشرات أداء البنوك التجميعية', result.big.period1, result.big.period2, _iaSummaryCols, 'big');
+    if (iaType !== 'small' && result.big) html += _iaBuildBigComparison(result.big.period1, result.big.period2);
     if (iaType !== 'big' && result.small) html += _iaBuildSection('مؤشرات أداء البنوك التخزينية', result.small.period1, result.small.period2, _iaSmallCols, 'small');
     if (!html) html = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
     wrap.innerHTML = html;
@@ -7837,6 +7837,145 @@ function _iaFmt(v) {
   if (v === 0 || v === null || v === undefined) return '0';
   if (typeof v === 'number') return v % 1 !== 0 ? v.toFixed(2) : v.toLocaleString('ar-EG');
   return v;
+}
+
+function _iaBuildBigComparison(p1Data, p2Data) {
+  const p1Map = new Map(p1Data.map(h => [h.hospital_id, h.data]));
+  const p2Map = new Map(p2Data.map(h => [h.hospital_id, h.data]));
+
+  const allHospitals = new Map();
+  for (const h of p1Data) allHospitals.set(h.hospital_id, { hospital_name: h.hospital_name, governorate: h.governorate });
+  for (const h of p2Data) if (!allHospitals.has(h.hospital_id)) allHospitals.set(h.hospital_id, { hospital_name: h.hospital_name, governorate: h.governorate });
+
+  const govGroups = new Map();
+  for (const [hid, info] of allHospitals) {
+    const g = info.governorate || 'غير محدد';
+    if (!govGroups.has(g)) govGroups.set(g, []);
+    govGroups.get(g).push({ hid, ...info });
+  }
+
+  function vals(d) {
+    const ct = d.collect_total || 0;
+    const ts = d.tested || 0;
+    const rf = (d.refused_fatty || 0) + (d.refused_icteric || 0);
+    const dt = d.donation_therapeutic || 0;
+    const un = d.uncompleted || 0;
+    const unscreened = rf + dt + un;
+    const neg = ts - (d.virology_c || 0) - (d.virology_b || 0) - (d.virology_i || 0) - (d.virology_dollar || 0);
+    const vt = (d.virology_c || 0) + (d.virology_b || 0) + (d.virology_i || 0) + (d.virology_dollar || 0);
+    return { ct, ts, rf, dt, un, unscreened, neg, vt, hc: d.virology_c || 0, hb: d.virology_b || 0, hi: d.virology_i || 0, hs: d.virology_dollar || 0 };
+  }
+
+  const sortedGovs = [...govGroups.entries()].sort((a, b) => a[0].localeCompare(b[0], 'ar'));
+  const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
+  const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
+
+  let html = `<div class="card" style="margin-bottom:20px"><div class="card-header" style="background:linear-gradient(135deg,#5A7A9A,#7A9ABA);color:#fff">
+    <h3 style="margin:0;font-size:15px"><i class="fa-solid fa-chart-simple"></i> مقارنة مؤشرات البنوك التجميعية — ${esc(pL1)} vs ${esc(pL2)}</h3>
+  </div><div class="card-body" style="overflow-x:auto;font-size:11px">
+    <table class="data-table" style="width:100%;border-collapse:collapse;min-width:1100px">
+      <thead>
+        <tr style="background:#e3e8ef">
+          <th rowspan="2" style="padding:6px;border:1px solid #ccc">المحافظة</th>
+          <th rowspan="2" style="padding:6px;border:1px solid #ccc">بنك الدم</th>
+          <th colspan="2" style="padding:6px;border:1px solid #ccc;text-align:center;background:#d6e4f0">التجميع</th>
+          <th colspan="2" style="padding:6px;border:1px solid #ccc;text-align:center;background:#d6e4f0">المفحوص</th>
+          <th colspan="2" style="padding:6px;border:1px solid #ccc;text-align:center;background:#fde8e8">العينات الغير مفحوصة — مرفوضة بسبب (دهون أو ارتفاع الصفراء)</th>
+          <th colspan="2" style="padding:6px;border:1px solid #ccc;text-align:center;background:#fde8e8">لم يتبرع علاجياً</th>
+          <th colspan="2" style="padding:6px;border:1px solid #ccc;text-align:center;background:#fde8e8">لم يكتمل</th>
+          <th colspan="2" style="padding:6px;border:1px solid #ccc;text-align:center;background:#fde8e8">اجمالي</th>
+          <th colspan="2" style="padding:6px;border:1px solid #ccc;text-align:center;background:#fff3e0">نسبة الغير مفحوص</th>
+          <th colspan="2" style="padding:6px;border:1px solid #ccc;text-align:center;background:#e8f5e9">اجمالي الوحدات السلبية</th>
+          <th colspan="5" style="padding:6px;border:1px solid #ccc;text-align:center;background:#f3e5f5">اجمالي ايجابي فيروسات</th>
+          <th colspan="2" style="padding:6px;border:1px solid #ccc;text-align:center;background:#fce4ec">لم يكتمل % ≥ 3</th>
+        </tr>
+        <tr style="background:#f0f0f0">
+          <th style="padding:3px;border:1px solid #ccc">ف1</th><th style="padding:3px;border:1px solid #ccc">ف2</th>
+          <th style="padding:3px;border:1px solid #ccc">ف1</th><th style="padding:3px;border:1px solid #ccc">ف2</th>
+          <th style="padding:3px;border:1px solid #ccc">ف1</th><th style="padding:3px;border:1px solid #ccc">ف2</th>
+          <th style="padding:3px;border:1px solid #ccc">ف1</th><th style="padding:3px;border:1px solid #ccc">ف2</th>
+          <th style="padding:3px;border:1px solid #ccc">ف1</th><th style="padding:3px;border:1px solid #ccc">ف2</th>
+          <th style="padding:3px;border:1px solid #ccc">ف1</th><th style="padding:3px;border:1px solid #ccc">ف2</th>
+          <th style="padding:3px;border:1px solid #ccc">ف1</th><th style="padding:3px;border:1px solid #ccc">ف2</th>
+          <th style="padding:3px;border:1px solid #ccc">ف1</th><th style="padding:3px;border:1px solid #ccc">ف2</th>
+          <th style="padding:3px;border:1px solid #ccc">HCV</th><th style="padding:3px;border:1px solid #ccc">HBV</th>
+          <th style="padding:3px;border:1px solid #ccc">HIV</th><th style="padding:3px;border:1px solid #ccc">Syphilis</th>
+          <th style="padding:3px;border:1px solid #ccc">الاجمالي</th>
+          <th style="padding:3px;border:1px solid #ccc">ف1</th><th style="padding:3px;border:1px solid #ccc">ف2</th>
+        </tr>
+      </thead><tbody>`;
+
+  const sGov = { ct1:0, ct2:0, ts1:0, ts2:0, rf1:0, rf2:0, dt1:0, dt2:0, un1:0, un2:0, neg1:0, neg2:0, hc1:0, hc2:0, hb1:0, hb2:0, hi1:0, hi2:0, hs1:0, hs2:0 };
+  const gt = { ...sGov };
+
+  function addRow(name, v1, v2, isSubtotal, govLabel) {
+    const pct = (num, den) => den ? ((num / den) * 100).toFixed(2) + '%' : '0.00%';
+    const bg = isSubtotal ? 'background:#e8f5e9;font-weight:700' : '';
+    const labelStyle = isSubtotal ? 'font-size:11px' : 'font-size:10px';
+    const prefix = isSubtotal ? `<td style="padding:4px 6px;border:1px solid #ccc;font-weight:700;${labelStyle}">${esc(govLabel || '')}</td>` : '<td style="padding:4px 6px;border:1px solid #ccc"></td>';
+    const refPct1 = pct(v1.rf, v1.ct), refPct2 = pct(v2.rf, v2.ct);
+    const therPct1 = pct(v1.dt, v1.ct), therPct2 = pct(v2.dt, v2.ct);
+    const unPct1 = pct(v1.un, v1.ct), unPct2 = pct(v2.un, v2.ct);
+    const totPct1 = pct(v1.unscreened, v1.ct), totPct2 = pct(v2.unscreened, v2.ct);
+    const ucPct1 = pct(v1.un, v1.ct), ucPct2 = pct(v2.un, v2.ct);
+    html += `<tr style="${bg}">
+      ${prefix}
+      <td style="padding:4px 6px;border:1px solid #ccc;${labelStyle}">${esc(name)}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${_iaFmt(v1.ct)}</td><td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${_iaFmt(v2.ct)}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${_iaFmt(v1.ts)}</td><td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${_iaFmt(v2.ts)}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${refPct1}</td><td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${refPct2}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${therPct1}</td><td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${therPct2}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${unPct1}</td><td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${unPct2}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${totPct1}</td><td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${totPct2}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${totPct1}</td><td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${totPct2}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${_iaFmt(v1.neg)}</td><td style="padding:3px 6px;border:1px solid #ccc;text-align:center">${_iaFmt(v2.neg)}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center;color:#c62828">${_iaFmt(v1.hc)}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center;color:#c62828">${_iaFmt(v1.hb)}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center;color:#c62828">${_iaFmt(v1.hi)}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center;color:#c62828">${_iaFmt(v1.hs)}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center;font-weight:700;color:#c62828">${_iaFmt(v1.hc+v1.hb+v1.hi+v1.hs)}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center;background:${parseFloat(ucPct1)>=3?'#ffebee':'transparent'};color:${parseFloat(ucPct1)>=3?'#c62828':'inherit'}">${ucPct1}</td>
+      <td style="padding:3px 6px;border:1px solid #ccc;text-align:center;background:${parseFloat(ucPct2)>=3?'#ffebee':'transparent'};color:${parseFloat(ucPct2)>=3?'#c62828':'inherit'}">${ucPct2}</td>
+    </tr>`;
+  }
+
+  function accum(s, v1, v2) {
+    s.ct1 += v1.ct; s.ct2 += v2.ct;
+    s.ts1 += v1.ts; s.ts2 += v2.ts;
+    s.rf1 += v1.rf; s.rf2 += v2.rf;
+    s.dt1 += v1.dt; s.dt2 += v2.dt;
+    s.un1 += v1.un; s.un2 += v2.un;
+    s.neg1 += v1.neg; s.neg2 += v2.neg;
+    s.hc1 += v1.hc; s.hc2 += v2.hc;
+    s.hb1 += v1.hb; s.hb2 += v2.hb;
+    s.hi1 += v1.hi; s.hi2 += v2.hi;
+    s.hs1 += v1.hs; s.hs2 += v2.hs;
+  }
+
+  for (const [gov, hosps] of sortedGovs) {
+    const sorted = hosps.sort((a, b) => a.hospital_name.localeCompare(b.hospital_name, 'ar'));
+    for (const h of sorted) {
+      const d1 = vals(p1Map.get(h.hid) || {});
+      const d2 = vals(p2Map.get(h.hid) || {});
+      addRow(h.hospital_name, d1, d2, false, '');
+      accum(sGov, d1, d2);
+    }
+    const sv1 = { ct:sGov.ct1, ts:sGov.ts1, rf:sGov.rf1, dt:sGov.dt1, un:sGov.un1, unscreened:sGov.rf1+sGov.dt1+sGov.un1, neg:sGov.neg1, hc:sGov.hc1, hb:sGov.hb1, hi:sGov.hi1, hs:sGov.hs1 };
+    const sv2 = { ct:sGov.ct2, ts:sGov.ts2, rf:sGov.rf2, dt:sGov.dt2, un:sGov.un2, unscreened:sGov.rf2+sGov.dt2+sGov.un2, neg:sGov.neg2, hc:sGov.hc2, hb:sGov.hb2, hi:sGov.hi2, hs:sGov.hs2 };
+    addRow(`اجمالي ${gov}`, sv1, sv2, true, gov);
+    accum(gt, sv1, sv2);
+    for (const k of Object.keys(sGov)) sGov[k] = 0;
+  }
+
+  const gv1 = { ct:gt.ct1, ts:gt.ts1, rf:gt.rf1, dt:gt.dt1, un:gt.un1, unscreened:gt.rf1+gt.dt1+gt.un1, neg:gt.neg1, hc:gt.hc1, hb:gt.hb1, hi:gt.hi1, hs:gt.hs1 };
+  const gv2 = { ct:gt.ct2, ts:gt.ts2, rf:gt.rf2, dt:gt.dt2, un:gt.un2, unscreened:gt.rf2+gt.dt2+gt.un2, neg:gt.neg2, hc:gt.hc2, hb:gt.hb2, hi:gt.hi2, hs:gt.hs2 };
+  addRow('الاجمالي العام', gv1, gv2, true, '');
+
+  html += '</tbody></table></div></div>';
+  html += _iaBuildCharts([
+    { key: 'hc', label: 'HCV' }, { key: 'hb', label: 'HBV' }, { key: 'hi', label: 'HIV' }, { key: 'hs', label: 'Syphilis' }, { key: 'vt', label: 'اجمالي الفيروسات' }
+  ], { hc: gt.hc, hb: gt.hb, hi: gt.hi, hs: gt.hs, vt: gt.hc+gt.hb+gt.hi+gt.hs }, { hc: 0, hb: 0, hi: 0, hs: 0, vt: 0 }, 'big');
+  return html;
 }
 
 function _iaBuildCharts(cols, totals1, totals2, type) {
