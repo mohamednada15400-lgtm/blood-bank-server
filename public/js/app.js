@@ -7722,26 +7722,16 @@ async function renderIndicatorAnalysis() {
     </div><div class="card-body" id="iaOptsBody" style="padding:14px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
         <div id="iaBigColsSection" style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:12px">
-          <div style="font-size:14px;font-weight:700;color:var(--primary);margin-bottom:10px;border-bottom:2px solid var(--primary);padding-bottom:6px"><i class="fa-solid fa-table-columns"></i> جدول المقارنة الرئيسي (تجميعي)</div>
+          <div style="font-size:14px;font-weight:700;color:var(--primary);margin-bottom:10px;border-bottom:2px solid var(--primary);padding-bottom:6px"><i class="fa-solid fa-table-columns"></i> جدول المقارنة (تجميعي)</div>
           ${_iaColChkboxes('big', _iaBigCols)}
-          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
-            <div style="font-size:12px;font-weight:700;color:#666;margin-bottom:6px">الجداول الإضافية</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px">${bigOpts.filter(o=>o.id!=='ia_chk_cmp').map(chkRow).join('')}</div>
-          </div>
         </div>
         <div id="iaSmallColsSection" style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:12px">
           <div style="font-size:14px;font-weight:700;color:#00695c;margin-bottom:10px;border-bottom:2px solid #00695c;padding-bottom:6px"><i class="fa-solid fa-warehouse"></i> جدول النظرة العامة (تخزيني)</div>
           ${_iaColChkboxes('small', _iaSmallCols)}
-          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
-            <div style="font-size:12px;font-weight:700;color:#666;margin-bottom:6px">الجداول الإضافية</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px">${smallOpts.map(chkRow).join('')}</div>
-          </div>
         </div>
       </div>
-      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-        <span style="font-size:12px;font-weight:700;color:#666">عام:</span>
-        ${commonOpts.map(chkRow).join('')}
-        <button data-click="loadIndicatorAnalysis" style="padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;margin-left:auto"><i class="fa-solid fa-rotate"></i> تحديث</button>
+      <div style="margin-top:12px;text-align:center">
+        <button data-click="loadIndicatorAnalysis" style="padding:10px 30px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px"><i class="fa-solid fa-rotate"></i> عرض النتائج</button>
       </div>
     </div></div>
     <div id="iaResults"></div>`;
@@ -7775,34 +7765,20 @@ async function loadIndicatorAnalysis() {
     if (hosp) params.set('hospitalId', hosp);
     const [result, allGovsRaw] = await Promise.all([api('GET', '/indicator-analysis?' + params.toString()), api('GET', '/governorates')]);
     const allGovs = allGovsRaw.map(g => typeof g === 'string' ? g : g.name);
-    const opt = _iaGetOpts();
     const bigCols = _iaGetCols('big');
     const smallCols = _iaGetCols('small');
     const iaType = document.getElementById('iaType')?.value || 'all';
     const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
     const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
-    let tablesHtml = '', chartsHtml = '', analysisHtml = '';
-    if (iaType !== 'small' && result.big) {
-      if (opt.ia_chk_cmp)   tablesHtml += _iaBigComparison(result.big.period1, result.big.period2, pL1, pL2, allGovs, bigCols);
-      if (opt.ia_chk_virus)  tablesHtml += _iaVirusRates(result.big.period1, result.big.period2, pL2, allGovs);
-      if (opt.ia_chk_short)  tablesHtml += _iaShortage(result.big.period1, result.big.period2, pL1, pL2, allGovs);
-      if (opt.ia_chk_disp_b) tablesHtml += _iaDisposal(result.big.period1, result.big.period2, pL2, 'big', allGovs);
-      if (opt.ia_chk_blood)  tablesHtml += _iaBloodType(result.big.period1, result.big.period2, pL2);
-      if (opt.ia_chk_chart)  chartsHtml += _iaChartsBig(result.big.period1, result.big.period2, pL1, pL2, allGovs);
+    let tablesHtml = '';
+    if (iaType !== 'small' && result.big && bigCols.length) {
+      tablesHtml += _iaBigComparison(result.big.period1, result.big.period2, pL1, pL2, allGovs, bigCols);
     }
-    if (iaType !== 'big' && result.small) {
-      if (opt.ia_chk_smov)   tablesHtml += _iaSmallSection(result.small.period1, result.small.period2, pL1, pL2, allGovs, smallCols);
-      if (opt.ia_chk_ct)     tablesHtml += _iaCTRatio(result.small.period1, result.small.period2, pL1, pL2, allGovs);
-      if (opt.ia_chk_disp_s) tablesHtml += _iaDisposal(result.small.period1, result.small.period2, pL2, 'small', allGovs);
-      if (opt.ia_chk_chart)  chartsHtml += _iaChartsSmall(result.small.period1, result.small.period2, pL1, pL2, allGovs);
+    if (iaType !== 'big' && result.small && smallCols.length) {
+      tablesHtml += _iaSmallSection(result.small.period1, result.small.period2, pL1, pL2, allGovs, smallCols);
     }
-    if (opt.ia_chk_analysis && (result.big || result.small)) analysisHtml = _iaAnalysis(result.big, result.small, pL1, pL2, allGovs);
-    let html = '';
-    if (tablesHtml) html += '<div id="iaTablesSection">' + tablesHtml + '</div>';
-    if (chartsHtml) html += '<div id="iaChartsSection" style="margin-top:20px">' + chartsHtml + '</div>';
-    if (analysisHtml) html += '<div id="iaAnalysisSection" style="margin-top:20px">' + analysisHtml + '</div>';
-    if (!html) html = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
-    wrap.innerHTML = html;
+    if (!tablesHtml) tablesHtml = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
+    wrap.innerHTML = tablesHtml;
   } catch (err) { wrap.innerHTML = `<div style="color:red;padding:20px;text-align:center">خطأ: ${esc(err.message||'')}</div>`; }
 }
 
