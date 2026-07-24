@@ -24,7 +24,6 @@ const MENU_CATS = [
           { key: 'monthly_small', label: 'مؤشرات تخزينيه', icon: 'fa-boxes-stacked', page: 'renderSmallIndicators' }
         ]
       },
-      { key: 'indicator_analysis', label: 'تحليل مؤشرات الأداء', icon: 'fa-magnifying-glass-chart', page: 'renderIndicatorAnalysis' },
       { key: 'monthly_consumption', label: 'منصرف فصائل الدم', icon: 'fa-hand-holding-droplet', page: 'renderBloodConsumption' }
     ]
   },
@@ -39,7 +38,8 @@ const MENU_CATS = [
       { key: 'employees', label: 'بيان العاملين', icon: 'fa-user-tie', page: 'renderEmployeeStatement' },
       { key: 'readiness', label: 'شيت الجاهزية', icon: 'fa-clipboard-check', page: 'renderReadinessSheet' },
       { key: 'equipment', label: 'الأجهزة', icon: 'fa-tools', page: 'renderEquipment' },
-      { key: 'strategic_stock', label: 'الرصيد الاستراتيجي', icon: 'fa-shield-halved', page: 'renderStrategicStock' }
+      { key: 'strategic_stock', label: 'الرصيد الاستراتيجي', icon: 'fa-shield-halved', page: 'renderStrategicStock' },
+      { key: 'indicator_analysis', label: 'تحليل مؤشرات الأداء', icon: 'fa-magnifying-glass-chart', page: 'renderIndicatorAnalysis' }
     ]
   },
   { key: 'admin', label: 'الإدارة', icon: 'fa-gear', color: ['#1565c0','#1e88e5'],
