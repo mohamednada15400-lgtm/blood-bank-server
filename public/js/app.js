@@ -4650,7 +4650,34 @@ async function renderMonthlyIndicators(presetType) {
           ${MONTHS_AR.map((m, i) => `<option value="${i+1}">${m}</option>`).join('')}
         </select>
       </div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header" style="padding:8px 16px;background:linear-gradient(135deg,#37474f,#546e7a);color:#fff;cursor:pointer;display:flex;justify-content:space-between;align-items:center" data-click="miTogglePicker" data-args="'miPickerBody','miPickerChevron'">
+          <span><i class="fas fa-list-check"></i> اختيار الأعمدة</span>
+          <i class="fas fa-chevron-down" id="miPickerChevron" style="transition:transform .2s"></i>
+        </div>
+        <div id="miPickerBody" style="display:none;padding:12px;border-top:1px solid var(--border)">
+          <div id="miPickerContent"></div>
+          <div style="margin-top:8px;display:flex;gap:6px">
+            <button class="btn btn-sm btn-outline" data-click="miPickerSelectAll"><i class="fas fa-check-double"></i> تحديد الكل</button>
+            <button class="btn btn-sm btn-outline" data-click="miPickerClearAll"><i class="fas fa-xmark"></i> إلغاء الكل</button>
+          </div>
+        </div>
+      </div>
       <div class="card"><div class="card-body table-scroll" id="indTableWrap"></div></div>`;
+    const pickerContent = document.getElementById('miPickerContent');
+    if (pickerContent) {
+      const typeFilter = document.getElementById('indTypeFilter')?.value || presetType || '';
+      let pickerHtml = '';
+      if (!typeFilter || typeFilter === 'تجميعي') {
+        pickerHtml += `<div style="margin-bottom:8px"><strong style="font-size:12px;color:#1565c0"><i class="fas fa-layer-group"></i> تجميعي</strong></div>`;
+        pickerHtml += miRenderPickerHtml(BIG_COL_DEFS, MI_PICKER_BIG);
+      }
+      if (!typeFilter || typeFilter === 'تخزيني') {
+        pickerHtml += `<div style="margin-top:10px;margin-bottom:8px"><strong style="font-size:12px;color:#6a1b9a"><i class="fas fa-layer-group"></i> تخزيني</strong></div>`;
+        pickerHtml += miRenderPickerHtml(SMALL_COL_DEFS, MI_PICKER_SMALL);
+      }
+      pickerContent.innerHTML = pickerHtml;
+    }
     if (canEdit) {
       const hospSel = document.getElementById('monIndHosp');
       const fillHosp = () => {
@@ -4907,6 +4934,79 @@ const SMALL_COL_DEFS = [
   { key: 'child_pct_other', label: 'أخرى', formula: true, cls: 'formula-cell', group: 'النسب المئوية للاعدام - أطفال', target: '<1%' }
 ];
 
+const MI_PICKER_BIG = 'mi_picker_big';
+const MI_PICKER_SMALL = 'mi_picker_small';
+
+function miRenderPickerHtml(colDefs, storageKey) {
+  const groups = [];
+  for (const c of colDefs) {
+    if (c.key === 'governorate' || c.key === 'hospital_name') continue;
+    const g = c.group || '';
+    let grp = groups.find(x => x.name === g);
+    if (!grp) { grp = { name: g, items: [] }; groups.push(grp); }
+    grp.items.push(c);
+  }
+  const stored = JSON.parse(localStorage.getItem(storageKey) || 'null');
+  const checkedKeys = stored || groups.flatMap(g => g.items.map(c => c.key));
+  let h = '';
+  for (const grp of groups) {
+    const grpColor = grp.name.includes('الوارد') ? '#2e7d32' : grp.name.includes('المنصرف') ? '#6a1b9a' : grp.name.includes('الفيروس') || grp.name.includes('نسب') ? '#c62828' : grp.name.includes('الإعدام') || grp.name.includes('الصرف') ? '#e65100' : grp.name.includes('الأطفال') ? '#ad1457' : grp.name.includes('الفصائل') || grp.name.includes('التوافق') || grp.name.includes('عينات') ? '#1565c0' : grp.name.includes('الجمع') || grp.name.includes('الفحص') ? '#1565c0' : '#455a64';
+    h += `<div style="width:100%;font-size:11px;font-weight:700;color:${grpColor};margin:6px 0 3px;border-bottom:1px solid var(--border);padding-bottom:2px">${esc(grp.name)}</div>`;
+    h += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+    for (const c of grp.items) {
+      const chk = checkedKeys.includes(c.key) ? 'checked' : '';
+      h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="miColChk" data-storage="${storageKey}" value="${c.key}" ${chk} data-change="miOnPickerChange" style="accent-color:${grpColor};width:13px;height:13px">${esc(c.label)} <span style="color:#999;font-size:9px">${c.key}</span></label>`;
+    }
+    h += '</div>';
+  }
+  return h;
+}
+function miSavePickerState(storageKey) {
+  const els = document.querySelectorAll(`.miColChk[data-storage="${storageKey}"]`);
+  const checked = Array.from(els).filter(e => e.checked).map(e => e.value);
+  localStorage.setItem(storageKey, JSON.stringify(checked));
+}
+function miGetFilteredCols(colDefs, storageKey) {
+  const stored = JSON.parse(localStorage.getItem(storageKey) || 'null');
+  if (!stored) return colDefs;
+  const staticCols = colDefs.filter(c => c.key === 'governorate' || c.key === 'hospital_name');
+  const dynamicCols = colDefs.filter(c => c.key !== 'governorate' && c.key !== 'hospital_name');
+  return [...staticCols, ...dynamicCols.filter(c => stored.includes(c.key))];
+}
+function miPickerSelectAll() {
+  document.querySelectorAll('.miColChk').forEach(c => c.checked = true);
+  [MI_PICKER_BIG, MI_PICKER_SMALL].forEach(k => miSavePickerState(k));
+}
+function miPickerClearAll() {
+  document.querySelectorAll('.miColChk').forEach(c => c.checked = false);
+  [MI_PICKER_BIG, MI_PICKER_SMALL].forEach(k => miSavePickerState(k));
+}
+function miTogglePicker(bodyId, chevronId) {
+  const body = document.getElementById(bodyId);
+  const chevron = document.getElementById(chevronId);
+  if (!body) return;
+  const show = body.style.display === 'none';
+  body.style.display = show ? '' : 'none';
+  if (chevron) chevron.style.transform = show ? 'rotate(180deg)' : '';
+}
+function miOnPickerChange(el) {
+  const storageKey = el?.dataset?.storage || MI_PICKER_BIG;
+  miSavePickerState(storageKey);
+  const wrap = document.getElementById('indTableWrap');
+  if (!wrap) return;
+  const hospitals = window._monIndHospitals || [];
+  const canEdit = hasPerm('monthly_indicators', 'edit');
+  const presetType = document.getElementById('indTypeFilter')?.value || '';
+  const filtMonth = document.getElementById('indMonthFilter')?.value;
+  const params = new URLSearchParams({ year: document.getElementById('indYearFilter')?.value || '' });
+  if (filtMonth) params.set('month', filtMonth);
+  const hId = document.getElementById('indHospitalFilter')?.value;
+  if (hId) params.set('hospitalId', hId);
+  api('GET', '/monthly-indicators?' + params.toString()).then(data => {
+    renderIndicatorsTable(hospitals, data, canEdit, presetType);
+  }).catch(() => {});
+}
+
 function makeGroupHeader(colDefs) {
   const groups = [];
   let currentGroup = null;
@@ -5042,12 +5142,16 @@ function renderIndicatorsTable(hospitals, data, canEdit, presetType) {
   }
 
   if (tableType === 'تجميعي') {
-    wrap.innerHTML = renderTable(BIG_COL_DEFS, 'مؤشرات أداء البنوك التجميعية', computeBigFormulas, 'big');
+    const filteredBig = miGetFilteredCols(BIG_COL_DEFS, MI_PICKER_BIG);
+    wrap.innerHTML = renderTable(filteredBig, 'مؤشرات أداء البنوك التجميعية', computeBigFormulas, 'big');
   } else if (tableType === 'تخزيني') {
-    wrap.innerHTML = renderTable(SMALL_COL_DEFS, 'مؤشرات أداء البنوك التخزينية', computeSmallFormulas, 'child');
+    const filteredSmall = miGetFilteredCols(SMALL_COL_DEFS, MI_PICKER_SMALL);
+    wrap.innerHTML = renderTable(filteredSmall, 'مؤشرات أداء البنوك التخزينية', computeSmallFormulas, 'child');
   } else {
-    wrap.innerHTML = renderTable(BIG_COL_DEFS, 'التجميعي - مؤشرات أداء البنوك التجميعية', computeBigFormulas, 'big') +
-      renderTable(SMALL_COL_DEFS, 'التخزيني - مؤشرات أداء البنوك التخزينية', computeSmallFormulas, 'child');
+    const filteredBig = miGetFilteredCols(BIG_COL_DEFS, MI_PICKER_BIG);
+    const filteredSmall = miGetFilteredCols(SMALL_COL_DEFS, MI_PICKER_SMALL);
+    wrap.innerHTML = renderTable(filteredBig, 'التجميعي - مؤشرات أداء البنوك التجميعية', computeBigFormulas, 'big') +
+      renderTable(filteredSmall, 'التخزيني - مؤشرات أداء البنوك التخزينية', computeSmallFormulas, 'child');
   }
 
   if (canEdit) {
