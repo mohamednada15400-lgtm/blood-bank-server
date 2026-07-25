@@ -7764,15 +7764,34 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
   if (!showGrandTotal && !showGovTotal && !showHospDetail) return '';
   if (!cols.length) return '';
   const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
+  const grpColors = { 'الجمع والفحص':'#1565c0', 'المرفوض والمكتمل':'#c62828', 'الوارد':'#2e7d32', 'المنصرف':'#6a1b9a', 'الفيروسات':'#e65100', 'النسب':'#00695c', 'الأطفال':'#ad1457' };
   let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+  // Build groups from cols
+  const groups = [];
+  for (const c of cols) {
+    const g = c.g || '';
+    let grp = groups.find(x => x.name === g);
+    if (!grp) { grp = { name: g, items: [] }; groups.push(grp); }
+    grp.items.push(c);
+  }
+  // Row 1: periods spanning all cols, Row 2: group headers, Row 3: column headers
   html += `<thead>
     <tr>
-      <th rowspan="2" style="background:#263238;color:#fff;padding:6px 8px;position:sticky;right:0;z-index:2;min-width:150px">البيان</th>
-      <th colspan="${cols.length}" style="background:#1a237e;color:#fff;text-align:center;padding:4px">${esc(pL1)}</th>
-      <th colspan="${cols.length}" style="background:#b71c1c;color:#fff;text-align:center;padding:4px">${esc(pL2)}</th>
-      <th rowspan="2" style="background:#333;color:#fff;padding:4px 8px;min-width:60px;text-align:center">التغيير %</th>
+      <th rowspan="3" style="background:#263238;color:#fff;padding:6px 8px;position:sticky;right:0;z-index:2;min-width:150px">البيان</th>
+      <th colspan="${cols.length}" style="background:#1a237e;color:#fff;text-align:center;padding:4px;font-size:13px">${esc(pL1)}</th>
+      <th colspan="${cols.length}" style="background:#b71c1c;color:#fff;text-align:center;padding:4px;font-size:13px">${esc(pL2)}</th>
+      <th rowspan="3" style="background:#333;color:#fff;padding:4px 8px;min-width:60px;text-align:center">التغيير %</th>
     </tr>
     <tr>`;
+  for (const grp of groups) {
+    const bg = grpColors[grp.name] || '#455a64';
+    html += `<th colspan="${grp.items.length}" style="background:${bg};color:#fff;text-align:center;padding:3px 4px;font-size:11px;border:1px solid rgba(255,255,255,.2)">${esc(grp.name)}</th>`;
+  }
+  for (const grp of groups) {
+    const bg = grpColors[grp.name] || '#455a64';
+    html += `<th colspan="${grp.items.length}" style="background:${bg};color:#fff;text-align:center;padding:3px 4px;font-size:11px;border:1px solid rgba(255,255,255,.2)">${esc(grp.name)}</th>`;
+  }
+  html += '</tr><tr>';
   for (const c of cols) html += `<th style="background:#1a237e;color:#cfd8dc;padding:3px 6px;font-size:10px;min-width:55px">${esc(c.label)}</th>`;
   for (const c of cols) html += `<th style="background:#b71c1c;color:#ffcdd2;padding:3px 6px;font-size:10px;min-width:55px">${esc(c.label)}</th>`;
   html += '</tr></thead><tbody>';
