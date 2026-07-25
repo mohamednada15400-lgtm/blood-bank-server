@@ -2749,16 +2749,60 @@ app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysi
       return merged;
     }
 
-    const [bigP1, bigP2, smallP1, smallP2] = await Promise.all([
+    async function fetchDispFromArchive(year, months) {
+      const isPG = db.mode === 'pg';
+      let rows = [];
+      if (isPG) {
+        try {
+          let sql = `SELECT (elem->>'hospital_id')::int as hospital_id,
+            elem->>'hospital_name' as hospital_name,
+            elem->>'governorate' as governorate,
+            (elem->>'year')::int as rec_year,
+            (elem->>'month')::int as rec_month,
+            elem->'blood_types' as blood_types
+            FROM archives, jsonb_array_elements(data) AS elem
+            WHERE type = 'منصرف فصائل الدم'
+            AND (elem->>'year')::int = $1
+            AND (elem->>'month')::int = ANY($2)`;
+          const params = [year, months];
+          if (governorate) { sql += ` AND elem->>'governorate' = $3`; params.push(governorate); }
+          if (hospitalId) { sql += ` AND (elem->>'hospital_id')::int = $4`; params.push(parseInt(hospitalId)); }
+          sql += ' ORDER BY elem->>\'governorate\', elem->>\'hospital_name\', (elem->>\'month\')::int';
+          rows = (await query(sql, params)).rows;
+        } catch (e) {}
+      }
+      if (!rows.length) {
+        const archives = await db.getTable('archives');
+        for (const arch of archives) {
+          if (arch.type !== 'منصرف فصائل الدم') continue;
+          const items = Array.isArray(arch.data) ? arch.data : [];
+          for (const item of items) {
+            if (item.year !== year || !months.includes(item.month)) continue;
+            if (governorate && item.governorate !== governorate) continue;
+            if (hospitalId && String(item.hospital_id) !== String(parseInt(hospitalId))) continue;
+            rows.push({ hospital_id: item.hospital_id, hospital_name: item.hospital_name, governorate: item.governorate, rec_year: item.year, rec_month: item.month, blood_types: item.blood_types || {} });
+          }
+        }
+      }
+      return rows.map(r => {
+        const bt = typeof r.blood_types === 'string' ? JSON.parse(r.blood_types) : (r.blood_types || {});
+        return { hospital_id: r.hospital_id, hospital_name: r.hospital_name, governorate: r.governorate, rec_year: r.rec_year, rec_month: r.rec_month, data: bt };
+      });
+    }
+
+    const [bigP1, bigP2, smallP1, smallP2, dispP1Raw, dispP2Raw] = await Promise.all([
       mergeSources('مؤشرات تجميعيه', 'monthly_big_indicators', y1, m1),
       mergeSources('مؤشرات تجميعيه', 'monthly_big_indicators', y2, m2),
       mergeSources('مؤشرات تخزينيه', 'monthly_small_indicators', y1, m1),
-      mergeSources('مؤشرات تخزينيه', 'monthly_small_indicators', y2, m2)
+      mergeSources('مؤشرات تخزينيه', 'monthly_small_indicators', y2, m2),
+      fetchDispFromArchive(y1, m1),
+      fetchDispFromArchive(y2, m2)
     ]);
 
     res.json({
       big: { period1: aggregateByHospital(bigP1), period2: aggregateByHospital(bigP2) },
-      small: { period1: aggregateByHospital(smallP1), period2: aggregateByHospital(smallP2) }
+      small: { period1: aggregateByHospital(smallP1), period2: aggregateByHospital(smallP2) },
+      disp: { period1: aggregateByHospital(dispP1Raw), period2: aggregateByHospital(dispP2Raw) }
     });
   } catch (err) {
     console.error('indicator-analysis error:', err);
