@@ -7591,80 +7591,109 @@ function _iaPct(num, den) { return den ? ((num / den) * 100).toFixed(2) : '0.00'
 function _iaFmt(v) { if (v === 0 || v === null || v === undefined) return '0'; if (typeof v === 'number') return v % 1 !== 0 ? v.toFixed(2) : v.toLocaleString('ar-EG'); return String(v); }
 
 const _iaBigFields = [
-  { key:'collect_total',    label:'اجمالي التجميع' },
-  { key:'tested',           label:'المفحوص' },
-  { key:'blood_groups',     label:'مجموع الفصائل' },
-  { key:'compatibility',    label:'Compatibility' },
-  { key:'refused_fatty',    label:'مرفوضة (دهون)' },
-  { key:'refused_icteric',  label:'مرفوضة (صفراء)' },
-  { key:'refused_all',      label:'اجمالي المرفوض' },
-  { key:'uncompleted',      label:'لم يكتمل' },
-  { key:'donation_therapeutic', label:'تبرع علاجي' },
-  { key:'inc_blood',        label:'وارد دم' },
-  { key:'inc_plasma',       label:'وارد بلازما' },
-  { key:'inc_rdp',          label:'وارد كريات مركزة' },
-  { key:'inc_sdp',          label:'وارد صفيحات' },
-  { key:'out_blood_auth',   label:'منصرف دم معتمد' },
-  { key:'out_blood_branch', label:'منصرف دم فرعية' },
-  { key:'out_blood_ext',    label:'منصرف دم خارجي' },
-  { key:'out_blood_int',    label:'منصرف دم داخلي' },
-  { key:'out_plasma_ext',   label:'منصرف بلازما خارجي' },
-  { key:'out_plasma_int',   label:'منصرف بلازما داخلي' },
-  { key:'out_rdp',          label:'منصرف كريات مركزة' },
-  { key:'out_sdp',          label:'منصرف صفيحات' },
-  { key:'disp_exp_blood',   label:'انتهاء صلاحية دم' },
-  { key:'disp_exp_plasma',  label:'انتهاء صلاحية بلازما' },
-  { key:'disp_exp_rdp',     label:'انتهاء صلاحية ك.مركزة' },
-  { key:'disp_exp_sdp',     label:'انتهاء صلاحية صفيحات' },
-  { key:'disp_open',        label:'نظام مفتوح' },
-  { key:'disp_other',       label:'اخري' },
-  { key:'disp_reaction',    label:'تفاعل' },
-  { key:'disp_returned',    label:'مرتجع' },
-  { key:'virology_c',       label:'HCV (فيروس سي)' },
-  { key:'virology_b',       label:'HBV (فيروس ب)' },
-  { key:'virology_i',       label:'HIV (فيروس اي)' },
-  { key:'virology_dollar',  label:'Syphilis (سيليليس)' },
-  { key:'child_inc_collected', label:'وارد تجميع طفل' },
-  { key:'child_inc_regional',  label:'وارد فرع طفل' },
-  { key:'child_out_blood',     label:'منصرف دم طفل' },
-  { key:'child_blood_groups',  label:'فصائل طفل' },
-  { key:'child_compatibility', label:'Compatibility طفل' },
-  { key:'child_disp_exp',      label:'انتهاء صلاحية طفل' },
-  { key:'child_disp_open',     label:'نظام مفتوح طفل' },
-  { key:'child_disp_other',    label:'اخري طفل' },
-  { key:'child_disp_reaction', label:'تفاعل طفل' },
-  { key:'child_disp_returned', label:'مرتجع طفل' },
+  { g:'الجمع والفحص', key:'collect_total',    label:'اجمالي التجميع' },
+  { g:'الجمع والفحص', key:'tested',           label:'المفحوص' },
+  { g:'الجمع والفحص', key:'blood_groups',     label:'مجموع الفصائل' },
+  { g:'الجمع والفحص', key:'compatibility',    label:'Compatibility' },
+  { g:'الجمع والفحص', key:'ct',               label:'C/T' },
+  { g:'المرفوض والمكتمل', key:'refused_fatty',    label:'مرفوضة (دهون)' },
+  { g:'المرفوض والمكتمل', key:'refused_icteric',  label:'مرفوضة (صفراء)' },
+  { g:'المرفوض والمكتمل', key:'refused_all',      label:'اجمالي المرفوض' },
+  { g:'المرفوض والمكتمل', key:'uncompleted',      label:'لم يكتمل' },
+  { g:'المرفوض والمكتمل', key:'donation_therapeutic', label:'تبرع علاجي' },
+  { g:'الوارد', key:'inc_blood',        label:'وارد دم' },
+  { g:'الوارد', key:'inc_plasma',       label:'وارد بلازما' },
+  { g:'الوارد', key:'inc_rdp',          label:'وارد كريات مركزة' },
+  { g:'الوارد', key:'inc_sdp',          label:'وارد صفيحات' },
+  { g:'المنصرف (داخلي)', key:'out_blood_int',    label:'منصرف دم داخلي' },
+  { g:'المنصرف (داخلي)', key:'out_blood_auth',   label:'منصرف دم معتمد' },
+  { g:'المنصرف (داخلي)', key:'out_blood_branch', label:'منصرف دم فرعية' },
+  { g:'المنصرف (داخلي)', key:'out_plasma_int',   label:'منصرف بلازما داخلي' },
+  { g:'المنصرف (داخلي)', key:'out_rdp',          label:'منصرف كريات مركزة' },
+  { g:'المنصرف (داخلي)', key:'out_sdp',          label:'منصرف صفيحات' },
+  { g:'المنصرف (خارجي)', key:'out_blood_ext',    label:'منصرف دم خارجي' },
+  { g:'المنصرف (خارجي)', key:'out_plasma_ext',   label:'منصرف بلازما خارجي' },
+  { g:'الصرف', key:'disp_exp_blood',    label:'انتهاء صلاحية دم' },
+  { g:'الصرف', key:'disp_exp_blood2',   label:'انتهاء صلاحية دم 2' },
+  { g:'الصرف', key:'disp_exp_plasma',   label:'انتهاء صلاحية بلازما' },
+  { g:'الصرف', key:'disp_exp_plasma2',  label:'انتهاء صلاحية بلازما 2' },
+  { g:'الصرف', key:'disp_exp_rdp',      label:'انتهاء صلاحية ك.مركزة' },
+  { g:'الصرف', key:'disp_exp_rdp2',     label:'انتهاء صلاحية ك.مركزة 2' },
+  { g:'الصرف', key:'disp_exp_sdp',      label:'انتهاء صلاحية صفيحات' },
+  { g:'الصرف', key:'disp_exp_sdp2',     label:'انتهاء صلاحية صفيحات 2' },
+  { g:'الصرف', key:'disp_open',         label:'نظام مفتوح' },
+  { g:'الصرف', key:'disp_other',        label:'اخري' },
+  { g:'الصرف', key:'disp_reaction',     label:'تفاعل' },
+  { g:'الصرف', key:'disp_returned',     label:'مرتجع' },
+  { g:'الفيروسات', key:'virology_c',       label:'HCV (فيروس سي)' },
+  { g:'الفيروسات', key:'virology_b',       label:'HBV (فيروس ب)' },
+  { g:'الفيروسات', key:'virology_i',       label:'HIV (فيروس اي)' },
+  { g:'الفيروسات', key:'virology_dollar',  label:'Syphilis (سيليليس)' },
+  { g:'الفيروسات (نسب)', key:'ratio_virus',       label:'نسبة الفيروسات' },
+  { g:'الفيروسات (نسب)', key:'ratio_c',          label:'نسبة HCV' },
+  { g:'الفيروسات (نسب)', key:'ratio_b',          label:'نسبة HBV' },
+  { g:'الفيروسات (نسب)', key:'ratio_i',          label:'نسبة HIV' },
+  { g:'الفيروسات (نسب)', key:'ratio_dollar',     label:'نسبة Syphilis' },
+  { g:'النسب', key:'ratio_refused',       label:'نسبة المرفوض' },
+  { g:'النسب', key:'ratio_uncompleted',   label:'نسبة لم يكتمل' },
+  { g:'النسب', key:'ratio_exp',           label:'نسبة انتهاء الصلاحية' },
+  { g:'النسب', key:'ratio_returned',      label:'نسبة المرتجع' },
+  { g:'النسب', key:'ratio_reaction',      label:'نسبة التفاعل' },
+  { g:'النسب', key:'ratio_open',          label:'نسبة النظام المفتوح' },
+  { g:'النسب', key:'ratio_other',         label:'نسبة الاخري' },
+  { g:'الاطفال', key:'child_inc_collected',  label:'وارد تجميع طفل' },
+  { g:'الاطفال', key:'child_inc_regional',   label:'وارد فرع طفل' },
+  { g:'الاطفال', key:'child_out_blood',      label:'منصرف دم طفل' },
+  { g:'الاطفال', key:'child_blood_groups',   label:'فصائل طفل' },
+  { g:'الاطفال', key:'child_compatibility',  label:'Compatibility طفل' },
+  { g:'الاطفال', key:'child_ct',             label:'C/T طفل' },
+  { g:'الاطفال', key:'child_disp_exp',       label:'انتهاء صلاحية طفل' },
+  { g:'الاطفال', key:'child_disp_open',      label:'نظام مفتوح طفل' },
+  { g:'الاطفال', key:'child_disp_other',     label:'اخري طفل' },
+  { g:'الاطفال', key:'child_disp_reaction',  label:'تفاعل طفل' },
+  { g:'الاطفال', key:'child_disp_returned',  label:'مرتجع طفل' },
+  { g:'الاطفال (نسب)', key:'child_pct_exp',      label:'نسبة ا.ص.طفل' },
+  { g:'الاطفال (نسب)', key:'child_pct_open',     label:'نسبة ن.م.طفل' },
+  { g:'الاطفال (نسب)', key:'child_pct_other',    label:'نسبة اخري طفل' },
+  { g:'الاطفال (نسب)', key:'child_pct_reaction', label:'نسبة تفاعل طفل' },
+  { g:'الاطفال (نسب)', key:'child_pct_returned', label:'نسبة مرتجع طفل' },
 ];
 const _iaSmallFields = [
-  { key:'inc_collected',     label:'وارد تجميع' },
-  { key:'inc_regional',      label:'وارد فرع' },
-  { key:'inc_plasma',        label:'وارد بلازما' },
-  { key:'inc_rdp',           label:'وارد كريات مركزة' },
-  { key:'inc_sdp',           label:'وارد صفيحات' },
-  { key:'out_blood',         label:'منصرف دم' },
-  { key:'out_plasma',        label:'منصرف بلازما' },
-  { key:'out_rdp',           label:'منصرف كريات مركزة' },
-  { key:'out_sdp',           label:'منصرف صفيحات' },
-  { key:'compatibility',     label:'Compatibility' },
-  { key:'blood_groups',      label:'مجموع الفصائل' },
-  { key:'disp_exp_blood',    label:'انتهاء صلاحية دم' },
-  { key:'disp_exp_plasma',   label:'انتهاء صلاحية بلازما' },
-  { key:'disp_exp_rdp',      label:'انتهاء صلاحية ك.مركزة' },
-  { key:'disp_exp_sdp',      label:'انتهاء صلاحية صفيحات' },
-  { key:'disp_open',         label:'نظام مفتوح' },
-  { key:'disp_other',        label:'اخري' },
-  { key:'disp_reaction',     label:'تفاعل' },
-  { key:'disp_returned',     label:'مرتجع' },
-  { key:'child_inc_collected', label:'وارد تجميع طفل' },
-  { key:'child_inc_regional',  label:'وارد فرع طفل' },
-  { key:'child_out_blood',     label:'منصرف دم طفل' },
-  { key:'child_blood_groups',  label:'فصائل طفل' },
-  { key:'child_compatibility', label:'Compatibility طفل' },
-  { key:'child_disp_exp',      label:'انتهاء صلاحية طفل' },
-  { key:'child_disp_open',     label:'نظام مفتوح طفل' },
-  { key:'child_disp_other',    label:'اخري طفل' },
-  { key:'child_disp_reaction', label:'تفاعل طفل' },
-  { key:'child_disp_returned', label:'مرتجع طفل' },
+  { g:'الوارد', key:'inc_collected',  label:'وارد تجميع' },
+  { g:'الوارد', key:'inc_regional',   label:'وارد فرع' },
+  { g:'الوارد', key:'inc_plasma',     label:'وارد بلازما' },
+  { g:'الوارد', key:'inc_rdp',        label:'وارد كريات مركزة' },
+  { g:'الوارد', key:'inc_sdp',        label:'وارد صفيحات' },
+  { g:'المنصرف', key:'out_blood',     label:'منصرف دم' },
+  { g:'المنصرف', key:'out_plasma',    label:'منصرف بلازما' },
+  { g:'المنصرف', key:'out_rdp',       label:'منصرف كريات مركزة' },
+  { g:'المنصرف', key:'out_sdp',       label:'منصرف صفيحات' },
+  { g:'الفحص', key:'compatibility',  label:'Compatibility' },
+  { g:'الفحص', key:'blood_groups',   label:'مجموع الفصائل' },
+  { g:'الفحص', key:'ct',             label:'C/T' },
+  { g:'الصرف', key:'disp_exp_blood',    label:'انتهاء صلاحية دم' },
+  { g:'الصرف', key:'disp_exp_plasma',   label:'انتهاء صلاحية بلازما' },
+  { g:'الصرف', key:'disp_exp_rdp',      label:'انتهاء صلاحية ك.مركزة' },
+  { g:'الصرف', key:'disp_exp_sdp',      label:'انتهاء صلاحية صفيحات' },
+  { g:'الصرف', key:'disp_open',         label:'نظام مفتوح' },
+  { g:'الصرف', key:'disp_other',        label:'اخري' },
+  { g:'الصرف', key:'disp_reaction',     label:'تفاعل' },
+  { g:'الصرف', key:'disp_returned',     label:'مرتجع' },
+  { g:'الاطفال', key:'child_inc_collected',  label:'وارد تجميع طفل' },
+  { g:'الاطفال', key:'child_inc_regional',   label:'وارد فرع طفل' },
+  { g:'الاطفال', key:'child_out_blood',      label:'منصرف دم طفل' },
+  { g:'الاطفال', key:'child_blood_groups',   label:'فصائل طفل' },
+  { g:'الاطفال', key:'child_compatibility',  label:'Compatibility طفل' },
+  { g:'الاطفال', key:'child_disp_exp',       label:'انتهاء صلاحية طفل' },
+  { g:'الاطفال', key:'child_disp_open',      label:'نظام مفتوح طفل' },
+  { g:'الاطفال', key:'child_disp_other',     label:'اخري طفل' },
+  { g:'الاطفال', key:'child_disp_reaction',  label:'تفاعل طفل' },
+  { g:'الاطفال', key:'child_disp_returned',  label:'مرتجع طفل' },
+  { g:'النسب', key:'pct_exp',      label:'نسبة ا.ص.' },
+  { g:'النسب', key:'pct_open',     label:'نسبة ن.م.' },
+  { g:'النسب', key:'pct_other',    label:'نسبة اخري' },
+  { g:'النسب', key:'pct_reaction', label:'نسبة تفاعل' },
+  { g:'النسب', key:'pct_returned', label:'نسبة مرتجع' },
 ];
 const _iaDispFields = [
   { key:'A+', label:'A+' }, { key:'A-', label:'A-' },
@@ -7672,6 +7701,26 @@ const _iaDispFields = [
   { key:'O+', label:'O+' }, { key:'O-', label:'O-' },
   { key:'AB+', label:'AB+' }, { key:'AB-', label:'AB-' },
 ];
+function _iaRenderFieldCheckboxes(fields, cls, accentColor) {
+  const groups = [];
+  for (const f of fields) {
+    const g = f.g || '';
+    let grp = groups.find(x => x.name === g);
+    if (!grp) { grp = { name: g, items: [] }; groups.push(grp); }
+    grp.items.push(f);
+  }
+  let h = '';
+  for (const grp of groups) {
+    if (grp.name) h += `<div style="width:100%;font-size:11px;font-weight:700;color:${accentColor};margin:6px 0 3px;opacity:.8;border-bottom:1px solid var(--border);padding-bottom:2px">${esc(grp.name)}</div>`;
+    h += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+    for (const f of grp.items) {
+      h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="${cls}" value="${f.key}" checked style="accent-color:${accentColor};width:13px;height:13px">${esc(f.label)} <span style="color:#999;font-size:9px">${f.key}</span></label>`;
+    }
+    h += '</div>';
+  }
+  return h;
+}
+
 function _iaGetCheckedCols(section) {
   const cls = section === 'big' ? '.iaBigColChk' : section === 'small' ? '.iaSmallColChk' : '.iaDispColChk';
   const els = document.querySelectorAll(cls);
@@ -7835,13 +7884,13 @@ async function renderIndicatorAnalysis() {
     </div><div class="card-body" id="iaPickerBody" style="padding:14px;display:none">
       <div style="margin-bottom:14px">
         <div style="font-size:13px;font-weight:700;color:#1a237e;margin-bottom:8px"><i class="fa-solid fa-building-columns" style="font-size:8px;margin-left:4px"></i>ارشيف التجميعي (${_iaBigFields.length} حقل)</div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaBigFields.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="iaBigColChk" value="${c.key}" checked style="accent-color:#1a237e;width:13px;height:13px">${esc(c.label)} <span style="color:#999;font-size:9px">${c.key}</span></label>`).join('')}</div>
+        ${_iaRenderFieldCheckboxes(_iaBigFields, 'iaBigColChk', '#1a237e')}
       </div>
-      <div style="margin-bottom:14px">
+      <div style="margin-bottom:14px;padding-top:12px;border-top:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:#4a148c;margin-bottom:8px"><i class="fa-solid fa-warehouse" style="font-size:8px;margin-left:4px"></i>ارشيف التخزيني (${_iaSmallFields.length} حقل)</div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaSmallFields.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="iaSmallColChk" value="${c.key}" checked style="accent-color:#4a148c;width:13px;height:13px">${esc(c.label)} <span style="color:#999;font-size:9px">${c.key}</span></label>`).join('')}</div>
+        ${_iaRenderFieldCheckboxes(_iaSmallFields, 'iaSmallColChk', '#4a148c')}
       </div>
-      <div style="margin-bottom:14px">
+      <div style="margin-bottom:14px;padding-top:12px;border-top:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:#00695c;margin-bottom:8px"><i class="fa-solid fa-droplet" style="font-size:8px;margin-left:4px"></i>ارشيف الفصائل</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaDispFields.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="iaDispColChk" value="${c.key}" checked style="accent-color:#00695c;width:13px;height:13px">${esc(c.label)}</label>`).join('')}</div>
       </div>
