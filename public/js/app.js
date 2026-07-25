@@ -4644,6 +4644,37 @@ async function renderMonthlyIndicators(presetType) {
         <select class="search-input" id="indHospitalFilter" data-change="renderMonthlyIndicators">
           ${isRestricted ? hospitals.filter(h => h.governorate === myGov).map(h => `<option value="${h.id}">${h.name}</option>`).join('') : '<option value="">كل المستشفيات</option>' + hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('')}
         </select>
+        <label style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap">
+          <input type="checkbox" id="indCompareMode" data-change="onIndCompareToggle" style="accent-color:#e65100;width:15px;height:15px">
+          مقارنة بين فترتين
+        </label>
+      </div>
+      <div id="indCompareSection" style="display:none;background:linear-gradient(135deg,#e3f2fd,#f3e5f5);border:1px solid #bbdefb;border-radius:10px;padding:12px 16px;margin-bottom:12px">
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start">
+          <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:10px">
+            <div style="font-weight:700;margin-bottom:8px;color:#1a237e;font-size:13px"><i class="fas fa-calendar"></i> الفترة الأولى (الأقدم)</div>
+            <div style="display:flex;gap:8px">
+              <input type="number" class="form-control" id="indCmpYear1" value="${now.getUTCFullYear()-1}" style="width:90px;height:32px;font-size:12px">
+              <select class="form-control" id="indCmpMonth1" style="width:110px;height:32px;font-size:12px">
+                <option value="">سنوي</option>
+                ${MONTHS_AR.map((m, i) => `<option value="${i+1}">${m}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;padding-top:24px;font-size:20px;color:#1a237e;font-weight:700">VS</div>
+          <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:10px">
+            <div style="font-weight:700;margin-bottom:8px;color:#b71c1c;font-size:13px"><i class="fas fa-calendar"></i> الفترة الثانية (الأحدث)</div>
+            <div style="display:flex;gap:8px">
+              <input type="number" class="form-control" id="indCmpYear2" value="${now.getUTCFullYear()}" style="width:90px;height:32px;font-size:12px">
+              <select class="form-control" id="indCmpMonth2" style="width:110px;height:32px;font-size:12px">
+                <option value="">سنوي</option>
+                ${MONTHS_AR.map((m, i) => `<option value="${i+1}" ${i === prevMonth ? 'selected' : ''}>${m}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="indNormalFilter" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
         <input type="number" class="search-input" id="indYearFilter" value="${now.getUTCFullYear()}" style="width:80px" data-change="renderMonthlyIndicators">
         <select class="search-input" id="indMonthFilter" data-change="renderMonthlyIndicators">
           <option value="">الشهرين الأخيرين</option>
@@ -4688,13 +4719,18 @@ async function renderMonthlyIndicators(presetType) {
       window.onMonIndGovChange = fillHosp;
       fillHosp();
     }
-    const filtMonth = document.getElementById('indMonthFilter').value;
-    const params = new URLSearchParams({ year: document.getElementById('indYearFilter').value });
-    if (filtMonth) params.set('month', filtMonth);
-    const hId = document.getElementById('indHospitalFilter').value;
-    if (hId) params.set('hospitalId', hId);
-    const data = await api('GET', '/monthly-indicators?' + params.toString());
-    renderIndicatorsTable(hospitals, data, canEdit, presetType);
+    const isCompare = document.getElementById('indCompareMode')?.checked;
+    if (isCompare) {
+      await loadCompareData(hospitals, canEdit, presetType);
+    } else {
+      const filtMonth = document.getElementById('indMonthFilter')?.value;
+      const params = new URLSearchParams({ year: document.getElementById('indYearFilter')?.value || '' });
+      if (filtMonth) params.set('month', filtMonth);
+      const hId = document.getElementById('indHospitalFilter')?.value;
+      if (hId) params.set('hospitalId', hId);
+      const data = await api('GET', '/monthly-indicators?' + params.toString());
+      renderIndicatorsTable(hospitals, data, canEdit, presetType);
+    }
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
 }
 
@@ -4707,6 +4743,160 @@ function indGovFilterChanged() {
   hospEl.innerHTML = '<option value="">كل المستشفيات</option>' + filtered.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
   if (gov && curVal && !filtered.some(h => h.id == curVal)) hospEl.value = '';
   renderMonthlyIndicators();
+}
+
+function onIndCompareToggle() {
+  const cmp = document.getElementById('indCompareMode')?.checked;
+  const cmpSection = document.getElementById('indCompareSection');
+  const normFilter = document.getElementById('indNormalFilter');
+  if (cmpSection) cmpSection.style.display = cmp ? '' : 'none';
+  if (normFilter) normFilter.style.display = cmp ? 'none' : 'flex';
+  renderMonthlyIndicators();
+}
+
+async function loadCompareData(hospitals, canEdit, presetType) {
+  const wrap = document.getElementById('indTableWrap');
+  if (!wrap) return;
+  const typeFilter = document.getElementById('indTypeFilter')?.value || presetType || '';
+  const year1 = document.getElementById('indCmpYear1')?.value || '';
+  const year2 = document.getElementById('indCmpYear2')?.value || '';
+  const month1 = document.getElementById('indCmpMonth1')?.value || '';
+  const month2 = document.getElementById('indCmpMonth2')?.value || '';
+  if (!year1 || !year2) { wrap.innerHTML = '<div class="empty-msg">اختر سنتين للمقارنة</div>'; return; }
+  const hId = document.getElementById('indHospitalFilter')?.value;
+  const gov = document.getElementById('indGovFilter')?.value || '';
+  const months = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
+  const pLabel1 = year1 + (month1 ? '/' + months[parseInt(month1)-1] : ' (سنوي)');
+  const pLabel2 = year2 + (month2 ? '/' + months[parseInt(month2)-1] : ' (سنوي)');
+  async function fetchPeriod(year, month) {
+    const params = new URLSearchParams({ year });
+    if (month) params.set('month', month);
+    if (hId) params.set('hospitalId', hId);
+    return api('GET', '/monthly-indicators?' + params.toString());
+  }
+  let p1Data, p2Data;
+  try {
+    [p1Data, p2Data] = await Promise.all([fetchPeriod(year1, month1), fetchPeriod(year2, month2)]);
+  } catch (e) { wrap.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; return; }
+  let showHospitals = hospitals;
+  if (hId) showHospitals = hospitals.filter(h => h.id == hId);
+  else if (typeFilter) showHospitals = hospitals.filter(h => h.type === typeFilter);
+  else if (gov) showHospitals = hospitals.filter(h => h.governorate === gov);
+  const govMap = new Map();
+  showHospitals.forEach(h => {
+    const g = h.governorate || 'غير محدد';
+    if (!govMap.has(g)) govMap.set(g, []);
+    govMap.get(g).push(h);
+  });
+  function aggHosp(hospId, dataArr, computeFn) {
+    const records = dataArr.filter(r => r.hospital_id == hospId);
+    if (!records.length) return { raw: {}, formulas: computeFn({}) };
+    const merged = {};
+    records.forEach(r => {
+      const d = r.data || {};
+      for (const k in d) {
+        merged[k] = (Number(merged[k]) || 0) + (Number(d[k]) || 0);
+      }
+    });
+    return { raw: merged, formulas: computeFn(merged) };
+  }
+  function getVal(hospAgg, c) {
+    if (c.formula) return (hospAgg.formulas[c.key] || 0);
+    return (hospAgg.raw[c.key] || 0);
+  }
+  function renderCompareTable(colDefs, label, computeFn, type) {
+    const filteredCols = type === 'big' ? miGetFilteredCols(colDefs, MI_PICKER_BIG) : miGetFilteredCols(colDefs, MI_PICKER_SMALL);
+    if (!filteredCols.length || filteredCols.every(c => c.key === 'governorate' || c.key === 'hospital_name')) return '';
+    const dynamicCols = filteredCols.filter(c => c.key !== 'governorate' && c.key !== 'hospital_name');
+    if (!dynamicCols.length) return '';
+    const grpColors = {
+      'التجميع':'#6a90b8','إجمالي الوارد':'#2e7d32','إجمالي المنصرف':'#c8a050',
+      'الفصائل والتوافق':'#1565c0','عينات غير مفحوصة':'#8a7aa8','الإعدامات':'#e65100',
+      'تحليل نسب المؤشرات':'#00695c','مؤشرات وحدات دم الأطفال':'#ad1457',
+      'النسب المئوية للاعدام - أطفال':'#c2185b','النسب المئوية للاعدام':'#c2185b',
+      'الوارد':'#2e7d32','المنصرف':'#6a1b9a','الفحص':'#1565c0','الصرف':'#e65100',
+      'الفيروسات':'#d32f2f','الفيروسات (نسب)':'#e53935','النسب':'#00695c',
+      'الاطفال':'#ad1457','الاطفال (نسب)':'#c2185b'
+    };
+    const groups = [];
+    for (const c of dynamicCols) {
+      const g = c.group || '';
+      let grp = groups.find(x => x.name === g);
+      if (!grp) { grp = { name: g, items: [] }; groups.push(grp); }
+      grp.items.push(c);
+    }
+    let html = `<h3 style="margin:24px 0 10px;font-size:16px;color:#2c3e50;border-right:4px solid #dc3545;padding-right:10px">${label}</h3>`;
+    html += '<div style="overflow-x:auto"><table class="ind-table" style="width:100%;border-collapse:collapse;font-size:13px"><thead>';
+    html += `<tr>
+      <th rowspan="3" style="background:#263238;color:#fff;padding:6px 8px;position:sticky;right:0;z-index:2;min-width:140px">المحافظة / بنك الدم</th>
+      <th colspan="${dynamicCols.length}" style="background:#1a237e;color:#fff;text-align:center;padding:4px;font-size:13px">${esc(pLabel1)}</th>
+      <th colspan="${dynamicCols.length}" style="background:#b71c1c;color:#fff;text-align:center;padding:4px;font-size:13px">${esc(pLabel2)}</th>
+      <th rowspan="3" style="background:#333;color:#fff;padding:4px 8px;min-width:60px;text-align:center;font-size:11px">التغيير</th>
+    </tr><tr>`;
+    for (const grp of groups) {
+      const bg = grpColors[grp.name] || '#455a64';
+      html += `<th colspan="${grp.items.length}" style="background:${bg};color:#fff;text-align:center;padding:3px 4px;font-size:11px;border:1px solid rgba(255,255,255,.2)">${esc(grp.name)}</th>`;
+    }
+    for (const grp of groups) {
+      const bg = grpColors[grp.name] || '#455a64';
+      html += `<th colspan="${grp.items.length}" style="background:${bg};color:#fff;text-align:center;padding:3px 4px;font-size:11px;border:1px solid rgba(255,255,255,.2)">${esc(grp.name)}</th>`;
+    }
+    html += '</tr><tr>';
+    for (const c of dynamicCols) html += `<th style="background:#1a237e;color:#cfd8dc;padding:3px 6px;font-size:10px;min-width:55px">${esc(c.label)}</th>`;
+    for (const c of dynamicCols) html += `<th style="background:#b71c1c;color:#ffcdd2;padding:3px 6px;font-size:10px;min-width:55px">${esc(c.label)}</th>`;
+    html += '</tr></thead><tbody>';
+    let grand1 = {}, grand2 = {};
+    for (const c of dynamicCols) { grand1[c.key] = 0; grand2[c.key] = 0; }
+    const sortedGovs = [...govMap.entries()].sort((a,b) => a[0].localeCompare(b[0], 'ar'));
+    for (const [govName, hosps] of sortedGovs) {
+      let gov1 = {}, gov2 = {};
+      for (const c of dynamicCols) { gov1[c.key] = 0; gov2[c.key] = 0; }
+      const hospRows = [];
+      for (const h of hosps) {
+        const d1 = aggHosp(h.id, p1Data, computeFn);
+        const d2 = aggHosp(h.id, p2Data, computeFn);
+        for (const c of dynamicCols) {
+          gov1[c.key] += (Number(getVal(d1, c)) || 0);
+          gov2[c.key] += (Number(getVal(d2, c)) || 0);
+        }
+        hospRows.push({ id: h.id, name: h.name, d1, d2 });
+      }
+      for (const c of dynamicCols) { grand1[c.key] += gov1[c.key]; grand2[c.key] += gov2[c.key]; }
+      html += `<tr style="background:#e8eaf6;font-weight:700;border-bottom:2px solid #9fa8da">`;
+      html += `<td style="padding:6px 8px;position:sticky;right:0;background:inherit;z-index:1;font-weight:700">${esc(govName)}</td>`;
+      for (const c of dynamicCols) html += `<td style="text-align:center;padding:3px 6px;font-size:12px">${_iaFmt(gov1[c.key])}</td>`;
+      for (const c of dynamicCols) html += `<td style="text-align:center;padding:3px 6px;font-size:12px;font-weight:700">${_iaFmt(gov2[c.key])}</td>`;
+      { let t1=0,t2=0; for(const c of dynamicCols){t1+=Number(gov1[c.key])||0;t2+=Number(gov2[c.key])||0;} html += _iaDeltaHtml(t1,t2); }
+      html += '</tr>';
+      for (const hr of hospRows) {
+        html += `<tr>`;
+        html += `<td style="padding:4px 8px;position:sticky;right:0;background:inherit;z-index:1;padding-right:24px;font-size:12px;color:var(--text-muted)">${esc(hr.name)}</td>`;
+        for (const c of dynamicCols) {
+          html += `<td style="text-align:center;padding:3px 6px;font-size:11px">${_iaFmt(getVal(hr.d1, c))}</td>`;
+        }
+        for (const c of dynamicCols) {
+          html += `<td style="text-align:center;padding:3px 6px;font-size:11px">${_iaFmt(getVal(hr.d2, c))}</td>`;
+        }
+        html += '<td style="text-align:center;color:#ccc">-</td></tr>';
+      }
+    }
+    html += `<tr style="background:#263238;color:#fff;font-weight:700;border-bottom:2px solid #555">`;
+    html += `<td style="padding:6px 8px;position:sticky;right:0;background:#263238;z-index:1;color:#fff">اجمالي الهيئة</td>`;
+    for (const c of dynamicCols) html += `<td style="text-align:center;padding:3px 6px;font-size:12px">${_iaFmt(grand1[c.key])}</td>`;
+    for (const c of dynamicCols) html += `<td style="text-align:center;padding:3px 6px;font-size:12px;font-weight:700">${_iaFmt(grand2[c.key])}</td>`;
+    { let t1=0,t2=0; for(const c of dynamicCols){t1+=Number(grand1[c.key])||0;t2+=Number(grand2[c.key])||0;} html += _iaDeltaHtml(t1,t2); }
+    html += '</tr>';
+    html += '</tbody></table></div>';
+    return html;
+  }
+  let html = '';
+  if (!typeFilter || typeFilter === 'تجميعي') {
+    html += renderCompareTable(BIG_COL_DEFS, 'التجميعي - مؤشرات أداء البنوك التجميعية', computeBigFormulas, 'big');
+  }
+  if (!typeFilter || typeFilter === 'تخزيني') {
+    html += renderCompareTable(SMALL_COL_DEFS, 'التخزيني - مؤشرات أداء البنوك التخزينية', computeSmallFormulas, 'child');
+  }
+  wrap.innerHTML = html || '<div class="empty-msg">لا توجد بيانات للمقارنة</div>';
 }
 
 async function saveMonthlyIndicatorDirect() {
@@ -4992,19 +5182,24 @@ function miTogglePicker(bodyId, chevronId) {
 function miOnPickerChange(el) {
   const storageKey = el?.dataset?.storage || MI_PICKER_BIG;
   miSavePickerState(storageKey);
-  const wrap = document.getElementById('indTableWrap');
-  if (!wrap) return;
-  const hospitals = window._monIndHospitals || [];
-  const canEdit = hasPerm('monthly_indicators', 'edit');
-  const presetType = document.getElementById('indTypeFilter')?.value || '';
-  const filtMonth = document.getElementById('indMonthFilter')?.value;
-  const params = new URLSearchParams({ year: document.getElementById('indYearFilter')?.value || '' });
-  if (filtMonth) params.set('month', filtMonth);
-  const hId = document.getElementById('indHospitalFilter')?.value;
-  if (hId) params.set('hospitalId', hId);
-  api('GET', '/monthly-indicators?' + params.toString()).then(data => {
-    renderIndicatorsTable(hospitals, data, canEdit, presetType);
-  }).catch(() => {});
+  const isCompare = document.getElementById('indCompareMode')?.checked;
+  if (isCompare) {
+    renderMonthlyIndicators();
+  } else {
+    const wrap = document.getElementById('indTableWrap');
+    if (!wrap) return;
+    const hospitals = window._monIndHospitals || [];
+    const canEdit = hasPerm('monthly_indicators', 'edit');
+    const presetType = document.getElementById('indTypeFilter')?.value || '';
+    const filtMonth = document.getElementById('indMonthFilter')?.value;
+    const params = new URLSearchParams({ year: document.getElementById('indYearFilter')?.value || '' });
+    if (filtMonth) params.set('month', filtMonth);
+    const hId = document.getElementById('indHospitalFilter')?.value;
+    if (hId) params.set('hospitalId', hId);
+    api('GET', '/monthly-indicators?' + params.toString()).then(data => {
+      renderIndicatorsTable(hospitals, data, canEdit, presetType);
+    }).catch(() => {});
+  }
 }
 
 function makeGroupHeader(colDefs) {
