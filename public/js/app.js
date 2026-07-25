@@ -7623,24 +7623,6 @@ function _iaBuildGovGroups(p1Data, p2Data, allGovs) {
   return { all, govG: [...govG.entries()].sort((a,b) => a[0].localeCompare(b[0], 'ar')), p1M: new Map(p1Data.map(h => [h.hospital_id, h.data||{}])), p2M: new Map(p2Data.map(h => [h.hospital_id, h.data||{}])) };
 }
 
-const _iaOptions = [
-  { id:'ia_chk_cmp',    label:'المقارنة الرئيسية',       type:'big',   icon:'fa-table' },
-  { id:'ia_chk_virus',   label:'نسب الفيروسات',          type:'big',   icon:'fa-virus' },
-  { id:'ia_chk_short',   label:'العجز والمستهدف',        type:'big',   icon:'fa-chart-bar' },
-  { id:'ia_chk_disp_b',  label:'مؤشرات الإعدام (تجميعي)', type:'big',   icon:'fa-trash-can' },
-  { id:'ia_chk_blood',   label:'منصرف الفصائل',          type:'big',   icon:'fa-droplet' },
-  { id:'ia_chk_smov',    label:'نظرة عامة التخزيني',      type:'small', icon:'fa-warehouse' },
-  { id:'ia_chk_ct',      label:'نسبة C/T',               type:'small', icon:'fa-scale-balanced' },
-  { id:'ia_chk_disp_s',  label:'مؤشرات الإعدام (تخزيني)', type:'small', icon:'fa-trash-can' },
-  { id:'ia_chk_chart',   label:'الرسم البياني',           type:'all',   icon:'fa-chart-pie' },
-  { id:'ia_chk_analysis', label:'التحليل التلقائي',        type:'all',   icon:'fa-clipboard-check' },
-];
-function _iaGetOpts() {
-  const o = {};
-  for (const opt of _iaOptions) { const el = document.getElementById(opt.id); o[opt.id] = el ? el.checked : true; }
-  return o;
-}
-
 async function renderIndicatorAnalysis() {
   pushNav(renderIndicatorAnalysis);
   const c = document.getElementById('mainContent');
@@ -7653,11 +7635,8 @@ async function renderIndicatorAnalysis() {
   if (Array.isArray(govs)) govs.forEach(g => { const n = typeof g === 'string' ? g : g.name; govOpts += `<option value="${esc(n)}">${esc(n)}</option>`; });
   let hospOpts = '<option value="">كل المستشفيات</option>';
   if (Array.isArray(hospList)) hospList.forEach(h => { hospOpts += `<option value="${h.id}">${esc(h.name)} (${esc(h.governorate)})</option>`; });
-  const bigOpts = _iaOptions.filter(o => o.type === 'big');
-  const smallOpts = _iaOptions.filter(o => o.type === 'small');
-  const commonOpts = _iaOptions.filter(o => o.type === 'all');
-  function chkRow(o) { return `<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap;transition:all .15s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" id="${o.id}" checked style="accent-color:var(--primary);width:16px;height:16px"><i class="fa-solid ${o.icon}" style="color:var(--primary);font-size:12px"></i>${o.label}</label>`; }
   c.innerHTML = `
+    <div style="margin-bottom:16px"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> رجوع</button></div>
     <div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#ff6f00,#ff8f00);color:#fff">
       <h2 style="margin:0;font-size:18px"><i class="fa-solid fa-magnifying-glass-chart"></i> تحليل مؤشرات الأداء</h2>
     </div><div class="card-body">
@@ -7741,18 +7720,10 @@ async function loadIndicatorAnalysis() {
     if (hosp) params.set('hospitalId', hosp);
     const [result, allGovsRaw] = await Promise.all([api('GET', '/indicator-analysis?' + params.toString()), api('GET', '/governorates')]);
     const allGovs = allGovsRaw.map(g => typeof g === 'string' ? g : g.name);
-    const dispCols = _iaGetCols('disp');
-    const smallCols = _iaGetCols('small');
     const iaType = document.getElementById('iaType')?.value || 'all';
     const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
     const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
     let tablesHtml = '';
-    if (iaType !== 'small' && result.big && dispCols.length) {
-      tablesHtml += _iaBloodType(result.big.period1, result.big.period2, pL2, allGovs, dispCols);
-    }
-    if (iaType !== 'big' && result.small && smallCols.length) {
-      tablesHtml += _iaSmallSection(result.small.period1, result.small.period2, pL1, pL2, allGovs, smallCols);
-    }
     if (!tablesHtml) tablesHtml = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
     wrap.innerHTML = tablesHtml;
   } catch (err) { wrap.innerHTML = `<div style="color:red;padding:20px;text-align:center">خطأ: ${esc(err.message||'')}</div>`; }
