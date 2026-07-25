@@ -7590,40 +7590,102 @@ function _iaCalcSmall(d) {
 function _iaPct(num, den) { return den ? ((num / den) * 100).toFixed(2) : '0.00'; }
 function _iaFmt(v) { if (v === 0 || v === null || v === undefined) return '0'; if (typeof v === 'number') return v % 1 !== 0 ? v.toFixed(2) : v.toLocaleString('ar-EG'); return String(v); }
 
-const _iaSmallCols = [
-  { key:'inc',     label:'وارد',           col:2 },
-  { key:'out',     label:'المنصرف',        col:2 },
-  { key:'compat',  label:'Compatibility', col:1 },
-  { key:'vtot',    label:'اجمالي الفيروسات', col:1 },
-  { key:'exp',     label:'انتهاء صلاحية',  col:1 },
-  { key:'ret',     label:'مرتجع',         col:1 },
-  { key:'react',   label:'تفاعل',         col:1 },
-  { key:'open',    label:'نظام مفتوح',    col:1 },
-  { key:'other',   label:'اخري',          col:1 },
+const _iaBigFields = [
+  { key:'collect_total',    label:'اجمالي التجميع' },
+  { key:'tested',           label:'المفحوص' },
+  { key:'blood_groups',     label:'مجموع الفصائل' },
+  { key:'compatibility',    label:'Compatibility' },
+  { key:'refused_fatty',    label:'مرفوضة (دهون)' },
+  { key:'refused_icteric',  label:'مرفوضة (صفراء)' },
+  { key:'refused_all',      label:'اجمالي المرفوض' },
+  { key:'uncompleted',      label:'لم يكتمل' },
+  { key:'donation_therapeutic', label:'تبرع علاجي' },
+  { key:'inc_blood',        label:'وارد دم' },
+  { key:'inc_plasma',       label:'وارد بلازما' },
+  { key:'inc_rdp',          label:'وارد كريات مركزة' },
+  { key:'inc_sdp',          label:'وارد صفيحات' },
+  { key:'out_blood_auth',   label:'منصرف دم معتمد' },
+  { key:'out_blood_branch', label:'منصرف دم فرعية' },
+  { key:'out_blood_ext',    label:'منصرف دم خارجي' },
+  { key:'out_blood_int',    label:'منصرف دم داخلي' },
+  { key:'out_plasma_ext',   label:'منصرف بلازما خارجي' },
+  { key:'out_plasma_int',   label:'منصرف بلازما داخلي' },
+  { key:'out_rdp',          label:'منصرف كريات مركزة' },
+  { key:'out_sdp',          label:'منصرف صفيحات' },
+  { key:'disp_exp_blood',   label:'انتهاء صلاحية دم' },
+  { key:'disp_exp_plasma',  label:'انتهاء صلاحية بلازما' },
+  { key:'disp_exp_rdp',     label:'انتهاء صلاحية ك.مركزة' },
+  { key:'disp_exp_sdp',     label:'انتهاء صلاحية صفيحات' },
+  { key:'disp_open',        label:'نظام مفتوح' },
+  { key:'disp_other',       label:'اخري' },
+  { key:'disp_reaction',    label:'تفاعل' },
+  { key:'disp_returned',    label:'مرتجع' },
+  { key:'virology_c',       label:'HCV (فيروس سي)' },
+  { key:'virology_b',       label:'HBV (فيروس ب)' },
+  { key:'virology_i',       label:'HIV (فيروس اي)' },
+  { key:'virology_dollar',  label:'Syphilis (سيليليس)' },
+  { key:'child_inc_collected', label:'وارد تجميع طفل' },
+  { key:'child_inc_regional',  label:'وارد فرع طفل' },
+  { key:'child_out_blood',     label:'منصرف دم طفل' },
+  { key:'child_blood_groups',  label:'فصائل طفل' },
+  { key:'child_compatibility', label:'Compatibility طفل' },
+  { key:'child_disp_exp',      label:'انتهاء صلاحية طفل' },
+  { key:'child_disp_open',     label:'نظام مفتوح طفل' },
+  { key:'child_disp_other',    label:'اخري طفل' },
+  { key:'child_disp_reaction', label:'تفاعل طفل' },
+  { key:'child_disp_returned', label:'مرتجع طفل' },
 ];
-const _iaDispCols = [
-  { key:'a_pos', label:'A+' },
-  { key:'a_neg', label:'A-' },
-  { key:'b_pos', label:'B+' },
-  { key:'b_neg', label:'B-' },
-  { key:'o_pos', label:'O+' },
-  { key:'o_neg', label:'O-' },
-  { key:'ab_pos', label:'AB+' },
-  { key:'ab_neg', label:'AB-' },
-  { key:'total', label:'المجموع' },
+const _iaSmallFields = [
+  { key:'inc_collected',     label:'وارد تجميع' },
+  { key:'inc_regional',      label:'وارد فرع' },
+  { key:'inc_plasma',        label:'وارد بلازما' },
+  { key:'inc_rdp',           label:'وارد كريات مركزة' },
+  { key:'inc_sdp',           label:'وارد صفيحات' },
+  { key:'out_blood',         label:'منصرف دم' },
+  { key:'out_plasma',        label:'منصرف بلازما' },
+  { key:'out_rdp',           label:'منصرف كريات مركزة' },
+  { key:'out_sdp',           label:'منصرف صفيحات' },
+  { key:'compatibility',     label:'Compatibility' },
+  { key:'blood_groups',      label:'مجموع الفصائل' },
+  { key:'disp_exp_blood',    label:'انتهاء صلاحية دم' },
+  { key:'disp_exp_plasma',   label:'انتهاء صلاحية بلازما' },
+  { key:'disp_exp_rdp',      label:'انتهاء صلاحية ك.مركزة' },
+  { key:'disp_exp_sdp',      label:'انتهاء صلاحية صفيحات' },
+  { key:'disp_open',         label:'نظام مفتوح' },
+  { key:'disp_other',        label:'اخري' },
+  { key:'disp_reaction',     label:'تفاعل' },
+  { key:'disp_returned',     label:'مرتجع' },
+  { key:'child_inc_collected', label:'وارد تجميع طفل' },
+  { key:'child_inc_regional',  label:'وارد فرع طفل' },
+  { key:'child_out_blood',     label:'منصرف دم طفل' },
+  { key:'child_blood_groups',  label:'فصائل طفل' },
+  { key:'child_compatibility', label:'Compatibility طفل' },
+  { key:'child_disp_exp',      label:'انتهاء صلاحية طفل' },
+  { key:'child_disp_open',     label:'نظام مفتوح طفل' },
+  { key:'child_disp_other',    label:'اخري طفل' },
+  { key:'child_disp_reaction', label:'تفاعل طفل' },
+  { key:'child_disp_returned', label:'مرتجع طفل' },
 ];
-
-function _iaGetCols(prefix) {
-  const cls = prefix === 'disp' ? '.iaDispColChk' : '.iaSmallColChk';
+const _iaDispFields = [
+  { key:'A+', label:'A+' }, { key:'A-', label:'A-' },
+  { key:'B+', label:'B+' }, { key:'B-', label:'B-' },
+  { key:'O+', label:'O+' }, { key:'O-', label:'O-' },
+  { key:'AB+', label:'AB+' }, { key:'AB-', label:'AB-' },
+];
+function _iaGetCheckedCols(section) {
+  const cls = section === 'big' ? '.iaBigColChk' : section === 'small' ? '.iaSmallColChk' : '.iaDispColChk';
   const els = document.querySelectorAll(cls);
-  if (!els.length) return (prefix === 'disp' ? _iaDispCols : _iaSmallCols).map(c => c.key);
+  if (!els.length) return [];
   return Array.from(els).filter(e => e.checked).map(e => e.value);
 }
+function _iaGetAllCheckedCols() {
+  return [..._iaGetCheckedCols('big'), ..._iaGetCheckedCols('small'), ..._iaGetCheckedCols('disp')];
+}
 function iaPickerSelectAll() {
-  document.querySelectorAll('.iaDispColChk').forEach(c => c.checked = true);
+  document.querySelectorAll('.iaBigColChk,.iaSmallColChk,.iaDispColChk').forEach(c => c.checked = true);
 }
 function iaPickerClearAll() {
-  document.querySelectorAll('.iaDispColChk').forEach(c => c.checked = false);
+  document.querySelectorAll('.iaBigColChk,.iaSmallColChk,.iaDispColChk').forEach(c => c.checked = false);
 }
 function toggleIaPicker() {
   const body = document.getElementById('iaPickerBody');
@@ -7633,36 +7695,10 @@ function toggleIaPicker() {
   body.style.display = show ? '' : 'none';
   if (chevron) chevron.style.transform = show ? 'rotate(180deg)' : '';
 }
-const _iaSummaryBigCols = [
-  { key:'ct',    label:'التجميع' },
-  { key:'ts',    label:'المفحوص' },
-  { key:'rf',    label:'مرفوضة' },
-  { key:'un',    label:'لم يكتمل' },
-  { key:'dt',    label:'تبرع علاجي' },
-  { key:'vt',    label:'فيروسات' },
-  { key:'hc',    label:'HCV' },
-  { key:'hb',    label:'HBV' },
-  { key:'hi',    label:'HIV' },
-  { key:'hs',    label:'Syphilis' },
-];
-const _iaSummarySmallCols = [
-  { key:'inc',    label:'وارد' },
-  { key:'out',    label:'المنصرف' },
-  { key:'compat', label:'Compatibility' },
-  { key:'vt',     label:'فيروسات' },
-  { key:'hc',     label:'HCV' },
-  { key:'hb',     label:'HBV' },
-  { key:'hi',     label:'HIV' },
-  { key:'hs',     label:'Syphilis' },
-  { key:'exp',    label:'انتهاء صلاحية' },
-  { key:'ret',    label:'مرتجع' },
-  { key:'react',  label:'تفاعل' },
-  { key:'open',   label:'نظام مفتوح' },
-];
-function _iaSumRows(data, calcFn, cols) {
+function _iaSumRows(data, cols) {
   const s = {};
   for (const c of cols) s[c.key] = 0;
-  for (const h of data) { const d = calcFn(h.data||{}); for (const c of cols) s[c.key] += (d[c.key]||0); }
+  for (const h of data) { const d = h.data||{}; for (const c of cols) s[c.key] += (Number(d[c.key])||0); }
   return s;
 }
 function _iaDeltaHtml(v1, v2) {
@@ -7672,14 +7708,13 @@ function _iaDeltaHtml(v1, v2) {
   const sign = d > 0 ? '+' : '';
   return `<td style="text-align:center;color:${color};font-weight:600;font-size:12px">${d !== null ? sign + d.toFixed(1) + '%' : '-'}</td>`;
 }
-function _iaBuildSummaryTable(bigData, smallData, pL1, pL2, allGovs, iaType) {
+function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
   const showGrandTotal = document.getElementById('iaShowGrand')?.checked;
   const showGovTotal = document.getElementById('iaShowGov')?.checked;
   const showHospDetail = document.getElementById('iaShowHosp')?.checked;
   if (!showGrandTotal && !showGovTotal && !showHospDetail) return '';
-  const G = _iaBuildGovGroups(bigData, smallData, allGovs);
-  const cols = iaType === 'small' ? _iaSummarySmallCols : _iaSummaryBigCols;
-  const calcFn = iaType === 'small' ? _iaCalcSmall : _iaCalcBig;
+  if (!cols.length) return '';
+  const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
   let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
   html += `<thead>
     <tr>
@@ -7705,8 +7740,8 @@ function _iaBuildSummaryTable(bigData, smallData, pL1, pL2, allGovs, iaType) {
       const v = d2[c.key] || 0;
       html += `<td style="text-align:center;padding:3px 6px;font-size:${isBold?'12':'11'}px">${_iaFmt(v)}</td>`;
     }
-    const v1 = d1.ct !== undefined ? d1.ct : d1.inc || 0;
-    const v2 = d2.ct !== undefined ? d2.ct : d2.inc || 0;
+    const firstCol = cols[0]?.key;
+    const v1 = d1[firstCol] || 0, v2 = d2[firstCol] || 0;
     html += _iaDeltaHtml(v1, v2);
     html += '</tr>';
   }
@@ -7717,8 +7752,8 @@ function _iaBuildSummaryTable(bigData, smallData, pL1, pL2, allGovs, iaType) {
     for (const c of cols) { gov1[c.key] = 0; gov2[c.key] = 0; }
     const hospRows = [];
     for (const h of hosps) {
-      const d1 = calcFn(G.p1M.get(h.hid)||{}), d2 = calcFn(G.p2M.get(h.hid)||{});
-      for (const c of cols) { gov1[c.key] += (d1[c.key]||0); gov2[c.key] += (d2[c.key]||0); }
+      const d1 = G.p1M.get(h.hid)||{}, d2 = G.p2M.get(h.hid)||{};
+      for (const c of cols) { gov1[c.key] += (Number(d1[c.key])||0); gov2[c.key] += (Number(d2[c.key])||0); }
       hospRows.push({ name: h.name, d1, d2 });
     }
     for (const c of cols) { grand1[c.key] += gov1[c.key]; grand2[c.key] += gov2[c.key]; }
@@ -7798,11 +7833,19 @@ async function renderIndicatorAnalysis() {
     <div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#37474f,#455a64);color:#fff;padding:10px 16px;cursor:pointer" data-click="toggleIaPicker">
       <h3 style="margin:0;font-size:15px;display:flex;align-items:center;gap:8px"><i class="fa-solid fa-sliders"></i> اختر المؤشرات اللي تتعرض <span style="margin-right:auto;font-size:12px;font-weight:400;opacity:.7">(اضغط لاختيار الأعمدة)</span><i class="fa-solid fa-chevron-down" id="iaPickerChevron" style="font-size:12px;transition:transform .2s"></i></h3>
     </div><div class="card-body" id="iaPickerBody" style="padding:14px;display:none">
-      <div id="iaDispColsSection">
-        <div style="font-size:13px;font-weight:700;color:#00695c;margin-bottom:8px"><i class="fa-solid fa-circle" style="font-size:8px;margin-left:4px"></i>منصرف الفصائل — الدموية</div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaDispCols.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;transition:all .15s" onmouseover="this.style.borderColor='#00695c'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" class="iaDispColChk" value="${c.key}" checked style="accent-color:#00695c;width:14px;height:14px">${c.label}</label>`).join('')}</div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:#1a237e;margin-bottom:8px"><i class="fa-solid fa-building-columns" style="font-size:8px;margin-left:4px"></i>ارشيف التجميعي (${_iaBigFields.length} حقل)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaBigFields.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="iaBigColChk" value="${c.key}" checked style="accent-color:#1a237e;width:13px;height:13px">${esc(c.label)} <span style="color:#999;font-size:9px">${c.key}</span></label>`).join('')}</div>
       </div>
-      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:#4a148c;margin-bottom:8px"><i class="fa-solid fa-warehouse" style="font-size:8px;margin-left:4px"></i>ارشيف التخزيني (${_iaSmallFields.length} حقل)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaSmallFields.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="iaSmallColChk" value="${c.key}" checked style="accent-color:#4a148c;width:13px;height:13px">${esc(c.label)} <span style="color:#999;font-size:9px">${c.key}</span></label>`).join('')}</div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:#00695c;margin-bottom:8px"><i class="fa-solid fa-droplet" style="font-size:8px;margin-left:4px"></i>ارشيف الفصائل</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaDispFields.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="iaDispColChk" value="${c.key}" checked style="accent-color:#00695c;width:13px;height:13px">${esc(c.label)}</label>`).join('')}</div>
+      </div>
+      <div style="padding-top:12px;border-top:1px solid var(--border);margin-bottom:14px">
         <div style="font-size:13px;font-weight:700;color:#ff6f00;margin-bottom:8px"><i class="fa-solid fa-layer-group" style="font-size:8px;margin-left:4px"></i>طريقة العرض</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px">
           <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600"><input type="checkbox" id="iaShowGrand" checked style="accent-color:#ff6f00;width:14px;height:14px">اجمالي الهيئه</label>
@@ -7810,7 +7853,7 @@ async function renderIndicatorAnalysis() {
           <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600"><input type="checkbox" id="iaShowHosp" checked style="accent-color:#ff6f00;width:14px;height:14px">تفاصيل المستشفيات</label>
         </div>
       </div>
-      <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+      <div style="display:flex;gap:8px;justify-content:center">
         <button data-click="iaPickerSelectAll" style="padding:6px 16px;background:#e3f2fd;border:1px solid #90caf9;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">تحديد الكل</button>
         <button data-click="iaPickerClearAll" style="padding:6px 16px;background:#ffebee;border:1px solid #ef9a9a;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">إلغاء الكل</button>
         <button data-click="loadIndicatorAnalysis" style="padding:6px 20px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px"><i class="fa-solid fa-rotate"></i> تحديث</button>
@@ -7824,10 +7867,7 @@ async function renderIndicatorAnalysis() {
     h.innerHTML = '<option value="">كل المستشفيات</option>';
     (Array.isArray(hospList) ? hospList : []).filter(x => !g || x.governorate === g).forEach(x => { h.innerHTML += `<option value="${x.id}">${esc(x.name)}</option>`; });
   });
-  document.getElementById('iaType').addEventListener('change', function() {
-    const v = this.value;
-    document.getElementById('iaDispColsSection').style.display = (v === 'all' || v === 'big') ? '' : 'none';
-  });
+  document.getElementById('iaType').addEventListener('change', function() {});
   loadIndicatorAnalysis();
 }
 async function loadIndicatorAnalysis() {
@@ -7853,14 +7893,24 @@ async function loadIndicatorAnalysis() {
     const bigP1 = result.big?.period1 || [], bigP2 = result.big?.period2 || [];
     const smallP1 = result.small?.period1 || [], smallP2 = result.small?.period2 || [];
     const hasBig = bigP1.length || bigP2.length, hasSmall = smallP1.length || smallP2.length;
+    const checkedBig = _iaGetCheckedCols('big').map(k => _iaBigFields.find(f => f.key === k)).filter(Boolean);
+    const checkedSmall = _iaGetCheckedCols('small').map(k => _iaSmallFields.find(f => f.key === k)).filter(Boolean);
+    const checkedDisp = _iaGetCheckedCols('disp').map(k => _iaDispFields.find(f => f.key === k)).filter(Boolean);
     if (hasBig && (iaType === 'all' || iaType === 'big')) {
+      const bigCols = checkedBig.length ? checkedBig : _iaBigFields.filter(f => ['collect_total','tested','refused_fatty','uncompleted','virology_c','virology_b','virology_i','virology_dollar'].includes(f.key));
       tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:#1a237e;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-building-columns"></i> المؤشرات التجميعية</h3></div><div class="card-body" style="padding:0">';
-      tablesHtml += _iaBuildSummaryTable(bigP1, bigP2, pL1, pL2, allGovs, 'big');
+      tablesHtml += _iaBuildSummaryTable(bigP1, bigP2, pL1, pL2, allGovs, bigCols);
       tablesHtml += '</div></div>';
     }
     if (hasSmall && (iaType === 'all' || iaType === 'small')) {
+      const smallCols = checkedSmall.length ? checkedSmall : _iaSmallFields.filter(f => ['inc_collected','out_blood','compatibility'].includes(f.key));
       tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:#4a148c;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-warehouse"></i> المؤشرات التخزينية</h3></div><div class="card-body" style="padding:0">';
-      tablesHtml += _iaBuildSummaryTable(smallP1, smallP2, pL1, pL2, allGovs, 'small');
+      tablesHtml += _iaBuildSummaryTable(smallP1, smallP2, pL1, pL2, allGovs, smallCols);
+      tablesHtml += '</div></div>';
+    }
+    if (checkedDisp.length && (iaType === 'all' || iaType === 'big')) {
+      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:#00695c;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-droplet"></i> منصرف الفصائل</h3></div><div class="card-body" style="padding:0">';
+      tablesHtml += '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px"><i class="fa-solid fa-info-circle"></i> بيانات الفصائل (A+, A-, B+...) متاحة في جدول الارشيف فقط — تحتاج ربط اضافي</div>';
       tablesHtml += '</div></div>';
     }
     if (!tablesHtml) tablesHtml = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
