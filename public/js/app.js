@@ -7633,8 +7633,103 @@ function toggleIaPicker() {
   body.style.display = show ? '' : 'none';
   if (chevron) chevron.style.transform = show ? 'rotate(180deg)' : '';
 }
-function _iaColChkboxes(prefix, colDefs) {
-  return '';
+const _iaSummaryBigCols = [
+  { key:'ct',    label:'التجميع' },
+  { key:'ts',    label:'المفحوص' },
+  { key:'rf',    label:'مرفوضة' },
+  { key:'un',    label:'لم يكتمل' },
+  { key:'dt',    label:'تبرع علاجي' },
+  { key:'vt',    label:'فيروسات' },
+  { key:'hc',    label:'HCV' },
+  { key:'hb',    label:'HBV' },
+  { key:'hi',    label:'HIV' },
+  { key:'hs',    label:'Syphilis' },
+];
+const _iaSummarySmallCols = [
+  { key:'inc',    label:'وارد' },
+  { key:'out',    label:'المنصرف' },
+  { key:'compat', label:'Compatibility' },
+  { key:'vt',     label:'فيروسات' },
+  { key:'hc',     label:'HCV' },
+  { key:'hb',     label:'HBV' },
+  { key:'hi',     label:'HIV' },
+  { key:'hs',     label:'Syphilis' },
+  { key:'exp',    label:'انتهاء صلاحية' },
+  { key:'ret',    label:'مرتجع' },
+  { key:'react',  label:'تفاعل' },
+  { key:'open',   label:'نظام مفتوح' },
+];
+function _iaSumRows(data, calcFn, cols) {
+  const s = {};
+  for (const c of cols) s[c.key] = 0;
+  for (const h of data) { const d = calcFn(h.data||{}); for (const c of cols) s[c.key] += (d[c.key]||0); }
+  return s;
+}
+function _iaDeltaHtml(v1, v2) {
+  if (!v1 && !v2) return '<td style="text-align:center;color:#999">-</td>';
+  const d = v1 ? ((v2 - v1) / v1 * 100) : null;
+  const color = d === null ? '#999' : d > 0 ? '#c62828' : d < 0 ? '#2e7d32' : '#666';
+  const sign = d > 0 ? '+' : '';
+  return `<td style="text-align:center;color:${color};font-weight:600;font-size:12px">${d !== null ? sign + d.toFixed(1) + '%' : '-'}</td>`;
+}
+function _iaBuildSummaryTable(bigData, smallData, pL1, pL2, allGovs, iaType) {
+  const showGrandTotal = document.getElementById('iaShowGrand')?.checked;
+  const showGovTotal = document.getElementById('iaShowGov')?.checked;
+  const showHospDetail = document.getElementById('iaShowHosp')?.checked;
+  if (!showGrandTotal && !showGovTotal && !showHospDetail) return '';
+  const G = _iaBuildGovGroups(bigData, smallData, allGovs);
+  const cols = iaType === 'small' ? _iaSummarySmallCols : _iaSummaryBigCols;
+  const calcFn = iaType === 'small' ? _iaCalcSmall : _iaCalcBig;
+  let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html += `<thead>
+    <tr>
+      <th rowspan="2" style="background:#263238;color:#fff;padding:6px 8px;position:sticky;right:0;z-index:2;min-width:150px">البيان</th>
+      <th colspan="${cols.length}" style="background:#1a237e;color:#fff;text-align:center;padding:4px">${esc(pL1)}</th>
+      <th colspan="${cols.length}" style="background:#b71c1c;color:#fff;text-align:center;padding:4px">${esc(pL2)}</th>
+      <th rowspan="2" style="background:#333;color:#fff;padding:4px 8px;min-width:60px;text-align:center">التغيير %</th>
+    </tr>
+    <tr>`;
+  for (const c of cols) html += `<th style="background:#1a237e;color:#cfd8dc;padding:3px 6px;font-size:10px;min-width:55px">${esc(c.label)}</th>`;
+  for (const c of cols) html += `<th style="background:#b71c1c;color:#ffcdd2;padding:3px 6px;font-size:10px;min-width:55px">${esc(c.label)}</th>`;
+  html += '</tr></thead><tbody>';
+  function addRow(label, d1, d2, bg, isBold) {
+    const isDark = bg === '#263238';
+    const txtColor = isDark ? '#fff' : '';
+    html += `<tr style="background:${bg};font-weight:${isBold?'700':'400'};border-bottom:2px solid ${isDark?'#555':'var(--border)'};${txtColor?'color:'+txtColor:''}">`;
+    html += `<td style="padding:6px 8px;position:sticky;right:0;background:inherit;z-index:1;${isBold?'':'padding-right:28px;font-size:12px;color:var(--text-muted)'}">${esc(label)}</td>`;
+    for (const c of cols) {
+      const v = d1[c.key] || 0;
+      html += `<td style="text-align:center;padding:3px 6px;font-size:${isBold?'12':'11'}px">${_iaFmt(v)}</td>`;
+    }
+    for (const c of cols) {
+      const v = d2[c.key] || 0;
+      html += `<td style="text-align:center;padding:3px 6px;font-size:${isBold?'12':'11'}px">${_iaFmt(v)}</td>`;
+    }
+    const v1 = d1.ct !== undefined ? d1.ct : d1.inc || 0;
+    const v2 = d2.ct !== undefined ? d2.ct : d2.inc || 0;
+    html += _iaDeltaHtml(v1, v2);
+    html += '</tr>';
+  }
+  let grand1 = {}, grand2 = {};
+  for (const c of cols) { grand1[c.key] = 0; grand2[c.key] = 0; }
+  for (const [gov, hosps] of G.govG) {
+    let gov1 = {}, gov2 = {};
+    for (const c of cols) { gov1[c.key] = 0; gov2[c.key] = 0; }
+    const hospRows = [];
+    for (const h of hosps) {
+      const d1 = calcFn(G.p1M.get(h.hid)||{}), d2 = calcFn(G.p2M.get(h.hid)||{});
+      for (const c of cols) { gov1[c.key] += (d1[c.key]||0); gov2[c.key] += (d2[c.key]||0); }
+      hospRows.push({ name: h.name, d1, d2 });
+    }
+    for (const c of cols) { grand1[c.key] += gov1[c.key]; grand2[c.key] += gov2[c.key]; }
+    if (showGovTotal) addRow(gov, gov1, gov2, '#e8eaf6', true);
+    if (showHospDetail) {
+      for (const hr of hospRows) addRow(hr.name, hr.d1, hr.d2, '', false);
+    }
+  }
+  if (showGrandTotal) addRow('اجمالي الهيئة', grand1, grand2, '#263238', true);
+  html += '</tbody></table></div>';
+  return html;
 }
 function _iaBuildGovGroups(p1Data, p2Data, allGovs) {
   const all = new Map();
@@ -7707,6 +7802,14 @@ async function renderIndicatorAnalysis() {
         <div style="font-size:13px;font-weight:700;color:#00695c;margin-bottom:8px"><i class="fa-solid fa-circle" style="font-size:8px;margin-left:4px"></i>منصرف الفصائل — الدموية</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaDispCols.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;transition:all .15s" onmouseover="this.style.borderColor='#00695c'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" class="iaDispColChk" value="${c.key}" checked style="accent-color:#00695c;width:14px;height:14px">${c.label}</label>`).join('')}</div>
       </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:700;color:#ff6f00;margin-bottom:8px"><i class="fa-solid fa-layer-group" style="font-size:8px;margin-left:4px"></i>طريقة العرض</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600"><input type="checkbox" id="iaShowGrand" checked style="accent-color:#ff6f00;width:14px;height:14px">اجمالي الهيئه</label>
+          <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600"><input type="checkbox" id="iaShowGov" checked style="accent-color:#ff6f00;width:14px;height:14px">اجمالي المحافظات</label>
+          <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600"><input type="checkbox" id="iaShowHosp" checked style="accent-color:#ff6f00;width:14px;height:14px">تفاصيل المستشفيات</label>
+        </div>
+      </div>
       <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
         <button data-click="iaPickerSelectAll" style="padding:6px 16px;background:#e3f2fd;border:1px solid #90caf9;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">تحديد الكل</button>
         <button data-click="iaPickerClearAll" style="padding:6px 16px;background:#ffebee;border:1px solid #ef9a9a;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">إلغاء الكل</button>
@@ -7747,6 +7850,19 @@ async function loadIndicatorAnalysis() {
     const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
     const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
     let tablesHtml = '';
+    const bigP1 = result.big?.period1 || [], bigP2 = result.big?.period2 || [];
+    const smallP1 = result.small?.period1 || [], smallP2 = result.small?.period2 || [];
+    const hasBig = bigP1.length || bigP2.length, hasSmall = smallP1.length || smallP2.length;
+    if (hasBig && (iaType === 'all' || iaType === 'big')) {
+      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:#1a237e;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-building-columns"></i> المؤشرات التجميعية</h3></div><div class="card-body" style="padding:0">';
+      tablesHtml += _iaBuildSummaryTable(bigP1, bigP2, pL1, pL2, allGovs, 'big');
+      tablesHtml += '</div></div>';
+    }
+    if (hasSmall && (iaType === 'all' || iaType === 'small')) {
+      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:#4a148c;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-warehouse"></i> المؤشرات التخزينية</h3></div><div class="card-body" style="padding:0">';
+      tablesHtml += _iaBuildSummaryTable(smallP1, smallP2, pL1, pL2, allGovs, 'small');
+      tablesHtml += '</div></div>';
+    }
     if (!tablesHtml) tablesHtml = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
     wrap.innerHTML = tablesHtml;
   } catch (err) { wrap.innerHTML = `<div style="color:red;padding:20px;text-align:center">خطأ: ${esc(err.message||'')}</div>`; }
