@@ -7590,6 +7590,29 @@ function _iaCalcSmall(d) {
 function _iaPct(num, den) { return den ? ((num / den) * 100).toFixed(2) : '0.00'; }
 function _iaFmt(v) { if (v === 0 || v === null || v === undefined) return '0'; if (typeof v === 'number') return v % 1 !== 0 ? v.toFixed(2) : v.toLocaleString('ar-EG'); return String(v); }
 
+const _iaSmallCols = [
+  { key:'inc',     label:'وارد',           col:2 },
+  { key:'out',     label:'المنصرف',        col:2 },
+  { key:'compat',  label:'Compatibility', col:1 },
+  { key:'vtot',    label:'اجمالي الفيروسات', col:1 },
+  { key:'exp',     label:'انتهاء صلاحية',  col:1 },
+  { key:'ret',     label:'مرتجع',         col:1 },
+  { key:'react',   label:'تفاعل',         col:1 },
+  { key:'open',    label:'نظام مفتوح',    col:1 },
+  { key:'other',   label:'اخري',          col:1 },
+];
+const _iaDispCols = [
+  { key:'a_pos', label:'A+' },
+  { key:'a_neg', label:'A-' },
+  { key:'b_pos', label:'B+' },
+  { key:'b_neg', label:'B-' },
+  { key:'o_pos', label:'O+' },
+  { key:'o_neg', label:'O-' },
+  { key:'ab_pos', label:'AB+' },
+  { key:'ab_neg', label:'AB-' },
+  { key:'total', label:'المجموع' },
+];
+
 function _iaGetCols(prefix) {
   const cls = prefix === 'disp' ? '.iaDispColChk' : '.iaSmallColChk';
   const els = document.querySelectorAll(cls);
