@@ -8586,7 +8586,7 @@ function toggleIaGroup(arg) {
   if (chev) chev.style.transform = show ? 'rotate(180deg)' : '';
 }
 
-/* ─── Group Narrative Analysis (bullet-point Arabic text) ─── */
+/* --- Group Narrative Analysis (bullet-point Arabic text + contextual domain analysis) --- */
 function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   var el = document.getElementById(divId);
   if (!el) return;
@@ -8683,7 +8683,6 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   }
 
   if (showGrand) {
-    var grandRaw1 = {}, grandRaw2 = {};
     for (var ci = 0; ci < cols.length; ci++) {
       var col = cols[ci];
       if (_iaIsFormula(col.key)) continue;
@@ -8700,19 +8699,305 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
     }
   }
 
+  /* ===== Contextual Domain Analysis ===== */
+  var ctxBullets = [];
+  var ctxGroups = new Set(cols.map(function(c) { return c.g || ''; }));
+
+  function _ctxSum(dataArr, key) {
+    var s = 0;
+    dataArr.forEach(function(h) { s += Number((h.data || {})[key]) || 0; });
+    return s;
+  }
+
+  /* ===== الفصائل والتوافق ===== */
+  if (ctxGroups.has('الفصائل والتوافق')) {
+    var ctKey = cols.some(function(c) { return c.key === 'child_ct'; }) ? 'child_ct' : 'ct';
+    var compatKey = ctKey === 'child_ct' ? 'child_compatibility' : 'compatibility';
+    var bgKey = ctKey === 'child_ct' ? 'child_blood_groups' : 'blood_groups';
+    var outKey = ctKey === 'child_ct' ? 'child_out_blood' : 'out_blood';
+    var hasCt = cols.some(function(c) { return c.key === 'ct' || c.key === 'child_ct'; });
+    var hasCompat = cols.some(function(c) { return c.key === 'compatibility' || c.key === 'child_compatibility'; });
+    var hasBgroups = cols.some(function(c) { return c.key === 'blood_groups' || c.key === 'child_blood_groups'; });
+
+    if (hasCt) {
+      /* Hospital-level C/T analysis */
+      if (showHosp) {
+        var lowCtHosps = [], okCtHosps = [];
+        var govArr2 = Array.from(G.govG);
+        for (var gi = 0; gi < govArr2.length; gi++) {
+          var hosps2 = govArr2[gi][1];
+          for (var hi = 0; hi < hosps2.length; hi++) {
+            var h = hosps2[hi];
+            var d2 = G.p2M.get(h.hid) || {};
+            var compatVal = Number(d2[compatKey]) || 0;
+            var outVal = Number(d2[outKey]) || 0;
+            if (compatVal === 0 && outVal === 0) continue;
+            var ctCalc = outVal ? (compatVal / outVal) : 0;
+            if (ctCalc < 2) lowCtHosps.push({ name: h.name, gov: govArr2[gi][0], ct: ctCalc });
+            else okCtHosps.push({ name: h.name, gov: govArr2[gi][0], ct: ctCalc });
+          }
+        }
+        if (lowCtHosps.length) {
+          var lowNames = lowCtHosps.map(function(h) { return h.name + ' (' + h.ct.toFixed(2) + ')'; }).join('\u060c ');
+          ctxBullets.push('نسبة C/T أقل من 2 في ' + lowCtHosps.length + ' مستشفى: ' + lowNames + ' \u2014 يُنصح بمراجعة سياسة الصرف والتوافق');
+        }
+        if (okCtHosps.length) {
+          ctxBullets.push('نسبة C/T مقبولة (2 أو أعلى) في ' + okCtHosps.length + ' مستشفى \u2014 الأداء مقبول');
+        }
+      }
+
+      /* Governorate-level C/T analysis */
+      if (showGov && !showHosp) {
+        var govArr3 = Array.from(G.govG);
+        for (var gi = 0; gi < govArr3.length; gi++) {
+          var govName2 = govArr3[gi][0], hosps3 = govArr3[gi][1];
+          var gCp2 = 0, gOt2 = 0;
+          for (var hi = 0; hi < hosps3.length; hi++) {
+            var d2 = G.p2M.get(hosps3[hi].hid) || {};
+            gCp2 += Number(d2[compatKey]) || 0; gOt2 += Number(d2[outKey]) || 0;
+          }
+          var ctGov2 = gOt2 ? (gCp2 / gOt2) : 0;
+          if (ctGov2 > 0 && ctGov2 < 2) ctxBullets.push('نسبة C/T في ' + govName2 + ' = ' + ctGov2.toFixed(2) + ' (أقل من 2) في ' + lP2);
+          else if (ctGov2 >= 2) ctxBullets.push('نسبة C/T في ' + govName2 + ' = ' + ctGov2.toFixed(2) + ' (مقبولة) في ' + lP2);
+        }
+      }
+
+      /* Grand total C/T analysis */
+      if (showGrand) {
+        var tc1 = _ctxSum(p1Data, compatKey), to1 = _ctxSum(p1Data, outKey);
+        var tc2 = _ctxSum(p2Data, compatKey), to2 = _ctxSum(p2Data, outKey);
+        var ctG1 = to1 ? (tc1 / to1) : 0;
+        var ctG2 = to2 ? (tc2 / to2) : 0;
+        if (ctG2 > 0 && ctG2 < 1) ctxBullets.push('نسبة C/T الإجمالية في ' + lP2 + ' = ' + ctG2.toFixed(2) + ' \u2014 أقل من 1: صرف زائد جداً عن التوافق');
+        else if (ctG2 >= 1 && ctG2 < 2) ctxBullets.push('نسبة C/T الإجمالية في ' + lP2 + ' = ' + ctG2.toFixed(2) + ' \u2014 أقل من 2: يُنصح بمراجعة كمية الصرف');
+        else if (ctG2 >= 2) ctxBullets.push('نسبة C/T الإجمالية في ' + lP2 + ' = ' + ctG2.toFixed(2) + ' \u2014 مقبولة (2 أو أعلى)');
+        if (ctG1 > 0 && ctG2 > 0) {
+          var ctDiff = ctG2 - ctG1;
+          if (ctDiff > 0.1) ctxBullets.push('تحسن نسبة C/T من ' + ctG1.toFixed(2) + ' في ' + lP1 + ' إلى ' + ctG2.toFixed(2) + ' في ' + lP2);
+          else if (ctDiff < -0.1) ctxBullets.push('تدهور نسبة C/T من ' + ctG1.toFixed(2) + ' في ' + lP1 + ' إلى ' + ctG2.toFixed(2) + ' في ' + lP2);
+        }
+      }
+    }
+
+    /* Compatibility rate analysis */
+    if (hasCompat && hasBgroups) {
+      if (showGrand) {
+        var tBg1 = _ctxSum(p1Data, bgKey), tCp1 = _ctxSum(p1Data, compatKey);
+        var tBg2 = _ctxSum(p2Data, bgKey), tCp2 = _ctxSum(p2Data, compatKey);
+        var r1 = tBg1 ? ((tCp1 / tBg1) * 100).toFixed(1) : '0';
+        var r2 = tBg2 ? ((tCp2 / tBg2) * 100).toFixed(1) : '0';
+        ctxBullets.push('نسبة التوافق من الفصائل المفحوصة: ' + r2 + '% في ' + lP2 + ' مقارنة بـ ' + r1 + '% في ' + lP1);
+        if (Number(r2) < 80) ctxBullets.push('نسبة التوافق أقل من 80% \u2014 يُنصح بمراجعة طرق الفحص والتوافق');
+        else if (Number(r2) >= 95) ctxBullets.push('نسبة التوافق 95% أو أعلى \u2014 أداء ممتاز');
+      }
+    }
+  }
+
+  /* ===== منصرف الفصائل (disp blood types) ===== */
+  if (label === 'منصرف الفصائل') {
+    var dispKeys = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
+    if (showGrand) {
+      var t1 = {}, t2 = {};
+      dispKeys.forEach(function(k) { t1[k] = _ctxSum(p1Data, k); t2[k] = _ctxSum(p2Data, k); });
+      var gT1 = 0, gT2 = 0;
+      dispKeys.forEach(function(k) { gT1 += t1[k]; gT2 += t2[k]; });
+      if (gT2 > 0) {
+        var sorted2 = dispKeys.slice().sort(function(a, b) { return t2[b] - t2[a]; });
+        ctxBullets.push('أكثر فصيلة منصرف في ' + lP2 + ': ' + sorted2[0] + ' (' + _iaFmt(t2[sorted2[0]]) + ' وحدة = ' + ((t2[sorted2[0]]/gT2)*100).toFixed(1) + '%)');
+        var last = sorted2[sorted2.length - 1];
+        ctxBullets.push('أقل فصيلة منصرف في ' + lP2 + ': ' + last + ' (' + _iaFmt(t2[last]) + ' وحدة = ' + ((t2[last]/gT2)*100).toFixed(1) + '%)');
+      }
+      /* Positive vs Negative ratio */
+      var posT = ['A+','B+','O+','AB+'], negT = ['A-','B-','O-','AB-'];
+      var pT2 = posT.reduce(function(s,k){return s+t2[k];},0), nT2 = negT.reduce(function(s,k){return s+t2[k];},0);
+      if (pT2 + nT2 > 0) ctxBullets.push('النسبة المئوية للسالب في ' + lP2 + ': ' + ((nT2/(pT2+nT2))*100).toFixed(1) + '% من إجمالي الصرف (' + _iaFmt(nT2) + ' من ' + _iaFmt(pT2+nT2) + ')');
+      /* Per-type changes */
+      dispKeys.forEach(function(k) {
+        var v1 = t1[k], v2 = t2[k];
+        if (v1 === 0 && v2 === 0) return;
+        var d = v2 - v1;
+        if (Math.abs(d) < 1) return;
+        var pctCh = v1 ? ((d / v1) * 100).toFixed(0) : null;
+        var dir = d > 0 ? 'ارتفاع' : 'انخفاض';
+        var detail = pctCh ? ' بنسبة ' + (d > 0 ? '+' : '') + pctCh + '%' : '';
+        ctxBullets.push(dir + ' منصرف ' + k + ' من ' + _iaFmt(v1) + ' إلى ' + _iaFmt(v2) + detail);
+      });
+    }
+    if (showGov && !showHosp) {
+      var dk2 = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
+      var gArr4 = Array.from(G.govG);
+      for (var gi = 0; gi < gArr4.length; gi++) {
+        var gN = gArr4[gi][0], hs4 = gArr4[gi][1];
+        var gT = {}; dk2.forEach(function(k){gT[k]=0;}); var gG = 0;
+        for (var hi = 0; hi < hs4.length; hi++) {
+          var d2 = G.p2M.get(hs4[hi].hid) || {};
+          dk2.forEach(function(k){var v=Number(d2[k])||0; gT[k]+=v; gG+=v;});
+        }
+        if (gG === 0) continue;
+        var mx = dk2.reduce(function(a,b){return gT[a]>=gT[b]?a:b;});
+        var mn = dk2.reduce(function(a,b){return gT[a]<=gT[b]?a:b;});
+        ctxBullets.push(gN + ': أكثر فصيلة ' + mx + ' (' + _iaFmt(gT[mx]) + ') وأقل فصيلة ' + mn + ' (' + _iaFmt(gT[mn]) + ')');
+      }
+    }
+    if (showHosp) {
+      var dk3 = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
+      var hAlerts = [];
+      var gArr5 = Array.from(G.govG);
+      for (var gi = 0; gi < gArr5.length; gi++) {
+        var hs5 = gArr5[gi][1];
+        for (var hi = 0; hi < hs5.length; hi++) {
+          var h2 = hs5[hi];
+          var d2 = G.p2M.get(h2.hid) || {};
+          var total = 0; dk3.forEach(function(k){total+=Number(d2[k])||0;});
+          if (total === 0) continue;
+          var zeros = dk3.filter(function(k){return (Number(d2[k])||0)===0;});
+          if (zeros.length >= 3) hAlerts.push(h2.name + ' (' + zeros.join('/') + ' = 0)');
+        }
+      }
+      if (hAlerts.length) ctxBullets.push('مستشفيات بها 3 فصائل أو أكثر منصرفها صفر: ' + hAlerts.join('\u060c '));
+    }
+  }
+
+  /* ===== إجمالي المنصرف ===== */
+  if (ctxGroups.has('إجمالي المنصرف')) {
+    if (showGrand) {
+      var hasBlood = cols.some(function(c){return c.key==='out_blood'||c.key==='out_blood_int';});
+      var hasPlasma = cols.some(function(c){return c.key==='out_plasma'||c.key==='out_plasma_int';});
+      if (hasBlood && hasPlasma) {
+        var bk2 = cols.some(function(c){return c.key==='out_blood_int';}) ? 'out_blood_int' : 'out_blood';
+        var pk2 = cols.some(function(c){return c.key==='out_plasma_int';}) ? 'out_plasma_int' : 'out_plasma';
+        var tb1 = _ctxSum(p1Data, bk2), tp1 = _ctxSum(p1Data, pk2);
+        var tb2 = _ctxSum(p2Data, bk2), tp2 = _ctxSum(p2Data, pk2);
+        var totO2 = tb2 + tp2;
+        if (totO2 > 0) ctxBullets.push('توزيع الصرف في ' + lP2 + ': دم ' + ((tb2/totO2)*100).toFixed(1) + '% (' + _iaFmt(tb2) + ') | بلازما ' + ((tp2/totO2)*100).toFixed(1) + '% (' + _iaFmt(tp2) + ')');
+      }
+    }
+  }
+
+  /* ===== إجمالي الوارد ===== */
+  if (ctxGroups.has('إجمالي الوارد')) {
+    if (showGrand) {
+      var hasIncBlood = cols.some(function(c){return c.key==='inc_blood';});
+      var hasIncPlasma = cols.some(function(c){return c.key==='inc_plasma';});
+      if (hasIncBlood && hasIncPlasma) {
+        var ib2 = _ctxSum(p2Data, 'inc_blood'), ip2 = _ctxSum(p2Data, 'inc_plasma');
+        var is2 = _ctxSum(p2Data, 'inc_sdp');
+        var totIn2 = ib2 + ip2 + is2;
+        if (totIn2 > 0) ctxBullets.push('توزيع الوارد في ' + lP2 + ': دم ' + ((ib2/totIn2)*100).toFixed(1) + '% | بلازما ' + ((ip2/totIn2)*100).toFixed(1) + '% | SDP ' + ((is2/totIn2)*100).toFixed(1) + '%');
+      }
+      var hasIncCollect = cols.some(function(c){return c.key==='inc_collected';});
+      if (hasIncCollect) {
+        var ic2 = _ctxSum(p2Data, 'inc_collected');
+        var ir2 = _ctxSum(p2Data, 'inc_regional');
+        var totI2 = ic2 + ir2;
+        if (totI2 > 0) ctxBullets.push(' مصدر الوارد في ' + lP2 + ': تجميعي ' + ((ic2/totI2)*100).toFixed(1) + '% (' + _iaFmt(ic2) + ') | إقليمي ' + ((ir2/totI2)*100).toFixed(1) + '% (' + _iaFmt(ir2) + ')');
+      }
+    }
+  }
+
+  /* ===== الإعدامات ===== */
+  if (ctxGroups.has('الإعدامات')) {
+    if (showGrand) {
+      var expKeys = ['disp_exp_blood','disp_exp_plasma','disp_exp_sdp','disp_exp_rdp'];
+      var expLbl = {'disp_exp_blood':'دم','disp_exp_plasma':'بلازما','disp_exp_sdp':'SDP','disp_exp_rdp':'RDP'};
+      var hasExp = expKeys.some(function(k){return cols.some(function(c){return c.key===k;});});
+      if (hasExp) {
+        var totE2 = 0; expKeys.forEach(function(k){totE2+=_ctxSum(p2Data,k);});
+        if (totE2 > 0) {
+          var ep = [];
+          expKeys.forEach(function(k){var v=_ctxSum(p2Data,k);if(v>0)ep.push(expLbl[k]+' '+_iaFmt(v)+' ('+((v/totE2)*100).toFixed(1)+'%)');});
+          ctxBullets.push('توزيع الإعدامات في ' + lP2 + ': ' + ep.join(' | '));
+        }
+      }
+      var hasViral = cols.some(function(c){return c.key==='virology_c';});
+      if (hasViral) {
+        var vc=_ctxSum(p2Data,'virology_c'),vb=_ctxSum(p2Data,'virology_b');
+        var vi=_ctxSum(p2Data,'virology_i'),vd=_ctxSum(p2Data,'virology_dollar');
+        var vtot=vc+vb+vi+vd;
+        if (vtot > 0) {
+          ctxBullets.push('إجمالي الإعدامات الفيروسية في ' + lP2 + ': C=' + _iaFmt(vc) + ' (' + ((vc/vtot)*100).toFixed(1) + '%) | B=' + _iaFmt(vb) + ' (' + ((vb/vtot)*100).toFixed(1) + '%) | I=' + _iaFmt(vi) + ' (' + ((vi/vtot)*100).toFixed(1) + '%) | $=' + _iaFmt(vd) + ' (' + ((vd/vtot)*100).toFixed(1) + '%)');
+          if (vc > vb * 2) ctxBullets.push('فيروس C متفوق على B بمرتين أو أكثر \u2014 يُنصح بمراجعة مصادر التلوث');
+        }
+      }
+    }
+  }
+
+  /* ===== تحليل نسب المؤشرات ===== */
+  if (ctxGroups.has('تحليل نسب المؤشرات')) {
+    if (showGrand) {
+      var ratioKeys = ['ratio_uncompleted','ratio_refused','ratio_c','ratio_b','ratio_i','ratio_dollar','ratio_exp','ratio_returned','ratio_reaction','ratio_open','ratio_other'];
+      var ratioLbl = {'ratio_uncompleted':'لم يكتمل','ratio_refused':'مرفوضة','ratio_c':'C','ratio_b':'B','ratio_i':'I','ratio_dollar':'$','ratio_exp':'انتهاء الصلاحية','ratio_returned':'مرتجع','ratio_reaction':'تفاعل','ratio_open':'نظام مفتوح','ratio_other':'أخرى'};
+      var hasRatio = ratioKeys.some(function(k){return cols.some(function(c){return c.key===k;});});
+      if (hasRatio) {
+        var maxR = 0, maxK = '', totR = 0;
+        ratioKeys.forEach(function(k){var v=_ctxSum(p2Data,k);totR+=v;if(v>maxR){maxR=v;maxK=k;}});
+        if (maxK && totR > 0) ctxBullets.push('أعلى نسبة إعدام في ' + lP2 + ': ' + ratioLbl[maxK] + ' (' + _iaFmt(maxR) + ' = ' + ((maxR/totR)*100).toFixed(1) + '% من الإجمالي)');
+        var tested2 = _ctxSum(p2Data, 'tested');
+        if (tested2 > 0 && totR > 0) ctxBullets.push('نسبة الإعدام الإجمالية من المفحوص: ' + ((totR/tested2)*100).toFixed(1) + '% في ' + lP2);
+      }
+    }
+  }
+
+  /* ===== عينات غير مفحوصة ===== */
+  if (ctxGroups.has('عينات غير مفحوصة')) {
+    if (showGrand) {
+      var unKeys = ['donation_therapeutic','uncompleted','refused_fatty','refused_icteric'];
+      var unLbl = {'donation_therapeutic':'تبرع علاجي','uncompleted':'لم يكتمل','refused_fatty':'دهون','refused_icteric':'Icteric'};
+      var totUn = 0;
+      unKeys.forEach(function(k){totUn+=_ctxSum(p2Data,k);});
+      if (totUn > 0) {
+        var maxU = 0, maxUK = '';
+        unKeys.forEach(function(k){var v=_ctxSum(p2Data,k);if(v>maxU){maxU=v;maxUK=k;}});
+        ctxBullets.push('أكبر سبب عدم الفحص في ' + lP2 + ': ' + unLbl[maxUK] + ' (' + _iaFmt(maxU) + ' = ' + ((maxU/totUn)*100).toFixed(1) + '%)');
+      }
+    }
+  }
+
+  /* ===== نسب الإعدامات (percentages) ===== */
+  if (ctxGroups.has('النسب المئوية للاعدام') || ctxGroups.has('النسب المئوية للاعدام - أطفال')) {
+    if (showGrand) {
+      var pctCols = cols.filter(function(c){return c.key.startsWith('pct_')||c.key.startsWith('child_pct_');});
+      if (pctCols.length) {
+        var maxP = 0, maxPC = null;
+        pctCols.forEach(function(c){var v=_ctxSum(p2Data,c.key);if(v>maxP){maxP=v;maxPC=c;}});
+        if (maxPC) ctxBullets.push('أعلى نسبة إعدام في ' + lP2 + ': ' + maxPC.label + ' (' + maxP.toFixed(2) + '%)');
+      }
+    }
+  }
+
+  /* ===== مؤشرات وحدات دم الأطفال ===== */
+  if (ctxGroups.has('مؤشرات وحدات دم الأطفال')) {
+    var hasChildCt = cols.some(function(c){return c.key==='child_ct';});
+    if (hasChildCt && showGrand) {
+      var cCp = _ctxSum(p2Data, 'child_compatibility');
+      var cOt = _ctxSum(p2Data, 'child_out_blood');
+      var cCt = cOt ? (cCp / cOt) : 0;
+      if (cCt < 2) ctxBullets.push('نسبة C/T للأطفال في ' + lP2 + ' = ' + cCt.toFixed(2) + ' \u2014 أقل من 2: يُنصح بمراجعة سياسة الصرف');
+      else ctxBullets.push('نسبة C/T للأطفال في ' + lP2 + ' = ' + cCt.toFixed(2) + ' \u2014 مقبولة');
+    }
+  }
+
+  /* ===== Render HTML ===== */
   var html = '<div style="padding:16px 20px"><div style="font-weight:700;font-size:13px;color:#333;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)"><i class="fa-solid fa-magnifying-glass-chart" style="margin-left:6px;color:#e65100"></i>تحليل ' + esc(label) + '</div>';
+  if (ctxBullets.length) {
+    html += '<div style="margin-bottom:12px;padding:10px 14px;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;font-size:12px;color:#f57f17;font-weight:600"><i class="fa-solid fa-lightbulb" style="margin-left:6px"></i> تحليل خاص بالمجموعات</div>';
+    html += '<ul style="margin:0;padding-right:20px;list-style:none">';
+    for (var i = 0; i < ctxBullets.length; i++) {
+      html += '<li style="padding:5px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:13px;line-height:1.9;color:#333">\u2022 ' + esc(ctxBullets[i]) + '</li>';
+    }
+    html += '</ul>';
+  }
   if (bullets.length) {
+    if (ctxBullets.length) html += '<div style="margin-top:10px;padding:6px 12px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;font-size:11px;color:#2e7d32;font-weight:600"><i class="fa-solid fa-chart-line" style="margin-left:4px"></i> تفاصيل التغييرات</div>';
     html += '<ul style="margin:0;padding-right:20px;list-style:none">';
     for (var i = 0; i < bullets.length; i++) {
       html += '<li style="padding:5px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:13px;line-height:1.9;color:#333">\u2022 ' + esc(bullets[i]) + '</li>';
     }
     html += '</ul>';
-  } else {
+  }
+  if (!ctxBullets.length && !bullets.length) {
     html += '<div style="padding:20px;text-align:center;color:#999;font-size:12px">لا توجد تغييرات بين الفترةتين</div>';
   }
   html += '</div>';
   el.innerHTML = html;
 }
-
-
-
