@@ -38,6 +38,12 @@ _dh('strategicGovChanged',function(){strategicViewGov=this.value;strategicViewMo
 _dh('strategicHospChanged',function(){strategicViewHosp=this.value;renderStrategicStock();});
 _dh('empGovChangedAdd',function(){empGovChanged('add');});
 _dh('archiveCellEnter',function(e){if(e.key==='Enter'){e.preventDefault();this.blur();}});
+_dh('goBack',function(){goBack();});
+_dh('loadIndicatorAnalysis',function(){loadIndicatorAnalysis();});
+_dh('iaPickerSelectAll',function(){iaPickerSelectAll();});
+_dh('iaPickerClearAll',function(){iaPickerClearAll();});
+_dh('iaPickerChanged',function(){iaPickerChanged();});
+_dh('toggleIaPicker',function(){toggleIaPicker();});
 _dh('autoFillEmpNameEdit',function(){autoFillEmpName('euName','euHosp');});
 _dh('rdnNameSelected',function(){rdnNameSelected(this);});
 _dh('rdnShiftChanged',function(){rdnShiftChanged(this);});
@@ -8117,7 +8123,7 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
     const bg = grpColors[grp.name] || '#455a64';
     html += `<th colspan="${grp.items.length * 2}" style="background:${bg};color:#fff;text-align:center;padding:6px 8px;font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,.15);white-space:nowrap">${esc(grp.name)}</th>`;
   }
-  html += `<th rowspan="3" style="background:#1a1a2e;color:#ffcc80;padding:8px 6px;min-width:70px;text-align:center;font-size:11px;border-bottom:3px solid #ff6f00;white-space:nowrap">التغيير %</th></tr><tr>`;
+  html += `</tr><tr>`;
   for (const grp of groups) {
     const bg = grpColors[grp.name] || '#455a64';
     for (const f of grp.items) {
@@ -8147,13 +8153,6 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
       const cellBg2 = isBold ? (isDark ? '#2a1018' : '#fff0f3') : '';
       html += `<td style="text-align:center;padding:5px 6px;font-size:${isBold?'12':'11'}px;background:${cellBg1};border-left:1px solid rgba(0,0,0,.04)">${_iaFmt(v1)}</td>`;
       html += `<td style="text-align:center;padding:5px 6px;font-size:${isBold?'12':'11'}px;background:${cellBg2};border-right:1px solid rgba(0,0,0,.04);${isBold?'font-weight:700':''}">${_iaFmt(v2)}</td>`;
-    }
-    if (isBold) {
-      let tot1 = 0, tot2 = 0;
-      for (const c of cols) { tot1 += (Number(d1[c.key])||0); tot2 += (Number(d2[c.key])||0); }
-      html += _iaDeltaHtml(tot1, tot2);
-    } else {
-      html += '<td style="text-align:center;color:#ccc;font-size:10px">-</td>';
     }
     html += '</tr>';
     rowIdx++;
