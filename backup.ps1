@@ -17,34 +17,35 @@ $paths = [System.Collections.ArrayList]@()
 
 # --- Core server files ---
 $paths.Add((Join-Path $ProjectDir "server.js")) | Out-Null
+$paths.Add((Join-Path $ProjectDir "db.js")) | Out-Null
 $paths.Add((Join-Path $ProjectDir "jsondb.js")) | Out-Null
-$paths.Add((Join-Path $ProjectDir "init-db.js")) | Out-Null
 $paths.Add((Join-Path $ProjectDir "package.json")) | Out-Null
 $paths.Add((Join-Path $ProjectDir "package-lock.json")) | Out-Null
-$paths.Add((Join-Path $ProjectDir "README.md")) | Out-Null
 $paths.Add((Join-Path $ProjectDir "backup.ps1")) | Out-Null
 $paths.Add((Join-Path $ProjectDir "backup.bat")) | Out-Null
+$paths.Add((Join-Path $ProjectDir "Dockerfile")) | Out-Null
+$paths.Add((Join-Path $ProjectDir "docker-compose.yml")) | Out-Null
+$paths.Add((Join-Path $ProjectDir "entrypoint.sh")) | Out-Null
+$paths.Add((Join-Path $ProjectDir "fly.toml")) | Out-Null
+$paths.Add((Join-Path $ProjectDir ".dockerignore")) | Out-Null
 
 # --- Data ---
 $paths.Add((Join-Path $ProjectDir "data\db.json")) | Out-Null
-$rdnXlsx = Get-ChildItem (Join-Path $ProjectDir "data") -Filter "*.xlsx" | Select-Object -First 1
-if ($rdnXlsx) { $paths.Add($rdnXlsx.FullName) | Out-Null }
 
 # --- Frontend ---
 Get-ChildItem -Path (Join-Path $ProjectDir "public") -Recurse -File | ForEach-Object {
   $paths.Add($_.FullName) | Out-Null
 }
 
-# --- Scripts & Utilities ---
-Get-ChildItem -Path (Join-Path $ProjectDir "scripts") -Filter "*.js" -File | ForEach-Object {
-  $paths.Add($_.FullName) | Out-Null
-}
-# Root-level utilities
-if (Test-Path (Join-Path $ProjectDir "import-equipment.js")) {
-  $paths.Add((Join-Path $ProjectDir "import-equipment.js")) | Out-Null
-}
+# --- Startup scripts ---
 if (Test-Path (Join-Path $ProjectDir "start.bat")) {
   $paths.Add((Join-Path $ProjectDir "start.bat")) | Out-Null
+}
+if (Test-Path (Join-Path $ProjectDir "stop.bat")) {
+  $paths.Add((Join-Path $ProjectDir "stop.bat")) | Out-Null
+}
+if (Test-Path (Join-Path $ProjectDir "server.bat")) {
+  $paths.Add((Join-Path $ProjectDir "server.bat")) | Out-Null
 }
 
 # --- GitHub workflows ---
@@ -58,14 +59,6 @@ if (Test-Path $ghDir) {
 # --- AGENTS.md (project documentation, 1 level up) ---
 $agentsMd = Join-Path $ParentDir "AGENTS.md"
 if (Test-Path $agentsMd) { $paths.Add($agentsMd) | Out-Null }
-
-# --- temp_restore ---
-$tempRestore = Join-Path $ProjectDir "temp_restore"
-if (Test-Path $tempRestore) {
-  Get-ChildItem -Path $tempRestore -Recurse -File | ForEach-Object {
-    $paths.Add($_.FullName) | Out-Null
-  }
-}
 
 $paths = $paths | Where-Object { Test-Path $_ }
 
