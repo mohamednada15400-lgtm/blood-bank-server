@@ -5148,7 +5148,7 @@ function miRenderPickerHtml(colDefs, storageKey) {
     h += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
     for (const c of grp.items) {
       const chk = checkedKeys.includes(c.key) ? 'checked' : '';
-      h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="miColChk" data-storage="${storageKey}" value="${c.key}" ${chk} data-change="miOnPickerChange" style="accent-color:${grpColor};width:13px;height:13px">${esc(c.label)} <span style="color:#999;font-size:9px">${c.key}</span></label>`;
+      h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="miColChk" data-storage="${storageKey}" value="${c.key}" ${chk} data-change="miOnPickerChange" style="accent-color:${grpColor};width:13px;height:13px">${esc(c.label)}</label>`;
     }
     h += '</div>';
   }
@@ -8047,7 +8047,7 @@ function _iaRenderFieldCheckboxes(fields, cls, accentColor) {
     if (grp.name) h += `<div style="width:100%;font-size:11px;font-weight:700;color:${accentColor};margin:6px 0 3px;opacity:.8;border-bottom:1px solid var(--border);padding-bottom:2px">${esc(grp.name)}</div>`;
     h += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
     for (const f of grp.items) {
-      h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="${cls}" value="${f.key}" checked style="accent-color:${accentColor};width:13px;height:13px">${esc(f.label)} <span style="color:#999;font-size:9px">${f.key}</span></label>`;
+      h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="${cls}" value="${f.key}" checked style="accent-color:${accentColor};width:13px;height:13px">${esc(f.label)}</label>`;
     }
     h += '</div>';
   }
