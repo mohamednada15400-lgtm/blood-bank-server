@@ -1978,7 +1978,6 @@ app.get('/api/equipment/export/xlsx', requireAuth(), requirePerm('equipment', 'e
       tc.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2C3E50' } }; tc.alignment = { horizontal:'center', vertical:'middle' }; tc.border = thinBorder;
       cIdx += 4;
     });
-    ws.mergeCells(2, mc, 2, mc);
     cIdx = 3;
     const subHeaders = ['عدد','حالة','ماركة','سعة'];
     types.forEach(t => {
@@ -2223,19 +2222,19 @@ app.get('/api/readiness-export/xlsx', requireAuth(), requirePerm('readiness', 'e
         days.push(labels[days.length] || `${dn} ${dStr}`);
         cur.setDate(cur.getDate() + 1);
       }
-      const dayCount = days.length;
+const dayCount = days.length;
       const totalCols = 3 + dayCount + 8;
+      const stockIdx = 3 + dayCount;
       const ws = wb.addWorksheet(occ.name.slice(0, 31), { views:[{ state:'frozen', ySplit:2, xSplit:2 }] });
       ws.getRow(1).height = 24; ws.getRow(2).height = 20;
       ws.getCell(1,1).value = 'المحافظة'; ws.getCell(1,1).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:10 };
       ws.getCell(1,1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2C3E50' } }; ws.getCell(1,1).alignment = { horizontal:'center', vertical:'middle' }; ws.getCell(1,1).border = thinBorder;
       ws.getCell(1,2).value = 'اسم بنك الدم'; ws.getCell(1,2).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:10 };
       ws.getCell(1,2).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2C3E50' } }; ws.getCell(1,2).alignment = { horizontal:'center', vertical:'middle' }; ws.getCell(1,2).border = thinBorder;
-      ws.mergeCells(1, 3, 1, 3 + dayCount + 1);
+      ws.mergeCells(1, 3, 1, stockIdx);
       ws.getCell(1,3).value = 'القوة البشريه المتواجده فعليا';
       ws.getCell(1,3).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:10 };
       ws.getCell(1,3).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF1565C0' } }; ws.getCell(1,3).alignment = { horizontal:'center', vertical:'middle' }; ws.getCell(1,3).border = thinBorder;
-      const stockIdx = 3 + dayCount;
       const extraHeaders = ['الرصيد','الاجهزه الطبية','','المستهلكات','الاستعاضة لكل بنك','ملاحظات مدير بنك الدم','تعليق مشرف الفرع','تعليق مشرف الهيئة'];
       extraHeaders.forEach((h, i) => {
         if (!h) return;
