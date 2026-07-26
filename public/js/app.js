@@ -8346,7 +8346,8 @@ function exportIndicatorAnalysisExcel() {
     const wb = new ExcelJS.Workbook();
     wb.creator = 'نظام بنك الدم';
     wb.created = new Date();
-    const grpColorMap = { 'التجميع':'1565C0', 'إجمالي الوارد':'2E7D32', 'إجمالي المنصرف':'6A1B9A', 'الفصائل والتوافق':'1565C0', 'عينات غير مفحوصة':'C62828', 'الإعدامات':'E65100', 'تحليل نسب المؤشرات':'00695C', 'مؤشرات وحدات دم الأطفال':'AD1457', 'النسب المئوية للاعدام - أطفال':'C2185B', 'النسب المئوية للاعدام':'C2185B' };
+    const grpColorMap = { 'التجميع':'5C6BC0', 'إجمالي الوارد':'66BB6A', 'إجمالي المنصرف':'AB47BC', 'الفصائل والتوافق':'42A5F5', 'عينات غير مفحوصة':'EF5350', 'الإعدامات':'FF7043', 'تحليل نسب المؤشرات':'26A69A', 'مؤشرات وحدات دم الأطفال':'EC407A', 'النسب المئوية للاعدام - أطفال':'F06292', 'النسب المئوية للاعدام':'F06292' };
+    const grpBgLight = { 'التجميع':'E8EAF6', 'إجمالي الوارد':'E8F5E9', 'إجمالي المنصرف':'F3E5F5', 'الفصائل والتوافق':'E3F2FD', 'عينات غير مفحوصة':'FFEBEE', 'الإعدامات':'FBE9E7', 'تحليل نسب المؤشرات':'E0F2F1', 'مؤشرات وحدات دم الأطفال':'FCE4EC', 'النسب المئوية للاعدام - أطفال':'FCE4EC', 'النسب المئوية للاعدام':'FCE4EC' };
     const borderStyle = { style:'thin', color:{ argb:'FFB0BEC5' } };
     const thinBorder = { top:borderStyle, bottom:borderStyle, left:borderStyle, right:borderStyle };
     const noBorder = { top:{style:'none'}, bottom:{style:'none'}, left:{style:'none'}, right:{style:'none'} };
@@ -8375,14 +8376,14 @@ function exportIndicatorAnalysisExcel() {
       ws.getRow(2).height = 22;
       ws.getRow(3).height = 18;
       ws.getCell(1,1).value = 'البيان';
-      ws.getCell(1,1).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:12 };
-      ws.getCell(1,1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF1A1A2E' } };
+      ws.getCell(1,1).font = { bold:true, color:{ argb:'FF263238' }, size:12 };
+      ws.getCell(1,1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFCFD8DC' } };
       ws.getCell(1,1).alignment = { horizontal:'center', vertical:'middle', wrapText:true };
       ws.getCell(1,1).border = thinBorder;
       ws.mergeCells(1,1,3,1);
       ws.getCell(1,2).value = 'التغيير %';
-      ws.getCell(1,2).font = { bold:true, color:{ argb:'FFFFCC80' }, size:10 };
-      ws.getCell(1,2).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF1A1A2E' } };
+      ws.getCell(1,2).font = { bold:true, color:{ argb:'FF37474F' }, size:10 };
+      ws.getCell(1,2).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFCFD8DC' } };
       ws.getCell(1,2).alignment = { horizontal:'center', vertical:'middle' };
       ws.getCell(1,2).border = thinBorder;
       ws.mergeCells(1, totalCols, 3, totalCols);
@@ -8392,14 +8393,14 @@ function exportIndicatorAnalysisExcel() {
         const grpBg = grpColorMap[grp.name] || '455A64';
         for (const f of grp.items) {
           ws.getCell(2, cIdx).value = f.label;
-          ws.getCell(2, cIdx).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:9 };
-          ws.getCell(2, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF' + grpBg } };
+          ws.getCell(2, cIdx).font = { bold:true, color:{ argb: 'FF' + grpBg }, size:9 };
+          ws.getCell(2, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF' + (grpBgLight[grp.name] || 'F5F5F5') } };
           ws.getCell(2, cIdx).alignment = { horizontal:'center', vertical:'middle' };
           ws.getCell(2, cIdx).border = thinBorder;
           ws.mergeCells(2, cIdx, 2, cIdx + 1);
           ws.getCell(3, cIdx).value = pL1;
-          ws.getCell(3, cIdx).font = { bold:true, color:{ argb:'FF1A237E' }, size:8 };
-          ws.getCell(3, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE3F2FD' } };
+          ws.getCell(3, cIdx).font = { bold:true, color:{ argb:'FF1565C0' }, size:8 };
+          ws.getCell(3, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8F0FE' } };
           ws.getCell(3, cIdx).alignment = { horizontal:'center', vertical:'middle' };
           ws.getCell(3, cIdx).border = thinBorder;
           ws.getCell(3, cIdx + 1).value = pL2;
@@ -8410,8 +8411,8 @@ function exportIndicatorAnalysisExcel() {
           cIdx += 2;
         }
         ws.getCell(1, startC).value = grp.name;
-        ws.getCell(1, startC).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:10 };
-        ws.getCell(1, startC).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF' + (grpColorMap[grp.name] || '455A64') } };
+        ws.getCell(1, startC).font = { bold:true, color:{ argb: 'FF' + (grpColorMap[grp.name] || '455A64') }, size:10 };
+        ws.getCell(1, startC).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF' + (grpBgLight[grp.name] || 'ECEFF1') } };
         ws.getCell(1, startC).alignment = { horizontal:'center', vertical:'middle' };
         ws.getCell(1, startC).border = thinBorder;
         ws.mergeCells(1, startC, 1, cIdx - 1);
@@ -8424,7 +8425,7 @@ function exportIndicatorAnalysisExcel() {
         ws.getCell(r, 1).font = { bold: style !== 'hosp', size: style === 'grand' ? 11 : 10, color:{ argb: style === 'grand' ? 'FFFFFFFF' : 'FF1A1A2E' } };
         ws.getCell(r, 1).alignment = { horizontal:'right', vertical:'middle', indent: style === 'hosp' ? 1 : 0 };
         ws.getCell(r, 1).border = thinBorder;
-        if (style === 'grand') ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF0D1B2A' } };
+        if (style === 'grand') ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF37474F' } };
         else if (style === 'gov') ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8EAF6' } };
         else if (r % 2 === 0) ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFAFAFA' } };
         cIdx = 2;
@@ -8433,17 +8434,17 @@ function exportIndicatorAnalysisExcel() {
           const v2 = Number(d2[c.key]) || 0;
           ws.getCell(r, cIdx).value = v1;
           ws.getCell(r, cIdx).numFmt = '#,##0';
-          ws.getCell(r, cIdx).font = { bold: style !== 'hosp', size: style === 'grand' ? 10 : 9, color:{ argb: style === 'grand' ? 'FFE0E0E0' : 'FF1A237E' } };
+          ws.getCell(r, cIdx).font = { bold: style !== 'hosp', size: style === 'grand' ? 10 : 9, color:{ argb: style === 'grand' ? 'FFE0E0E0' : 'FF1565C0' } };
           ws.getCell(r, cIdx).alignment = { horizontal:'center', vertical:'middle' };
           ws.getCell(r, cIdx).border = thinBorder;
-          if (style === 'grand') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF1B2838' } };
+          if (style === 'grand') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF455A64' } };
           else if (style === 'gov') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFF0F4FF' } };
           ws.getCell(r, cIdx + 1).value = v2;
           ws.getCell(r, cIdx + 1).numFmt = '#,##0';
-          ws.getCell(r, cIdx + 1).font = { bold: style !== 'hosp', size: style === 'grand' ? 10 : 9, color:{ argb: style === 'grand' ? 'FFE0E0E0' : 'FF880E4F' } };
+          ws.getCell(r, cIdx + 1).font = { bold: style !== 'hosp', size: style === 'grand' ? 10 : 9, color:{ argb: style === 'grand' ? 'FFE0E0E0' : 'FFAD1457' } };
           ws.getCell(r, cIdx + 1).alignment = { horizontal:'center', vertical:'middle' };
           ws.getCell(r, cIdx + 1).border = thinBorder;
-          if (style === 'grand') ws.getCell(r, cIdx + 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2A1018' } };
+          if (style === 'grand') ws.getCell(r, cIdx + 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF455A64' } };
           else if (style === 'gov') ws.getCell(r, cIdx + 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFFF0F3' } };
           cIdx += 2;
         }
@@ -8454,13 +8455,13 @@ function exportIndicatorAnalysisExcel() {
           for (const c of cols) { t1 += (Number(d1[c.key]) || 0); t2 += (Number(d2[c.key]) || 0); }
           const pct = t1 ? ((t2 - t1) / t1 * 100) : 0;
           ws.getCell(r, cIdx).value = t1 ? pct / 100 : '';
-          ws.getCell(r, cIdx).numFmt = '0.0%';
+          ws.getCell(r, cIdx).numFmt = '0.00%';
           const pctColor = pct > 0 ? 'FF2E7D32' : pct < 0 ? 'FFC62828' : 'FF455A64';
           ws.getCell(r, cIdx).font = { bold:true, size:10, color:{ argb: pctColor } };
         }
         ws.getCell(r, cIdx).alignment = { horizontal:'center', vertical:'middle' };
         ws.getCell(r, cIdx).border = thinBorder;
-        if (style === 'grand') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF0D1B2A' } };
+        if (style === 'grand') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF455A64' } };
         else if (style === 'gov') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8EAF6' } };
         r++;
       }
