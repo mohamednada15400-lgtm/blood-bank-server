@@ -8297,6 +8297,8 @@ async function loadIndicatorAnalysis() {
     if (hosp) params.set('hospitalId', hosp);
     const [result, allGovsRaw] = await Promise.all([api('GET', '/indicator-analysis?' + params.toString()), api('GET', '/governorates')]);
     const allGovs = allGovsRaw.map(g => typeof g === 'string' ? g : g.name);
+    window._iaLastResult = result;
+    window._iaLastGovs = allGovs;
     const iaType = document.getElementById('iaType')?.value || 'all';
     const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
     const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
@@ -8328,19 +8330,171 @@ async function loadIndicatorAnalysis() {
   } catch (err) { wrap.innerHTML = `<div style="color:red;padding:20px;text-align:center">خطأ: ${esc(err.message||'')}</div>`; }
 }
 
-/* ─── Excel Export ─── */
+/* ─── Excel Export (professional) ─── */
 function exportIndicatorAnalysisExcel() {
   showToast('جاري التجهيز...');
   try {
-    const tables = document.querySelectorAll('#iaResults table');
-    if (!tables.length) { showToast('لا توجد جداول للتصدير', 'warning'); return; }
-    const wb = XLSX.utils.book_new();
-    tables.forEach((tbl, i) => {
-      const ws = XLSX.utils.table_to_sheet(tbl);
-      const name = tbl.closest('.card')?.querySelector('h3')?.textContent?.trim().substring(0, 28) || ('جدول ' + (i+1));
-      XLSX.utils.book_append_sheet(wb, ws, name);
+    if (typeof ExcelJS === 'undefined') { showToast('مكتبة ExcelJS غير محملة', 'error'); return; }
+    const iaType = document.getElementById('iaType')?.value || 'all';
+    const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
+    const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
+    const checkedBig = _iaGetCheckedCols('big').map(k => _iaBigFields.find(f => f.key === k)).filter(Boolean);
+    const checkedSmall = _iaGetCheckedCols('small').map(k => _iaSmallFields.find(f => f.key === k)).filter(Boolean);
+    const checkedDisp = _iaGetCheckedCols('disp').map(k => _iaDispFields.find(f => f.key === k)).filter(Boolean);
+    if (!checkedBig.length && !checkedSmall.length && !checkedDisp.length) { showToast('لا توجد أعمدة محددة للتصدير', 'warning'); return; }
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'نظام بنك الدم';
+    wb.created = new Date();
+    const grpColorMap = { 'التجميع':'1565C0', 'إجمالي الوارد':'2E7D32', 'إجمالي المنصرف':'6A1B9A', 'الفصائل والتوافق':'1565C0', 'عينات غير مفحوصة':'C62828', 'الإعدامات':'E65100', 'تحليل نسب المؤشرات':'00695C', 'مؤشرات وحدات دم الأطفال':'AD1457', 'النسب المئوية للاعدام - أطفال':'C2185B', 'النسب المئوية للاعدام':'C2185B' };
+    const borderStyle = { style:'thin', color:{ argb:'FFB0BEC5' } };
+    const thinBorder = { top:borderStyle, bottom:borderStyle, left:borderStyle, right:borderStyle };
+    const noBorder = { top:{style:'none'}, bottom:{style:'none'}, left:{style:'none'}, right:{style:'none'} };
+    function buildSheet(title, cols, cardType) {
+      if (!cols.length) return;
+      const groups = [];
+      for (const f of cols) {
+        const g = f.g || '';
+        let grp = groups.find(x => x.name === g);
+        if (!grp) { grp = { name: g, items: [] }; groups.push(grp); }
+        grp.items.push(f);
+      }
+      const ws = wb.addWorksheet(title, { views:[{ state:'frozen', ySplit:3, xSplit:1 }] });
+      const data = cardType === 'big' ? window._iaLastResult?.big : cardType === 'small' ? window._iaLastResult?.small : window._iaLastResult?.disp;
+      const p1Data = data?.period1 || [], p2Data = data?.period2 || [];
+      const G = _iaBuildGovGroups(p1Data, p2Data, window._iaLastGovs || []);
+      const showGrand = document.getElementById('iaShowGrand')?.checked;
+      const showGov = document.getElementById('iaShowGov')?.checked;
+      const showHosp = document.getElementById('iaShowHosp')?.checked;
+      ws.getColumn(1).width = 26;
+      let colIdx = 2;
+      for (const c of cols) { ws.getColumn(colIdx).width = 11; ws.getColumn(colIdx + 1).width = 11; colIdx += 2; }
+      ws.getColumn(colIdx).width = 10;
+      const totalCols = cols.length * 2 + 2;
+      ws.getRow(1).height = 28;
+      ws.getRow(2).height = 22;
+      ws.getRow(3).height = 18;
+      ws.getCell(1,1).value = 'البيان';
+      ws.getCell(1,1).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:12 };
+      ws.getCell(1,1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF1A1A2E' } };
+      ws.getCell(1,1).alignment = { horizontal:'center', vertical:'middle', wrapText:true };
+      ws.getCell(1,1).border = thinBorder;
+      ws.mergeCells(1,1,3,1);
+      ws.getCell(1,2).value = 'التغيير %';
+      ws.getCell(1,2).font = { bold:true, color:{ argb:'FFFFCC80' }, size:10 };
+      ws.getCell(1,2).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF1A1A2E' } };
+      ws.getCell(1,2).alignment = { horizontal:'center', vertical:'middle' };
+      ws.getCell(1,2).border = thinBorder;
+      ws.mergeCells(1, totalCols, 3, totalCols);
+      let cIdx = 2;
+      for (const grp of groups) {
+        const startC = cIdx;
+        const grpBg = grpColorMap[grp.name] || '455A64';
+        for (const f of grp.items) {
+          ws.getCell(2, cIdx).value = f.label;
+          ws.getCell(2, cIdx).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:9 };
+          ws.getCell(2, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF' + grpBg } };
+          ws.getCell(2, cIdx).alignment = { horizontal:'center', vertical:'middle' };
+          ws.getCell(2, cIdx).border = thinBorder;
+          ws.mergeCells(2, cIdx, 2, cIdx + 1);
+          ws.getCell(3, cIdx).value = pL1;
+          ws.getCell(3, cIdx).font = { bold:true, color:{ argb:'FF1A237E' }, size:8 };
+          ws.getCell(3, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE3F2FD' } };
+          ws.getCell(3, cIdx).alignment = { horizontal:'center', vertical:'middle' };
+          ws.getCell(3, cIdx).border = thinBorder;
+          ws.getCell(3, cIdx + 1).value = pL2;
+          ws.getCell(3, cIdx + 1).font = { bold:true, color:{ argb:'FF880E4F' }, size:8 };
+          ws.getCell(3, cIdx + 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFCE4EC' } };
+          ws.getCell(3, cIdx + 1).alignment = { horizontal:'center', vertical:'middle' };
+          ws.getCell(3, cIdx + 1).border = thinBorder;
+          cIdx += 2;
+        }
+        ws.getCell(1, startC).value = grp.name;
+        ws.getCell(1, startC).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:10 };
+        ws.getCell(1, startC).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF' + (grpColorMap[grp.name] || '455A64') } };
+        ws.getCell(1, startC).alignment = { horizontal:'center', vertical:'middle' };
+        ws.getCell(1, startC).border = thinBorder;
+        ws.mergeCells(1, startC, 1, cIdx - 1);
+      }
+      let r = 4;
+      function addRow(label, d1, d2, style) {
+        const row = ws.getRow(r);
+        row.height = style === 'grand' ? 26 : style === 'gov' ? 22 : 18;
+        ws.getCell(r, 1).value = label;
+        ws.getCell(r, 1).font = { bold: style !== 'hosp', size: style === 'grand' ? 11 : 10, color:{ argb: style === 'grand' ? 'FFFFFFFF' : 'FF1A1A2E' } };
+        ws.getCell(r, 1).alignment = { horizontal:'right', vertical:'middle', indent: style === 'hosp' ? 1 : 0 };
+        ws.getCell(r, 1).border = thinBorder;
+        if (style === 'grand') ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF0D1B2A' } };
+        else if (style === 'gov') ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8EAF6' } };
+        else if (r % 2 === 0) ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFAFAFA' } };
+        cIdx = 2;
+        for (const c of cols) {
+          const v1 = Number(d1[c.key]) || 0;
+          const v2 = Number(d2[c.key]) || 0;
+          ws.getCell(r, cIdx).value = v1;
+          ws.getCell(r, cIdx).numFmt = '#,##0';
+          ws.getCell(r, cIdx).font = { bold: style !== 'hosp', size: style === 'grand' ? 10 : 9, color:{ argb: style === 'grand' ? 'FFE0E0E0' : 'FF1A237E' } };
+          ws.getCell(r, cIdx).alignment = { horizontal:'center', vertical:'middle' };
+          ws.getCell(r, cIdx).border = thinBorder;
+          if (style === 'grand') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF1B2838' } };
+          else if (style === 'gov') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFF0F4FF' } };
+          ws.getCell(r, cIdx + 1).value = v2;
+          ws.getCell(r, cIdx + 1).numFmt = '#,##0';
+          ws.getCell(r, cIdx + 1).font = { bold: style !== 'hosp', size: style === 'grand' ? 10 : 9, color:{ argb: style === 'grand' ? 'FFE0E0E0' : 'FF880E4F' } };
+          ws.getCell(r, cIdx + 1).alignment = { horizontal:'center', vertical:'middle' };
+          ws.getCell(r, cIdx + 1).border = thinBorder;
+          if (style === 'grand') ws.getCell(r, cIdx + 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2A1018' } };
+          else if (style === 'gov') ws.getCell(r, cIdx + 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFFF0F3' } };
+          cIdx += 2;
+        }
+        if (style === 'hosp') {
+          ws.getCell(r, cIdx).value = '';
+        } else {
+          let t1 = 0, t2 = 0;
+          for (const c of cols) { t1 += (Number(d1[c.key]) || 0); t2 += (Number(d2[c.key]) || 0); }
+          const pct = t1 ? ((t2 - t1) / t1 * 100) : 0;
+          ws.getCell(r, cIdx).value = t1 ? pct / 100 : '';
+          ws.getCell(r, cIdx).numFmt = '0.0%';
+          const pctColor = pct > 0 ? 'FF2E7D32' : pct < 0 ? 'FFC62828' : 'FF455A64';
+          ws.getCell(r, cIdx).font = { bold:true, size:10, color:{ argb: pctColor } };
+        }
+        ws.getCell(r, cIdx).alignment = { horizontal:'center', vertical:'middle' };
+        ws.getCell(r, cIdx).border = thinBorder;
+        if (style === 'grand') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF0D1B2A' } };
+        else if (style === 'gov') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8EAF6' } };
+        r++;
+      }
+      let grand1 = {}, grand2 = {};
+      for (const c of cols) { grand1[c.key] = 0; grand2[c.key] = 0; }
+      for (const [gov, hosps] of G.govG) {
+        let gov1 = {}, gov2 = {};
+        for (const c of cols) { gov1[c.key] = 0; gov2[c.key] = 0; }
+        for (const h of hosps) {
+          const d1 = G.p1M.get(h.hid) || {}, d2 = G.p2M.get(h.hid) || {};
+          for (const c of cols) { gov1[c.key] += (Number(d1[c.key]) || 0); gov2[c.key] += (Number(d2[c.key]) || 0); }
+        }
+        for (const c of cols) { grand1[c.key] += gov1[c.key]; grand2[c.key] += gov2[c.key]; }
+        if (showGov) addRow(gov, gov1, gov2, 'gov');
+        if (showHosp) {
+          for (const h of hosps) {
+            const d1 = G.p1M.get(h.hid) || {}, d2 = G.p2M.get(h.hid) || {};
+            addRow(h.name, d1, d2, 'hosp');
+          }
+        }
+      }
+      if (showGrand) addRow('اجمالي الهيئة', grand1, grand2, 'grand');
+    }
+    if (checkedBig.length && (iaType === 'all' || iaType === 'big')) buildSheet('المؤشرات التجميعية', checkedBig, 'big');
+    if (checkedSmall.length && (iaType === 'all' || iaType === 'small')) buildSheet('المؤشرات التخزينية', checkedSmall, 'small');
+    if (checkedDisp.length && (iaType === 'all' || iaType === 'big' || iaType === 'disp')) buildSheet('منصرف الفصائل', checkedDisp, 'disp');
+    if (!wb._worksheets || !wb._worksheets.length) { showToast('لا توجد جداول للتصدير', 'warning'); return; }
+    wb.xlsx.writeBuffer().then(function(buffer) {
+      const blob = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'تحليل_مؤشرات_الأداء.xlsx';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('تم التصدير بنجاح', 'success');
     });
-    XLSX.writeFile(wb, 'تحليل_مؤشرات_الأداء.xlsx');
-    showToast('تم التصدير بنجاح', 'success');
   } catch (e) { showToast('خطأ في التصدير: ' + e.message, 'error'); }
 }

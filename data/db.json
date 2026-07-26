@@ -71691,8 +71691,10 @@
       "national_id": "29901011906997",
       "phone": "1095421873",
       "email": "ahmedsaleh@gmail.com",
-      "updated_at": "2026-07-16T21:16:18.445Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:41.514Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 218,
@@ -71707,8 +71709,10 @@
       "national_id": "29710011908167",
       "phone": "1004850205",
       "email": "hebamatwan@hotmail.com",
-      "updated_at": "2026-07-16T21:16:18.418Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:41.377Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 217,
@@ -71723,8 +71727,10 @@
       "national_id": "29701012416153",
       "phone": "1020423025",
       "email": "mahmoudgemy062@gmail.com",
-      "updated_at": "2026-07-16T21:16:18.391Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:41.336Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 216,
@@ -71739,8 +71745,10 @@
       "national_id": "29103171300463",
       "phone": "1007299766",
       "email": "nohasoliman430@gmail.com",
-      "updated_at": "2026-07-16T21:16:18.362Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:41.264Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 215,
@@ -71755,8 +71763,10 @@
       "national_id": "27601121900543",
       "phone": "1094727594",
       "email": "monatahawy@gmail.com",
-      "updated_at": "2026-07-16T21:16:18.333Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:41.217Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 214,
@@ -71771,8 +71781,10 @@
       "national_id": "28004071300413",
       "phone": "1008726403",
       "email": "sayedldeek668@gmail.com",
-      "updated_at": "2026-07-16T21:16:18.309Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:41.177Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 213,
@@ -71787,8 +71799,10 @@
       "national_id": "28408151900423",
       "phone": "1278710230",
       "email": "asmaabadrdr@gmail.com",
-      "updated_at": "2026-07-16T21:16:18.281Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:41.131Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 212,
@@ -71803,8 +71817,10 @@
       "national_id": "29304051303537",
       "phone": "1028265993",
       "email": null,
-      "updated_at": "2026-07-16T21:16:18.255Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:45.311Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 211,
@@ -71819,8 +71835,10 @@
       "national_id": "27605251900061",
       "phone": "1006899756",
       "email": "naglaafathy7676@gmail.com",
-      "updated_at": "2026-07-16T21:16:18.228Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:45.284Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 210,
@@ -71835,8 +71853,10 @@
       "national_id": "28011031301243",
       "phone": "1093806264",
       "email": null,
-      "updated_at": "2026-07-16T21:16:18.200Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:45.256Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 209,
@@ -71851,8 +71871,10 @@
       "national_id": "27107040104853",
       "phone": "1090677390",
       "email": null,
-      "updated_at": "2026-07-16T21:16:18.174Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:45.206Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 208,
@@ -71867,8 +71889,10 @@
       "national_id": "29107011303038",
       "phone": "1000478283",
       "email": null,
-      "updated_at": "2026-07-16T21:16:18.146Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:45.172Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 207,
@@ -71883,8 +71907,10 @@
       "national_id": "28408251302124",
       "phone": "10006115370",
       "email": "Fatma_ali56@yahoo. Com",
-      "updated_at": "2026-07-16T21:16:18.118Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:55.700Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 206,
@@ -71899,8 +71925,10 @@
       "national_id": "28809231401112",
       "phone": "1220044913",
       "email": "Sam.sky2013@gmail.com",
-      "updated_at": "2026-07-16T21:16:18.093Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:55.672Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 205,
@@ -71915,8 +71943,10 @@
       "national_id": "29111241303719",
       "phone": "1025373878",
       "email": "shehataelbeily44@gmail.com",
-      "updated_at": "2026-07-16T21:16:18.065Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:55.645Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 204,
@@ -71931,8 +71961,10 @@
       "national_id": "27704261302071",
       "phone": "1006653901",
       "email": "0122884591zzaa@gmail.com",
-      "updated_at": "2026-07-16T21:16:18.040Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:55.615Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 203,
@@ -71947,8 +71979,10 @@
       "national_id": "27512191300516",
       "phone": "1005473226",
       "email": "menaa20086@gmail.com",
-      "updated_at": "2026-07-16T21:16:18.011Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:55.587Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 202,
@@ -71963,8 +71997,10 @@
       "national_id": "28210081900183",
       "phone": "1032000285",
       "email": "monah7140@gmail.com",
-      "updated_at": "2026-07-16T21:16:17.983Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:55.555Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 201,
@@ -72091,8 +72127,10 @@
       "national_id": "29607141202376",
       "phone": "1099569696",
       "email": "mmO413875@gmail.com",
-      "updated_at": "2026-07-16T21:16:17.757Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:58.723Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 193,
@@ -72107,8 +72145,10 @@
       "national_id": "29303031900362",
       "phone": "1022883289",
       "email": "ahmedmostafa5404@gmail.com",
-      "updated_at": "2026-07-16T21:16:17.730Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:58.694Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 192,
@@ -72123,8 +72163,10 @@
       "national_id": "29306271900172",
       "phone": "1097673941",
       "email": "Mohammed.Maarouf2016@gmail.com",
-      "updated_at": "2026-07-16T21:16:17.705Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:58.657Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 191,
@@ -72139,8 +72181,10 @@
       "national_id": "29109151312552",
       "phone": "1068880999",
       "email": "abohafsanada422@gmail.com",
-      "updated_at": "2026-07-16T21:16:17.676Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:58.621Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 190,
@@ -72155,8 +72199,10 @@
       "national_id": "28012271402736",
       "phone": "1006049587",
       "email": "tamimgabal40@gmail.com",
-      "updated_at": "2026-07-16T21:16:17.648Z",
-      "user_id": 1
+      "updated_at": "2026-07-26T06:43:58.581Z",
+      "user_id": 1,
+      "reviewed": true,
+      "review_month": 202607
     },
     {
       "id": 189,
@@ -73967,207 +74013,9 @@
       "user_id": null
     }
   ],
-  "readiness_occasions": [
-    {
-      "id": 13,
-      "name": "عيد الاضحي",
-      "date_from": "2026-07-16",
-      "date_to": "2026-07-16",
-      "day_labels": "[]",
-      "created_at": "2026-07-15T13:32:04.273Z",
-      "updated_at": "2026-07-15T13:32:04.273Z",
-      "user_id": 1
-    }
-  ],
-  "readiness_reports": [
-    {
-      "id": 2,
-      "occasion_id": 13,
-      "hospital_id": 2,
-      "hospital_name": "النصر *",
-      "governorate": "بورسعيد",
-      "staff_data": "\"[{\\\"name\\\":\\\"محمد السيد الحسانين محمد\\\",\\\"phone\\\":\\\"01000047459\\\",\\\"shifts\\\":{\\\"0\\\":\\\"12 A\\\"}},{\\\"name\\\":\\\"شريف محمد حنفي مقلد\\\",\\\"phone\\\":\\\"01505144141\\\",\\\"shifts\\\":{\\\"0\\\":\\\"12 P\\\"}},{\\\"name\\\":\\\"ندى طارق محمد نصر الدين\\\",\\\"phone\\\":\\\"01228632075\\\",\\\"shifts\\\":{\\\"0\\\":\\\"12 P\\\"}}]\"",
-      "stock": "كافي",
-      "shortage": "",
-      "maintenance": "تتم",
-      "breakdowns": "لا يوجد",
-      "consumables": "كافية",
-      "correction": "",
-      "notes_manager": "",
-      "notes_branch": "",
-      "notes_authority": "",
-      "created_by": 55,
-      "created_at": "2026-07-15T13:37:27.778Z"
-    },
-    {
-      "id": 1,
-      "occasion_id": 13,
-      "hospital_id": 8,
-      "hospital_name": "طوارئ ابو خليفه",
-      "governorate": "الإسماعيلية",
-      "staff_data": "[{\"name\":\"محمد عبدالمنعم حسن\",\"phone\":\"1068880999\",\"shifts\":{\"0\":\"12 A\"}}]",
-      "stock": "كافي",
-      "shortage": "",
-      "maintenance": "تتم",
-      "breakdowns": "لا يوجد",
-      "consumables": "كافية",
-      "correction": "",
-      "notes_manager": "",
-      "notes_branch": "",
-      "notes_authority": "",
-      "created_by": 1,
-      "created_at": "2026-07-15T13:32:19.801Z"
-    }
-  ],
-  "readiness_notifications": [
-    {
-      "id": 13,
-      "occasion_id": 13,
-      "occasion_name": "عيد الاضحي",
-      "message": "جاهزية بنوك الدم بمناسبة \"عيد الاضحي\" من 2026-07-16 إلى 2026-07-16 - 34 بنك دم لم يدخل الجاهزية",
-      "created_by": 1,
-      "created_at": "2026-07-15T13:32:04.273Z",
-      "dismissed": false,
-      "_missingHospitals": [
-        {
-          "name": "التضامن (مجمع الشفاء)*",
-          "gov": "بورسعيد"
-        },
-        {
-          "name": "الحياة بورفؤاد *",
-          "gov": "بورسعيد"
-        },
-        {
-          "name": "الزهور",
-          "gov": "بورسعيد"
-        },
-        {
-          "name": "٣٠ يونيو",
-          "gov": "بورسعيد"
-        },
-        {
-          "name": "السلام",
-          "gov": "بورسعيد"
-        },
-        {
-          "name": "المجمع الطبي *",
-          "gov": "الإسماعيلية"
-        },
-        {
-          "name": "مركز 30 يونيو",
-          "gov": "الإسماعيلية"
-        },
-        {
-          "name": "فايد التخصصي",
-          "gov": "الإسماعيلية"
-        },
-        {
-          "name": "القصاصين التخصصي",
-          "gov": "الإسماعيلية"
-        },
-        {
-          "name": "القنطرة غرب التخصصي",
-          "gov": "الإسماعيلية"
-        },
-        {
-          "name": "القنطرة شرق التخصصي",
-          "gov": "الإسماعيلية"
-        },
-        {
-          "name": "التل الكبيرالتخصصي",
-          "gov": "الإسماعيلية"
-        },
-        {
-          "name": "مجمع السويس الطبي *",
-          "gov": "السويس"
-        },
-        {
-          "name": "المرأه والطفل ( حوض الدرس )",
-          "gov": "السويس"
-        },
-        {
-          "name": "المناظير و الجهاز الهضمي",
-          "gov": "السويس"
-        },
-        {
-          "name": "طيبة التخصصي *",
-          "gov": "الأقصر"
-        },
-        {
-          "name": "المجمع الطبي الاقصر",
-          "gov": "الأقصر"
-        },
-        {
-          "name": "ايزيس التخصصي",
-          "gov": "الأقصر"
-        },
-        {
-          "name": "الاطفال التخصصي",
-          "gov": "الأقصر"
-        },
-        {
-          "name": "الكرنك الدولي *",
-          "gov": "الأقصر"
-        },
-        {
-          "name": "حورس",
-          "gov": "الأقصر"
-        },
-        {
-          "name": "راس سدر *",
-          "gov": "جنوب سيناء"
-        },
-        {
-          "name": "شرم الشيخ الدولي",
-          "gov": "جنوب سيناء"
-        },
-        {
-          "name": "طابا",
-          "gov": "جنوب سيناء"
-        },
-        {
-          "name": "سانت كاترين",
-          "gov": "جنوب سيناء"
-        },
-        {
-          "name": "مجمع الفيروز *",
-          "gov": "جنوب سيناء"
-        },
-        {
-          "name": "النيل التخصصي*(حورس ادفو)",
-          "gov": "أسوان"
-        },
-        {
-          "name": "اسوان التخصصي (الصداقه)",
-          "gov": "أسوان"
-        },
-        {
-          "name": "كوم امبو *",
-          "gov": "أسوان"
-        },
-        {
-          "name": "دراو",
-          "gov": "أسوان"
-        },
-        {
-          "name": "معهد الاورام",
-          "gov": "أسوان"
-        },
-        {
-          "name": "ابوسمبل الدولي",
-          "gov": "أسوان"
-        },
-        {
-          "name": "المسلة التخصصي",
-          "gov": "أسوان"
-        },
-        {
-          "name": "السباعية التخصصي",
-          "gov": "أسوان"
-        }
-      ]
-    }
-  ],
+  "readiness_occasions": [],
+  "readiness_reports": [],
+  "readiness_notifications": [],
   "role_perms": [
     {
       "id": 1,
