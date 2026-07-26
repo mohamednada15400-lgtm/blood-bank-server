@@ -8101,7 +8101,8 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
   if (!cols.length) return '';
   const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
   const grpColors = { 'التجميع':'#1565c0', 'إجمالي الوارد':'#2e7d32', 'إجمالي المنصرف':'#6a1b9a', 'الفصائل والتوافق':'#1565c0', 'عينات غير مفحوصة':'#c62828', 'الإعدامات':'#e65100', 'تحليل نسب المؤشرات':'#00695c', 'مؤشرات وحدات دم الأطفال':'#ad1457', 'النسب المئوية للاعدام - أطفال':'#c2185b', 'النسب المئوية للاعدام':'#c2185b' };
-  let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+  const grpBgs = { 'التجميع':'#e8eaf6', 'إجمالي الوارد':'#e8f5e9', 'إجمالي المنصرف':'#f3e5f5', 'الفصائل والتوافق':'#e3f2fd', 'عينات غير مفحوصة':'#ffebee', 'الإعدامات':'#fff3e0', 'تحليل نسب المؤشرات':'#e0f2f1', 'مؤشرات وحدات دم الأطفال':'#fce4ec', 'النسب المئوية للاعدام - أطفال':'#fce4ec', 'السب المئوية للاعدام':'#fce4ec' };
+  let html = '<div style="overflow-x:auto;padding:2px"><style>.ia-row:hover{background:#e3f2fd!important}.ia-row[data-row-bg="#0d1b2a"]:hover{background:#1b2838!important}</style><table style="width:100%;border-collapse:collapse;font-size:12px;letter-spacing:0">';
   const groups = [];
   for (const c of cols) {
     const g = c.g || '';
@@ -8109,45 +8110,53 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
     if (!grp) { grp = { name: g, items: [] }; groups.push(grp); }
     grp.items.push(c);
   }
-  const totalInterleaved = cols.length * 2;
   html += `<thead>
     <tr>
-      <th rowspan="3" style="background:#263238;color:#fff;padding:6px 8px;position:sticky;right:0;z-index:2;min-width:150px">البيان</th>`;
+      <th rowspan="3" style="background:#1a1a2e;color:#e0e0e0;padding:10px 12px;position:sticky;right:0;z-index:3;min-width:160px;text-align:right;font-size:13px;border-bottom:3px solid #ff6f00;white-space:nowrap">البيان</th>`;
   for (const grp of groups) {
     const bg = grpColors[grp.name] || '#455a64';
-    html += `<th colspan="${grp.items.length * 2}" style="background:${bg};color:#fff;text-align:center;padding:4px 6px;font-size:11px;border:1px solid rgba(255,255,255,.2)">${esc(grp.name)}</th>`;
+    html += `<th colspan="${grp.items.length * 2}" style="background:${bg};color:#fff;text-align:center;padding:6px 8px;font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,.15);white-space:nowrap">${esc(grp.name)}</th>`;
   }
-  html += `<th rowspan="3" style="background:#333;color:#fff;padding:4px 8px;min-width:60px;text-align:center;font-size:11px">التغيير %</th></tr><tr>`;
+  html += `<th rowspan="3" style="background:#1a1a2e;color:#ffcc80;padding:8px 6px;min-width:70px;text-align:center;font-size:11px;border-bottom:3px solid #ff6f00;white-space:nowrap">التغيير %</th></tr><tr>`;
   for (const grp of groups) {
+    const bg = grpColors[grp.name] || '#455a64';
     for (const f of grp.items) {
-      html += `<th colspan="2" style="background:${grpColors[grp.name]||'#455a64'};color:#fff;text-align:center;padding:3px 4px;font-size:10px;border:1px solid rgba(255,255,255,.15)">${esc(f.label)}</th>`;
+      html += `<th colspan="2" style="background:${bg};color:#fff;text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(255,255,255,.1);white-space:nowrap">${esc(f.label)}</th>`;
     }
   }
   html += '</tr><tr>';
   for (const c of cols) {
-    html += `<th style="background:#1a237e;color:#cfd8dc;padding:2px 4px;font-size:9px;min-width:42px">${esc(pL1)}</th>`;
-    html += `<th style="background:#b71c1c;color:#ffcdd2;padding:2px 4px;font-size:9px;min-width:42px">${esc(pL2)}</th>`;
+    html += `<th style="background:#283593;color:#bbdefb;padding:3px 5px;font-size:9px;min-width:44px;border-bottom:2px solid #5c6bc0">${esc(pL1)}</th>`;
+    html += `<th style="background:#880e4f;color:#f8bbd0;padding:3px 5px;font-size:9px;min-width:44px;border-bottom:2px solid #e91e63">${esc(pL2)}</th>`;
   }
   html += '</tr></thead><tbody>';
-  function addRow(label, d1, d2, bg, isBold) {
-    const isDark = bg === '#263238';
-    const txtColor = isDark ? '#fff' : '';
-    html += `<tr style="background:${bg};font-weight:${isBold?'700':'400'};border-bottom:2px solid ${isDark?'#555':'var(--border)'};${txtColor?'color:'+txtColor:''}">`;
-    html += `<td style="padding:6px 8px;position:sticky;right:0;background:inherit;z-index:1;${isBold?'':'padding-right:28px;font-size:12px;color:var(--text-muted)'}">${esc(label)}</td>`;
-    for (const c of cols) {
+  let rowIdx = 0;
+  function addRow(label, d1, d2, bg, isBold, isGov) {
+    const isDark = bg === '#0d1b2a';
+    const rowBg = isDark ? '#0d1b2a' : (isBold ? '#f5f7fa' : (rowIdx % 2 === 0 ? '#fff' : '#fafbfc'));
+    const txtColor = isDark ? '#e0e0e0' : (isBold ? '#1a1a2e' : '#37474f');
+    const borderBot = isDark ? '3px solid #ff6f00' : (isBold ? '2px solid #90a4ae' : '1px solid #eceff1');
+    const labelIndent = isBold ? '0' : '20px';
+    html += `<tr class="ia-row" data-row-bg="${rowBg}" style="background:${rowBg};font-weight:${isBold?'700':'400'};border-bottom:${borderBot};color:${txtColor};transition:background .15s">`;
+    html += `<td style="padding:7px 12px;position:sticky;right:0;background:inherit;z-index:1;font-size:${isBold?'13':'12'}px;text-align:right;border-left:3px solid ${isDark?'#ff6f00':isGov?'#5c6bc0':'transparent'};padding-left:${labelIndent};white-space:nowrap">${isBold?'<strong>':''}${esc(label)}${isBold?'</strong>':''}</td>`;
+    for (let ci = 0; ci < cols.length; ci++) {
+      const c = cols[ci];
       const v1 = d1[c.key] || 0;
       const v2 = d2[c.key] || 0;
-      html += `<td style="text-align:center;padding:3px 4px;font-size:${isBold?'12':'11'}px;border-left:1px solid rgba(0,0,0,.06)">${_iaFmt(v1)}</td>`;
-      html += `<td style="text-align:center;padding:3px 4px;font-size:${isBold?'12':'11'}px;${isBold?'font-weight:700':''};border-right:1px solid rgba(0,0,0,.06)">${_iaFmt(v2)}</td>`;
+      const cellBg1 = isBold ? (isDark ? '#1b2838' : '#f0f4ff') : '';
+      const cellBg2 = isBold ? (isDark ? '#2a1018' : '#fff0f3') : '';
+      html += `<td style="text-align:center;padding:5px 6px;font-size:${isBold?'12':'11'}px;background:${cellBg1};border-left:1px solid rgba(0,0,0,.04)">${_iaFmt(v1)}</td>`;
+      html += `<td style="text-align:center;padding:5px 6px;font-size:${isBold?'12':'11'}px;background:${cellBg2};border-right:1px solid rgba(0,0,0,.04);${isBold?'font-weight:700':''}">${_iaFmt(v2)}</td>`;
     }
     if (isBold) {
       let tot1 = 0, tot2 = 0;
       for (const c of cols) { tot1 += (Number(d1[c.key])||0); tot2 += (Number(d2[c.key])||0); }
       html += _iaDeltaHtml(tot1, tot2);
     } else {
-      html += '<td style="text-align:center;color:#ccc">-</td>';
+      html += '<td style="text-align:center;color:#ccc;font-size:10px">-</td>';
     }
     html += '</tr>';
+    rowIdx++;
   }
   let grand1 = {}, grand2 = {};
   for (const c of cols) { grand1[c.key] = 0; grand2[c.key] = 0; }
@@ -8161,12 +8170,12 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
       hospRows.push({ name: h.name, d1, d2 });
     }
     for (const c of cols) { grand1[c.key] += gov1[c.key]; grand2[c.key] += gov2[c.key]; }
-    if (showGovTotal) addRow(gov, gov1, gov2, '#e8eaf6', true);
+    if (showGovTotal) addRow(gov, gov1, gov2, '', true, true);
     if (showHospDetail) {
-      for (const hr of hospRows) addRow(hr.name, hr.d1, hr.d2, '', false);
+      for (const hr of hospRows) addRow(hr.name, hr.d1, hr.d2, '', false, false);
     }
   }
-  if (showGrandTotal) addRow('اجمالي الهيئة', grand1, grand2, '#263238', true);
+  if (showGrandTotal) addRow('اجمالي الهيئة', grand1, grand2, '#0d1b2a', true, false);
   html += '</tbody></table></div>';
   return html;
 }
@@ -8301,25 +8310,22 @@ async function loadIndicatorAnalysis() {
     const checkedBig = _iaGetCheckedCols('big').map(k => _iaBigFields.find(f => f.key === k)).filter(Boolean);
     const checkedSmall = _iaGetCheckedCols('small').map(k => _iaSmallFields.find(f => f.key === k)).filter(Boolean);
     const checkedDisp = _iaGetCheckedCols('disp').map(k => _iaDispFields.find(f => f.key === k)).filter(Boolean);
-    if (hasBig && (iaType === 'all' || iaType === 'big')) {
-      const bigCols = checkedBig.length ? checkedBig : _iaBigFields.filter(f => ['collect_total','tested','refused_fatty','uncompleted','virology_c','virology_b','virology_i','virology_dollar'].includes(f.key));
-      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:#1a237e;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-building-columns"></i> المؤشرات التجميعية</h3></div><div class="card-body" style="padding:0">';
-      tablesHtml += _iaBuildSummaryTable(bigP1, bigP2, pL1, pL2, allGovs, bigCols);
+    if (hasBig && checkedBig.length && (iaType === 'all' || iaType === 'big')) {
+      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#1a237e,#283593);color:#fff;padding:10px 16px"><h3 style="margin:0;font-size:14px"><i class="fa-solid fa-building-columns" style="margin-left:8px"></i>المؤشرات التجميعية <span style="font-size:11px;opacity:.7;font-weight:400">(' + checkedBig.length + ' حقل)</span></h3></div><div class="card-body" style="padding:0">';
+      tablesHtml += _iaBuildSummaryTable(bigP1, bigP2, pL1, pL2, allGovs, checkedBig);
       tablesHtml += '</div></div>';
     }
-    if (hasSmall && (iaType === 'all' || iaType === 'small')) {
-      const smallCols = checkedSmall.length ? checkedSmall : _iaSmallFields.filter(f => ['inc_collected','out_blood','compatibility'].includes(f.key));
-      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:#4a148c;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-warehouse"></i> المؤشرات التخزينية</h3></div><div class="card-body" style="padding:0">';
-      tablesHtml += _iaBuildSummaryTable(smallP1, smallP2, pL1, pL2, allGovs, smallCols);
+    if (hasSmall && checkedSmall.length && (iaType === 'all' || iaType === 'small')) {
+      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#4a148c,#6a1b9a);color:#fff;padding:10px 16px"><h3 style="margin:0;font-size:14px"><i class="fa-solid fa-warehouse" style="margin-left:8px"></i>المؤشرات التخزينية <span style="font-size:11px;opacity:.7;font-weight:400">(' + checkedSmall.length + ' حقل)</span></h3></div><div class="card-body" style="padding:0">';
+      tablesHtml += _iaBuildSummaryTable(smallP1, smallP2, pL1, pL2, allGovs, checkedSmall);
       tablesHtml += '</div></div>';
     }
     if (hasDisp && checkedDisp.length && (iaType === 'all' || iaType === 'big' || iaType === 'disp')) {
-      const dispCols = checkedDisp.length ? checkedDisp : _iaDispFields;
-      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:#00695c;color:#fff"><h3 style="margin:0;font-size:15px"><i class="fa-solid fa-droplet"></i> منصرف الفصائل</h3></div><div class="card-body" style="padding:0">';
-      tablesHtml += _iaBuildSummaryTable(dispP1, dispP2, pL1, pL2, allGovs, dispCols);
+      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#00695c,#00897b);color:#fff;padding:10px 16px"><h3 style="margin:0;font-size:14px"><i class="fa-solid fa-droplet" style="margin-left:8px"></i>منصرف الفصائل <span style="font-size:11px;opacity:.7;font-weight:400">(' + checkedDisp.length + ' حقل)</span></h3></div><div class="card-body" style="padding:0">';
+      tablesHtml += _iaBuildSummaryTable(dispP1, dispP2, pL1, pL2, allGovs, checkedDisp);
       tablesHtml += '</div></div>';
     }
-    if (!tablesHtml) tablesHtml = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa-solid fa-inbox" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد بيانات مطابقة للفلاتر المحددة</div></div>';
+    if (!tablesHtml) tablesHtml = '<div class="card"><div class="card-body" style="text-align:center;padding:48px 20px;color:var(--text-muted)"><i class="fa-solid fa-table-columns" style="font-size:40px;margin-bottom:12px;opacity:.4"></i><br><div style="font-size:14px;font-weight:600;margin-bottom:6px">لا توجد أعمدة محددة</div><div style="font-size:12px;opacity:.7">افتح بانل اختيار المؤشرات حدد الأعمدة المطلوبة ثم اضغط تحديث</div></div></div>';
     wrap.innerHTML = tablesHtml;
   } catch (err) { wrap.innerHTML = `<div style="color:red;padding:20px;text-align:center">خطأ: ${esc(err.message||'')}</div>`; }
 }
