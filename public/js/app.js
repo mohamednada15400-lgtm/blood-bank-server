@@ -8175,41 +8175,58 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
   }
   let grand1 = {}, grand2 = {};
   for (const c of cols) { grand1[c.key] = 0; grand2[c.key] = 0; }
+  const useFormulas = (typeKey === 'big' || typeKey === 'small');
   let grandRaw1 = {}, grandRaw2 = {};
-  for (const c of cols) { if (!_iaIsFormula(c.key)) { grandRaw1[c.key] = 0; grandRaw2[c.key] = 0; } }
   for (const [gov, hosps] of G.govG) {
-    let gov1 = {}, gov2 = {};
-    for (const c of cols) { gov1[c.key] = 0; gov2[c.key] = 0; }
+    let govRaw1 = {}, govRaw2 = {};
     const hospRows = [];
     for (const h of hosps) {
       const d1raw = G.p1M.get(h.hid)||{}, d2raw = G.p2M.get(h.hid)||{};
       const d1 = _iaMergeWithFormulas(d1raw, typeKey);
       const d2 = _iaMergeWithFormulas(d2raw, typeKey);
-      for (const c of cols) {
-        if (_iaIsFormula(c.key)) continue;
-        gov1[c.key] += (Number(d1[c.key])||0); gov2[c.key] += (Number(d2[c.key])||0);
+      for (const [k, v] of Object.entries(d1raw)) {
+        if (_iaIsFormula(k)) continue;
+        if (typeof v === 'number') govRaw1[k] = (govRaw1[k]||0) + v;
+      }
+      for (const [k, v] of Object.entries(d2raw)) {
+        if (_iaIsFormula(k)) continue;
+        if (typeof v === 'number') govRaw2[k] = (govRaw2[k]||0) + v;
       }
       hospRows.push({ name: h.name, d1, d2 });
     }
-    if (typeKey === 'big' || typeKey === 'small') {
-      const gf1 = _iaRecomputeFormulas(gov1, typeKey); Object.assign(gov1, gf1);
-      const gf2 = _iaRecomputeFormulas(gov2, typeKey); Object.assign(gov2, gf2);
+    let gov1 = {}, gov2 = {};
+    if (useFormulas) {
+      Object.assign(gov1, govRaw1, _iaRecomputeFormulas(govRaw1, typeKey));
+      Object.assign(gov2, govRaw2, _iaRecomputeFormulas(govRaw2, typeKey));
+    } else {
+      gov1 = govRaw1; gov2 = govRaw2;
     }
-    for (const c of cols) {
-      if (_iaIsFormula(c.key)) continue;
-      grandRaw1[c.key] = (grandRaw1[c.key]||0) + gov1[c.key]; grandRaw2[c.key] = (grandRaw2[c.key]||0) + gov2[c.key];
+    for (const [k, v] of Object.entries(govRaw1)) {
+      if (_iaIsFormula(k)) continue;
+      grandRaw1[k] = (grandRaw1[k]||0) + v;
     }
-    if (showGovTotal) addRow(gov, gov1, gov2, '', true, true);
+    for (const [k, v] of Object.entries(govRaw2)) {
+      if (_iaIsFormula(k)) continue;
+      grandRaw2[k] = (grandRaw2[k]||0) + v;
+    }
+    if (showGovTotal) {
+      const g1 = {}, g2 = {};
+      for (const c of cols) { g1[c.key] = gov1[c.key] || 0; g2[c.key] = gov2[c.key] || 0; }
+      addRow(gov, g1, g2, '', true, true);
+    }
     if (showHospDetail) {
       for (const hr of hospRows) addRow(hr.name, hr.d1, hr.d2, '', false, false);
     }
   }
-  if (typeKey === 'big' || typeKey === 'small') {
+  if (useFormulas) {
+    Object.assign(grand1, grandRaw1, _iaRecomputeFormulas(grandRaw1, typeKey));
+    Object.assign(grand2, grandRaw2, _iaRecomputeFormulas(grandRaw2, typeKey));
+  } else {
     Object.assign(grand1, grandRaw1); Object.assign(grand2, grandRaw2);
-    const ggf1 = _iaRecomputeFormulas(grand1, typeKey); Object.assign(grand1, ggf1);
-    const ggf2 = _iaRecomputeFormulas(grand2, typeKey); Object.assign(grand2, ggf2);
   }
-  if (showGrandTotal) addRow('اجمالي الهيئة', grand1, grand2, '#f5f6fa', true, false);
+  const gFinal1 = {}, gFinal2 = {};
+  for (const c of cols) { gFinal1[c.key] = grand1[c.key] || 0; gFinal2[c.key] = grand2[c.key] || 0; }
+  if (showGrandTotal) addRow('اجمالي الهيئة', gFinal1, gFinal2, '#f5f6fa', true, false);
   html += '</tbody></table></div>';
   return html;
 }
@@ -8573,76 +8590,113 @@ function toggleIaGroup(arg) {
 function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   var el = document.getElementById(divId);
   if (!el) return;
+  var showGrand = document.getElementById('iaShowGrand')?.checked;
+  var showGov = document.getElementById('iaShowGov')?.checked;
+  var showHosp = document.getElementById('iaShowHosp')?.checked;
   var G = _iaBuildGovGroups(p1Data, p2Data, []);
   var bullets = [];
 
-  for (var ci = 0; ci < cols.length; ci++) {
-    var col = cols[ci];
-    var hospChanges = [];
-    var govArr = Array.from(G.govG);
-    for (var gi = 0; gi < govArr.length; gi++) {
-      var gov = govArr[gi][0], hosps = govArr[gi][1];
-      for (var hi = 0; hi < hosps.length; hi++) {
-        var h = hosps[hi];
-        var d1 = G.p1M.get(h.hid) || {}, d2 = G.p2M.get(h.hid) || {};
-        var v1 = Number(d1[col.key]) || 0, v2 = Number(d2[col.key]) || 0;
-        if (v1 === 0 && v2 === 0) continue;
-        if (v1 === v2) continue;
-        hospChanges.push({ name: h.name, gov: gov, v1: v1, v2: v2, diff: v2 - v1, pct: v1 ? ((v2 - v1) / v1 * 100) : null });
-      }
-    }
-    hospChanges.sort(function(a, b) { return Math.abs(b.diff) - Math.abs(a.diff); });
-    var increases = hospChanges.filter(function(h) { return h.diff > 0; });
-    var decreases = hospChanges.filter(function(h) { return h.diff < 0; });
-
-    if (increases.length === 1) {
-      var h = increases[0];
-      bullets.push('ارتفاع ' + col.label + ' ب' + h.name + ' في ' + h.gov + ' خلال ' + lP2 + ' (' + _iaFmt(h.v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(h.v1) + ')');
-    } else if (increases.length > 1) {
-      var grouped = {};
-      for (var ii = 0; ii < increases.length; ii++) { var hh = increases[ii]; if (!grouped[hh.gov]) grouped[hh.gov] = []; grouped[hh.gov].push(hh); }
-      var gKeys = Object.keys(grouped);
-      for (var ki = 0; ki < gKeys.length; ki++) {
-        var gk = gKeys[ki], arr = grouped[gk];
-        if (arr.length === 1) {
-          bullets.push('ارتفاع ' + col.label + ' ب' + arr[0].name + ' في ' + gk + ' خلال ' + lP2 + ' (' + _iaFmt(arr[0].v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(arr[0].v1) + ')');
-        } else {
-          var names = arr.map(function(x) { return x.name; }).join(' و ');
-          bullets.push('ارتفاع ' + col.label + ' ب' + names + ' في ' + gk + ' خلال ' + lP2 + ' مقارنة ب' + lP1);
+  if (showHosp) {
+    for (var ci = 0; ci < cols.length; ci++) {
+      var col = cols[ci];
+      var hospChanges = [];
+      var govArr = Array.from(G.govG);
+      for (var gi = 0; gi < govArr.length; gi++) {
+        var gov = govArr[gi][0], hosps = govArr[gi][1];
+        for (var hi = 0; hi < hosps.length; hi++) {
+          var h = hosps[hi];
+          var d1raw = G.p1M.get(h.hid) || {}, d2raw = G.p2M.get(h.hid) || {};
+          var v1 = Number(d1raw[col.key]) || 0, v2 = Number(d2raw[col.key]) || 0;
+          if (v1 === 0 && v2 === 0) continue;
+          if (v1 === v2) continue;
+          hospChanges.push({ name: h.name, gov: gov, v1: v1, v2: v2, diff: v2 - v1, pct: v1 ? ((v2 - v1) / v1 * 100) : null });
         }
       }
-    }
+      hospChanges.sort(function(a, b) { return Math.abs(b.diff) - Math.abs(a.diff); });
+      var increases = hospChanges.filter(function(h) { return h.diff > 0; });
+      var decreases = hospChanges.filter(function(h) { return h.diff < 0; });
 
-    if (decreases.length === 1) {
-      var h = decreases[0];
-      bullets.push('انخفاض ' + col.label + ' ب' + h.name + ' في ' + h.gov + ' خلال ' + lP2 + ' (' + _iaFmt(h.v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(h.v1) + ')');
-    } else if (decreases.length > 1) {
-      var grouped = {};
-      for (var ii = 0; ii < decreases.length; ii++) { var hh = decreases[ii]; if (!grouped[hh.gov]) grouped[hh.gov] = []; grouped[hh.gov].push(hh); }
-      var gKeys = Object.keys(grouped);
-      for (var ki = 0; ki < gKeys.length; ki++) {
-        var gk = gKeys[ki], arr = grouped[gk];
-        if (arr.length === 1) {
-          bullets.push('انخفاض ' + col.label + ' ب' + arr[0].name + ' في ' + gk + ' خلال ' + lP2 + ' (' + _iaFmt(arr[0].v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(arr[0].v1) + ')');
-        } else {
-          var names = arr.map(function(x) { return x.name; }).join(' و ');
-          bullets.push('انخفاض ' + col.label + ' ب' + names + ' في ' + gk + ' خلال ' + lP2 + ' مقارنة ب' + lP1);
+      if (increases.length === 1) {
+        var h = increases[0];
+        bullets.push('ارتفاع ' + col.label + ' ب' + h.name + ' في ' + h.gov + ' خلال ' + lP2 + ' (' + _iaFmt(h.v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(h.v1) + ')');
+      } else if (increases.length > 1) {
+        var grouped = {};
+        for (var ii = 0; ii < increases.length; ii++) { var hh = increases[ii]; if (!grouped[hh.gov]) grouped[hh.gov] = []; grouped[hh.gov].push(hh); }
+        var gKeys = Object.keys(grouped);
+        for (var ki = 0; ki < gKeys.length; ki++) {
+          var gk = gKeys[ki], arr = grouped[gk];
+          if (arr.length === 1) {
+            bullets.push('ارتفاع ' + col.label + ' ب' + arr[0].name + ' في ' + gk + ' خلال ' + lP2 + ' (' + _iaFmt(arr[0].v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(arr[0].v1) + ')');
+          } else {
+            var names = arr.map(function(x) { return x.name; }).join(' و ');
+            bullets.push('ارتفاع ' + col.label + ' ب' + names + ' في ' + gk + ' خلال ' + lP2 + ' مقارنة ب' + lP1);
+          }
+        }
+      }
+
+      if (decreases.length === 1) {
+        var h = decreases[0];
+        bullets.push('انخفاض ' + col.label + ' ب' + h.name + ' في ' + h.gov + ' خلال ' + lP2 + ' (' + _iaFmt(h.v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(h.v1) + ')');
+      } else if (decreases.length > 1) {
+        var grouped = {};
+        for (var ii = 0; ii < decreases.length; ii++) { var hh = decreases[ii]; if (!grouped[hh.gov]) grouped[hh.gov] = []; grouped[hh.gov].push(hh); }
+        var gKeys = Object.keys(grouped);
+        for (var ki = 0; ki < gKeys.length; ki++) {
+          var gk = gKeys[ki], arr = grouped[gk];
+          if (arr.length === 1) {
+            bullets.push('انخفاض ' + col.label + ' ب' + arr[0].name + ' في ' + gk + ' خلال ' + lP2 + ' (' + _iaFmt(arr[0].v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(arr[0].v1) + ')');
+          } else {
+            var names = arr.map(function(x) { return x.name; }).join(' و ');
+            bullets.push('انخفاض ' + col.label + ' ب' + names + ' في ' + gk + ' خلال ' + lP2 + ' مقارنة ب' + lP1);
+          }
         }
       }
     }
   }
 
-  var total1 = 0, total2 = 0;
-  for (var ci = 0; ci < cols.length; ci++) {
-    if (_iaIsFormula(cols[ci].key)) continue;
-    for (var i = 0; i < p1Data.length; i++) total1 += (Number(p1Data[i].data?.[cols[ci].key]) || 0);
-    for (var i = 0; i < p2Data.length; i++) total2 += (Number(p2Data[i].data?.[cols[ci].key]) || 0);
+  if (showGov && !showHosp) {
+    for (var ci = 0; ci < cols.length; ci++) {
+      var col = cols[ci];
+      var govChanges = [];
+      var govArr = Array.from(G.govG);
+      for (var gi = 0; gi < govArr.length; gi++) {
+        var govName = govArr[gi][0], hosps = govArr[gi][1];
+        var sum1 = 0, sum2 = 0;
+        for (var hi = 0; hi < hosps.length; hi++) {
+          var d1raw = G.p1M.get(hosps[hi].hid) || {}, d2raw = G.p2M.get(hosps[hi].hid) || {};
+          sum1 += Number(d1raw[col.key]) || 0;
+          sum2 += Number(d2raw[col.key]) || 0;
+        }
+        if (sum1 === 0 && sum2 === 0) continue;
+        if (sum1 === sum2) continue;
+        govChanges.push({ name: govName, v1: sum1, v2: sum2, diff: sum2 - sum1 });
+      }
+      govChanges.sort(function(a, b) { return Math.abs(b.diff) - Math.abs(a.diff); });
+      for (var gi2 = 0; gi2 < govChanges.length; gi2++) {
+        var gc = govChanges[gi2];
+        var dir = gc.diff > 0 ? 'ارتفاع' : 'انخفاض';
+        var sign = gc.diff > 0 ? '+' : '';
+        var pct = gc.v1 ? ((gc.v2 - gc.v1) / gc.v1 * 100).toFixed(1) : '-';
+        bullets.push(dir + ' ' + col.label + ' في ' + gc.name + ' خلال ' + lP2 + ' (' + _iaFmt(gc.v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(gc.v1) + ') بنسبة ' + sign + pct + '%');
+      }
+    }
   }
-  if (total1 > 0 || total2 > 0) {
-    var totalPct = total1 ? ((total2 - total1) / total1 * 100) : null;
-    if (totalPct !== null && Math.abs(totalPct) > 1) {
-      var dir = totalPct > 0 ? 'ارتفاع' : 'انخفاض';
-      bullets.unshift(dir + ' إجمالي ' + label + ' خلال ' + lP2 + ' (' + _iaFmt(total2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(total1) + ') بنسبة ' + (totalPct > 0 ? '+' : '') + totalPct.toFixed(1) + '%');
+
+  if (showGrand) {
+    var grandRaw1 = {}, grandRaw2 = {};
+    for (var ci = 0; ci < cols.length; ci++) {
+      var col = cols[ci];
+      if (_iaIsFormula(col.key)) continue;
+      var s1 = 0, s2 = 0;
+      for (var i = 0; i < p1Data.length; i++) s1 += (Number(p1Data[i].data?.[col.key]) || 0);
+      for (var i = 0; i < p2Data.length; i++) s2 += (Number(p2Data[i].data?.[col.key]) || 0);
+      if (s1 === 0 && s2 === 0) continue;
+      if (s1 === s2) continue;
+      var diff = s2 - s1;
+      var dir = diff > 0 ? 'ارتفاع' : 'انخفاض';
+      var pct = s1 ? (((s2 - s1) / s1) * 100).toFixed(1) : '-';
+      var sign = diff > 0 ? '+' : '';
+      bullets.push(dir + ' ' + col.label + ' خلال ' + lP2 + ' (' + _iaFmt(s2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(s1) + ') بنسبة ' + sign + pct + '%');
     }
   }
 
