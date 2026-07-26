@@ -8106,9 +8106,10 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
   if (!showGrandTotal && !showGovTotal && !showHospDetail) return '';
   if (!cols.length) return '';
   const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
-  const grpColors = { 'التجميع':'#1565c0', 'إجمالي الوارد':'#2e7d32', 'إجمالي المنصرف':'#6a1b9a', 'الفصائل والتوافق':'#1565c0', 'عينات غير مفحوصة':'#c62828', 'الإعدامات':'#e65100', 'تحليل نسب المؤشرات':'#00695c', 'مؤشرات وحدات دم الأطفال':'#ad1457', 'النسب المئوية للاعدام - أطفال':'#c2185b', 'النسب المئوية للاعدام':'#c2185b' };
-  const grpBgs = { 'التجميع':'#e8eaf6', 'إجمالي الوارد':'#e8f5e9', 'إجمالي المنصرف':'#f3e5f5', 'الفصائل والتوافق':'#e3f2fd', 'عينات غير مفحوصة':'#ffebee', 'الإعدامات':'#fff3e0', 'تحليل نسب المؤشرات':'#e0f2f1', 'مؤشرات وحدات دم الأطفال':'#fce4ec', 'النسب المئوية للاعدام - أطفال':'#fce4ec', 'السب المئوية للاعدام':'#fce4ec' };
-  let html = '<div style="overflow-x:auto;padding:2px"><style>.ia-row:hover{background:#e3f2fd!important}.ia-row[data-row-bg="#0d1b2a"]:hover{background:#1b2838!important}</style><table style="width:100%;border-collapse:collapse;font-size:12px;letter-spacing:0">';
+  const grpColors = { 'التجميع':'#c5cae9', 'إجمالي الوارد':'#c8e6c9', 'إجمالي المنصرف':'#e1bee7', 'الفصائل والتوافق':'#bbdefb', 'عينات غير مفحوصة':'#ffcdd2', 'الإعدامات':'#ffe0b2', 'تحليل نسب المؤشرات':'#b2dfdb', 'مؤشرات وحدات دم الأطفال':'#f8bbd0', 'النسب المئوية للاعدام - أطفال':'#f8bbd0', 'السب المئوية للاعدام':'#f8bbd0' };
+  const grpTextColors = { 'التجميع':'#283593', 'إجمالي الوارد':'#1b5e20', 'إجمالي المنصرف':'#4a148c', 'الفصائل والتوافق':'#0d47a1', 'عينات غير مفحوصة':'#b71c1c', 'الإعدامات':'#e65100', 'تحليل نسب المؤشرات':'#004d40', 'مؤشرات وحدات دم الأطفال':'#880e4f', 'النسب المئوية للاعدام - أطفال':'#ad1457', 'السب المئوية للاعدام':'#ad1457' };
+  const grpBgs = { 'التibraries':'#f3f0ff', 'التجميع':'#f3f0ff', 'إجمالي الوارد':'#f1f8e9', 'إجمالي المنصرف':'#faf0ff', 'الفصائل والتوافق':'#f0f7ff', 'عينات غير مفحوصة':'#fff5f5', 'الإعدامات':'#fffaf0', 'تحليل نسب المؤشرات':'#f0faf8', 'مؤشرات وحدات دم الأطفال':'#fdf0f5', 'النسب المئوية للاعدام - أطفال':'#fdf0f5', 'السب المئوية للاعدام':'#fdf0f5' };
+  let html = '<div style="overflow-x:auto;padding:2px"><style>.ia-row:hover{background:#f5f8ff!important}.ia-row[data-row-bg="#f5f6fa"]:hover{background:#eef1f7!important}</style><table style="width:100%;border-collapse:collapse;font-size:12px;letter-spacing:0">';
   const groups = [];
   for (const c of cols) {
     const g = c.g || '';
@@ -8118,41 +8119,43 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
   }
   html += `<thead>
     <tr>
-      <th rowspan="3" style="background:#1a1a2e;color:#e0e0e0;padding:10px 12px;position:sticky;right:0;z-index:3;min-width:160px;text-align:right;font-size:13px;border-bottom:3px solid #ff6f00;white-space:nowrap">البيان</th>`;
+      <th rowspan="3" style="background:#e8eaf6;color:#283593;padding:10px 12px;position:sticky;right:0;z-index:3;min-width:160px;text-align:right;font-size:13px;border-bottom:3px solid #90caf9;white-space:nowrap">البيان</th>`;
   for (const grp of groups) {
-    const bg = grpColors[grp.name] || '#455a64';
-    html += `<th colspan="${grp.items.length * 2}" style="background:${bg};color:#fff;text-align:center;padding:6px 8px;font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,.15);white-space:nowrap">${esc(grp.name)}</th>`;
+    const bg = grpColors[grp.name] || '#e0e0e0';
+    const tc = grpTextColors[grp.name] || '#37474f';
+    html += `<th colspan="${grp.items.length * 2}" style="background:${bg};color:${tc};text-align:center;padding:6px 8px;font-size:11px;font-weight:700;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(grp.name)}</th>`;
   }
   html += `</tr><tr>`;
   for (const grp of groups) {
-    const bg = grpColors[grp.name] || '#455a64';
+    const bg = grpColors[grp.name] || '#e0e0e0';
+    const tc = grpTextColors[grp.name] || '#37474f';
     for (const f of grp.items) {
-      html += `<th colspan="2" style="background:${bg};color:#fff;text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(255,255,255,.1);white-space:nowrap">${esc(f.label)}</th>`;
+      html += `<th colspan="2" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.label)}</th>`;
     }
   }
   html += '</tr><tr>';
   for (const c of cols) {
-    html += `<th style="background:#283593;color:#bbdefb;padding:3px 5px;font-size:9px;min-width:44px;border-bottom:2px solid #5c6bc0">${esc(pL1)}</th>`;
-    html += `<th style="background:#880e4f;color:#f8bbd0;padding:3px 5px;font-size:9px;min-width:44px;border-bottom:2px solid #e91e63">${esc(pL2)}</th>`;
+    html += `<th style="background:#e3f2fd;color:#1565c0;padding:3px 5px;font-size:9px;min-width:44px;border-bottom:2px solid #90caf9">${esc(pL1)}</th>`;
+    html += `<th style="background:#fce4ec;color:#c62828;padding:3px 5px;font-size:9px;min-width:44px;border-bottom:2px solid #ef9a9a">${esc(pL2)}</th>`;
   }
   html += '</tr></thead><tbody>';
   let rowIdx = 0;
   function addRow(label, d1, d2, bg, isBold, isGov) {
-    const isDark = bg === '#0d1b2a';
-    const rowBg = isDark ? '#0d1b2a' : (isBold ? '#f5f7fa' : (rowIdx % 2 === 0 ? '#fff' : '#fafbfc'));
-    const txtColor = isDark ? '#e0e0e0' : (isBold ? '#1a1a2e' : '#37474f');
-    const borderBot = isDark ? '3px solid #ff6f00' : (isBold ? '2px solid #90a4ae' : '1px solid #eceff1');
+    const isDark = bg === '#f5f6fa';
+    const rowBg = isDark ? '#f5f6fa' : (isBold ? '#f5f6fa' : (rowIdx % 2 === 0 ? '#fff' : '#fafbfc'));
+    const txtColor = isBold ? '#263238' : '#455a64';
+    const borderBot = isDark ? '2px solid #90a4ae' : (isBold ? '1.5px solid #cfd8dc' : '1px solid #f0f0f0');
     const labelIndent = isBold ? '0' : '20px';
     html += `<tr class="ia-row" data-row-bg="${rowBg}" style="background:${rowBg};font-weight:${isBold?'700':'400'};border-bottom:${borderBot};color:${txtColor};transition:background .15s">`;
-    html += `<td style="padding:7px 12px;position:sticky;right:0;background:inherit;z-index:1;font-size:${isBold?'13':'12'}px;text-align:right;border-left:3px solid ${isDark?'#ff6f00':isGov?'#5c6bc0':'transparent'};padding-left:${labelIndent};white-space:nowrap">${isBold?'<strong>':''}${esc(label)}${isBold?'</strong>':''}</td>`;
+    html += `<td style="padding:7px 12px;position:sticky;right:0;background:inherit;z-index:1;font-size:${isBold?'13':'12'}px;text-align:right;border-left:3px solid ${isGov?'#90caf9':'transparent'};padding-left:${labelIndent};white-space:nowrap">${isBold?'<strong>':''}${esc(label)}${isBold?'</strong>':''}</td>`;
     for (let ci = 0; ci < cols.length; ci++) {
       const c = cols[ci];
       const v1 = d1[c.key] || 0;
       const v2 = d2[c.key] || 0;
-      const cellBg1 = isBold ? (isDark ? '#1b2838' : '#f0f4ff') : '';
-      const cellBg2 = isBold ? (isDark ? '#2a1018' : '#fff0f3') : '';
-      html += `<td style="text-align:center;padding:5px 6px;font-size:${isBold?'12':'11'}px;background:${cellBg1};border-left:1px solid rgba(0,0,0,.04)">${_iaFmt(v1)}</td>`;
-      html += `<td style="text-align:center;padding:5px 6px;font-size:${isBold?'12':'11'}px;background:${cellBg2};border-right:1px solid rgba(0,0,0,.04);${isBold?'font-weight:700':''}">${_iaFmt(v2)}</td>`;
+      const cellBg1 = isBold ? '#f0f4ff' : '';
+      const cellBg2 = isBold ? '#fff5f7' : '';
+      html += `<td style="text-align:center;padding:5px 6px;font-size:${isBold?'12':'11'}px;background:${cellBg1};color:#1565c0;border-left:1px solid rgba(0,0,0,.03)">${_iaFmt(v1)}</td>`;
+      html += `<td style="text-align:center;padding:5px 6px;font-size:${isBold?'12':'11'}px;background:${cellBg2};color:#c62828;border-right:1px solid rgba(0,0,0,.03);${isBold?'font-weight:700':''}">${_iaFmt(v2)}</td>`;
     }
     html += '</tr>';
     rowIdx++;
@@ -8174,7 +8177,7 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
       for (const hr of hospRows) addRow(hr.name, hr.d1, hr.d2, '', false, false);
     }
   }
-  if (showGrandTotal) addRow('اجمالي الهيئة', grand1, grand2, '#0d1b2a', true, false);
+  if (showGrandTotal) addRow('اجمالي الهيئة', grand1, grand2, '#f5f6fa', true, false);
   html += '</tbody></table></div>';
   return html;
 }
@@ -8346,7 +8349,7 @@ function exportIndicatorAnalysisExcel() {
     const wb = new ExcelJS.Workbook();
     wb.creator = 'نظام بنك الدم';
     wb.created = new Date();
-    const grpColorMap = { 'التجميع':'5C6BC0', 'إجمالي الوارد':'66BB6A', 'إجمالي المنصرف':'AB47BC', 'الفصائل والتوافق':'42A5F5', 'عينات غير مفحوصة':'EF5350', 'الإعدامات':'FF7043', 'تحليل نسب المؤشرات':'26A69A', 'مؤشرات وحدات دم الأطفال':'EC407A', 'النسب المئوية للاعدام - أطفال':'F06292', 'النسب المئوية للاعدام':'F06292' };
+    const grpColorMap = { 'التجميع':'7986CB', 'إجمالي الوارد':'81C784', 'إجمالي المنصرف':'CE93D8', 'الفصائل والتوافق':'64B5F6', 'عينات غير مفحوصة':'EF9A9A', 'الإعدامات':'FFAB91', 'تحليل نسب المؤشرات':'80CBC4', 'مؤشرات وحدات دم الأطفال':'F48FB1', 'النسب المئوية للاعدام - أطفال':'F48FB1', 'النسب المئوية للاعدام':'F48FB1' };
     const grpBgLight = { 'التجميع':'E8EAF6', 'إجمالي الوارد':'E8F5E9', 'إجمالي المنصرف':'F3E5F5', 'الفصائل والتوافق':'E3F2FD', 'عينات غير مفحوصة':'FFEBEE', 'الإعدامات':'FBE9E7', 'تحليل نسب المؤشرات':'E0F2F1', 'مؤشرات وحدات دم الأطفال':'FCE4EC', 'النسب المئوية للاعدام - أطفال':'FCE4EC', 'النسب المئوية للاعدام':'FCE4EC' };
     const borderStyle = { style:'thin', color:{ argb:'FFB0BEC5' } };
     const thinBorder = { top:borderStyle, bottom:borderStyle, left:borderStyle, right:borderStyle };
@@ -8376,14 +8379,14 @@ function exportIndicatorAnalysisExcel() {
       ws.getRow(2).height = 22;
       ws.getRow(3).height = 18;
       ws.getCell(1,1).value = 'البيان';
-      ws.getCell(1,1).font = { bold:true, color:{ argb:'FF263238' }, size:12 };
-      ws.getCell(1,1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFCFD8DC' } };
+      ws.getCell(1,1).font = { bold:true, color:{ argb:'FF283593' }, size:12 };
+      ws.getCell(1,1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8EAF6' } };
       ws.getCell(1,1).alignment = { horizontal:'center', vertical:'middle', wrapText:true };
       ws.getCell(1,1).border = thinBorder;
       ws.mergeCells(1,1,3,1);
       ws.getCell(1,2).value = 'التغيير %';
       ws.getCell(1,2).font = { bold:true, color:{ argb:'FF37474F' }, size:10 };
-      ws.getCell(1,2).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFCFD8DC' } };
+      ws.getCell(1,2).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8EAF6' } };
       ws.getCell(1,2).alignment = { horizontal:'center', vertical:'middle' };
       ws.getCell(1,2).border = thinBorder;
       ws.mergeCells(1, totalCols, 3, totalCols);
@@ -8422,11 +8425,11 @@ function exportIndicatorAnalysisExcel() {
         const row = ws.getRow(r);
         row.height = style === 'grand' ? 26 : style === 'gov' ? 22 : 18;
         ws.getCell(r, 1).value = label;
-        ws.getCell(r, 1).font = { bold: style !== 'hosp', size: style === 'grand' ? 11 : 10, color:{ argb: style === 'grand' ? 'FFFFFFFF' : 'FF1A1A2E' } };
+        ws.getCell(r, 1).font = { bold: style !== 'hosp', size: style === 'grand' ? 11 : 10, color:{ argb: 'FF263238' } };
         ws.getCell(r, 1).alignment = { horizontal:'right', vertical:'middle', indent: style === 'hosp' ? 1 : 0 };
         ws.getCell(r, 1).border = thinBorder;
-        if (style === 'grand') ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF37474F' } };
-        else if (style === 'gov') ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8EAF6' } };
+        if (style === 'grand') ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8EAF6' } };
+        else if (style === 'gov') ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFF3F0FF' } };
         else if (r % 2 === 0) ws.getCell(r, 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFAFAFA' } };
         cIdx = 2;
         for (const c of cols) {
@@ -8434,17 +8437,17 @@ function exportIndicatorAnalysisExcel() {
           const v2 = Number(d2[c.key]) || 0;
           ws.getCell(r, cIdx).value = v1;
           ws.getCell(r, cIdx).numFmt = '#,##0';
-          ws.getCell(r, cIdx).font = { bold: style !== 'hosp', size: style === 'grand' ? 10 : 9, color:{ argb: style === 'grand' ? 'FFE0E0E0' : 'FF1565C0' } };
+          ws.getCell(r, cIdx).font = { bold: style !== 'hosp', size: style === 'grand' ? 10 : 9, color:{ argb: 'FF1565C0' } };
           ws.getCell(r, cIdx).alignment = { horizontal:'center', vertical:'middle' };
           ws.getCell(r, cIdx).border = thinBorder;
-          if (style === 'grand') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF455A64' } };
+          if (style === 'grand') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE3F2FD' } };
           else if (style === 'gov') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFF0F4FF' } };
           ws.getCell(r, cIdx + 1).value = v2;
           ws.getCell(r, cIdx + 1).numFmt = '#,##0';
-          ws.getCell(r, cIdx + 1).font = { bold: style !== 'hosp', size: style === 'grand' ? 10 : 9, color:{ argb: style === 'grand' ? 'FFE0E0E0' : 'FFAD1457' } };
+          ws.getCell(r, cIdx + 1).font = { bold: style !== 'hosp', size: style === 'grand' ? 10 : 9, color:{ argb: 'FFAD1457' } };
           ws.getCell(r, cIdx + 1).alignment = { horizontal:'center', vertical:'middle' };
           ws.getCell(r, cIdx + 1).border = thinBorder;
-          if (style === 'grand') ws.getCell(r, cIdx + 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF455A64' } };
+          if (style === 'grand') ws.getCell(r, cIdx + 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFCE4EC' } };
           else if (style === 'gov') ws.getCell(r, cIdx + 1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFFF0F3' } };
           cIdx += 2;
         }
@@ -8456,13 +8459,13 @@ function exportIndicatorAnalysisExcel() {
           const pct = t1 ? ((t2 - t1) / t1 * 100) : 0;
           ws.getCell(r, cIdx).value = t1 ? pct / 100 : '';
           ws.getCell(r, cIdx).numFmt = '0.00%';
-          const pctColor = pct > 0 ? 'FF2E7D32' : pct < 0 ? 'FFC62828' : 'FF455A64';
+          const pctColor = pct > 0 ? 'FF66BB6A' : pct < 0 ? 'FFEF5350' : 'FF78909C';
           ws.getCell(r, cIdx).font = { bold:true, size:10, color:{ argb: pctColor } };
         }
         ws.getCell(r, cIdx).alignment = { horizontal:'center', vertical:'middle' };
         ws.getCell(r, cIdx).border = thinBorder;
-        if (style === 'grand') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF455A64' } };
-        else if (style === 'gov') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8EAF6' } };
+        if (style === 'grand') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8EAF6' } };
+        else if (style === 'gov') ws.getCell(r, cIdx).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFF3F0FF' } };
         r++;
       }
       let grand1 = {}, grand2 = {};
