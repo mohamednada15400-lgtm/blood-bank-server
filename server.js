@@ -1943,45 +1943,86 @@ app.post('/api/equipment/import', requireAuth(), requirePerm('equipment', 'add')
 // Export to Excel
 app.get('/api/equipment/export/xlsx', requireAuth(), requirePerm('equipment', 'export'), async (req, res) => {
   try {
-    const XLSX = require('xlsx');
+    const ExcelJS = require('exceljs');
     const eq = await db.getEquipment();
-    const wb = XLSX.utils.book_new();
     const types = eq.types;
     const hospitals = eq.hospitals;
-    // Header row
-    const headers = ['المحافظة', 'اسم بنك الدم'];
-    types.forEach(t => { headers.push(t.name + ' (عدد)', t.name + ' (حالة)', t.name + ' (ماركة)', t.name + ' (سعة)'); });
-    const rows = [headers];
-    // Sort by governorate then name
-    const sorted = [...hospitals].sort((a, b) => a.governorate.localeCompare(b.governorate, 'ar') || a.name.localeCompare(b.name, 'ar'));
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'نظام بنك الدم';
+    wb.created = new Date();
+    const ws = wb.addWorksheet('الأجهزة', { views:[{ state:'frozen', ySplit:2, xSplit:1 }] });
+    const mc = 2 + types.length * 4;
+    ws.getRow(1).height = 28;
+    ws.mergeCells(1,1,1,mc);
+    ws.getCell(1,1).value = 'أجهزة بنوك الدم';
+    ws.getCell(1,1).font = { bold:true, size:14, color:{ argb:'FF2C3E50' } };
+    ws.getCell(1,1).alignment = { horizontal:'center', vertical:'middle' };
+    ws.getRow(2).height = 22;
+    ws.getCell(2,1).value = 'المحافظة'; ws.getCell(2,2).value = 'اسم بنك الدم';
+    const borderStyle = { style:'thin', color:{ argb:'FFB0BEC5' } };
+    const thinBorder = { top:borderStyle, bottom:borderStyle, left:borderStyle, right:borderStyle };
+    [1,2].forEach(ci => {
+      const c = ws.getCell(2, ci); c.font = { bold:true, color:{ argb:'FFFFFFFF' }, size:10 };
+      c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2C3E50' } }; c.alignment = { horizontal:'center', vertical:'middle' }; c.border = thinBorder;
+    });
+    let cIdx = 3;
+    types.forEach(t => {
+      ws.mergeCells(2, cIdx, 2, cIdx + 3);
+      const tc = ws.getCell(2, cIdx); tc.value = t.name;
+      tc.font = { bold:true, color:{ argb:'FFFFFFFF' }, size:10 };
+      tc.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2C3E50' } }; tc.alignment = { horizontal:'center', vertical:'middle' }; tc.border = thinBorder;
+      cIdx += 4;
+    });
+    ws.mergeCells(2, mc, 2, mc);
+    cIdx = 3;
+    const subHeaders = ['عدد','حالة','ماركة','سعة'];
+    types.forEach(t => {
+      subHeaders.forEach(h => {
+        const c = ws.getCell(3, cIdx); c.value = h;
+        c.font = { bold:true, color:{ argb:'FFFFFFFF' }, size:9 };
+        c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF34495E' } }; c.alignment = { horizontal:'center', vertical:'middle' }; c.border = thinBorder;
+        cIdx++;
+      });
+    });
+    ws.getCell(3,1).value = ''; ws.getCell(3,2).value = '';
+    ws.getCell(3,1).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:9 };
+    ws.getCell(3,1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF34495E' } }; ws.getCell(3,1).border = thinBorder;
+    ws.getCell(3,2).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:9 };
+    ws.getCell(3,2).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF34495E' } }; ws.getCell(3,2).border = thinBorder;
     function getEqVal(eq, field) {
       if (Array.isArray(eq)) return eq.map(e => e[field] || '').filter(Boolean).join(', ');
       if (eq && typeof eq === 'object') return eq[field] != null ? eq[field] : '';
       return '';
     }
+    const sorted = [...hospitals].sort((a, b) => (a.governorate || '').localeCompare(b.governorate || '', 'ar') || (a.name || '').localeCompare(b.name || '', 'ar'));
+    let dr = 4;
     sorted.forEach(h => {
-      const row = [h.governorate, h.name];
+      const row = ws.getRow(dr); row.height = 18;
+      ws.getCell(dr,1).value = h.governorate || '';
+      ws.getCell(dr,2).value = h.name || '';
+      ws.getCell(dr,1).font = { size:9 }; ws.getCell(dr,1).alignment = { horizontal:'right', vertical:'middle' }; ws.getCell(dr,1).border = thinBorder;
+      ws.getCell(dr,2).font = { size:9 }; ws.getCell(dr,2).alignment = { horizontal:'right', vertical:'middle' }; ws.getCell(dr,2).border = thinBorder;
+      cIdx = 3;
       types.forEach(t => {
-        const eqEntry = h.equipment[t.id];
-        if (eqEntry) {
-          row.push(getEqVal(eqEntry, 'count'));
-          row.push(getEqVal(eqEntry, 'status'));
-          row.push(getEqVal(eqEntry, 'brand'));
-          row.push(getEqVal(eqEntry, 'capacity'));
-        } else {
-          row.push('', '', '', '');
-        }
+        const eqEntry = (h.equipment || {})[t.id];
+        ['count','status','brand','capacity'].forEach(f => {
+          const c = ws.getCell(dr, cIdx); c.value = getEqVal(eqEntry, f);
+          c.font = { size:9 }; c.alignment = { horizontal:'center', vertical:'middle' }; c.border = thinBorder;
+          if (dr % 2 === 0) c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFF8F9FA' } };
+          cIdx++;
+        });
       });
-      rows.push(row);
+      dr++;
     });
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{ wch: 14 }, { wch: 22 }];
-    for (let i = 0; i < types.length; i++) ws['!cols'].push({ wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 });
-    XLSX.utils.book_append_sheet(wb, ws, 'الأجهزة');
-    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    ws.getColumn(1).width = 16; ws.getColumn(2).width = 24;
+    for (let i = 3; i <= mc; i++) ws.getColumn(i).width = 12;
+    ws.mergeCells(dr,1,dr,mc);
+    ws.getCell(dr,1).value = 'إعداد و برمجة محمد ندا 01068880999';
+    ws.getCell(dr,1).font = { size:9, color:{ argb:'FF95A5A6' }, italic:true }; ws.getCell(dr,1).alignment = { horizontal:'center' };
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=equipment.xlsx');
-    res.send(buf);
+    res.setHeader('Content-Disposition', 'attachment; filename="equipment.xlsx"');
+    const buf = await wb.xlsx.writeBuffer();
+    res.send(Buffer.from(buf));
   } catch (e) {
     res.status(500).json({ error: errMsg(e) });
   }
@@ -2150,109 +2191,129 @@ app.post('/api/readiness-notifications/dismiss/:id', requireAuth(), requirePerm(
 // --- Excel Export ---
 app.get('/api/readiness-export/xlsx', requireAuth(), requirePerm('readiness', 'export'), async (req, res) => {
   try {
-    const XLSX = require('xlsx');
-    const wb = XLSX.utils.book_new();
+    const ExcelJS = require('exceljs');
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'نظام بنك الدم';
+    wb.created = new Date();
     const occasionsResult = await query('SELECT * FROM readiness_occasions ORDER BY id DESC');
     const occasions = occasionsResult.rows || [];
     const hospitalsResult = await query('SELECT * FROM hospitals ORDER BY governorate, name');
     const hospitals = hospitalsResult.rows || [];
     if (occasions.length === 0) return res.status(400).json({ error: 'لا توجد مناسبات للتصدير' });
-    // Pre-fetch all readiness reports
     const allReportsResult = await query('SELECT * FROM readiness_reports');
     const allReports = allReportsResult.rows || [];
+    const borderStyle = { style:'thin', color:{ argb:'FFB0BEC5' } };
+    const thinBorder = { top:borderStyle, bottom:borderStyle, left:borderStyle, right:borderStyle };
+    const dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
     occasions.forEach(occ => {
       const reports = allReports.filter(r => r.occasion_id === occ.id);
-      const sheetData = [];
       const fromDate = new Date(occ.date_from);
       const toDate = new Date(occ.date_to);
       const labels = occ.day_labels || [];
-      // Generate day labels from date range if not provided
-      const dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
       const days = [];
       let cur = new Date(fromDate);
       while (cur <= toDate) {
         const dStr = cur.toISOString().slice(0,10);
         const dn = dayNames[cur.getDay()];
-        const label = labels[days.length] || `${dn} ${dStr}`;
-        days.push(label);
+        days.push(labels[days.length] || `${dn} ${dStr}`);
         cur.setDate(cur.getDate() + 1);
       }
       const dayCount = days.length;
-      // Build header — matching Excel template
-      const row1 = Array(3 + dayCount + 12).fill('');
-      row1[0] = 'المحافظة';
-      row1[1] = 'اسم بنك الدم';
-      row1[2] = 'القوة البشريه المتواجده فعليا';
+      const totalCols = 3 + dayCount + 8;
+      const ws = wb.addWorksheet(occ.name.slice(0, 31), { views:[{ state:'frozen', ySplit:2, xSplit:2 }] });
+      ws.getRow(1).height = 24; ws.getRow(2).height = 20;
+      ws.getCell(1,1).value = 'المحافظة'; ws.getCell(1,1).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:10 };
+      ws.getCell(1,1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2C3E50' } }; ws.getCell(1,1).alignment = { horizontal:'center', vertical:'middle' }; ws.getCell(1,1).border = thinBorder;
+      ws.getCell(1,2).value = 'اسم بنك الدم'; ws.getCell(1,2).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:10 };
+      ws.getCell(1,2).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2C3E50' } }; ws.getCell(1,2).alignment = { horizontal:'center', vertical:'middle' }; ws.getCell(1,2).border = thinBorder;
+      ws.mergeCells(1, 3, 1, 3 + dayCount + 1);
+      ws.getCell(1,3).value = 'القوة البشريه المتواجده فعليا';
+      ws.getCell(1,3).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:10 };
+      ws.getCell(1,3).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF1565C0' } }; ws.getCell(1,3).alignment = { horizontal:'center', vertical:'middle' }; ws.getCell(1,3).border = thinBorder;
       const stockIdx = 3 + dayCount;
-      row1[stockIdx] = 'الرصيد';
-      row1[stockIdx+1] = 'الاجهزه الطبية';
-      row1[stockIdx+3] = 'المستهلكات';
-      row1[stockIdx+4] = 'الاستعاضة لكل بنك';
-      row1[stockIdx+5] = 'ملاحظات مدير بنك الدم';
-      row1[stockIdx+6] = 'تعليق مشرف الفرع';
-      row1[stockIdx+7] = 'تعليق مشرف الهيئة';
-      sheetData.push(row1);
-      const row2 = Array(3 + dayCount + 12).fill('');
-      row2[0] = ''; row2[1] = '';
-      row2[2] = 'الاسم';
-      row2[3] = 'رقم التليفون';
-      for (let d = 0; d < dayCount; d++) row2[4 + d] = days[d];
-      row2[stockIdx] = '';
-      row2[stockIdx+1] = 'مراجعة الصيانة';
-      row2[stockIdx+2] = 'الاعطال';
-      row2[stockIdx+3] = '';
-      row2[stockIdx+4] = '';
-      row2[stockIdx+5] = '';
-      row2[stockIdx+6] = '';
-      row2[stockIdx+7] = '';
-      sheetData.push(row2);
-      // Data: expand each hospital into multiple staff rows
+      const extraHeaders = ['الرصيد','الاجهزه الطبية','','المستهلكات','الاستعاضة لكل بنك','ملاحظات مدير بنك الدم','تعليق مشرف الفرع','تعليق مشرف الهيئة'];
+      extraHeaders.forEach((h, i) => {
+        if (!h) return;
+        ws.getCell(1, stockIdx + i).value = h;
+        ws.getCell(1, stockIdx + i).font = { bold:true, color:{ argb:'FFFFFFFF' }, size:10 };
+        ws.getCell(1, stockIdx + i).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2E7D32' } };
+        ws.getCell(1, stockIdx + i).alignment = { horizontal:'center', vertical:'middle' }; ws.getCell(1, stockIdx + i).border = thinBorder;
+      });
+      ws.mergeCells(1, stockIdx + 1, 1, stockIdx + 2);
+      ws.getCell(2,1).value = ''; ws.getCell(2,2).value = '';
+      ws.getCell(2,3).value = 'الاسم'; ws.getCell(2,4).value = 'رقم التليفون';
+      for (let d = 0; d < dayCount; d++) ws.getCell(2, 5 + d).value = days[d];
+      ws.getCell(2, stockIdx + 1).value = 'مراجعة الصيانة';
+      ws.getCell(2, stockIdx + 2).value = 'الاعطال';
+      for (let ci = 1; ci <= totalCols; ci++) {
+        const c = ws.getCell(2, ci);
+        c.font = { bold:true, color:{ argb:'FF34495E' }, size:9 };
+        c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFECF0F1' } };
+        c.alignment = { horizontal:'center', vertical:'middle' }; c.border = thinBorder;
+      }
+      let dr = 3;
       const govSorted = [...new Set(hospitals.map(h => h.governorate))].sort((a,b) => a.localeCompare(b, 'ar'));
       govSorted.forEach(gov => {
         const govHospitals = hospitals.filter(h => h.governorate === gov);
         govHospitals.forEach(h => {
           const r = reports.find(rep => rep.hospital_id === h.id);
-          const raw = r ? (r.staff_data || []) : []; const staff = Array.isArray(raw) ? raw : (typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch(e) { return []; } })() : []);
+          let staff = [];
+          if (r) {
+            const raw = r.staff_data || [];
+            staff = Array.isArray(raw) ? raw : (typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch(e) { return []; } })() : []);
+          }
           if (staff.length === 0) {
-            // Empty row
-            const row = Array(3 + dayCount + 12).fill('');
-            row[0] = gov; row[1] = h.name;
-            sheetData.push(row);
+            const row = ws.getRow(dr); row.height = 18;
+            ws.getCell(dr,1).value = gov; ws.getCell(dr,2).value = h.name;
+            ws.getCell(dr,1).font = { size:9 }; ws.getCell(dr,1).alignment = { horizontal:'right', vertical:'middle' }; ws.getCell(dr,1).border = thinBorder;
+            ws.getCell(dr,2).font = { size:9 }; ws.getCell(dr,2).alignment = { horizontal:'right', vertical:'middle' }; ws.getCell(dr,2).border = thinBorder;
+            for (let ci = 3; ci <= totalCols; ci++) {
+              ws.getCell(dr, ci).border = thinBorder;
+              if (dr % 2 === 0) ws.getCell(dr, ci).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFF8F9FA' } };
+            }
+            dr++;
           } else {
             staff.forEach((s, si) => {
-              const row = Array(3 + dayCount + 12).fill('');
-              row[0] = si === 0 ? gov : '';
-              row[1] = si === 0 ? h.name : '';
-              row[2] = s.name || '';
-              row[3] = s.phone || '';
+              const row = ws.getRow(dr); row.height = 18;
+              ws.getCell(dr,1).value = si === 0 ? gov : '';
+              ws.getCell(dr,2).value = si === 0 ? h.name : '';
+              ws.getCell(dr,3).value = s.name || '';
+              ws.getCell(dr,4).value = s.phone || '';
               for (let d = 0; d < dayCount; d++) {
-                row[4 + d] = (s.shifts && s.shifts[String(d)]) || '';
+                ws.getCell(dr, 5 + d).value = (s.shifts && s.shifts[String(d)]) || '';
               }
               if (si === 0) {
-                row[stockIdx] = r ? (r.stock || '') : '';
-                row[stockIdx+1] = r ? (r.maintenance || '') : '';
-                row[stockIdx+2] = r ? (r.breakdowns || '') : '';
-                row[stockIdx+3] = r ? (r.consumables || '') : '';
-                row[stockIdx+4] = r ? (r.correction || '') : '';
-                row[stockIdx+5] = r ? (r.notes_manager || '') : '';
-                row[stockIdx+6] = r ? (r.notes_branch || '') : '';
-                row[stockIdx+7] = r ? (r.notes_authority || '') : '';
+                ws.getCell(dr, stockIdx).value = r ? (r.stock || '') : '';
+                ws.getCell(dr, stockIdx+1).value = r ? (r.maintenance || '') : '';
+                ws.getCell(dr, stockIdx+2).value = r ? (r.breakdowns || '') : '';
+                ws.getCell(dr, stockIdx+3).value = r ? (r.consumables || '') : '';
+                ws.getCell(dr, stockIdx+4).value = r ? (r.correction || '') : '';
+                ws.getCell(dr, stockIdx+5).value = r ? (r.notes_manager || '') : '';
+                ws.getCell(dr, stockIdx+6).value = r ? (r.notes_branch || '') : '';
+                ws.getCell(dr, stockIdx+7).value = r ? (r.notes_authority || '') : '';
               }
-              sheetData.push(row);
+              for (let ci = 1; ci <= totalCols; ci++) {
+                ws.getCell(dr, ci).font = { size:9 };
+                ws.getCell(dr, ci).alignment = { horizontal:'center', vertical:'middle' };
+                ws.getCell(dr, ci).border = thinBorder;
+                if (ci <= 2) ws.getCell(dr, ci).alignment = { horizontal:'right', vertical:'middle' };
+              }
+              if (dr % 2 === 0) {
+                for (let ci = 3; ci <= totalCols; ci++) ws.getCell(dr, ci).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFF8F9FA' } };
+              }
+              dr++;
             });
           }
         });
       });
-      const ws = XLSX.utils.aoa_to_sheet(sheetData);
-      ws['!cols'] = [{ wch: 16 }, { wch: 22 }, { wch: 20 }, { wch: 14 }];
-      for (let d = 0; d < dayCount; d++) ws['!cols'].push({ wch: 14 });
-      for (let i = 0; i < 8; i++) ws['!cols'].push({ wch: 18 });
-      XLSX.utils.book_append_sheet(wb, ws, occ.name.slice(0, 31));
+      ws.getColumn(1).width = 16; ws.getColumn(2).width = 24; ws.getColumn(3).width = 20; ws.getColumn(4).width = 14;
+      for (let d = 0; d < dayCount; d++) ws.getColumn(5 + d).width = 14;
+      for (let i = 0; i < 8; i++) ws.getColumn(stockIdx + i).width = 18;
     });
-    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=readiness.xlsx');
-    res.send(buf);
+    res.setHeader('Content-Disposition', 'attachment; filename="readiness.xlsx"');
+    const buf = await wb.xlsx.writeBuffer();
+    res.send(Buffer.from(buf));
   } catch (e) {
     res.status(500).json({ error: errMsg(e) });
   }

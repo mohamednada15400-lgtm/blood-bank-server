@@ -1,5 +1,65 @@
 /* event delegation for CSP compliance */
 (function(){var H={},E={click:1,change:1,input:1,focusin:1,paste:1,focusout:1,keydown:1,mouseover:1,mouseout:1};window._dh=function(n,f){H[n]=f;};for(var K in E){if(E.hasOwnProperty(K)){(function(et){document.addEventListener(et,function(e){try{var attr='data-'+et;if(et==='focusin')attr='data-focus';if(et==='focusout')attr='data-blur';if(et==='keydown')attr='data-keydown';var el=e.target.closest('['+attr+']');if(!el)return;var n=el.getAttribute(attr);if(!n)return;var fn=H[n];if(typeof fn!=='function')fn=window[n];if(typeof fn!=='function')return;var args=el.getAttribute('data-args');var parsed=[];if(args){var parts=args.split(',');for(var i=0;i<parts.length;i++){var a=parts[i].trim();if(a==='null'){parsed.push(null);continue;}if(a==='undefined'){parsed.push(undefined);continue;}if(a==='true'){parsed.push(true);continue;}if(a==='false'){parsed.push(false);continue;}var num=Number(a);if(!isNaN(num)&&a.length>0){parsed.push(num);continue;}var s=a;if((s[0]==='"'&&s[s.length-1]==='"')||(s[0]==="'"&&s[s.length-1]==="'"))s=s.slice(1,-1);parsed.push(s);}}fn.apply(el,parsed);}catch(ex){console.error('[delegation]',et,n,ex.message);}});})(K);}}})();
+/* ─── ExcelJS Shared Helpers ─── */
+var _XB={style:'thin',color:{argb:'FFB0BEC5'}};
+var _XBN={top:_XB,bottom:_XB,left:_XB,right:_XB};
+function _xlsxDl(wb,fn){
+  wb.creator='نظام بنك الدم';wb.created=new Date();
+  wb.xlsx.writeBuffer().then(function(b){
+    var bl=new Blob([b],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var u=URL.createObjectURL(bl),a=document.createElement('a');
+    a.href=u;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);
+    showToast('✅ تم التصدير بنجاح');
+  });
+}
+function _xlsxTbl(table,opts){
+  if(!table||typeof ExcelJS==='undefined')return null;
+  opts=opts||{};
+  var wb=new ExcelJS.Workbook(),ws=wb.addWorksheet(opts.sheetName||'بيانات');
+  var hBg=opts.headerBg||'FF2C3E50',hFg=opts.headerFg||'FFFFFFFF';
+  var skipAct=opts.skipActions!==false;
+  var trs=Array.from(table.querySelectorAll('tr'));
+  if(!trs.length)return{wb:wb,ws:ws,r:1,mc:0};
+  var mc=0;trs.forEach(function(tr){var n=tr.querySelectorAll('th,td').length;if(n>mc)mc=n;});
+  if(skipAct&&mc>0)mc--;
+  var r=opts.startRow||1;
+  trs.forEach(function(tr){
+    var cells=Array.from(tr.querySelectorAll('th,td'));
+    var isH=cells.length>0&&cells[0].tagName==='TH';
+    if(skipAct&&cells.length===mc+1)cells.pop();
+    var rw=ws.getRow(r);rw.height=isH?24:18;
+    cells.forEach(function(td,ci){
+      var v=td.textContent.trim();
+      var cs=parseInt(td.getAttribute('colspan'))||1;
+      var c=ws.getCell(r,ci+1);
+      var nm=parseFloat(v.replace(/[,]/g,''));
+      if(!isNaN(nm)&&v.replace(/[,.\-\s]/g,'').length===0&&v.length>0){c.value=nm;c.numFmt='#,##0';}
+      else{c.value=v;}
+      c.alignment={horizontal:'center',vertical:'middle',wrapText:true};
+      c.border=_XBN;
+      if(isH){c.font={bold:true,color:{argb:hFg},size:10};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:hBg}};}
+      else{c.font={size:9};if(r%2===0)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF8F9FA'}};}
+      if(cs>1)ws.mergeCells(r,ci+1,r,ci+cs);
+    });
+    r++;
+  });
+  for(var i=1;i<=mc;i++)ws.getColumn(i).width=i===1?22:14;
+  return{wb:wb,ws:ws,r:r,mc:mc};
+}
+function _xlsxTitleRow(ws,row,title,sub,mc){
+  ws.mergeCells(row,1,row,mc);var c=ws.getCell(row,1);c.value=title;
+  c.font={bold:true,size:14,color:{argb:'FF2C3E50'}};c.alignment={horizontal:'center',vertical:'middle'};
+  ws.getRow(row).height=28;
+  if(sub){ws.mergeCells(row+1,1,row+1,mc);var s=ws.getCell(row+1,1);s.value=sub;
+  s.font={size:10,color:{argb:'FF7F8C8D'}};s.alignment={horizontal:'center'};ws.getRow(row+1).height=18;return row+2;}
+  return row+1;
+}
+function _xlsxFooter(ws,row,mc){
+  ws.mergeCells(row,1,row,mc);var c=ws.getCell(row,1);
+  c.value='إعداد و برمجة محمد ندا 01068880999';
+  c.font={size:9,color:{argb:'FF95A5A6'},italic:true};c.alignment={horizontal:'center'};
+}
+
 /* registered handlers for complex inline conversions */
 _dh('viewAllStrategic',function(){strategicViewMode='all';renderStrategicStock();});
 _dh('viewGovStrategic',function(){strategicViewMode='gov';renderStrategicStock();});
@@ -184,21 +244,13 @@ async function renderDailyStock() {
 }
 
 function exportStockExcel() {
-  const table = document.getElementById('dailyStockTable');
+  var table = document.getElementById('dailyStockTable');
   if (!table) return;
-  let html = table.outerHTML;
-  html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:10px;"');
-  html = html.replace(/<th(?!\s)/g, '<th style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap"');
-  html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap">`);
-  html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px"');
-  html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px">`);
-  const dateStr = fmtCairoDate('full');
-  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
-    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#2c3e50;border:none">المخزون اليومي لبنوك الدم</td></tr>
-      <tr><td style="text-align:center;font-size:11px;color:#7f8c8d;border:none">${dateStr}</td></tr></table>
-    ${html}
-    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'stock-management-' + fmtCairoDate('date') + '.xls');
+  var res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:3 });
+  if (!res) return;
+  _xlsxTitleRow(res.ws, 1, 'المخزون اليومي لبنوك الدم', fmtCairoDate('full'), res.mc);
+  _xlsxFooter(res.ws, res.r, res.mc);
+  _xlsxDl(res.wb, 'stock-management-' + fmtCairoDate('date') + '.xlsx');
 }
 
 function setupInlineEdit() {
@@ -646,30 +698,15 @@ async function doStrategicCalc() {
 }
 
 function exportStrategicExcel() {
-  const wrap = document.getElementById('strategicTableWrap');
+  var wrap = document.getElementById('strategicTableWrap');
   if (!wrap) return;
-  const dateStr = new Date().toLocaleDateString('ar-EG');
-  const tbl = wrap.querySelector('table');
+  var tbl = wrap.querySelector('table');
   if (!tbl) return;
-  let html = tbl.outerHTML;
-  // Add inline styles to all cells for Excel
-  html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:12px"');
-  html = html.replace(/<th(?!\s)/g, '<th style="background:#2e7d32;color:#fff;font-weight:700;padding:6px 8px;border:1px solid #1b5e20;text-align:center;white-space:nowrap"');
-  html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2e7d32;color:#fff;font-weight:700;padding:6px 8px;border:1px solid #1b5e20;text-align:center;white-space:nowrap">`);
-  html = html.replace(/<td(?!\s)/g, '<td style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:12px"');
-  html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:4px 6px;border:1px solid #999;text-align:center;font-size:12px">`);
-  // Style the total rows
-  html = html.replace(/إجمالي/g, '<b style="color:#1b5e20">إجمالي</b>');
-  html = html.replace(/الرصيد في الهيئة/g, '<b style="color:#1b5e20;font-size:13px">الرصيد في الهيئة</b>');
-  const fullHtml = `<html dir="rtl"><head><meta charset="utf-8"><style>
-    .gov-even td { background:#f9f9f9 } .gov-odd td { background:#fff }
-  </style></head><body>
-    <table style="width:100%;margin-bottom:10px"><tr><td style="text-align:center;font-size:18px;font-weight:700;color:#2e7d32;border:none">الرصيد الاستراتيجي</td></tr>
-      <tr><td style="text-align:center;font-size:12px;color:#666;border:none">تاريخ التقرير: ${dateStr}</td></tr></table>
-    ${html}
-    <table style="width:100%;margin-top:12px"><tr><td style="text-align:center;font-size:11px;color:#888;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table>
-    </body></html>`;
-  downloadBlob(new Blob(['\ufeff' + fullHtml], { type: 'application/octet-stream' }), 'strategic-stock.xls');
+  var res = _xlsxTbl(tbl, { headerBg:'FF2E7D32', skipActions:true, startRow:3 });
+  if (!res) return;
+  _xlsxTitleRow(res.ws, 1, 'الرصيد الاستراتيجي', 'تاريخ التقرير: ' + new Date().toLocaleDateString('ar-EG'), res.mc);
+  _xlsxFooter(res.ws, res.r, res.mc);
+  _xlsxDl(res.wb, 'strategic-stock.xlsx');
 }
 
 function downloadPdf(bodyHtml, filename) {
@@ -762,21 +799,13 @@ function renderTotalTable(data) {
 }
 
 function exportTotalExcel() {
-  const table = document.getElementById('totalTable');
+  var table = document.getElementById('totalTable');
   if (!table) return;
-  const dateStr = new Date().toLocaleDateString('ar-EG');
-  let html = table.outerHTML;
-  html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:11px"');
-  html = html.replace(/<th(?!\s)/g, '<th style="background:#2e7d32;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #1b5e20;text-align:center;white-space:nowrap"');
-  html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2e7d32;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #1b5e20;text-align:center;white-space:nowrap">`);
-  html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #999;text-align:center"');
-  html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #999;text-align:center">`);
-  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
-    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#2e7d32;border:none">إجمالي الرصيد ببنوك الدم</td></tr>
-      <tr><td style="text-align:center;font-size:11px;color:#666;border:none">تاريخ التقرير: ${dateStr}</td></tr></table>
-    ${html}
-    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#888;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'total-stock.xls');
+  var res = _xlsxTbl(table, { headerBg:'FF2E7D32', skipActions:true, startRow:3 });
+  if (!res) return;
+  _xlsxTitleRow(res.ws, 1, 'إجمالي الرصيد ببنوك الدم', 'تاريخ التقرير: ' + new Date().toLocaleDateString('ar-EG'), res.mc);
+  _xlsxFooter(res.ws, res.r, res.mc);
+  _xlsxDl(res.wb, 'total-stock.xlsx');
 }
 
 function exportTotalPDF() {
@@ -1099,20 +1128,14 @@ async function renderBranchStatement() {
 }
 
 function branchExportExcel() {
-  const table = document.querySelector('#branchStmtReport table');
+  var table = document.querySelector('#branchStmtReport table');
   if (!table) return;
-  let html = table.outerHTML;
-  html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:10px"');
-  html = html.replace(/<th(?!\s)/g, '<th style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap"');
-  html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap">`);
-  html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px"');
-  html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px">`);
-  const title = document.querySelector('.stmt-title')?.textContent || 'بيان الفرع';
-  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
-    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#2c3e50;border:none">${title}</td></tr></table>
-    ${html}
-    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'branch-statement-' + fmtCairoDate('date') + '.xls');
+  var title = (document.querySelector('.stmt-title') || {}).textContent || 'بيان الفرع';
+  var res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:2 });
+  if (!res) return;
+  _xlsxTitleRow(res.ws, 1, title, '', res.mc);
+  _xlsxFooter(res.ws, res.r, res.mc);
+  _xlsxDl(res.wb, 'branch-statement-' + fmtCairoDate('date') + '.xlsx');
 }
 
 function branchExportPdf() {
@@ -1996,14 +2019,14 @@ async function printEmployeeTable() {
 }
 
 function exportEmployeeExcel() {
-  const data = window._empData || [];
+  var data = window._empData || [];
   if (!data.length) return showToast('لا توجد بيانات');
-  const gov = document.getElementById('empFilterGov')?.value || '';
-  const hosp = document.getElementById('empFilterHosp')?.value || '';
-  const cat = document.getElementById('empFilterCat')?.value || '';
-  const cls = document.getElementById('empFilterClass')?.value || '';
-  const search = (document.getElementById('empSearch')?.value || '').trim().toLowerCase();
-  const filtered = data.filter(d => {
+  var gov = document.getElementById('empFilterGov')?.value || '';
+  var hosp = document.getElementById('empFilterHosp')?.value || '';
+  var cat = document.getElementById('empFilterCat')?.value || '';
+  var cls = document.getElementById('empFilterClass')?.value || '';
+  var search = (document.getElementById('empSearch')?.value || '').trim().toLowerCase();
+  var filtered = data.filter(function(d) {
     if (gov && d.governorate !== gov) return false;
     if (hosp && d.hospital_name !== hosp) return false;
     if (cat && d.category !== cat) return false;
@@ -2011,63 +2034,67 @@ function exportEmployeeExcel() {
     if (search && (!d.employee || !d.employee.toLowerCase().includes(search)) && !(d.national_id||'').includes(search)) return false;
     return true;
   });
-  const branchName = gov || 'جميع الفروع';
-  const hospitalName = hosp || 'جميع بنوك الدم';
-  // Group by governorate → hospital
-  const egroups = {};
-  filtered.forEach(d => {
-    const gk = d.governorate || 'أخرى'; const hk = d.hospital_name || 'غير معروف';
+  var branchName = gov || 'جميع الفروع';
+  var hospitalName = hosp || 'جميع بنوك الدم';
+  var egroups = {};
+  filtered.forEach(function(d) {
+    var gk = d.governorate || 'أخرى'; var hk = d.hospital_name || 'غير معروف';
     if (!egroups[gk]) egroups[gk] = {};
     if (!egroups[gk][hk]) egroups[gk][hk] = [];
     egroups[gk][hk].push(d);
   });
-  const egKeys = Object.keys(egroups).sort((a,b) => a.localeCompare(b, 'ar'));
-  let ei = 0, eRows = '';
-  const escExcel = v => (v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  egKeys.forEach(g => {
-    const ehKeys = Object.keys(egroups[g]).sort((a,b) => a.localeCompare(b, 'ar'));
-    eRows += `<tr style="background:#e3f2fd"><td colspan="7" style="padding:5px 8px;border:1px solid #bdc3c7;font-size:11px;font-weight:700;color:#1565c0;text-align:right">
-      📍 محافظة ${escExcel(g)}
-      <span style="background:#1565c0;color:#fff;border-radius:10px;padding:0 6px;font-size:9px;margin-right:6px">${ehKeys.reduce((s,k) => s + egroups[g][k].length, 0)}</span>
-    </td></tr>`;
-    ehKeys.forEach(h => {
-      const emps = egroups[g][h];
-      eRows += `<tr style="background:#fff8e1"><td colspan="7" style="padding:3px 8px 3px 20px;border:1px solid #bdc3c7;font-size:10px;font-weight:600;color:#e65100;text-align:right">
-        🏥 ${escExcel(h)}
-        <span style="background:#e65100;color:#fff;border-radius:10px;padding:0 4px;font-size:8px;margin-right:6px">${emps.length}</span>
-      </td></tr>`;
-      emps.forEach(d => {
+  if (typeof ExcelJS === 'undefined') { showToast('مكتبة ExcelJS غير محملة', 'error'); return; }
+  var wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
+  var ws = wb.addWorksheet('بيان العاملين', { views:[{state:'frozen',ySplit:2,xSplit:1}] });
+  var mc = 7;
+  var dateStr = new Date().toLocaleDateString('ar-EG');
+  _xlsxTitleRow(ws, 1, 'بيان العاملين ببنوك الدم', dateStr + ' | ' + branchName + ' | ' + hospitalName, mc);
+  var hdrs = ['م','الموظف','الفئه','التصنيف','الرقم القومي','التليفون','البريد'];
+  var hBg = 'FF795548';
+  var hRow = ws.getRow(3); hRow.height = 24;
+  hdrs.forEach(function(h, ci) {
+    var c = ws.getCell(3, ci+1); c.value = h;
+    c.font = {bold:true, color:{argb:'FFFFFFFF'}, size:10};
+    c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:hBg}};
+    c.alignment = {horizontal:'center',vertical:'middle',wrapText:true}; c.border = _XBN;
+  });
+  var egKeys = Object.keys(egroups).sort(function(a,b){return a.localeCompare(b,'ar');});
+  var r = 4, ei = 0;
+  egKeys.forEach(function(g) {
+    var ehKeys = Object.keys(egroups[g]).sort(function(a,b){return a.localeCompare(b,'ar');});
+    var total = ehKeys.reduce(function(s,k){return s+egroups[g][k].length;},0);
+    ws.mergeCells(r,1,r,mc);
+    var gc = ws.getCell(r,1); gc.value = 'محافظة ' + g + '  (' + total + ')';
+    gc.font = {bold:true, size:11, color:{argb:'FF1565C0'}};
+    gc.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFE3F2FD'}};
+    gc.alignment = {horizontal:'right',vertical:'middle'}; gc.border = _XBN;
+    ws.getRow(r).height = 22; r++;
+    ehKeys.forEach(function(h) {
+      var emps = egroups[g][h];
+      ws.mergeCells(r,1,r,mc);
+      var hc = ws.getCell(r,1); hc.value = h + '  (' + emps.length + ')';
+      hc.font = {bold:true, size:10, color:{argb:'FFE65100'}};
+      hc.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF8E1'}};
+      hc.alignment = {horizontal:'right',vertical:'middle',indent:1}; hc.border = _XBN;
+      ws.getRow(r).height = 20; r++;
+      emps.forEach(function(d) {
         ei++;
-        eRows += `<tr>
-          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${ei}</td>
-          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${escExcel(d.employee)}</td>
-          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${escExcel(d.category)}</td>
-          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px">${escExcel(d.classification)}</td>
-          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${escExcel(d.national_id)}</td>
-          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${escExcel(d.phone)}</td>
-          <td style="padding:4px 6px;border:1px solid #bdc3c7;text-align:center;font-size:10px;direction:ltr">${escExcel(d.email)}</td>
-        </tr>`;
+        var row = ws.getRow(r); row.height = 18;
+        var vals = [ei, d.employee, d.category, d.classification, d.national_id, d.phone, d.email];
+        vals.forEach(function(v, ci) {
+          var c = ws.getCell(r, ci+1); c.value = v || '';
+          c.font = {size:9}; c.alignment = {horizontal:'center',vertical:'middle'};
+          c.border = _XBN;
+          if (r % 2 === 0) c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFFAFAFA'}};
+        });
+        r++;
       });
     });
   });
-  const dateStr = new Date().toLocaleDateString('ar-EG');
-  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
-    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#795548;border:none">بيان العاملين ببنوك الدم</td></tr>
-      <tr><td style="text-align:center;font-size:11px;color:#7f8c8d;border:none">${dateStr} | ${branchName} | ${hospitalName}</td></tr></table>
-    <table style="border-collapse:collapse;width:100%;font-family:'Segoe UI',Arial;font-size:10px">
-      <thead><tr>
-        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">م</th>
-        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الموظف</th>
-        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الفئه</th>
-        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">التصنيف</th>
-        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">الرقم القومي</th>
-        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">التليفون</th>
-        <th style="background:#795548;color:#fff;font-weight:700;padding:5px 7px;border:1px solid #5d4037;text-align:center;white-space:nowrap">البريد</th>
-      </tr></thead>
-      <tbody>${eRows}</tbody></table>
-    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'بيان_العاملين.xls');
-  showToast('✅ تم التحميل');
+  for (var i = 1; i <= mc; i++) ws.getColumn(i).width = [6,22,18,16,18,16,20][i-1] || 14;
+  _xlsxFooter(ws, r, mc);
+  _xlsxDl(wb, 'بيان_العاملين.xlsx');
+  showToast('✅ تم التصدير بنجاح');
 }
 
 function exportEmployeePDF() {
@@ -3355,25 +3382,45 @@ async function saveArchiveCell(el) {
 }
 
 function exportArchiveIndicatorsExcel() {
-  const tables = document.querySelectorAll('#archIndTable table.ind-table');
+  var tables = document.querySelectorAll('#archIndTable table.ind-table');
   if (!tables.length) return;
-  let html = '';
-  tables.forEach((table, ti) => {
-    let tbl = table.outerHTML;
-    tbl = tbl.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:10px;margin-top:12px"');
-    tbl = tbl.replace(/<th(?!\s)/g, '<th style="background:#5A7A9A;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #3a5a7a;text-align:center;white-space:nowrap"');
-    tbl = tbl.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#5A7A9A;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #3a5a7a;text-align:center;white-space:nowrap">`);
-    tbl = tbl.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px"');
-    tbl = tbl.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px">`);
-    // Remove action buttons column (last td in each row)
-    tbl = tbl.replace(/<td[^>]*><button[\s\S]*?<\/button><\/td>/g, '<td></td>');
-    html += tbl;
+  if (typeof ExcelJS === 'undefined') { showToast('مكتبة ExcelJS غير محملة', 'error'); return; }
+  var wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
+  var ws = wb.addWorksheet('أرشيف مؤشرات الأداء');
+  var hBg = 'FF5A7A9A';
+  var mc = 0, r = 1;
+  tables.forEach(function(table, ti) {
+    var trs = Array.from(table.querySelectorAll('tr'));
+    var tmc = 0;
+    trs.forEach(function(tr){var n=tr.querySelectorAll('th,td').length;if(n>tmc)tmc=n;});
+    if (tmc - 1 > mc) mc = tmc - 1;
+    if (ti > 0) r++;
+    trs.forEach(function(tr) {
+      var cells = Array.from(tr.querySelectorAll('th,td'));
+      var isH = cells.length > 0 && cells[0].tagName === 'TH';
+      cells.pop();
+      var rw = ws.getRow(r); rw.height = isH ? 24 : 18;
+      cells.forEach(function(td, ci) {
+        var v = td.textContent.trim();
+        var cs = parseInt(td.getAttribute('colspan')) || 1;
+        var c = ws.getCell(r, ci + 1);
+        var nm = parseFloat(v.replace(/[,]/g, ''));
+        if (!isNaN(nm) && v.replace(/[,.\-\s]/g, '').length === 0 && v.length > 0) { c.value = nm; c.numFmt = '#,##0'; }
+        else { c.value = v; }
+        c.alignment = {horizontal:'center',vertical:'middle',wrapText:true}; c.border = _XBN;
+        if (isH) { c.font = {bold:true,color:{argb:'FFFFFFFF'},size:10}; c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:hBg}}; }
+        else { c.font = {size:9}; if (r%2===0) c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFF8F9FA'}}; }
+        if (cs > 1) ws.mergeCells(r, ci+1, r, ci+cs);
+      });
+      r++;
+    });
   });
-  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
-    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#5A7A9A;border:none">أرشيف مؤشرات الأداء</td></tr></table>
-    ${html}
-    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'archive_indicators_' + fmtCairoDate('date') + '.xls');
+  if (!mc) mc = 5;
+  for (var i = 1; i <= mc; i++) ws.getColumn(i).width = i === 1 ? 22 : 14;
+  var sr = _xlsxTitleRow(ws, 1, 'أرشيف مؤشرات الأداء', '', mc);
+  ws.spliceRows(1, sr - 1);
+  _xlsxFooter(ws, r, mc);
+  _xlsxDl(wb, 'archive_indicators_' + fmtCairoDate('date') + '.xlsx');
 }
 
 function exportArchiveIndicatorsPdf() {
@@ -3395,34 +3442,26 @@ function exportArchiveIndicatorsPdf() {
   downloadPdf(bodyHtml, 'indicators-archive.pdf');
 }
 function exportExcel() {
-  const table = document.querySelector('#exportTable table');
+  var table = document.querySelector('#exportTable table');
   if (!table) return;
-  const fGov = document.getElementById('filterGov')?.value || '';
-  const fYear = document.getElementById('filterYear')?.value || '';
-  const fPeriod = document.getElementById('filterPeriod')?.value || '';
-  const fHosp = document.getElementById('filterHosp')?.value || '';
-  const periodLabels = { '': 'شهري', q1: 'الربع الأول', q2: 'الربع الثاني', q3: 'الربع الثالث', q4: 'الربع الرابع', h1: 'النصف الأول', h2: 'النصف الثاني', year: 'سنوي', all: 'الكل' };
-  const hospName = fHosp ? document.getElementById('filterHosp')?.selectedOptions[0]?.text : '';
-  let title = 'معدل صرف فصائل الدم';
-  const parts = [];
+  var fGov = document.getElementById('filterGov')?.value || '';
+  var fYear = document.getElementById('filterYear')?.value || '';
+  var fPeriod = document.getElementById('filterPeriod')?.value || '';
+  var fHosp = document.getElementById('filterHosp')?.value || '';
+  var periodLabels = { '': 'شهري', q1: 'الربع الأول', q2: 'الربع الثاني', q3: 'الربع الثالث', q4: 'الربع الرابع', h1: 'النصف الأول', h2: 'النصف الثاني', year: 'سنوي', all: 'الكل' };
+  var hospName = fHosp ? (document.getElementById('filterHosp')?.selectedOptions[0]?.text || '') : '';
+  var title = 'معدل صرف فصائل الدم';
+  var parts = [];
   if (fYear) parts.push('سنة ' + fYear);
   if (fPeriod !== undefined && periodLabels[fPeriod]) parts.push(periodLabels[fPeriod]);
   if (fGov) parts.push('فرع ' + fGov);
   if (hospName) parts.push(hospName);
   if (parts.length) title += ' (' + parts.join(' - ') + ')';
-  let html = table.outerHTML;
-  html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:10px"');
-  html = html.replace(/<th(?!\s)/g, '<th style="background:#2e7d32;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1b5e20;text-align:center;white-space:nowrap"');
-  html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2e7d32;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1b5e20;text-align:center;white-space:nowrap">`);
-  html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px"');
-  html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px">`);
-  // Remove action buttons column (last td)
-  html = html.replace(/<td[^>]*><button[\s\S]*?<\/button><\/td>/g, '<td></td>');
-  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
-    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#2e7d32;border:none">${title}</td></tr></table>
-    ${html}
-    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'consumption_archive_' + fmtCairoDate('date') + '.xls');
+  var res = _xlsxTbl(table, { headerBg:'FF2E7D32', skipActions:true, startRow:2 });
+  if (!res) return;
+  _xlsxTitleRow(res.ws, 1, title, '', res.mc);
+  _xlsxFooter(res.ws, res.r, res.mc);
+  _xlsxDl(res.wb, 'consumption_archive_' + fmtCairoDate('date') + '.xlsx');
 }
 
 function exportPDF() {
@@ -3561,15 +3600,18 @@ function copyUsersTable() {
   navigator.clipboard.writeText(rows.join('\n')).then(() => showToast('✅ تم نسخ الجدول'));
 }
 function exportUsersExcel() {
-  const table = document.getElementById('userTable');
+  var table = document.getElementById('userTable');
   if (!table) return;
-  const clone = table.cloneNode(true);
-  clone.querySelectorAll('tr').forEach(tr => {
-    const last = tr.querySelector('td:last-child, th:last-child');
+  var clone = table.cloneNode(true);
+  clone.querySelectorAll('tr').forEach(function(tr) {
+    var last = tr.querySelector('td:last-child, th:last-child');
     if (last) last.remove();
   });
-  const html = `<html><meta charset="utf-8"><body>${clone.outerHTML}</body></html>`;
-  downloadBlob(new Blob([html], { type: 'application/octet-stream' }), 'users.xls');
+  var res = _xlsxTbl(clone, { headerBg:'FF333333', skipActions:false, startRow:2 });
+  if (!res) return;
+  _xlsxTitleRow(res.ws, 1, 'قائمة المستخدمين', '', res.mc);
+  _xlsxFooter(res.ws, res.r, res.mc);
+  _xlsxDl(res.wb, 'users_' + fmtCairoDate('date') + '.xlsx');
 }
 function exportUsersPdf() {
   const table = document.getElementById('userTable');
@@ -5024,8 +5066,8 @@ const BIG_COL_DEFS = [
   { key: 'refused_icteric', label: 'Icteric', group: 'عينات غير مفحوصة', sg: 'عينات مرفوضة' },
 
   // ===== الإعدامات =====
-  { key: 'disp_exp_blood', label: 'دم', group: 'الإعدامات', sg: 'إنتهاء الصلاحيه' },
-  { key: 'disp_exp_plasma', label: 'بلازما', group: 'الإعدامات', sg: 'إنتهاء الصلاحيه' },
+  { key: 'disp_exp_blood', label: 'دم', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_plasma', label: 'بلازما', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'صفائح' },
   { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'صفائح' },
   { key: 'disp_returned', label: 'مرتجع', group: 'الإعدامات' },
@@ -5074,8 +5116,8 @@ const BIG_COL_DEFS = [
 ];
 
 const SMALL_COL_DEFS = [
-  { key: 'governorate', label: 'الفرع', cls: 'gov-col' },
-  { key: 'hospital_name', label: 'بنك الدم', cls: 'hosp-col' },
+  { key: 'governorate', label: 'الفرع', cls: 'gov-col', group: '' },
+  { key: 'hospital_name', label: 'بنك الدم', cls: 'hosp-col', group: '' },
 
   // ===== إجمالي الوارد =====
   { key: 'inc_collected', label: 'تجميعي', group: 'إجمالي الوارد', sg: 'دم' },
@@ -5096,7 +5138,7 @@ const SMALL_COL_DEFS = [
   { key: 'ct', label: 'C/T', formula: true, group: 'الفصائل والتوافق', target: '<2' },
 
   // ===== الإعدامات =====
-  { key: 'disp_exp_blood', label: 'الدم', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_blood', label: 'دم', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_exp_plasma', label: 'بلازما', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'صفائح' },
   { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'صفائح' },
@@ -6249,10 +6291,75 @@ async function eqImport() {
 }
 
 function eqExportXlsx() {
-  const a = document.createElement('a');
-  a.href = '/api/equipment/export/xlsx';
-  a.download = 'اجهزة_بنوك_الدم.xlsx'; a.click();
-  showToast('✅ جاري تحميل ملف Excel');
+  showToast('جاري التجهيز...');
+  api('GET', '/equipment').then(function(eq) {
+    if (typeof ExcelJS === 'undefined') { showToast('مكتبة ExcelJS غير محملة', 'error'); return; }
+    var types = eq.types || [], hospitals = eq.hospitals || [];
+    var wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
+    var ws = wb.addWorksheet('الأجهزة', { views:[{state:'frozen',ySplit:2,xSplit:1}] });
+    var mc = 2 + types.length * 4;
+    var sr = _xlsxTitleRow(ws, 1, 'أجهزة بنوك الدم', '', mc);
+    var hRow = ws.getRow(sr); hRow.height = 22;
+    ws.getCell(sr,1).value = 'المحافظة'; ws.getCell(sr,2).value = 'اسم بنك الدم';
+    for (var ci = 1; ci <= 2; ci++) {
+      var c = ws.getCell(sr, ci); c.font = {bold:true,color:{argb:'FFFFFFFF'},size:10};
+      c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF2C3E50'}}; c.alignment = {horizontal:'center',vertical:'middle'}; c.border = _XBN;
+    }
+    var cIdx = 3;
+    types.forEach(function(t) {
+      ws.mergeCells(sr, cIdx, sr, cIdx + 3);
+      var tc = ws.getCell(sr, cIdx); tc.value = t.name;
+      tc.font = {bold:true,color:{argb:'FFFFFFFF'},size:10};
+      tc.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF2C3E50'}}; tc.alignment = {horizontal:'center',vertical:'middle'}; tc.border = _XBN;
+      cIdx += 4;
+    });
+    var r2 = ws.getRow(sr + 1); r2.height = 20;
+    ws.getCell(sr+1,1).value = ''; ws.getCell(sr+1,2).value = '';
+    ws.getCell(sr+1,1).font = {bold:true,color:{argb:'FFFFFFFF'},size:9};
+    ws.getCell(sr+1,1).fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF34495E'}}; ws.getCell(sr+1,1).border = _XBN;
+    ws.getCell(sr+1,2).font = {bold:true,color:{argb:'FFFFFFFF'},size:9};
+    ws.getCell(sr+1,2).fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF34495E'}}; ws.getCell(sr+1,2).border = _XBN;
+    cIdx = 3;
+    types.forEach(function(t) {
+      ['عدد','حالة','ماركة','سعة'].forEach(function(h) {
+        var c = ws.getCell(sr+1, cIdx); c.value = h;
+        c.font = {bold:true,color:{argb:'FFFFFFFF'},size:9};
+        c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF34495E'}}; c.alignment = {horizontal:'center',vertical:'middle'}; c.border = _XBN;
+        cIdx++;
+      });
+    });
+    var dr = sr + 2;
+    var sorted = hospitals.slice().sort(function(a,b) {
+      return (a.governorate || '').localeCompare(b.governorate || '', 'ar') || (a.name || '').localeCompare(b.name || '', 'ar');
+    });
+    sorted.forEach(function(h) {
+      var row = ws.getRow(dr); row.height = 18;
+      ws.getCell(dr,1).value = h.governorate || '';
+      ws.getCell(dr,2).value = h.name || '';
+      ws.getCell(dr,1).font = {size:9}; ws.getCell(dr,1).alignment = {horizontal:'right',vertical:'middle'}; ws.getCell(dr,1).border = _XBN;
+      ws.getCell(dr,2).font = {size:9}; ws.getCell(dr,2).alignment = {horizontal:'right',vertical:'middle'}; ws.getCell(dr,2).border = _XBN;
+      cIdx = 3;
+      types.forEach(function(t) {
+        var eqEntry = (h.equipment || {})[t.id];
+        ['count','status','brand','capacity'].forEach(function(f) {
+          var val = '';
+          if (eqEntry) {
+            if (Array.isArray(eqEntry)) val = eqEntry.map(function(e){return e[f]||'';}).filter(Boolean).join(', ');
+            else if (eqEntry && typeof eqEntry === 'object') val = eqEntry[f] != null ? eqEntry[f] : '';
+          }
+          var c = ws.getCell(dr, cIdx); c.value = val;
+          c.font = {size:9}; c.alignment = {horizontal:'center',vertical:'middle'}; c.border = _XBN;
+          if (dr % 2 === 0) c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFF8F9FA'}};
+          cIdx++;
+        });
+      });
+      dr++;
+    });
+    ws.getColumn(1).width = 16; ws.getColumn(2).width = 24;
+    for (var i = 3; i <= mc; i++) ws.getColumn(i).width = 12;
+    _xlsxFooter(ws, dr, mc);
+    _xlsxDl(wb, 'اجهزة_بنوك_الدم.xlsx');
+  }).catch(function(e) { showToast('❌ ' + e.message); });
 }
 
 function eqExportPdf() {
@@ -7259,22 +7366,15 @@ function rdnPrint() {
 }
 
 function rdnExportXlsx() {
-  const table = document.querySelector('#rdnSummaryTable .data-table');
+  var table = document.querySelector('#rdnSummaryTable .data-table');
   if (!table) { showToast('⚠ لا توجد بيانات للتصدير'); return; }
-  let html = table.outerHTML;
-  html = html.replace(/<table/g, '<table style="border-collapse:collapse;width:100%;font-family:\'Segoe UI\',Arial;font-size:10px;"');
-  html = html.replace(/<th(?!\s)/g, '<th style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap"');
-  html = html.replace(/<th\s+([^>]*)>/g, (m, a) => `<th ${a} style="background:#2c3e50;color:#fff;font-weight:700;padding:4px 6px;border:1px solid #1a252f;text-align:center;white-space:nowrap">`);
-  html = html.replace(/<td(?!\s)/g, '<td style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px;mso-number-format:\'\\@\'"');
-  html = html.replace(/<td\s+([^>]*)>/g, (m, a) => `<td ${a} style="padding:3px 5px;border:1px solid #bdc3c7;text-align:center;font-size:10px;mso-number-format:'\\@'">`);
-  const sel = document.getElementById('rdnOccasionSelect');
-  const title = sel && sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : 'جاهزية بنوك الدم';
-  const full = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
-    <table style="width:100%;margin-bottom:8px"><tr><td style="text-align:center;font-size:16px;font-weight:700;color:#2c3e50;border:none">بيان بجاهزية بنوك الدم</td></tr>
-      <tr><td style="text-align:center;font-size:11px;color:#7f8c8d;border:none">${esc(title)}</td></tr></table>
-    ${html}
-    <table style="width:100%;margin-top:10px"><tr><td style="text-align:center;font-size:10px;color:#95a5a6;border:none">إعداد و برمجة محمد ندا 01068880999</td></tr></table></body></html>`;
-  downloadBlob(new Blob(['\ufeff' + full], { type: 'application/octet-stream' }), 'جاهزية_بنوك_الدم.xls');
+  var sel = document.getElementById('rdnOccasionSelect');
+  var title = sel && sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : 'جاهزية بنوك الدم';
+  var res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:3 });
+  if (!res) return;
+  _xlsxTitleRow(res.ws, 1, 'بيان بجاهزية بنوك الدم', title, res.mc);
+  _xlsxFooter(res.ws, res.r, res.mc);
+  _xlsxDl(res.wb, 'جاهزية_بنوك_الدم.xlsx');
 }
 
 function rdnExportPdf() {
@@ -7939,8 +8039,8 @@ const _iaBigFields = [
   // ===== عينات غير مفحوصة =====
   { g:'عينات غير مفحوصة', key:'donation_therapeutic', label:'تبرع علاجي' },
   { g:'عينات غير مفحوصة', key:'uncompleted', label:'لم يكتمل' },
-  { g:'عينات غير مفحوصة', key:'refused_fatty', label:'دهون' },
-  { g:'عينات غير مفحوصة', key:'refused_icteric', label:'Icteric' },
+  { g:'عينات غير مفحوصة', key:'refused_fatty', label:'دهون', sg:'عينات مرفوضة' },
+  { g:'عينات غير مفحوصة', key:'refused_icteric', label:'Icteric', sg:'عينات مرفوضة' },
 
   // ===== الإعدامات =====
   { g:'الإعدامات', key:'disp_exp_blood', label:'دم', sg:'انتهاء الصلاحيه' },
@@ -7955,16 +8055,16 @@ const _iaBigFields = [
   { g:'الإعدامات', key:'virology_b', label:'B', sg:'الفيروسات' },
   { g:'الإعدامات', key:'virology_i', label:'I', sg:'الفيروسات' },
   { g:'الإعدامات', key:'virology_dollar', label:'$', sg:'الفيروسات' },
-  { g:'الإعدامات', key:'virology_total', label:'إجمالي' },
+  { g:'الإعدامات', key:'virology_total', label:'إجمالي', sg:'الفيروسات' },
 
   // ===== تحليل نسب المؤشرات =====
   { g:'تحليل نسب المؤشرات', key:'tested', label:'المفحوص' },
   { g:'تحليل نسب المؤشرات', key:'ratio_uncompleted', label:'لم يكتمل' },
   { g:'تحليل نسب المؤشرات', key:'ratio_refused', label:'مرفوضه' },
-  { g:'تحليل نسب المؤشرات', key:'ratio_c', label:'C' },
-  { g:'تحليل نسب المؤشرات', key:'ratio_b', label:'B' },
-  { g:'تحليل نسب المؤشرات', key:'ratio_i', label:'I' },
-  { g:'تحليل نسب المؤشرات', key:'ratio_dollar', label:'$' },
+  { g:'تحليل نسب المؤشرات', key:'ratio_c', label:'C', sg:'الفيروسات' },
+  { g:'تحليل نسب المؤشرات', key:'ratio_b', label:'B', sg:'الفيروسات' },
+  { g:'تحليل نسب المؤشرات', key:'ratio_i', label:'I', sg:'الفيروسات' },
+  { g:'تحليل نسب المؤشرات', key:'ratio_dollar', label:'$', sg:'الفيروسات' },
   { g:'تحليل نسب المؤشرات', key:'ratio_exp', label:'Exp' },
   { g:'تحليل نسب المؤشرات', key:'ratio_returned', label:'مرتجع' },
   { g:'تحليل نسب المؤشرات', key:'ratio_reaction', label:'تفاعل' },
@@ -7972,17 +8072,17 @@ const _iaBigFields = [
   { g:'تحليل نسب المؤشرات', key:'ratio_other', label:'أخرى' },
 
   // ===== مؤشرات وحدات دم الأطفال =====
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_inc_collected', label:'تجميعي' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_inc_regional', label:'إقليمي' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_inc_collected', label:'تجميعي', sg:'وارد الدم' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_inc_regional', label:'إقليمي', sg:'وارد الدم' },
   { g:'مؤشرات وحدات دم الأطفال', key:'child_out_blood', label:'منصرف الدم' },
   { g:'مؤشرات وحدات دم الأطفال', key:'child_blood_groups', label:'الفصائل' },
   { g:'مؤشرات وحدات دم الأطفال', key:'child_compatibility', label:'التوافق' },
   { g:'مؤشرات وحدات دم الأطفال', key:'child_ct', label:'C/T' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_exp', label:'EXP' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_returned', label:'مرتجع' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_reaction', label:'تفاعل' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_open', label:'نظام مفتوح' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_other', label:'أخرى' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_exp', label:'EXP', sg:'اعدامات الدم' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_returned', label:'مرتجع', sg:'اعدامات الدم' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_reaction', label:'تفاعل', sg:'اعدامات الدم' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_open', label:'نظام مفتوح', sg:'اعدامات الدم' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_other', label:'أخرى', sg:'اعدامات الدم' },
 
   // ===== النسب المئوية للاعدام - أطفال =====
   { g:'النسب المئوية للاعدام - أطفال', key:'child_pct_exp', label:'Exp الدم' },
@@ -8011,7 +8111,7 @@ const _iaSmallFields = [
   { g:'الفصائل والتوافق', key:'ct', label:'C/T' },
 
   // ===== الإعدامات =====
-  { g:'الإعدامات', key:'disp_exp_blood', label:'الدم', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_blood', label:'دم', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'صفائح' },
   { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'صفائح' },
@@ -8028,17 +8128,17 @@ const _iaSmallFields = [
   { g:'النسب المئوية للاعدام', key:'pct_other', label:'أخرى' },
 
   // ===== مؤشرات وحدات دم الأطفال =====
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_inc_collected', label:'تجميعي' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_inc_regional', label:'إقليمي' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_inc_collected', label:'تجميعي', sg:'وارد الدم' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_inc_regional', label:'إقليمي', sg:'وارد الدم' },
   { g:'مؤشرات وحدات دم الأطفال', key:'child_out_blood', label:'منصرف الدم' },
   { g:'مؤشرات وحدات دم الأطفال', key:'child_blood_groups', label:'الفصائل' },
   { g:'مؤشرات وحدات دم الأطفال', key:'child_compatibility', label:'التوافق' },
   { g:'مؤشرات وحدات دم الأطفال', key:'child_ct', label:'C/T' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_exp', label:'EXP' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_returned', label:'مرتجع' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_reaction', label:'تفاعل' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_open', label:'نظام مفتوح' },
-  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_other', label:'أخرى' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_exp', label:'EXP', sg:'اعدامات الدم' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_returned', label:'مرتجع', sg:'اعدامات الدم' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_reaction', label:'تفاعل', sg:'اعدامات الدم' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_open', label:'نظام مفتوح', sg:'اعدامات الدم' },
+  { g:'مؤشرات وحدات دم الأطفال', key:'child_disp_other', label:'أخرى', sg:'اعدامات الدم' },
 
   // ===== النسب المئوية للاعدام - أطفال =====
   { g:'النسب المئوية للاعدام - أطفال', key:'child_pct_exp', label:'Exp الدم' },
@@ -8058,17 +8158,37 @@ function _iaRenderFieldCheckboxes(fields, cls, accentColor) {
   for (const f of fields) {
     const g = f.g || '';
     let grp = groups.find(x => x.name === g);
-    if (!grp) { grp = { name: g, items: [] }; groups.push(grp); }
+    if (!grp) { grp = { name: g, items: [], sgMap: new Map() }; groups.push(grp); }
     grp.items.push(f);
+    if (f.sg) {
+      if (!grp.sgMap.has(f.sg)) grp.sgMap.set(f.sg, []);
+      grp.sgMap.get(f.sg).push(f);
+    }
   }
   let h = '';
   for (const grp of groups) {
     if (grp.name) h += `<div style="width:100%;font-size:11px;font-weight:700;color:${accentColor};margin:6px 0 3px;opacity:.8;border-bottom:1px solid var(--border);padding-bottom:2px">${esc(grp.name)}</div>`;
-    h += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
-    for (const f of grp.items) {
-      h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="${cls}" value="${f.key}" checked style="accent-color:${accentColor};width:13px;height:13px">${esc(f.label)}</label>`;
+    if (grp.sgMap.size > 0) {
+      const seen = new Set();
+      for (const f of grp.items) {
+        if (f.sg && !seen.has(f.sg)) {
+          seen.add(f.sg);
+          const sgItems = grp.sgMap.get(f.sg);
+          h += `<div style="width:100%;font-size:10px;font-weight:600;color:${accentColor};margin:4px 0 2px;opacity:.65;padding-right:8px">› ${esc(f.sg)}</div>`;
+          h += '<div style="display:flex;flex-wrap:wrap;gap:4px;padding-right:12px">';
+          for (const sf of sgItems) {
+            h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="${cls}" value="${sf.key}" checked style="accent-color:${accentColor};width:13px;height:13px">${esc(sf.label)}</label>`;
+          }
+          h += '</div>';
+        }
+      }
+    } else {
+      h += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+      for (const f of grp.items) {
+        h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="${cls}" value="${f.key}" checked style="accent-color:${accentColor};width:13px;height:13px">${esc(f.label)}</label>`;
+      }
+      h += '</div>';
     }
-    h += '</div>';
   }
   return h;
 }
@@ -8971,15 +9091,21 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   if (ctxGroups.has('تحليل نسب المؤشرات')) {
     if (showGrand) {
       var ratioKeys = ['ratio_uncompleted','ratio_refused','ratio_c','ratio_b','ratio_i','ratio_dollar','ratio_exp','ratio_returned','ratio_reaction','ratio_open','ratio_other'];
-      var ratioLbl = {'ratio_uncompleted':'لم يكتمل','ratio_refused':'مرفوضة','ratio_c':'C','ratio_b':'B','ratio_i':'I','ratio_dollar':'$','ratio_exp':'انتهاء الصلاحية','ratio_returned':'مرتجع','ratio_reaction':'تفاعل','ratio_open':'نظام مفتوح','ratio_other':'أخرى'};
+      var ratioLbl = {'ratio_uncompleted':'لم يكتمل','ratio_refused':'مرفوضة','ratio_c':'فيروس C','ratio_b':'فيروس B','ratio_i':'فيروس I','ratio_dollar':'فيروس $','ratio_exp':'انتهاء الصلاحية','ratio_returned':'مرتجع','ratio_reaction':'تفاعل','ratio_open':'نظام مفتوح','ratio_other':'أخرى'};
       var hasRatio = ratioKeys.some(function(k){return cols.some(function(c){return c.key===k;});});
       if (hasRatio) {
         var aggP2 = _ctxAggFormulas(p2Data, 'big');
         var maxR = 0, maxK = '', totR = 0;
         ratioKeys.forEach(function(k){var v=Number(aggP2[k])||0;totR+=v;if(v>maxR){maxR=v;maxK=k;}});
         if (maxK && totR > 0) ctxBullets.push('أعلى نسبة إعدام في ' + lP2 + ': ' + ratioLbl[maxK] + ' (' + _iaFmt(maxR) + '% = ' + ((maxR/totR)*100).toFixed(1) + '% من الإجمالي)');
-        var tested2 = Number(aggP2.tested) || 0;
-        if (tested2 > 0 && totR > 0) ctxBullets.push('نسبة الإعدام الإجمالية من المفحوص: ' + ((totR/tested2)*100).toFixed(1) + '% في ' + lP2);
+        var coll2 = Number(aggP2.collect_total)||0, test2 = Number(aggP2.tested)||0;
+        var ref2 = (Number(aggP2.refused_fatty)||0)+(Number(aggP2.refused_icteric)||0);
+        var unc2 = Number(aggP2.uncompleted)||0, thr2 = Number(aggP2.donation_therapeutic)||0;
+        var totReject = ref2+unc2+thr2;
+        if (coll2 > 0) ctxBullets.push('نسبة عدم الفحص من التجميع: ' + ((totReject/coll2)*100).toFixed(1) + '% (' + _iaFmt(totReject) + ' من ' + _iaFmt(coll2) + ')');
+        var vC=Number(aggP2.virology_c)||0,vB=Number(aggP2.virology_b)||0,vI=Number(aggP2.virology_i)||0,vD=Number(aggP2.virology_dollar)||0;
+        var totVirus=vC+vB+vI+vD;
+        if (test2 > 0 && totVirus > 0) ctxBullets.push('نسبة الإيجابية الفيروسية من المفحوص: ' + ((totVirus/test2)*100).toFixed(1) + '% (' + _iaFmt(totVirus) + ' من ' + _iaFmt(test2) + ')');
       }
     }
   }
