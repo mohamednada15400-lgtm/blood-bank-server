@@ -3143,7 +3143,7 @@ function renderArchiveIndicatorsTable() {
       const canEditDel = isAdmin;
       const mh = makeGroupHeader(colDefs).replace(/(rowspan="[23]">بنك الدم<\/th>)/, '$1<th rowspan="3" style="min-width:44px;font-size:11px;color:#5A7A9A">الشهر</th>');
       let h = `<div style="margin-top:20px"><div class="table-scroll"><table class="data-table ind-table" style="min-width:800px"><thead>
-        <tr><th colspan="${colDefs.length + 1 + (canEditDel ? 1 : 0)}" style="text-align:center;background:linear-gradient(135deg,#5A7A9A,#7A9ABA);color:#fff;font-size:13px">${title}</th></tr>
+        <tr><th colspan="${colDefs.length + 1 + (canEditDel ? 1 : 0)}" style="text-align:center;background:linear-gradient(135deg,#5A80A8,#7BA0C8);color:#fff;font-size:15px;font-weight:800;padding:10px 16px;letter-spacing:0.5px;border-bottom:3px solid #90b8d8">${title}</th></tr>
         ${mh}
       </thead><tbody>`;
       h += records.map(r => {
@@ -4973,7 +4973,7 @@ function computeBigFormulas(d) {
     ratio_i: pct(virologyI, tested),
     ratio_dollar: pct(virologyDollar, tested),
     virology_total: virologyC + virologyB + virologyI + virologyDollar,
-    ratio_exp: pct(dispExpBlood, (collectTotal + incBlood) - (donationTherapeutic + uncompleted + refusedIcteric + virologyC + virologyB + virologyI + virologyDollar)),
+    ratio_exp: pct(dispExpBlood, (collectTotal + incBlood) - (donationTherapeutic + uncompleted + refusedFatty + refusedIcteric + virologyC + virologyB + virologyI + virologyDollar)),
     ratio_returned: pct(dispReturned, outBloodInt),
     ratio_reaction: pct(dispReaction, outBloodInt),
     ratio_open: pct(dispOpen, outBloodInt),
@@ -4997,8 +4997,8 @@ const BIG_COL_DEFS = [
   { key: 'collect_total', label: 'التجميع', group: 'التجميع' },
 
   // ===== إجمالي الوارد =====
-  { key: 'inc_blood', label: 'دم', group: 'إجمالي الوارد' },
-  { key: 'inc_plasma', label: 'بلازما', group: 'إجمالي الوارد' },
+  { key: 'inc_blood', label: 'دم', group: 'إجمالي الوارد', sg: 'دم' },
+  { key: 'inc_plasma', label: 'بلازما', group: 'إجمالي الوارد', sg: 'بلازما' },
   { key: 'inc_sdp', label: 'SDP', group: 'إجمالي الوارد', sg: 'صفائح' },
   { key: 'inc_rdp', label: 'RDP', group: 'إجمالي الوارد', sg: 'صفائح' },
 
@@ -5026,8 +5026,8 @@ const BIG_COL_DEFS = [
   // ===== الإعدامات =====
   { key: 'disp_exp_blood', label: 'دم', group: 'الإعدامات', sg: 'إنتهاء الصلاحيه' },
   { key: 'disp_exp_plasma', label: 'بلازما', group: 'الإعدامات', sg: 'إنتهاء الصلاحيه' },
-  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'إنتهاء الصلاحيه' },
-  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'إنتهاء الصلاحيه' },
+  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'صفائح' },
+  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'صفائح' },
   { key: 'disp_returned', label: 'مرتجع', group: 'الإعدامات' },
   { key: 'disp_reaction', label: 'تفاعل', group: 'الإعدامات' },
   { key: 'disp_open', label: 'نظام مفتوح', group: 'الإعدامات' },
@@ -5080,13 +5080,13 @@ const SMALL_COL_DEFS = [
   // ===== إجمالي الوارد =====
   { key: 'inc_collected', label: 'تجميعي', group: 'إجمالي الوارد', sg: 'دم' },
   { key: 'inc_regional', label: 'إقليمي', group: 'إجمالي الوارد', sg: 'دم' },
-  { key: 'inc_plasma', label: 'بلازما', group: 'إجمالي الوارد' },
+  { key: 'inc_plasma', label: 'بلازما', group: 'إجمالي الوارد', sg: 'بلازما' },
   { key: 'inc_sdp', label: 'SDP', group: 'إجمالي الوارد', sg: 'صفائح' },
   { key: 'inc_rdp', label: 'RDP', group: 'إجمالي الوارد', sg: 'صفائح' },
 
   // ===== إجمالي المنصرف =====
-  { key: 'out_blood', label: 'دم', group: 'إجمالي المنصرف' },
-  { key: 'out_plasma', label: 'بلازما', group: 'إجمالي المنصرف' },
+  { key: 'out_blood', label: 'دم', group: 'إجمالي المنصرف', sg: 'دم' },
+  { key: 'out_plasma', label: 'بلازما', group: 'إجمالي المنصرف', sg: 'بلازما' },
   { key: 'out_sdp', label: 'SDP', group: 'إجمالي المنصرف', sg: 'صفائح' },
   { key: 'out_rdp', label: 'RDP', group: 'إجمالي المنصرف', sg: 'صفائح' },
 
@@ -5098,8 +5098,8 @@ const SMALL_COL_DEFS = [
   // ===== الإعدامات =====
   { key: 'disp_exp_blood', label: 'الدم', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_exp_plasma', label: 'بلازما', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'صفائح' },
+  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'صفائح' },
   { key: 'disp_returned', label: 'مرتجع', group: 'الإعدامات' },
   { key: 'disp_reaction', label: 'تفاعل', group: 'الإعدامات' },
   { key: 'disp_open', label: 'نظام مفتوح', group: 'الإعدامات' },
@@ -7916,8 +7916,8 @@ const _iaBigFields = [
   { g:'التجميع', key:'collect_total', label:'التجميع' },
 
   // ===== إجمالي الوارد =====
-  { g:'إجمالي الوارد', key:'inc_blood', label:'دم' },
-  { g:'إجمالي الوارد', key:'inc_plasma', label:'بلازما' },
+  { g:'إجمالي الوارد', key:'inc_blood', label:'دم', sg:'دم' },
+  { g:'إجمالي الوارد', key:'inc_plasma', label:'بلازما', sg:'بلازما' },
   { g:'إجمالي الوارد', key:'inc_sdp', label:'SDP', sg:'صفائح' },
   { g:'إجمالي الوارد', key:'inc_rdp', label:'RDP', sg:'صفائح' },
 
@@ -7945,8 +7945,8 @@ const _iaBigFields = [
   // ===== الإعدامات =====
   { g:'الإعدامات', key:'disp_exp_blood', label:'دم', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'صفائح' },
+  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'صفائح' },
   { g:'الإعدامات', key:'disp_returned', label:'مرتجع' },
   { g:'الإعدامات', key:'disp_reaction', label:'تفاعل' },
   { g:'الإعدامات', key:'disp_open', label:'نظام مفتوح' },
@@ -7995,13 +7995,13 @@ const _iaSmallFields = [
   // ===== إجمالي الوارد =====
   { g:'إجمالي الوارد', key:'inc_collected', label:'تجميعي', sg:'دم' },
   { g:'إجمالي الوارد', key:'inc_regional', label:'إقليمي', sg:'دم' },
-  { g:'إجمالي الوارد', key:'inc_plasma', label:'بلازما' },
+  { g:'إجمالي الوارد', key:'inc_plasma', label:'بلازما', sg:'بلازما' },
   { g:'إجمالي الوارد', key:'inc_sdp', label:'SDP', sg:'صفائح' },
   { g:'إجمالي الوارد', key:'inc_rdp', label:'RDP', sg:'صفائح' },
 
   // ===== إجمالي المنصرف =====
-  { g:'إجمالي المنصرف', key:'out_blood', label:'دم' },
-  { g:'إجمالي المنصرف', key:'out_plasma', label:'بلازما' },
+  { g:'إجمالي المنصرف', key:'out_blood', label:'دم', sg:'دم' },
+  { g:'إجمالي المنصرف', key:'out_plasma', label:'بلازما', sg:'بلازما' },
   { g:'إجمالي المنصرف', key:'out_sdp', label:'SDP', sg:'صفائح' },
   { g:'إجمالي المنصرف', key:'out_rdp', label:'RDP', sg:'صفائح' },
 
@@ -8013,8 +8013,8 @@ const _iaSmallFields = [
   // ===== الإعدامات =====
   { g:'الإعدامات', key:'disp_exp_blood', label:'الدم', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'صفائح' },
+  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'صفائح' },
   { g:'الإعدامات', key:'disp_returned', label:'مرتجع' },
   { g:'الإعدامات', key:'disp_reaction', label:'تفاعل' },
   { g:'الإعدامات', key:'disp_open', label:'نظام مفتوح' },
@@ -8738,6 +8738,21 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
     dataArr.forEach(function(h) { s += Number((h.data || {})[key]) || 0; });
     return s;
   }
+  function _ctxAggFormulas(dataArr, cardType) {
+    var agg = {};
+    dataArr.forEach(function(h) {
+      var d = h.data || {};
+      for (var k in d) {
+        if (_iaIsFormula(k)) continue;
+        if (typeof d[k] === 'number') agg[k] = (agg[k] || 0) + d[k];
+      }
+    });
+    if (cardType === 'big' || cardType === 'small') {
+      var f = _iaRecomputeFormulas(agg, cardType);
+      for (var k in f) agg[k] = f[k];
+    }
+    return agg;
+  }
 
   /* ===== الفصائل والتوافق ===== */
   if (ctxGroups.has('الفصائل والتوافق')) {
@@ -8959,10 +8974,11 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
       var ratioLbl = {'ratio_uncompleted':'لم يكتمل','ratio_refused':'مرفوضة','ratio_c':'C','ratio_b':'B','ratio_i':'I','ratio_dollar':'$','ratio_exp':'انتهاء الصلاحية','ratio_returned':'مرتجع','ratio_reaction':'تفاعل','ratio_open':'نظام مفتوح','ratio_other':'أخرى'};
       var hasRatio = ratioKeys.some(function(k){return cols.some(function(c){return c.key===k;});});
       if (hasRatio) {
+        var aggP2 = _ctxAggFormulas(p2Data, 'big');
         var maxR = 0, maxK = '', totR = 0;
-        ratioKeys.forEach(function(k){var v=_ctxSum(p2Data,k);totR+=v;if(v>maxR){maxR=v;maxK=k;}});
-        if (maxK && totR > 0) ctxBullets.push('أعلى نسبة إعدام في ' + lP2 + ': ' + ratioLbl[maxK] + ' (' + _iaFmt(maxR) + ' = ' + ((maxR/totR)*100).toFixed(1) + '% من الإجمالي)');
-        var tested2 = _ctxSum(p2Data, 'tested');
+        ratioKeys.forEach(function(k){var v=Number(aggP2[k])||0;totR+=v;if(v>maxR){maxR=v;maxK=k;}});
+        if (maxK && totR > 0) ctxBullets.push('أعلى نسبة إعدام في ' + lP2 + ': ' + ratioLbl[maxK] + ' (' + _iaFmt(maxR) + '% = ' + ((maxR/totR)*100).toFixed(1) + '% من الإجمالي)');
+        var tested2 = Number(aggP2.tested) || 0;
         if (tested2 > 0 && totR > 0) ctxBullets.push('نسبة الإعدام الإجمالية من المفحوص: ' + ((totR/tested2)*100).toFixed(1) + '% في ' + lP2);
       }
     }
@@ -8988,8 +9004,10 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
     if (showGrand) {
       var pctCols = cols.filter(function(c){return c.key.startsWith('pct_')||c.key.startsWith('child_pct_');});
       if (pctCols.length) {
+        var pctType = cols.some(function(c){return c.key.startsWith('ratio_');}) ? 'big' : 'small';
+        var aggPct = _ctxAggFormulas(p2Data, pctType);
         var maxP = 0, maxPC = null;
-        pctCols.forEach(function(c){var v=_ctxSum(p2Data,c.key);if(v>maxP){maxP=v;maxPC=c;}});
+        pctCols.forEach(function(c){var v=Number(aggPct[c.key])||0;if(v>maxP){maxP=v;maxPC=c;}});
         if (maxPC) ctxBullets.push('أعلى نسبة إعدام في ' + lP2 + ': ' + maxPC.label + ' (' + maxP.toFixed(2) + '%)');
       }
     }
