@@ -8189,7 +8189,6 @@ function _iaBuildGovGroups(p1Data, p2Data, allGovs) {
 }
 
 async function renderIndicatorAnalysis() {
-  pushNav(renderIndicatorAnalysis);
   const c = document.getElementById('mainContent');
   const now = new Date();
   const curYear = now.getFullYear();
