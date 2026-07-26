@@ -7918,18 +7918,18 @@ const _iaBigFields = [
   // ===== إجمالي الوارد =====
   { g:'إجمالي الوارد', key:'inc_blood', label:'دم' },
   { g:'إجمالي الوارد', key:'inc_plasma', label:'بلازما' },
-  { g:'إجمالي الوارد', key:'inc_sdp', label:'SDP' },
-  { g:'إجمالي الوارد', key:'inc_rdp', label:'RDP' },
+  { g:'إجمالي الوارد', key:'inc_sdp', label:'SDP', sg:'صفائح' },
+  { g:'إجمالي الوارد', key:'inc_rdp', label:'RDP', sg:'صفائح' },
 
   // ===== إجمالي المنصرف =====
-  { g:'إجمالي المنصرف', key:'out_blood_int', label:'داخلي' },
-  { g:'إجمالي المنصرف', key:'out_blood_branch', label:'فرع' },
-  { g:'إجمالي المنصرف', key:'out_blood_auth', label:'هيئة' },
-  { g:'إجمالي المنصرف', key:'out_blood_ext', label:'خارجي' },
-  { g:'إجمالي المنصرف', key:'out_plasma_int', label:'داخلي' },
-  { g:'إجمالي المنصرف', key:'out_plasma_ext', label:'خارجي' },
-  { g:'إجمالي المنصرف', key:'out_sdp', label:'SDP' },
-  { g:'إجمالي المنصرف', key:'out_rdp', label:'RDP' },
+  { g:'إجمالي المنصرف', key:'out_blood_int', label:'داخلي', sg:'دم' },
+  { g:'إجمالي المنصرف', key:'out_blood_branch', label:'فرع', sg:'دم' },
+  { g:'إجمالي المنصرف', key:'out_blood_auth', label:'هيئة', sg:'دم' },
+  { g:'إجمالي المنصرف', key:'out_blood_ext', label:'خارجي', sg:'دم' },
+  { g:'إجمالي المنصرف', key:'out_plasma_int', label:'داخلي', sg:'بلازما' },
+  { g:'إجمالي المنصرف', key:'out_plasma_ext', label:'خارجي', sg:'بلازما' },
+  { g:'إجمالي المنصرف', key:'out_sdp', label:'SDP', sg:'صفائح' },
+  { g:'إجمالي المنصرف', key:'out_rdp', label:'RDP', sg:'صفائح' },
 
   // ===== الفصائل والتوافق =====
   { g:'الفصائل والتوافق', key:'blood_groups', label:'الفصائل' },
@@ -7943,18 +7943,18 @@ const _iaBigFields = [
   { g:'عينات غير مفحوصة', key:'refused_icteric', label:'Icteric' },
 
   // ===== الإعدامات =====
-  { g:'الإعدامات', key:'disp_exp_blood', label:'دم' },
-  { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما' },
-  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP' },
-  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP' },
+  { g:'الإعدامات', key:'disp_exp_blood', label:'دم', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_returned', label:'مرتجع' },
   { g:'الإعدامات', key:'disp_reaction', label:'تفاعل' },
   { g:'الإعدامات', key:'disp_open', label:'نظام مفتوح' },
   { g:'الإعدامات', key:'disp_other', label:'أخرى' },
-  { g:'الإعدامات', key:'virology_c', label:'C' },
-  { g:'الإعدامات', key:'virology_b', label:'B' },
-  { g:'الإعدامات', key:'virology_i', label:'I' },
-  { g:'الإعدامات', key:'virology_dollar', label:'$' },
+  { g:'الإعدامات', key:'virology_c', label:'C', sg:'الفيروسات' },
+  { g:'الإعدامات', key:'virology_b', label:'B', sg:'الفيروسات' },
+  { g:'الإعدامات', key:'virology_i', label:'I', sg:'الفيروسات' },
+  { g:'الإعدامات', key:'virology_dollar', label:'$', sg:'الفيروسات' },
   { g:'الإعدامات', key:'virology_total', label:'إجمالي' },
 
   // ===== تحليل نسب المؤشرات =====
@@ -7993,17 +7993,17 @@ const _iaBigFields = [
 ];
 const _iaSmallFields = [
   // ===== إجمالي الوارد =====
-  { g:'إجمالي الوارد', key:'inc_collected', label:'تجميعي' },
-  { g:'إجمالي الوارد', key:'inc_regional', label:'إقليمي' },
+  { g:'إجمالي الوارد', key:'inc_collected', label:'تجميعي', sg:'دم' },
+  { g:'إجمالي الوارد', key:'inc_regional', label:'إقليمي', sg:'دم' },
   { g:'إجمالي الوارد', key:'inc_plasma', label:'بلازما' },
-  { g:'إجمالي الوارد', key:'inc_sdp', label:'SDP' },
-  { g:'إجمالي الوارد', key:'inc_rdp', label:'RDP' },
+  { g:'إجمالي الوارد', key:'inc_sdp', label:'SDP', sg:'صفائح' },
+  { g:'إجمالي الوارد', key:'inc_rdp', label:'RDP', sg:'صفائح' },
 
   // ===== إجمالي المنصرف =====
   { g:'إجمالي المنصرف', key:'out_blood', label:'دم' },
   { g:'إجمالي المنصرف', key:'out_plasma', label:'بلازما' },
-  { g:'إجمالي المنصرف', key:'out_sdp', label:'SDP' },
-  { g:'إجمالي المنصرف', key:'out_rdp', label:'RDP' },
+  { g:'إجمالي المنصرف', key:'out_sdp', label:'SDP', sg:'صفائح' },
+  { g:'إجمالي المنصرف', key:'out_rdp', label:'RDP', sg:'صفائح' },
 
   // ===== الفصائل والتوافق =====
   { g:'الفصائل والتوافق', key:'blood_groups', label:'الفصائل' },
@@ -8011,10 +8011,10 @@ const _iaSmallFields = [
   { g:'الفصائل والتوافق', key:'ct', label:'C/T' },
 
   // ===== الإعدامات =====
-  { g:'الإعدامات', key:'disp_exp_blood', label:'الدم' },
-  { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما' },
-  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP' },
-  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP' },
+  { g:'الإعدامات', key:'disp_exp_blood', label:'الدم', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_returned', label:'مرتجع' },
   { g:'الإعدامات', key:'disp_reaction', label:'تفاعل' },
   { g:'الإعدامات', key:'disp_open', label:'نظام مفتوح' },
@@ -8122,17 +8122,21 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
   const grpColors = { 'التجميع':'#c5cae9', 'إجمالي الوارد':'#c8e6c9', 'إجمالي المنصرف':'#e1bee7', 'الفصائل والتوافق':'#bbdefb', 'عينات غير مفحوصة':'#ffcdd2', 'الإعدامات':'#ffe0b2', 'تحليل نسب المؤشرات':'#b2dfdb', 'مؤشرات وحدات دم الأطفال':'#f8bbd0', 'النسب المئوية للاعدام - أطفال':'#f8bbd0', 'السب المئوية للاعدام':'#f8bbd0' };
   const grpTextColors = { 'التجميع':'#283593', 'إجمالي الوارد':'#1b5e20', 'إجمالي المنصرف':'#4a148c', 'الفصائل والتوافق':'#0d47a1', 'عينات غير مفحوصة':'#b71c1c', 'الإعدامات':'#e65100', 'تحليل نسب المؤشرات':'#004d40', 'مؤشرات وحدات دم الأطفال':'#880e4f', 'النسب المئوية للاعدام - أطفال':'#ad1457', 'السب المئوية للاعدام':'#ad1457' };
   const grpBgs = { 'التibraries':'#f3f0ff', 'التجميع':'#f3f0ff', 'إجمالي الوارد':'#f1f8e9', 'إجمالي المنصرف':'#faf0ff', 'الفصائل والتوافق':'#f0f7ff', 'عينات غير مفحوصة':'#fff5f5', 'الإعدامات':'#fffaf0', 'تحليل نسب المؤشرات':'#f0faf8', 'مؤشرات وحدات دم الأطفال':'#fdf0f5', 'النسب المئوية للاعدام - أطفال':'#fdf0f5', 'السب المئوية للاعدام':'#fdf0f5' };
+  const hasSub = cols.some(c => c.sg);
   let html = '<div style="overflow-x:auto;padding:2px"><style>.ia-row:hover{background:#f5f8ff!important}.ia-row[data-row-bg="#f5f6fa"]:hover{background:#eef1f7!important}</style><table style="width:100%;border-collapse:collapse;font-size:12px;letter-spacing:0">';
   const groups = [];
   for (const c of cols) {
     const g = c.g || '';
     let grp = groups.find(x => x.name === g);
-    if (!grp) { grp = { name: g, items: [] }; groups.push(grp); }
+    if (!grp) { grp = { name: g, items: [], subs: new Map() }; groups.push(grp); }
     grp.items.push(c);
+    if (c.sg) {
+      if (!grp.subs.has(c.sg)) grp.subs.set(c.sg, []);
+      grp.subs.get(c.sg).push(c);
+    }
   }
-  html += `<thead>
-    <tr>
-      <th rowspan="3" style="background:#e8eaf6;color:#283593;padding:10px 12px;position:sticky;right:0;z-index:3;min-width:160px;text-align:right;font-size:13px;border-bottom:3px solid #90caf9;white-space:nowrap">البيان</th>`;
+  html += `<thead><tr>`;
+  html += `<th rowspan="${hasSub ? 3 : 2}" style="background:#e8eaf6;color:#283593;padding:10px 12px;position:sticky;right:0;z-index:3;min-width:160px;text-align:right;font-size:13px;border-bottom:3px solid #90caf9;white-space:nowrap">البيان</th>`;
   for (const grp of groups) {
     const bg = grpColors[grp.name] || '#e0e0e0';
     const tc = grpTextColors[grp.name] || '#37474f';
@@ -8142,11 +8146,37 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
   for (const grp of groups) {
     const bg = grpColors[grp.name] || '#e0e0e0';
     const tc = grpTextColors[grp.name] || '#37474f';
-    for (const f of grp.items) {
-      html += `<th colspan="2" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.label)}</th>`;
+    let ci = 0;
+    while (ci < grp.items.length) {
+      const f = grp.items[ci];
+      if (f.sg && grp.subs.has(f.sg)) {
+        const subCols = grp.subs.get(f.sg);
+        html += `<th colspan="${subCols.length * 2}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.sg)}</th>`;
+        ci += subCols.length;
+      } else {
+        html += `<th rowspan="${hasSub ? 2 : 1}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.label)}</th>`;
+        ci++;
+      }
     }
   }
-  html += '</tr><tr>';
+  if (hasSub) {
+    html += `</tr><tr>`;
+    for (const grp of groups) {
+      const bg = grpColors[grp.name] || '#e0e0e0';
+      const tc = grpTextColors[grp.name] || '#37474f';
+      for (const f of grp.items) {
+        if (f.sg && grp.subs.has(f.sg)) {
+          const subCols = grp.subs.get(f.sg);
+          if (subCols[0].key === f.key) {
+            for (const sc of subCols) {
+              html += `<th colspan="2" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(sc.label)}</th>`;
+            }
+          }
+        }
+      }
+    }
+  }
+  html += `</tr><tr>`;
   for (const c of cols) {
     html += `<th style="background:#e3f2fd;color:#1565c0;padding:3px 5px;font-size:9px;min-width:44px;border-bottom:2px solid #90caf9">${esc(pL1)}</th>`;
     html += `<th style="background:#fce4ec;color:#c62828;padding:3px 5px;font-size:9px;min-width:44px;border-bottom:2px solid #ef9a9a">${esc(pL2)}</th>`;
