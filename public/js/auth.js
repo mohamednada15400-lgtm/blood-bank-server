@@ -82,7 +82,7 @@ function initApp(u) {
   window._user = u;
   document.getElementById('loginPage').style.display = 'none';
   document.getElementById('appPage').style.display = '';
-  const roleLabels = { admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
+  const roleLabels = { admin:'مدير عام', hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
   if (u.role === 'hospital') {
     document.getElementById('userBadge').textContent = 'مستخدم: ' + u.name;
   } else {
@@ -111,7 +111,7 @@ async function doLogin() {
 function showMyProfile() {
   const u = window._user;
   if (!u) return;
-  const roleLabels = { admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
+  const roleLabels = { admin:'مدير عام', hospital_manager:'مدير بنك دم', hospital:'مستخدم مستشفي', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' };
   openModal('الملف الشخصي',
     `<div style="text-align:center;margin-bottom:16px"><i class="fas fa-user-circle" style="font-size:64px;color:#dc3545;opacity:0.7"></i>
     <h3 style="margin:8px 0 4px">${esc(u.name || u.username)}</h3>

@@ -142,7 +142,6 @@ app.use(helmet({
   },
   crossOriginOpenerPolicy: { policy: 'same-origin' },
   originAgentCluster: true,
-  originAgentCluster: true,
   dnsPrefetchControl: { allow: false },
   frameguard: { action: 'deny' },
   hidePoweredBy: true,
@@ -925,6 +924,12 @@ app.patch('/api/daily-reports/:id/pc', requireAuth(), async (req, res) => {
 });
 
 app.delete('/api/daily-reports/:id', requireAuth(), requirePerm('daily_stock', 'edit'), async (req, res) => {
+  const user = req.session.user;
+  const report = await query('SELECT hospital_id FROM daily_reports WHERE id = $1', [parseInt(req.params.id)]);
+  if (report.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
+  if (user.role === 'hospital' || user.role === 'hospital_manager') {
+    if (report.rows[0].hospital_id !== user.hospitalId) return res.status(403).json({ error: 'ليس لديك صلاحية' });
+  }
   await query('DELETE FROM daily_reports WHERE id = $1', [parseInt(req.params.id)]);
   res.json({ ok: true });
 });
@@ -2345,7 +2350,7 @@ function getDriveDbFileName() {
 }
 
 // GET /api/sync/status
-app.get('/api/sync/status', requireAuth(), async (req, res) => {
+app.get('/api/sync/status', requireAuth(), requireMaster(), async (req, res) => {
   const dbPath = path.join(DATA_DIR, 'db.json');
   let fileSize = 0, fileDate = null;
   try {
@@ -2365,7 +2370,7 @@ app.get('/api/sync/status', requireAuth(), async (req, res) => {
 });
 
 // GET /api/sync/export
-app.get('/api/sync/export', requireAuth(), async (req, res) => {
+app.get('/api/sync/export', requireAuth(), requireMaster(), async (req, res) => {
   if (isPG) {
     try {
       // Export from PostgreSQL — query all tables
@@ -2446,7 +2451,7 @@ app.get('/api/sync/export', requireAuth(), async (req, res) => {
 });
 
 // POST /api/sync/import
-app.post('/api/sync/import', requireAuth(), async (req, res) => {
+app.post('/api/sync/import', requireAuth(), requireMaster(), async (req, res) => {
   const { data } = req.body;
   if (!data) return res.status(400).json({ error: 'البيانات مطلوبة' });
   try {
@@ -2494,7 +2499,7 @@ app.post('/api/sync/import', requireAuth(), async (req, res) => {
 });
 
 // GET /api/sync/drive/auth-url
-app.get('/api/sync/drive/auth-url', requireAuth(), async (req, res) => {
+app.get('/api/sync/drive/auth-url', requireAuth(), requireMaster(), async (req, res) => {
   try {
     const oauth2Client = createOAuth2Client();
     if (!oauth2Client) return res.status(400).json({ error: 'لم يتم تكوين Google Drive. الرجاء إضافة client_id و client_secret في data/drive-config.json' });
@@ -2509,7 +2514,7 @@ app.get('/api/sync/drive/auth-url', requireAuth(), async (req, res) => {
 });
 
 // POST /api/sync/drive/callback
-app.post('/api/sync/drive/callback', requireAuth(), async (req, res) => {
+app.post('/api/sync/drive/callback', requireAuth(), requireMaster(), async (req, res) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: 'رمز المصادقة مطلوب' });
   try {
@@ -2524,7 +2529,7 @@ app.post('/api/sync/drive/callback', requireAuth(), async (req, res) => {
 });
 
 // POST /api/sync/drive/upload
-app.post('/api/sync/drive/upload', requireAuth(), async (req, res) => {
+app.post('/api/sync/drive/upload', requireAuth(), requireMaster(), async (req, res) => {
   try {
     const tokens = loadDriveTokens();
     if (!tokens) return res.status(400).json({ error: 'لم يتم ربط Google Drive. الرجاء المصادقة أولاً' });
@@ -2564,7 +2569,7 @@ app.post('/api/sync/drive/upload', requireAuth(), async (req, res) => {
 });
 
 // GET /api/sync/drive/download
-app.get('/api/sync/drive/download', requireAuth(), async (req, res) => {
+app.get('/api/sync/drive/download', requireAuth(), requireMaster(), async (req, res) => {
   try {
     const tokens = loadDriveTokens();
     if (!tokens) return res.status(400).json({ error: 'لم يتم ربط Google Drive' });
@@ -2672,7 +2677,7 @@ function startAutoBackup() {
 }
 
 // GET /api/sync/auto-backup-status
-app.get('/api/sync/auto-backup-status', requireAuth(), async (req, res) => {
+app.get('/api/sync/auto-backup-status', requireAuth(), requireMaster(), async (req, res) => {
   const backupDir = path.join(DATA_DIR, 'auto-backups');
   let backupCount = 0;
   try {
