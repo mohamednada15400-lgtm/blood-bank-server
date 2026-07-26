@@ -4999,8 +4999,8 @@ const BIG_COL_DEFS = [
   // ===== إجمالي الوارد =====
   { key: 'inc_blood', label: 'دم', group: 'إجمالي الوارد' },
   { key: 'inc_plasma', label: 'بلازما', group: 'إجمالي الوارد' },
-  { key: 'inc_sdp', label: 'SDP', group: 'إجمالي الوارد', sg: 'بلازما' },
-  { key: 'inc_rdp', label: 'RDP', group: 'إجمالي الوارد', sg: 'بلازما' },
+  { key: 'inc_sdp', label: 'SDP', group: 'إجمالي الوارد', sg: 'صفائح' },
+  { key: 'inc_rdp', label: 'RDP', group: 'إجمالي الوارد', sg: 'صفائح' },
 
   // ===== إجمالي المنصرف =====
   { key: 'out_blood_int', label: 'داخلي', group: 'إجمالي المنصرف', sg: 'دم' },
@@ -5009,8 +5009,8 @@ const BIG_COL_DEFS = [
   { key: 'out_blood_ext', label: 'خارجي', group: 'إجمالي المنصرف', sg: 'دم' },
   { key: 'out_plasma_int', label: 'داخلي', group: 'إجمالي المنصرف', sg: 'بلازما' },
   { key: 'out_plasma_ext', label: 'خارجي', group: 'إجمالي المنصرف', sg: 'بلازما' },
-  { key: 'out_sdp', label: 'SDP', group: 'إجمالي المنصرف', sg: 'بلازما' },
-  { key: 'out_rdp', label: 'RDP', group: 'إجمالي المنصرف', sg: 'بلازما' },
+  { key: 'out_sdp', label: 'SDP', group: 'إجمالي المنصرف', sg: 'صفائح' },
+  { key: 'out_rdp', label: 'RDP', group: 'إجمالي المنصرف', sg: 'صفائح' },
 
   // ===== الفصائل، التوافق، C/T =====
   { key: 'blood_groups', label: 'الفصائل', group: 'الفصائل والتوافق' },
@@ -5081,14 +5081,14 @@ const SMALL_COL_DEFS = [
   { key: 'inc_collected', label: 'تجميعي', group: 'إجمالي الوارد', sg: 'دم' },
   { key: 'inc_regional', label: 'إقليمي', group: 'إجمالي الوارد', sg: 'دم' },
   { key: 'inc_plasma', label: 'بلازما', group: 'إجمالي الوارد' },
-  { key: 'inc_sdp', label: 'SDP', group: 'إجمالي الوارد', sg: 'بلازما' },
-  { key: 'inc_rdp', label: 'RDP', group: 'إجمالي الوارد', sg: 'بلازما' },
+  { key: 'inc_sdp', label: 'SDP', group: 'إجمالي الوارد', sg: 'صفائح' },
+  { key: 'inc_rdp', label: 'RDP', group: 'إجمالي الوارد', sg: 'صفائح' },
 
   // ===== إجمالي المنصرف =====
   { key: 'out_blood', label: 'دم', group: 'إجمالي المنصرف' },
   { key: 'out_plasma', label: 'بلازما', group: 'إجمالي المنصرف' },
-  { key: 'out_sdp', label: 'SDP', group: 'إجمالي المنصرف', sg: 'بلازما' },
-  { key: 'out_rdp', label: 'RDP', group: 'إجمالي المنصرف', sg: 'بلازما' },
+  { key: 'out_sdp', label: 'SDP', group: 'إجمالي المنصرف', sg: 'صفائح' },
+  { key: 'out_rdp', label: 'RDP', group: 'إجمالي المنصرف', sg: 'صفائح' },
 
   // ===== الفصائل، التوافق، C/T =====
   { key: 'blood_groups', label: 'الفصائل', group: 'الفصائل والتوافق' },
