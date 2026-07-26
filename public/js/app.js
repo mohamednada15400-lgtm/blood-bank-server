@@ -8315,22 +8315,39 @@ async function loadIndicatorAnalysis() {
     const checkedSmall = _iaGetCheckedCols('small').map(k => _iaSmallFields.find(f => f.key === k)).filter(Boolean);
     const checkedDisp = _iaGetCheckedCols('disp').map(k => _iaDispFields.find(f => f.key === k)).filter(Boolean);
     if (hasBig && checkedBig.length && (iaType === 'all' || iaType === 'big')) {
-      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#1a237e,#283593);color:#fff;padding:10px 16px"><h3 style="margin:0;font-size:14px"><i class="fa-solid fa-building-columns" style="margin-left:8px"></i>المؤشرات التجميعية <span style="font-size:11px;opacity:.7;font-weight:400">(' + checkedBig.length + ' حقل)</span></h3></div><div class="card-body" style="padding:0">';
+      tablesHtml += '<div class="card" style="margin-bottom:16px" id="iaCardBig"><div class="card-header" style="background:linear-gradient(135deg,#1a237e,#283593);color:#fff;padding:10px 16px"><h3 style="margin:0;font-size:14px"><i class="fa-solid fa-building-columns" style="margin-left:8px"></i>المؤشرات التجميعية <span style="font-size:11px;opacity:.7;font-weight:400">(' + checkedBig.length + ' حقل)</span></h3></div><div class="card-body" style="padding:0">';
       tablesHtml += _iaBuildSummaryTable(bigP1, bigP2, pL1, pL2, allGovs, checkedBig);
+      tablesHtml += `<div class="ia-chart-wrap"><canvas id="iaChartBig" height="300"></canvas></div><div class="ia-analysis" id="iaChartBigAnalysis"></div>`;
       tablesHtml += '</div></div>';
     }
     if (hasSmall && checkedSmall.length && (iaType === 'all' || iaType === 'small')) {
-      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#4a148c,#6a1b9a);color:#fff;padding:10px 16px"><h3 style="margin:0;font-size:14px"><i class="fa-solid fa-warehouse" style="margin-left:8px"></i>المؤشرات التخزينية <span style="font-size:11px;opacity:.7;font-weight:400">(' + checkedSmall.length + ' حقل)</span></h3></div><div class="card-body" style="padding:0">';
+      tablesHtml += '<div class="card" style="margin-bottom:16px" id="iaCardSmall"><div class="card-header" style="background:linear-gradient(135deg,#4a148c,#6a1b9a);color:#fff;padding:10px 16px"><h3 style="margin:0;font-size:14px"><i class="fa-solid fa-warehouse" style="margin-left:8px"></i>المؤشرات التخزينية <span style="font-size:11px;opacity:.7;font-weight:400">(' + checkedSmall.length + ' حقل)</span></h3></div><div class="card-body" style="padding:0">';
       tablesHtml += _iaBuildSummaryTable(smallP1, smallP2, pL1, pL2, allGovs, checkedSmall);
+      tablesHtml += `<div class="ia-chart-wrap"><canvas id="iaChartSmall" height="300"></canvas></div><div class="ia-analysis" id="iaChartSmallAnalysis"></div>`;
       tablesHtml += '</div></div>';
     }
     if (hasDisp && checkedDisp.length && (iaType === 'all' || iaType === 'big' || iaType === 'disp')) {
-      tablesHtml += '<div class="card" style="margin-bottom:16px"><div class="card-header" style="background:linear-gradient(135deg,#00695c,#00897b);color:#fff;padding:10px 16px"><h3 style="margin:0;font-size:14px"><i class="fa-solid fa-droplet" style="margin-left:8px"></i>منصرف الفصائل <span style="font-size:11px;opacity:.7;font-weight:400">(' + checkedDisp.length + ' حقل)</span></h3></div><div class="card-body" style="padding:0">';
+      tablesHtml += '<div class="card" style="margin-bottom:16px" id="iaCardDisp"><div class="card-header" style="background:linear-gradient(135deg,#00695c,#00897b);color:#fff;padding:10px 16px"><h3 style="margin:0;font-size:14px"><i class="fa-solid fa-droplet" style="margin-left:8px"></i>منصرف الفصائل <span style="font-size:11px;opacity:.7;font-weight:400">(' + checkedDisp.length + ' حقل)</span></h3></div><div class="card-body" style="padding:0">';
       tablesHtml += _iaBuildSummaryTable(dispP1, dispP2, pL1, pL2, allGovs, checkedDisp);
+      tablesHtml += `<div class="ia-chart-wrap"><canvas id="iaChartDisp" height="300"></canvas></div><div class="ia-analysis" id="iaChartDispAnalysis"></div>`;
       tablesHtml += '</div></div>';
     }
     if (!tablesHtml) tablesHtml = '<div class="card"><div class="card-body" style="text-align:center;padding:48px 20px;color:var(--text-muted)"><i class="fa-solid fa-table-columns" style="font-size:40px;margin-bottom:12px;opacity:.4"></i><br><div style="font-size:14px;font-weight:600;margin-bottom:6px">لا توجد أعمدة محددة</div><div style="font-size:12px;opacity:.7">افتح بانل اختيار المؤشرات حدد الأعمدة المطلوبة ثم اضغط تحديث</div></div></div>';
     wrap.innerHTML = tablesHtml;
+    const iaCharts = [];
+    if (hasBig && checkedBig.length && (iaType === 'all' || iaType === 'big')) {
+      iaCharts.push({ id: 'iaChartBig', p1: bigP1, p2: bigP2, cols: checkedBig, label: 'المؤشرات التجميعية', color1: '#5c6bc0', color2: '#ef5350' });
+    }
+    if (hasSmall && checkedSmall.length && (iaType === 'all' || iaType === 'small')) {
+      iaCharts.push({ id: 'iaChartSmall', p1: smallP1, p2: smallP2, cols: checkedSmall, label: 'المؤشرات التخزينية', color1: '#7e57c2', color2: '#ff7043' });
+    }
+    if (hasDisp && checkedDisp.length && (iaType === 'all' || iaType === 'big' || iaType === 'disp')) {
+      iaCharts.push({ id: 'iaChartDisp', p1: dispP1, p2: dispP2, cols: checkedDisp, label: 'منصرف الفصائل', color1: '#26a69a', color2: '#ec407a' });
+    }
+    for (const ch of iaCharts) {
+      _iaRenderSectionChart(ch.id, ch.p1, ch.p2, ch.cols, ch.color1, ch.color2);
+      _iaRenderSectionAnalysis(ch.id + 'Analysis', ch.p1, ch.p2, ch.cols, ch.label);
+    }
   } catch (err) { wrap.innerHTML = `<div style="color:red;padding:20px;text-align:center">خطأ: ${esc(err.message||'')}</div>`; }
 }
 
@@ -8502,4 +8519,111 @@ function exportIndicatorAnalysisExcel() {
       showToast('تم التصدير بنجاح', 'success');
     });
   } catch (e) { showToast('خطأ في التصدير: ' + e.message, 'error'); }
+}
+
+/* ─── Section Chart (Chart.js grouped bar) ─── */
+function _iaRenderSectionChart(canvasId, p1Data, p2Data, cols, c1, c2) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || typeof Chart === 'undefined') return;
+  const G = _iaBuildGovGroups(p1Data, p2Data, []);
+  const govLabels = G.govG.map(([gov]) => gov);
+  const govTotals1 = G.govG.map(([, hosps]) => {
+    let t = 0; for (const h of hosps) { const d = G.p1M.get(h.hid) || {}; for (const c of cols) t += (Number(d[c.key]) || 0); } return t;
+  });
+  const govTotals2 = G.govG.map(([, hosps]) => {
+    let t = 0; for (const h of hosps) { const d = G.p2M.get(h.hid) || {}; for (const c of cols) t += (Number(d[c.key]) || 0); } return t;
+  });
+  const grpLabels = [], grpP1 = [], grpP2 = [];
+  const grpSet = [...new Set(cols.map(c => c.g || 'أخرى'))];
+  for (const g of grpSet) {
+    const gCols = cols.filter(c => (c.g || 'أخرى') === g);
+    let s1 = 0, s2 = 0;
+    for (const h of p1Data) { for (const c of gCols) s1 += (Number(h.data?.[c.key]) || 0); }
+    for (const h of p2Data) { for (const c of gCols) s2 += (Number(h.data?.[c.key]) || 0); }
+    grpLabels.push(g); grpP1.push(s1); grpP2.push(s2);
+  }
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: govLabels.length <= 15 ? govLabels : grpLabels,
+      datasets: [
+        { label: 'الفترة الأولى', data: govLabels.length <= 15 ? govTotals1 : grpP1, backgroundColor: c1 + '99', borderColor: c1, borderWidth: 1, borderRadius: 4 },
+        { label: 'الفترة الثانية', data: govLabels.length <= 15 ? govTotals2 : grpP2, backgroundColor: c2 + '99', borderColor: c2, borderWidth: 1, borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, padding: 16 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } },
+        y: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 10 } }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+/* ─── Section Auto-Analysis ─── */
+function _iaRenderSectionAnalysis(divId, p1Data, p2Data, cols, label) {
+  const el = document.getElementById(divId);
+  if (!el) return;
+  const G = _iaBuildGovGroups(p1Data, p2Data, []);
+  const govs = [];
+  for (const [gov, hosps] of G.govG) {
+    let t1 = 0, t2 = 0;
+    for (const h of hosps) {
+      const d1 = G.p1M.get(h.hid) || {}, d2 = G.p2M.get(h.hid) || {};
+      for (const c of cols) { t1 += (Number(d1[c.key]) || 0); t2 += (Number(d2[c.key]) || 0); }
+    }
+    govs.push({ gov, t1, t2, diff: t2 - t1, pct: t1 ? ((t2 - t1) / t1 * 100) : null });
+  }
+  if (!govs.length) { el.innerHTML = ''; return; }
+  const byP1 = [...govs].sort((a,b) => b.t1 - a.t1);
+  const byP2 = [...govs].sort((a,b) => b.t2 - a.t2);
+  const byInc = [...govs].filter(g => g.pct !== null).sort((a,b) => b.pct - a.pct);
+  const byDec = [...govs].filter(g => g.pct !== null && g.pct < 0).sort((a,b) => a.pct - b.pct);
+  let html = `<div class="ia-analysis-title"><i class="fa-solid fa-chart-line"></i> تحليل ${esc(label)}</div>`;
+  if (byP1.length) {
+    html += `<div class="ia-analysis-row"><div class="ia-analysis-label">الترتيب حسب الفترة الأولى:</div>`;
+    html += `<span class="ia-analysis-card info">الأعلى: ${esc(byP1[0].gov)} (${_iaFmt(byP1[0].t1)})</span>`;
+    if (byP1.length > 1) html += `<span class="ia-analysis-card info">الأدنى: ${esc(byP1[byP1.length-1].gov)} (${_iaFmt(byP1[byP1.length-1].t1)})</span>`;
+    html += `</div>`;
+  }
+  if (byInc.length) {
+    html += `<div class="ia-analysis-row"><div class="ia-analysis-label">أكبر ارتفاع:</div>`;
+    html += `<span class="ia-analysis-card success">↑ ${esc(byInc[0].gov)} (+${byInc[0].pct.toFixed(1)}%)</span>`;
+    if (byInc.length > 1 && byInc[1].pct > 0) html += `<span class="ia-analysis-card success">↑ ${esc(byInc[1].gov)} (+${byInc[1].pct.toFixed(1)}%)</span>`;
+    html += `</div>`;
+  }
+  if (byDec.length) {
+    html += `<div class="ia-analysis-row"><div class="ia-analysis-label">أكبر انخفاض:</div>`;
+    html += `<span class="ia-analysis-card danger">↓ ${esc(byDec[0].gov)} (${byDec[0].pct.toFixed(1)}%)</span>`;
+    if (byDec.length > 1) html += `<span class="ia-analysis-card danger">↓ ${esc(byDec[1].gov)} (${byDec[1].pct.toFixed(1)}%)</span>`;
+    html += `</div>`;
+  }
+  const grpCols = [...new Set(cols.map(c => c.g || 'أخرى'))];
+  if (grpCols.length > 1) {
+    html += `<div class="ia-analysis-row"><div class="ia-analysis-label">المؤشرات التي زادت / نقصت:</div>`;
+    for (const g of grpCols) {
+      const gCols = cols.filter(c => (c.g || 'أخرى') === g);
+      let s1 = 0, s2 = 0;
+      for (const h of p1Data) { for (const c of gCols) s1 += (Number(h.data?.[c.key]) || 0); }
+      for (const h of p2Data) { for (const c of gCols) s2 += (Number(h.data?.[c.key]) || 0); }
+      if (s1 === 0 && s2 === 0) continue;
+      const pct = s1 ? ((s2 - s1) / s1 * 100) : null;
+      if (pct !== null) {
+        const cls = pct > 5 ? 'success' : pct < -5 ? 'danger' : 'warning';
+        const arrow = pct > 0 ? '↑' : pct < 0 ? '↓' : '→';
+        html += `<span class="ia-analysis-card ${cls}">${arrow} ${esc(g)}: ${_iaFmt(s1)} → ${_iaFmt(s2)} (${pct > 0 ? '+' : ''}${pct.toFixed(1)}%)</span>`;
+      }
+    }
+    html += `</div>`;
+  }
+  const total1 = govs.reduce((s,g) => s + g.t1, 0);
+  const total2 = govs.reduce((s,g) => s + g.t2, 0);
+  const totalPct = total1 ? ((total2 - total1) / total1 * 100) : null;
+  if (totalPct !== null) {
+    const cls = totalPct > 5 ? 'success' : totalPct < -5 ? 'danger' : 'info';
+    html += `<div class="ia-analysis-row"><div class="ia-analysis-label">الاجمالي العام:</div><span class="ia-analysis-card ${cls}">${totalPct > 0 ? '↑' : totalPct < 0 ? '↓' : '→'} ${_iaFmt(total1)} → ${_iaFmt(total2)} (${totalPct > 0 ? '+' : ''}${totalPct.toFixed(1)}%)</span></div>`;
+  }
+  el.innerHTML = html;
 }
