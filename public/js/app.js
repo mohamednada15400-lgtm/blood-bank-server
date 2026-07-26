@@ -8270,7 +8270,8 @@ async function renderIndicatorAnalysis() {
         <button data-click="loadIndicatorAnalysis" style="padding:6px 20px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px"><i class="fa-solid fa-rotate"></i> تحديث</button>
       </div>
     </div></div>
-    <div id="iaResults"></div>`;
+    <div id="iaResults"></div>
+    <div style="text-align:center;margin-top:20px;padding:12px;border-top:1px solid var(--border);font-size:10px;color:var(--text-muted)">إعداد و برمجة محمد ندا 01068880999</div>`;
   document.getElementById('iaPeriod1').addEventListener('change', function() { document.getElementById('iaMonth1').style.display = this.value === 'monthly' ? '' : 'none'; });
   document.getElementById('iaPeriod2').addEventListener('change', function() { document.getElementById('iaMonth2').style.display = this.value === 'monthly' ? '' : 'none'; });
   document.getElementById('iaGov').addEventListener('change', function() {
