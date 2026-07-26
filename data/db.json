@@ -74620,32 +74620,884 @@
     {
       "id": 1,
       "role": "admin",
-      "permissions": "{\"daily_stock\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"daily_total\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"daily_statement\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"daily_branch\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"monthly_indicators\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"monthly_consumption\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"monthly_big\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"monthly_small\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"employees\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"readiness\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"equipment\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"archive\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"strategic_stock\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"users\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"role_perms\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"hospitals\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"governorates\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"emp_accounts\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"time_config\":{\"v\":1,\"a\":1,\"e\":1,\"d\":1,\"x\":1},\"_label\":\"admin\"}"
+      "permissions": {
+        "daily_stock": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "daily_total": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "daily_statement": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "daily_branch": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "monthly_indicators": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "monthly_consumption": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "monthly_big": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "monthly_small": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "employees": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "readiness": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "equipment": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "archive": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "strategic_stock": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "users": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "role_perms": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "hospitals": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "governorates": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "emp_accounts": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "time_config": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        },
+        "_label": "admin",
+        "indicator_analysis": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        }
+      }
     },
     {
       "id": 2,
       "role": "org_supervisor",
-      "permissions": "{\"daily_stock\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_total\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_statement\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_branch\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_indicators\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_consumption\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_big\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_small\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"employees\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"readiness\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"equipment\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"archive\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"strategic_stock\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"users\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"role_perms\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"hospitals\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"governorates\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"emp_accounts\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"time_config\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"_label\":\"org_supervisor\"}"
+      "permissions": {
+        "daily_stock": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_total": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_statement": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_branch": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_indicators": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_consumption": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_big": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_small": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "employees": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "readiness": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "equipment": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "archive": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "strategic_stock": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "users": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "role_perms": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "hospitals": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "governorates": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "emp_accounts": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "time_config": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "_label": "org_supervisor",
+        "indicator_analysis": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 1
+        }
+      }
     },
     {
       "id": 3,
       "role": "branch_supervisor",
-      "permissions": "{\"daily_stock\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_total\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_statement\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_branch\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_indicators\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_consumption\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_big\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_small\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"employees\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"readiness\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"equipment\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"archive\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"strategic_stock\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"users\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"role_perms\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"hospitals\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"governorates\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"emp_accounts\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"time_config\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"_label\":\"branch_supervisor\"}"
+      "permissions": {
+        "daily_stock": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_total": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_statement": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_branch": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_indicators": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_consumption": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_big": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_small": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "employees": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "readiness": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "equipment": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "archive": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "strategic_stock": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "users": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "role_perms": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "hospitals": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 1
+        },
+        "governorates": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 1
+        },
+        "emp_accounts": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "time_config": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "_label": "branch_supervisor",
+        "indicator_analysis": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        }
+      }
     },
     {
       "id": 4,
       "role": "hospital",
-      "permissions": "{\"daily_stock\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_total\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_statement\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_branch\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_indicators\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_consumption\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_big\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_small\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"employees\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"readiness\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"equipment\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"archive\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"strategic_stock\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"users\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"role_perms\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"hospitals\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"governorates\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"emp_accounts\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"time_config\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"_label\":\"hospital\"}"
+      "permissions": {
+        "daily_stock": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_total": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_statement": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_branch": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_indicators": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_consumption": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_big": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_small": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "employees": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "readiness": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "equipment": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 0,
+          "x": 0
+        },
+        "archive": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "strategic_stock": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "users": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "role_perms": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "hospitals": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "governorates": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "emp_accounts": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "time_config": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "_label": "hospital",
+        "indicator_analysis": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        }
+      }
     },
     {
       "id": 5,
       "role": "hospital_manager",
-      "permissions": "{\"daily_stock\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_total\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_statement\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_branch\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_indicators\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_consumption\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_big\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_small\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"employees\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"readiness\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"equipment\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"archive\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"strategic_stock\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"users\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"role_perms\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"hospitals\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"governorates\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"emp_accounts\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"time_config\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"_label\":\"hospital_manager\"}"
+      "permissions": {
+        "daily_stock": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_total": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_statement": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_branch": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_indicators": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_consumption": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_big": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_small": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "employees": {
+          "v": 0,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 0
+        },
+        "readiness": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "equipment": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "archive": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "strategic_stock": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "users": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "role_perms": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "hospitals": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "governorates": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "emp_accounts": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "time_config": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "_label": "hospital_manager",
+        "indicator_analysis": {
+          "v": 1,
+          "a": 1,
+          "e": 1,
+          "d": 1,
+          "x": 1
+        }
+      }
     },
     {
       "id": 6,
       "role": "visitor",
-      "permissions": "{\"daily_stock\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_total\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_statement\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"daily_branch\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_indicators\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_consumption\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_big\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"monthly_small\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"employees\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"readiness\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"equipment\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"archive\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"strategic_stock\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"users\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"role_perms\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"hospitals\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"governorates\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"emp_accounts\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"time_config\":{\"v\":0,\"a\":0,\"e\":0,\"d\":0,\"x\":0},\"_label\":\"visitor\"}"
+      "permissions": {
+        "daily_stock": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_total": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_statement": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "daily_branch": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_indicators": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_consumption": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_big": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "monthly_small": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "employees": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "readiness": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "equipment": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "archive": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "strategic_stock": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "users": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "role_perms": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "hospitals": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "governorates": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "emp_accounts": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "time_config": {
+          "v": 0,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        },
+        "_label": "visitor",
+        "indicator_analysis": {
+          "v": 1,
+          "a": 0,
+          "e": 0,
+          "d": 0,
+          "x": 0
+        }
+      }
     }
   ],
   "strategic_settings": [
