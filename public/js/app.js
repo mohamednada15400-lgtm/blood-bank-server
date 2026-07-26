@@ -8523,8 +8523,8 @@ function exportIndicatorAnalysisExcel() {
 }
 
 /* ─── Toggle Group (chart + analysis accordion) ─── */
-function toggleIaGroup(el) {
-  const divId = el.getAttribute('data-args');
+function toggleIaGroup(arg) {
+  const divId = typeof arg === 'string' ? arg : (this.getAttribute('data-args') || '');
   if (!divId) return;
   const body = document.getElementById(divId);
   const chev = document.getElementById('chev_' + divId);
