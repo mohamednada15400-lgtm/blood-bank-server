@@ -2659,6 +2659,7 @@ app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysi
     const m2 = months2.split(',').map(Number);
     const y1 = parseInt(year1), y2 = parseInt(year2);
 
+    const FORMULA_KEYS = new Set(['total_blood','tested','ct','ratio_uncompleted','ratio_refused','ratio_c','ratio_b','ratio_i','ratio_dollar','virology_total','ratio_exp','ratio_returned','ratio_reaction','ratio_open','ratio_other','pct_exp','pct_returned','pct_reaction','pct_open','pct_other','child_ct','child_pct_exp','child_pct_returned','child_pct_reaction','child_pct_open','child_pct_other']);
     function aggregateByHospital(rows) {
       const map = {};
       for (const r of rows) {
@@ -2672,6 +2673,7 @@ app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysi
         for (const r of h.records) {
           const d = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
           for (const [k, v] of Object.entries(d)) {
+            if (FORMULA_KEYS.has(k)) continue;
             if (typeof v === 'number') agg[k] = (agg[k] || 0) + v;
             else if (!agg[k]) agg[k] = v;
           }

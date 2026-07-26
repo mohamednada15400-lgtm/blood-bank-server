@@ -4119,8 +4119,8 @@ function computeSmallFormulas(d) {
   const mainOut = d.out_blood || 0;
   const childOut = d.child_out_blood || 0;
   return {
-    ct: d.compatibility ? Math.round(((d.out_blood || 0) / d.compatibility) * 100) / 100 : 0,
-    child_ct: d.child_compatibility ? Math.round(((d.child_out_blood || 0) / d.child_compatibility) * 100) / 100 : 0,
+    ct: mainOut ? Math.round(((d.compatibility || 0) / mainOut) * 100) / 100 : 0,
+    child_ct: childOut ? Math.round(((d.child_compatibility || 0) / childOut) * 100) / 100 : 0,
     pct_exp: pct(d.disp_exp_blood||0, bloodIn),
     pct_returned: pct(d.disp_returned||0, mainOut),
     pct_reaction: pct(d.disp_reaction||0, mainOut),
@@ -4980,7 +4980,7 @@ function computeBigFormulas(d) {
     ratio_other: pct(dispOther, outBloodInt),
 
     // ===== أطفال =====
-    child_ct: (d.child_compatibility||0) ? Math.round(((d.child_out_blood||0) / (d.child_compatibility||0)) * 100) / 100 : 0,
+    child_ct: (d.child_out_blood||0) ? Math.round(((d.child_compatibility||0) / (d.child_out_blood||0)) * 100) / 100 : 0,
     child_pct_exp: pct(d.child_disp_exp, d.child_out_blood),
     child_pct_returned: pct(d.child_disp_returned, d.child_out_blood),
     child_pct_reaction: pct(d.child_disp_reaction, d.child_out_blood),
@@ -7897,6 +7897,19 @@ function _iaCalcSmall(d) {
 }
 function _iaPct(num, den) { return den ? ((num / den) * 100).toFixed(2) : '0.00'; }
 function _iaFmt(v) { if (v === 0 || v === null || v === undefined) return '0'; if (typeof v === 'number') return v % 1 !== 0 ? v.toFixed(2) : String(v); return String(v); }
+const _IA_FORMULA_KEYS = new Set(['total_blood','tested','ct','ratio_uncompleted','ratio_refused','ratio_c','ratio_b','ratio_i','ratio_dollar','virology_total','ratio_exp','ratio_returned','ratio_reaction','ratio_open','ratio_other','pct_exp','pct_returned','pct_reaction','pct_open','pct_other','child_ct','child_pct_exp','child_pct_returned','child_pct_reaction','child_pct_open','child_pct_other']);
+function _iaIsFormula(key) { return _IA_FORMULA_KEYS.has(key); }
+function _iaRecomputeFormulas(rawData, typeKey) {
+  if (!rawData) return {};
+  if (typeKey === 'big') return computeBigFormulas(rawData);
+  if (typeKey === 'small') return computeSmallFormulas(rawData);
+  return {};
+}
+function _iaMergeWithFormulas(rawData, typeKey) {
+  if (!rawData || typeKey === 'disp') return rawData || {};
+  const f = _iaRecomputeFormulas(rawData, typeKey);
+  return Object.assign({}, rawData, f);
+}
 
 const _iaBigFields = [
   // ===== التجميع =====
@@ -8099,7 +8112,7 @@ function _iaDeltaHtml(v1, v2) {
   const sign = d > 0 ? '+' : '';
   return `<td style="text-align:center;color:${color};font-weight:600;font-size:12px">${d !== null ? sign + d.toFixed(1) + '%' : '-'}</td>`;
 }
-function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
+function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) {
   const showGrandTotal = document.getElementById('iaShowGrand')?.checked;
   const showGovTotal = document.getElementById('iaShowGov')?.checked;
   const showHospDetail = document.getElementById('iaShowHosp')?.checked;
@@ -8162,20 +8175,39 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
   }
   let grand1 = {}, grand2 = {};
   for (const c of cols) { grand1[c.key] = 0; grand2[c.key] = 0; }
+  let grandRaw1 = {}, grandRaw2 = {};
+  for (const c of cols) { if (!_iaIsFormula(c.key)) { grandRaw1[c.key] = 0; grandRaw2[c.key] = 0; } }
   for (const [gov, hosps] of G.govG) {
     let gov1 = {}, gov2 = {};
     for (const c of cols) { gov1[c.key] = 0; gov2[c.key] = 0; }
     const hospRows = [];
     for (const h of hosps) {
-      const d1 = G.p1M.get(h.hid)||{}, d2 = G.p2M.get(h.hid)||{};
-      for (const c of cols) { gov1[c.key] += (Number(d1[c.key])||0); gov2[c.key] += (Number(d2[c.key])||0); }
+      const d1raw = G.p1M.get(h.hid)||{}, d2raw = G.p2M.get(h.hid)||{};
+      const d1 = _iaMergeWithFormulas(d1raw, typeKey);
+      const d2 = _iaMergeWithFormulas(d2raw, typeKey);
+      for (const c of cols) {
+        if (_iaIsFormula(c.key)) continue;
+        gov1[c.key] += (Number(d1[c.key])||0); gov2[c.key] += (Number(d2[c.key])||0);
+      }
       hospRows.push({ name: h.name, d1, d2 });
     }
-    for (const c of cols) { grand1[c.key] += gov1[c.key]; grand2[c.key] += gov2[c.key]; }
+    if (typeKey === 'big' || typeKey === 'small') {
+      const gf1 = _iaRecomputeFormulas(gov1, typeKey); Object.assign(gov1, gf1);
+      const gf2 = _iaRecomputeFormulas(gov2, typeKey); Object.assign(gov2, gf2);
+    }
+    for (const c of cols) {
+      if (_iaIsFormula(c.key)) continue;
+      grandRaw1[c.key] = (grandRaw1[c.key]||0) + gov1[c.key]; grandRaw2[c.key] = (grandRaw2[c.key]||0) + gov2[c.key];
+    }
     if (showGovTotal) addRow(gov, gov1, gov2, '', true, true);
     if (showHospDetail) {
       for (const hr of hospRows) addRow(hr.name, hr.d1, hr.d2, '', false, false);
     }
+  }
+  if (typeKey === 'big' || typeKey === 'small') {
+    Object.assign(grand1, grandRaw1); Object.assign(grand2, grandRaw2);
+    const ggf1 = _iaRecomputeFormulas(grand1, typeKey); Object.assign(grand1, ggf1);
+    const ggf2 = _iaRecomputeFormulas(grand2, typeKey); Object.assign(grand2, ggf2);
   }
   if (showGrandTotal) addRow('اجمالي الهيئة', grand1, grand2, '#f5f6fa', true, false);
   html += '</tbody></table></div>';
@@ -8319,7 +8351,7 @@ async function loadIndicatorAnalysis() {
       if (!checked.length) return;
       const groups = [...new Set(checked.map(c => c.g || 'أخرى'))];
       let h = `<div class="card" style="margin-bottom:16px" id="iaCard${secId}"><div class="card-header" style="background:linear-gradient(135deg,${grad});color:#fff;padding:10px 16px"><h3 style="margin:0;font-size:14px"><i class="fa-solid ${icon}" style="margin-left:8px"></i>${secLabel} <span style="font-size:11px;opacity:.7;font-weight:400">(${checked.length} حقل)</span></h3></div><div class="card-body" style="padding:0">`;
-      h += _iaBuildSummaryTable(p1, p2, pL1, pL2, allGovs, checked);
+      h += _iaBuildSummaryTable(p1, p2, pL1, pL2, allGovs, checked, typeKey);
       const grpBgMap = {'التجميع':'#e8eaf6,#c5cae9','إجمالي الوارد':'#e8f5e9,#c8e6c9','إجمالي المنصرف':'#f3e5f5,#e1bee7','الفصائل والتوافق':'#e3f2fd,#bbdefb','عينات غير مفحوصة':'#ffebee,#ffcdd2','الإعدامات':'#fff3e0,#ffe0b2','تحليل نسب المؤشرات':'#e0f2f1,#b2dfdb','مؤشرات وحدات دم الأطفال':'#fce4ec,#f8bbd0','النسب المئوية للاعدام - أطفال':'#fce4ec,#f8bbd0','السب المئوية للاعدام':'#fce4ec,#f8bbd0'};
       const grpTxtMap = {'التجميع':'#1a237e','إجمالي الوارد':'#1b5e20','إجمالي المنصرف':'#4a148c','الفصائل والتوافق':'#0d47a1','عينات غير مفحوصة':'#b71c1c','الإعدامات':'#e65100','تحليل نسب المؤشرات':'#004d40','مؤشرات وحدات دم الأطفال':'#880e4f','النسب المئوية للاعدام - أطفال':'#ad1457','السب المئوية للاعدام':'#ad1457'};
       for (const grp of groups) {
@@ -8469,7 +8501,7 @@ function exportIndicatorAnalysisExcel() {
           ws.getCell(r, cIdx).value = '';
         } else {
           let t1 = 0, t2 = 0;
-          for (const c of cols) { t1 += (Number(d1[c.key]) || 0); t2 += (Number(d2[c.key]) || 0); }
+          for (const c of cols) { if (_iaIsFormula(c.key)) continue; t1 += (Number(d1[c.key]) || 0); t2 += (Number(d2[c.key]) || 0); }
           const pct = t1 ? ((t2 - t1) / t1 * 100) : 0;
           ws.getCell(r, cIdx).value = t1 ? pct / 100 : '';
           ws.getCell(r, cIdx).numFmt = '0.00%';
@@ -8483,22 +8515,29 @@ function exportIndicatorAnalysisExcel() {
         r++;
       }
       let grand1 = {}, grand2 = {};
-      for (const c of cols) { grand1[c.key] = 0; grand2[c.key] = 0; }
+      let grandRaw1 = {}, grandRaw2 = {};
+      for (const c of cols) { grand1[c.key] = 0; grand2[c.key] = 0; if (!_iaIsFormula(c.key)) { grandRaw1[c.key] = 0; grandRaw2[c.key] = 0; } }
       for (const [gov, hosps] of G.govG) {
         let gov1 = {}, gov2 = {};
         for (const c of cols) { gov1[c.key] = 0; gov2[c.key] = 0; }
         for (const h of hosps) {
           const d1 = G.p1M.get(h.hid) || {}, d2 = G.p2M.get(h.hid) || {};
-          for (const c of cols) { gov1[c.key] += (Number(d1[c.key]) || 0); gov2[c.key] += (Number(d2[c.key]) || 0); }
+          for (const c of cols) { if (_iaIsFormula(c.key)) continue; gov1[c.key] += (Number(d1[c.key]) || 0); gov2[c.key] += (Number(d2[c.key]) || 0); }
         }
-        for (const c of cols) { grand1[c.key] += gov1[c.key]; grand2[c.key] += gov2[c.key]; }
+        if (cardType === 'big' || cardType === 'small') { Object.assign(gov1, _iaRecomputeFormulas(gov1, cardType)); Object.assign(gov2, _iaRecomputeFormulas(gov2, cardType)); }
+        for (const c of cols) { if (_iaIsFormula(c.key)) continue; grandRaw1[c.key] += gov1[c.key]; grandRaw2[c.key] += gov2[c.key]; }
         if (showGov) addRow(gov, gov1, gov2, 'gov');
         if (showHosp) {
           for (const h of hosps) {
-            const d1 = G.p1M.get(h.hid) || {}, d2 = G.p2M.get(h.hid) || {};
+            const d1raw = G.p1M.get(h.hid) || {}, d2raw = G.p2M.get(h.hid) || {};
+            const d1 = _iaMergeWithFormulas(d1raw, cardType), d2 = _iaMergeWithFormulas(d2raw, cardType);
             addRow(h.name, d1, d2, 'hosp');
           }
         }
+      }
+      if (cardType === 'big' || cardType === 'small') {
+        Object.assign(grand1, grandRaw1); Object.assign(grand2, grandRaw2);
+        Object.assign(grand1, _iaRecomputeFormulas(grand1, cardType)); Object.assign(grand2, _iaRecomputeFormulas(grand2, cardType));
       }
       if (showGrand) addRow('اجمالي الهيئة', grand1, grand2, 'grand');
     }
@@ -8595,6 +8634,7 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
 
   var total1 = 0, total2 = 0;
   for (var ci = 0; ci < cols.length; ci++) {
+    if (_iaIsFormula(cols[ci].key)) continue;
     for (var i = 0; i < p1Data.length; i++) total1 += (Number(p1Data[i].data?.[cols[ci].key]) || 0);
     for (var i = 0; i < p2Data.length; i++) total2 += (Number(p2Data[i].data?.[cols[ci].key]) || 0);
   }
