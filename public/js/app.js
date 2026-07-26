@@ -3388,12 +3388,18 @@ function exportArchiveIndicatorsExcel() {
   var wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
   var ws = wb.addWorksheet('أرشيف مؤشرات الأداء');
   var hBg = 'FF5A7A9A';
-  var mc = 0, r = 1;
-  tables.forEach(function(table, ti) {
+  var mc = 0;
+  tables.forEach(function(table) {
     var trs = Array.from(table.querySelectorAll('tr'));
     var tmc = 0;
     trs.forEach(function(tr){var n=tr.querySelectorAll('th,td').length;if(n>tmc)tmc=n;});
     if (tmc - 1 > mc) mc = tmc - 1;
+  });
+  if (!mc) mc = 5;
+  var sr = _xlsxTitleRow(ws, 1, 'أرشيف مؤشرات الأداء', '', mc);
+  var r = sr;
+  tables.forEach(function(table, ti) {
+    var trs = Array.from(table.querySelectorAll('tr'));
     if (ti > 0) r++;
     trs.forEach(function(tr) {
       var cells = Array.from(tr.querySelectorAll('th,td'));
@@ -3415,10 +3421,7 @@ function exportArchiveIndicatorsExcel() {
       r++;
     });
   });
-  if (!mc) mc = 5;
   for (var i = 1; i <= mc; i++) ws.getColumn(i).width = i === 1 ? 22 : 14;
-  var sr = _xlsxTitleRow(ws, 1, 'أرشيف مؤشرات الأداء', '', mc);
-  ws.spliceRows(1, sr - 1);
   _xlsxFooter(ws, r, mc);
   _xlsxDl(wb, 'archive_indicators_' + fmtCairoDate('date') + '.xlsx');
 }
