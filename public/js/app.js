@@ -8065,10 +8065,13 @@ function _iaGetAllCheckedCols() {
 }
 function iaPickerSelectAll() {
   document.querySelectorAll('.iaBigColChk,.iaSmallColChk,.iaDispColChk').forEach(c => c.checked = true);
+  loadIndicatorAnalysis();
 }
 function iaPickerClearAll() {
   document.querySelectorAll('.iaBigColChk,.iaSmallColChk,.iaDispColChk').forEach(c => c.checked = false);
+  loadIndicatorAnalysis();
 }
+function iaPickerChanged() { loadIndicatorAnalysis(); }
 function toggleIaPicker() {
   const body = document.getElementById('iaPickerBody');
   const chevron = document.getElementById('iaPickerChevron');
@@ -8099,7 +8102,6 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
   const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
   const grpColors = { 'التجميع':'#1565c0', 'إجمالي الوارد':'#2e7d32', 'إجمالي المنصرف':'#6a1b9a', 'الفصائل والتوافق':'#1565c0', 'عينات غير مفحوصة':'#c62828', 'الإعدامات':'#e65100', 'تحليل نسب المؤشرات':'#00695c', 'مؤشرات وحدات دم الأطفال':'#ad1457', 'النسب المئوية للاعدام - أطفال':'#c2185b', 'النسب المئوية للاعدام':'#c2185b' };
   let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
-  // Build groups from cols
   const groups = [];
   for (const c of cols) {
     const g = c.g || '';
@@ -8107,26 +8109,25 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
     if (!grp) { grp = { name: g, items: [] }; groups.push(grp); }
     grp.items.push(c);
   }
-  // Row 1: periods spanning all cols, Row 2: group headers, Row 3: column headers
+  const totalInterleaved = cols.length * 2;
   html += `<thead>
     <tr>
-      <th rowspan="3" style="background:#263238;color:#fff;padding:6px 8px;position:sticky;right:0;z-index:2;min-width:150px">البيان</th>
-      <th colspan="${cols.length}" style="background:#1a237e;color:#fff;text-align:center;padding:4px;font-size:13px">${esc(pL1)}</th>
-      <th colspan="${cols.length}" style="background:#b71c1c;color:#fff;text-align:center;padding:4px;font-size:13px">${esc(pL2)}</th>
-      <th rowspan="3" style="background:#333;color:#fff;padding:4px 8px;min-width:60px;text-align:center;font-size:11px">التغيير %</th>
-    </tr>
-    <tr>`;
+      <th rowspan="3" style="background:#263238;color:#fff;padding:6px 8px;position:sticky;right:0;z-index:2;min-width:150px">البيان</th>`;
   for (const grp of groups) {
     const bg = grpColors[grp.name] || '#455a64';
-    html += `<th colspan="${grp.items.length}" style="background:${bg};color:#fff;text-align:center;padding:3px 4px;font-size:11px;border:1px solid rgba(255,255,255,.2)">${esc(grp.name)}</th>`;
+    html += `<th colspan="${grp.items.length * 2}" style="background:${bg};color:#fff;text-align:center;padding:4px 6px;font-size:11px;border:1px solid rgba(255,255,255,.2)">${esc(grp.name)}</th>`;
   }
+  html += `<th rowspan="3" style="background:#333;color:#fff;padding:4px 8px;min-width:60px;text-align:center;font-size:11px">التغيير %</th></tr><tr>`;
   for (const grp of groups) {
-    const bg = grpColors[grp.name] || '#455a64';
-    html += `<th colspan="${grp.items.length}" style="background:${bg};color:#fff;text-align:center;padding:3px 4px;font-size:11px;border:1px solid rgba(255,255,255,.2)">${esc(grp.name)}</th>`;
+    for (const f of grp.items) {
+      html += `<th colspan="2" style="background:${grpColors[grp.name]||'#455a64'};color:#fff;text-align:center;padding:3px 4px;font-size:10px;border:1px solid rgba(255,255,255,.15)">${esc(f.label)}</th>`;
+    }
   }
   html += '</tr><tr>';
-  for (const c of cols) html += `<th style="background:#1a237e;color:#cfd8dc;padding:3px 6px;font-size:10px;min-width:55px">${esc(c.label)}</th>`;
-  for (const c of cols) html += `<th style="background:#b71c1c;color:#ffcdd2;padding:3px 6px;font-size:10px;min-width:55px">${esc(c.label)}</th>`;
+  for (const c of cols) {
+    html += `<th style="background:#1a237e;color:#cfd8dc;padding:2px 4px;font-size:9px;min-width:42px">${esc(pL1)}</th>`;
+    html += `<th style="background:#b71c1c;color:#ffcdd2;padding:2px 4px;font-size:9px;min-width:42px">${esc(pL2)}</th>`;
+  }
   html += '</tr></thead><tbody>';
   function addRow(label, d1, d2, bg, isBold) {
     const isDark = bg === '#263238';
@@ -8134,12 +8135,10 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols) {
     html += `<tr style="background:${bg};font-weight:${isBold?'700':'400'};border-bottom:2px solid ${isDark?'#555':'var(--border)'};${txtColor?'color:'+txtColor:''}">`;
     html += `<td style="padding:6px 8px;position:sticky;right:0;background:inherit;z-index:1;${isBold?'':'padding-right:28px;font-size:12px;color:var(--text-muted)'}">${esc(label)}</td>`;
     for (const c of cols) {
-      const v = d1[c.key] || 0;
-      html += `<td style="text-align:center;padding:3px 6px;font-size:${isBold?'12':'11'}px">${_iaFmt(v)}</td>`;
-    }
-    for (const c of cols) {
-      const v = d2[c.key] || 0;
-      html += `<td style="text-align:center;padding:3px 6px;font-size:${isBold?'12':'11'}px;${isBold?'font-weight:700':''}">${_iaFmt(v)}</td>`;
+      const v1 = d1[c.key] || 0;
+      const v2 = d2[c.key] || 0;
+      html += `<td style="text-align:center;padding:3px 4px;font-size:${isBold?'12':'11'}px;border-left:1px solid rgba(0,0,0,.06)">${_iaFmt(v1)}</td>`;
+      html += `<td style="text-align:center;padding:3px 4px;font-size:${isBold?'12':'11'}px;${isBold?'font-weight:700':''};border-right:1px solid rgba(0,0,0,.06)">${_iaFmt(v2)}</td>`;
     }
     if (isBold) {
       let tot1 = 0, tot2 = 0;
@@ -8248,14 +8247,14 @@ async function renderIndicatorAnalysis() {
       </div>
       <div style="margin-bottom:14px;padding-top:12px;border-top:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:#00695c;margin-bottom:8px"><i class="fa-solid fa-droplet" style="font-size:8px;margin-left:4px"></i>ارشيف الفصائل</div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaDispFields.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="iaDispColChk" value="${c.key}" checked style="accent-color:#00695c;width:13px;height:13px">${esc(c.label)}</label>`).join('')}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">${_iaDispFields.map(c => `<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="iaDispColChk" value="${c.key}" checked data-change="iaPickerChanged" style="accent-color:#00695c;width:13px;height:13px">${esc(c.label)}</label>`).join('')}</div>
       </div>
       <div style="padding-top:12px;border-top:1px solid var(--border);margin-bottom:14px">
         <div style="font-size:13px;font-weight:700;color:#ff6f00;margin-bottom:8px"><i class="fa-solid fa-layer-group" style="font-size:8px;margin-left:4px"></i>طريقة العرض</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px">
-          <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600"><input type="checkbox" id="iaShowGrand" checked style="accent-color:#ff6f00;width:14px;height:14px">اجمالي الهيئه</label>
-          <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600"><input type="checkbox" id="iaShowGov" checked style="accent-color:#ff6f00;width:14px;height:14px">اجمالي المحافظات</label>
-          <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600"><input type="checkbox" id="iaShowHosp" checked style="accent-color:#ff6f00;width:14px;height:14px">تفاصيل المستشفيات</label>
+          <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600"><input type="checkbox" id="iaShowGrand" checked data-change="iaPickerChanged" style="accent-color:#ff6f00;width:14px;height:14px">اجمالي الهيئه</label>
+          <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600"><input type="checkbox" id="iaShowGov" checked data-change="iaPickerChanged" style="accent-color:#ff6f00;width:14px;height:14px">اجمالي المحافظات</label>
+          <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600"><input type="checkbox" id="iaShowHosp" checked data-change="iaPickerChanged" style="accent-color:#ff6f00;width:14px;height:14px">تفاصيل المستشفيات</label>
         </div>
       </div>
       <div style="display:flex;gap:8px;justify-content:center">
