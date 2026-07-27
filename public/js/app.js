@@ -33,10 +33,11 @@ function _xlsxTbl(table,opts){
     const isH=cells.length>0&&cells[0].tagName==='TH';
     if(skipAct&&cells.length===mc+1)cells.pop();
     const rw=ws.getRow(r);rw.height=isH?24:18;
+    let ac=1;
     cells.forEach(function(td,ci){
       const v=td.textContent.trim();
       const cs=parseInt(td.getAttribute('colspan'))||1;
-      const c=ws.getCell(r,ci+1);
+      const c=ws.getCell(r,ac);
       const nm=parseFloat(v.replace(/[,]/g,''));
       if(!isNaN(nm)&&v.replace(/[,.\-\s]/g,'').length===0&&v.length>0){c.value=nm;c.numFmt='#,##0';}
       else{c.value=v;}
@@ -44,7 +45,8 @@ function _xlsxTbl(table,opts){
       c.border=_XBN;
       if(isH){c.font={bold:true,color:{argb:hFg},size:10};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:hBg}};}
       else{c.font={size:9};if(r%2===0)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF8F9FA'}};}
-      if(cs>1)ws.mergeCells(r,ci+1,r,ci+cs);
+      if(cs>1)ws.mergeCells(r,ac,r,ac+cs-1);
+      ac+=cs;
     });
     r++;
   });
@@ -3425,17 +3427,19 @@ function exportArchiveIndicatorsExcel() {
       const isH = cells.length > 0 && cells[0].tagName === 'TH';
       cells.pop();
       const rw = ws.getRow(r); rw.height = isH ? 24 : 18;
-      cells.forEach(function(td, ci) {
+      let ac = 1;
+      cells.forEach(function(td) {
         const v = td.textContent.trim();
         const cs = parseInt(td.getAttribute('colspan')) || 1;
-        const c = ws.getCell(r, ci + 1);
+        const c = ws.getCell(r, ac);
         const nm = parseFloat(v.replace(/[,]/g, ''));
         if (!isNaN(nm) && v.replace(/[,.\-\s]/g, '').length === 0 && v.length > 0) { c.value = nm; c.numFmt = '#,##0'; }
         else { c.value = v; }
         c.alignment = {horizontal:'center',vertical:'middle',wrapText:true}; c.border = _XBN;
         if (isH) { c.font = {bold:true,color:{argb:'FFFFFFFF'},size:10}; c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:hBg}}; }
         else { c.font = {size:9}; if (r%2===0) c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFF8F9FA'}}; }
-        if (cs > 1) ws.mergeCells(r, ci+1, r, ci+cs);
+        if (cs > 1) ws.mergeCells(r, ac, r, ac + cs - 1);
+        ac += cs;
       });
       r++;
     });
