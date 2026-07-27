@@ -8,8 +8,12 @@ function _xlsxDl(wb,fn){
   wb.xlsx.writeBuffer().then(function(b){
     const bl=new Blob([b],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const u=URL.createObjectURL(bl),a=document.createElement('a');
-    a.href=u;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);
+    a.href=u;a.download=fn;document.body.appendChild(a);a.click();
+    setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(u);},1000);
     showToast('✅ تم التصدير بنجاح');
+  }).catch(function(err){
+    console.error('[ExcelJS] writeBuffer error:',err);
+    showToast('❌ خطأ في إنشاء ملف Excel: '+err.message,'error');
   });
 }
 function _xlsxTbl(table,opts){
@@ -245,13 +249,18 @@ async function renderDailyStock() {
 }
 
 function exportStockExcel() {
-  const table = document.getElementById('dailyStockTable');
-  if (!table) return;
-  const res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:3 });
-  if (!res) return;
-  _xlsxTitleRow(res.ws, 1, 'المخزون اليومي لبنوك الدم', fmtCairoDate('full'), res.mc);
-  _xlsxFooter(res.ws, res.r, res.mc);
-  _xlsxDl(res.wb, 'stock-management-' + fmtCairoDate('date') + '.xlsx');
+  try {
+    const table = document.getElementById('dailyStockTable');
+    if (!table) { showToast('❌ لا يوجد جدول بيانات', 'error'); return; }
+    const res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:3 });
+    if (!res) return;
+    _xlsxTitleRow(res.ws, 1, 'المخزون اليومي لبنوك الدم', fmtCairoDate('full'), res.mc);
+    _xlsxFooter(res.ws, res.r, res.mc);
+    _xlsxDl(res.wb, 'stock-management-' + fmtCairoDate('date') + '.xlsx');
+  } catch(e) {
+    console.error('[exportStockExcel]', e);
+    showToast('❌ خطأ في التصدير: ' + e.message, 'error');
+  }
 }
 
 function setupInlineEdit() {
@@ -699,15 +708,17 @@ async function doStrategicCalc() {
 }
 
 function exportStrategicExcel() {
-  const wrap = document.getElementById('strategicTableWrap');
-  if (!wrap) return;
-  const tbl = wrap.querySelector('table');
-  if (!tbl) return;
-  const res = _xlsxTbl(tbl, { headerBg:'FF2E7D32', skipActions:true, startRow:3 });
-  if (!res) return;
-  _xlsxTitleRow(res.ws, 1, 'الرصيد الاستراتيجي', 'تاريخ التقرير: ' + new Date().toLocaleDateString('ar-EG'), res.mc);
-  _xlsxFooter(res.ws, res.r, res.mc);
-  _xlsxDl(res.wb, 'strategic-stock.xlsx');
+  try {
+    const wrap = document.getElementById('strategicTableWrap');
+    if (!wrap) { showToast('❌ لا يوجد جدول بيانات', 'error'); return; }
+    const tbl = wrap.querySelector('table');
+    if (!tbl) { showToast('❌ لا يوجد جدول بيانات', 'error'); return; }
+    const res = _xlsxTbl(tbl, { headerBg:'FF2E7D32', skipActions:true, startRow:3 });
+    if (!res) return;
+    _xlsxTitleRow(res.ws, 1, 'الرصيد الاستراتيجي', 'تاريخ التقرير: ' + new Date().toLocaleDateString('ar-EG'), res.mc);
+    _xlsxFooter(res.ws, res.r, res.mc);
+    _xlsxDl(res.wb, 'strategic-stock.xlsx');
+  } catch(e) { console.error('[exportStrategicExcel]', e); showToast('❌ خطأ في التصدير: ' + e.message, 'error'); }
 }
 
 function downloadPdf(bodyHtml, filename) {
@@ -800,13 +811,15 @@ function renderTotalTable(data) {
 }
 
 function exportTotalExcel() {
-  const table = document.getElementById('totalTable');
-  if (!table) return;
-  const res = _xlsxTbl(table, { headerBg:'FF2E7D32', skipActions:true, startRow:3 });
-  if (!res) return;
-  _xlsxTitleRow(res.ws, 1, 'إجمالي الرصيد ببنوك الدم', 'تاريخ التقرير: ' + new Date().toLocaleDateString('ar-EG'), res.mc);
-  _xlsxFooter(res.ws, res.r, res.mc);
-  _xlsxDl(res.wb, 'total-stock.xlsx');
+  try {
+    const table = document.getElementById('totalTable');
+    if (!table) { showToast('❌ لا يوجد جدول بيانات', 'error'); return; }
+    const res = _xlsxTbl(table, { headerBg:'FF2E7D32', skipActions:true, startRow:3 });
+    if (!res) return;
+    _xlsxTitleRow(res.ws, 1, 'إجمالي الرصيد ببنوك الدم', 'تاريخ التقرير: ' + new Date().toLocaleDateString('ar-EG'), res.mc);
+    _xlsxFooter(res.ws, res.r, res.mc);
+    _xlsxDl(res.wb, 'total-stock.xlsx');
+  } catch(e) { console.error('[exportTotalExcel]', e); showToast('❌ خطأ في التصدير: ' + e.message, 'error'); }
 }
 
 function exportTotalPDF() {
@@ -1129,14 +1142,16 @@ async function renderBranchStatement() {
 }
 
 function branchExportExcel() {
-  const table = document.querySelector('#branchStmtReport table');
-  if (!table) return;
-  const title = (document.querySelector('.stmt-title') || {}).textContent || 'بيان الفرع';
-  const res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:2 });
-  if (!res) return;
-  _xlsxTitleRow(res.ws, 1, title, '', res.mc);
-  _xlsxFooter(res.ws, res.r, res.mc);
-  _xlsxDl(res.wb, 'branch-statement-' + fmtCairoDate('date') + '.xlsx');
+  try {
+    const table = document.querySelector('#branchStmtReport table');
+    if (!table) { showToast('❌ لا يوجد جدول بيانات', 'error'); return; }
+    const title = (document.querySelector('.stmt-title') || {}).textContent || 'بيان الفرع';
+    const res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:2 });
+    if (!res) return;
+    _xlsxTitleRow(res.ws, 1, title, '', res.mc);
+    _xlsxFooter(res.ws, res.r, res.mc);
+    _xlsxDl(res.wb, 'branch-statement-' + fmtCairoDate('date') + '.xlsx');
+  } catch(e) { console.error('[branchExportExcel]', e); showToast('❌ خطأ في التصدير: ' + e.message, 'error'); }
 }
 
 function branchExportPdf() {
@@ -2021,6 +2036,7 @@ async function printEmployeeTable() {
 }
 
 function exportEmployeeExcel() {
+  try {
   const data = window._empData || [];
   if (!data.length) return showToast('لا توجد بيانات');
   const gov = document.getElementById('empFilterGov')?.value || '';
@@ -2096,7 +2112,7 @@ function exportEmployeeExcel() {
   for (let i = 1; i <= mc; i++) ws.getColumn(i).width = [6,22,18,16,18,16,20][i-1] || 14;
   _xlsxFooter(ws, r, mc);
   _xlsxDl(wb, 'بيان_العاملين.xlsx');
-  showToast('✅ تم التصدير بنجاح');
+  } catch(e) { console.error('[exportEmployeeExcel]', e); showToast('❌ خطأ في التصدير: ' + e.message, 'error'); }
 }
 
 function exportEmployeePDF() {
@@ -3384,9 +3400,10 @@ async function saveArchiveCell(el) {
 }
 
 function exportArchiveIndicatorsExcel() {
+  try {
   const tables = document.querySelectorAll('#archIndTable table.ind-table');
   if (!tables.length) return;
-  if (typeof ExcelJS === 'undefined') { showToast('مكتبة ExcelJS غير محملة', 'error'); return; }
+  if (typeof ExcelJS === 'undefined') { showToast('❌ مكتبة ExcelJS غير محمّلة — تأكد من اتصال الإنترنت ثم أعد تحميل الصفحة','error'); return; }
   const wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
   const ws = wb.addWorksheet('أرشيف مؤشرات الأداء');
   const hBg = 'FF5A7A9A';
@@ -3426,6 +3443,7 @@ function exportArchiveIndicatorsExcel() {
   for (let i = 1; i <= mc; i++) ws.getColumn(i).width = i === 1 ? 22 : 14;
   _xlsxFooter(ws, r, mc);
   _xlsxDl(wb, 'archive_indicators_' + fmtCairoDate('date') + '.xlsx');
+  } catch(e) { console.error('[exportArchiveIndicatorsExcel]', e); showToast('❌ خطأ في التصدير: ' + e.message, 'error'); }
 }
 
 function exportArchiveIndicatorsPdf() {
@@ -3447,8 +3465,9 @@ function exportArchiveIndicatorsPdf() {
   downloadPdf(bodyHtml, 'indicators-archive.pdf');
 }
 function exportExcel() {
+  try {
   const table = document.querySelector('#exportTable table');
-  if (!table) return;
+  if (!table) { showToast('❌ لا يوجد جدول بيانات', 'error'); return; }
   const fGov = document.getElementById('filterGov')?.value || '';
   const fYear = document.getElementById('filterYear')?.value || '';
   const fPeriod = document.getElementById('filterPeriod')?.value || '';
@@ -3467,6 +3486,7 @@ function exportExcel() {
   _xlsxTitleRow(res.ws, 1, title, '', res.mc);
   _xlsxFooter(res.ws, res.r, res.mc);
   _xlsxDl(res.wb, 'consumption_archive_' + fmtCairoDate('date') + '.xlsx');
+  } catch(e) { console.error('[exportExcel]', e); showToast('❌ خطأ في التصدير: ' + e.message, 'error'); }
 }
 
 function exportPDF() {
@@ -3605,8 +3625,9 @@ function copyUsersTable() {
   navigator.clipboard.writeText(rows.join('\n')).then(() => showToast('✅ تم نسخ الجدول'));
 }
 function exportUsersExcel() {
+  try {
   const table = document.getElementById('userTable');
-  if (!table) return;
+  if (!table) { showToast('❌ لا يوجد جدول بيانات', 'error'); return; }
   const clone = table.cloneNode(true);
   clone.querySelectorAll('tr').forEach(function(tr) {
     const last = tr.querySelector('td:last-child, th:last-child');
@@ -3617,6 +3638,7 @@ function exportUsersExcel() {
   _xlsxTitleRow(res.ws, 1, 'قائمة المستخدمين', '', res.mc);
   _xlsxFooter(res.ws, res.r, res.mc);
   _xlsxDl(res.wb, 'users_' + fmtCairoDate('date') + '.xlsx');
+  } catch(e) { console.error('[exportUsersExcel]', e); showToast('❌ خطأ في التصدير: ' + e.message, 'error'); }
 }
 function exportUsersPdf() {
   const table = document.getElementById('userTable');
@@ -6299,9 +6321,10 @@ async function eqImport() {
 }
 
 function eqExportXlsx() {
+  try {
   showToast('جاري التجهيز...');
   api('GET', '/equipment').then(function(eq) {
-    if (typeof ExcelJS === 'undefined') { showToast('مكتبة ExcelJS غير محملة', 'error'); return; }
+    if (typeof ExcelJS === 'undefined') { showToast('❌ مكتبة ExcelJS غير محمّلة — تأكد من اتصال الإنترنت ثم أعد تحميل الصفحة','error'); return; }
     const types = eq.types || [], hospitals = eq.hospitals || [];
     const wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
     const ws = wb.addWorksheet('الأجهزة', { views:[{state:'frozen',ySplit:2,xSplit:1}] });
@@ -6367,7 +6390,8 @@ function eqExportXlsx() {
     for (let i = 3; i <= mc; i++) ws.getColumn(i).width = 12;
     _xlsxFooter(ws, dr, mc);
     _xlsxDl(wb, 'اجهزة_بنوك_الدم.xlsx');
-  }).catch(function(e) { showToast('❌ ' + e.message); });
+  }).catch(function(e) { console.error('[eqExportXlsx]', e); showToast('❌ خطأ في التصدير: ' + e.message, 'error'); });
+  } catch(e) { console.error('[eqExportXlsx]', e); showToast('❌ خطأ في التصدير: ' + e.message, 'error'); }
 }
 
 function eqExportPdf() {
@@ -7374,6 +7398,7 @@ function rdnPrint() {
 }
 
 function rdnExportXlsx() {
+  try {
   const table = document.querySelector('#rdnSummaryTable .data-table');
   if (!table) { showToast('⚠ لا توجد بيانات للتصدير'); return; }
   const sel = document.getElementById('rdnOccasionSelect');
@@ -7383,6 +7408,7 @@ function rdnExportXlsx() {
   _xlsxTitleRow(res.ws, 1, 'بيان بجاهزية بنوك الدم', title, res.mc);
   _xlsxFooter(res.ws, res.r, res.mc);
   _xlsxDl(res.wb, 'جاهزية_بنوك_الدم.xlsx');
+  } catch(e) { console.error('[rdnExportXlsx]', e); showToast('❌ خطأ في التصدير: ' + e.message, 'error'); }
 }
 
 function rdnExportPdf() {
