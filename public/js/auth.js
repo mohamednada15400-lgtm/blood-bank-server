@@ -134,7 +134,7 @@ async function saveMyProfile() {
     if (u.role === 'hospital') {
       document.getElementById('userBadge').textContent = 'مستخدم: ' + name;
     } else {
-      document.getElementById('userBadge').textContent = name + ' (' + ({ admin:'مدير', hospital:'مستشفى', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' }[u.role] || u.role) + ')';
+      document.getElementById('userBadge').textContent = name + ' (' + ({ admin:'مدير عام', hospital:'مستشفى', hospital_manager:'مدير بنك دم', branch_supervisor:'مشرف فرع', org_supervisor:'مشرف هيئة', visitor:'زائر' }[u.role] || u.role) + ')';
     }
     closeModal();
     showToast('تم حفظ الملف الشخصي');

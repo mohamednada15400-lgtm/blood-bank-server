@@ -32,7 +32,7 @@ function getWritableDir() {
 const DATA_DIR = getWritableDir();
 // Consistent error sanitization: secure by default — hide details unless SHOW_ERROR_DETAILS=true
 const showError = process.env.SHOW_ERROR_DETAILS === 'true';
-function errMsg(e) { return e.message; }
+function errMsg(e) { return showError ? e.message : 'خطأ في الخادم'; }
 function getLocalIP() { const ifs = os.networkInterfaces(); for (const k in ifs) { for (const i of ifs[k]) { if (i.family === 'IPv4' && !i.internal) return i.address; } } return '127.0.0.1'; }
 
 // Copy initial db.json from seed to writable directory if needed
@@ -59,7 +59,6 @@ async function startServer() {
   const isPG = db.mode === 'pg';
 
   // Session store: Redis → PostgreSQL → memorystore (priority order)
-  let pool;
   const SESSION_CONFIG = {
     secret: SESSION_SECRET,
     resave: false,
@@ -84,7 +83,7 @@ async function startServer() {
     const MemoryStore = require('memorystore')(session);
     SESSION_CONFIG.store = new MemoryStore({ checkPeriod: 86400000 });
   }
-  query = async (text, params) => { return isPG && pool ? (await pool.query(text, params)) : db.query(text, params); };
+  query = async (text, params) => { return db.query(text, params); };
   
   // Warm-up query: establish first connection before handling requests
   if (isPG) {
@@ -399,10 +398,11 @@ app.post('/api/users', requireAuth(), requireMaster(), async (req, res) => {
   }
   const exist = await query('SELECT id FROM users WHERE username = $1', [username]);
   if (exist.rows.length > 0) return res.status(400).json({ error: 'اسم المستخدم موجود' });
+  const hashPw = bcrypt.hashSync(password || '123456', 10);
   const vhIds = viewHospitalIds && Array.isArray(viewHospitalIds) ? JSON.stringify(viewHospitalIds) : '[]';
   const result = await query(
     "INSERT INTO users (username, password, name, role, hospital_id, governorate, view_permission, phone, email, view_hospital_ids) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id, username, name, role, hospital_id, governorate, view_permission, phone, email, view_hospital_ids",
-    [username, password || '123456', name, role, hospitalId || null, governorate || null, viewPermission || 'own', phone || '', email || '', vhIds]
+    [username, hashPw, name, role, hospitalId || null, governorate || null, viewPermission || 'own', phone || '', email || '', vhIds]
   );
   res.json(result.rows[0]);
 });
@@ -461,7 +461,7 @@ app.post('/api/users/batch-create-employees', requireAuth(), requireMaster(), as
 
         const seq = nextSeq[hid]++;
         const username = 'h' + hid + '_' + seq;
-        const genPassword = '123';
+        const genPassword = bcrypt.hashSync('123', 10);
 
         await query(
           "INSERT INTO users (username, password, name, role, hospital_id, governorate, view_permission, phone, email) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
@@ -487,7 +487,7 @@ app.put('/api/users/:id', requireAuth(), async (req, res) => {
     if (email !== undefined) { sets.push(`email = $${idx++}`); vals.push(email); }
     if (name) { sets.push(`name = $${idx++}`); vals.push(name); }
     if (role) { sets.push(`role = $${idx++}`); vals.push(role); }
-    if (password) { sets.push(`password = $${idx++}`); vals.push(password); }
+    if (password) { sets.push(`password = $${idx++}`); vals.push(bcrypt.hashSync(password, 10)); }
     if (hospitalId !== undefined) { sets.push(`hospital_id = $${idx++}`); vals.push(hospitalId); }
     if (governorate !== undefined) { sets.push(`governorate = $${idx++}`); vals.push(governorate); }
     if (viewPermission) { sets.push(`view_permission = $${idx++}`); vals.push(viewPermission); }
@@ -508,7 +508,7 @@ app.put('/api/users/:id', requireAuth(), async (req, res) => {
 
     const sets = []; const vals = []; let idx = 1;
     if (name) { sets.push(`name = $${idx++}`); vals.push(name); }
-    if (password) { sets.push(`password = $${idx++}`); vals.push(password); }
+    if (password) { sets.push(`password = $${idx++}`); vals.push(bcrypt.hashSync(password, 10)); }
     if (sets.length === 0) return res.status(400).json({ error: 'لا يوجد بيانات للتحديث' });
     vals.push(targetId);
     const result = await query(`UPDATE users SET ${sets.join(', ')} WHERE id = $${idx} RETURNING id, username, name, role, hospital_id, governorate, view_permission`, vals);
@@ -618,7 +618,7 @@ app.post('/api/hospitals', requireAuth(), requireMaster(), async (req, res) => {
   if (existHospUser.rows.length === 0) {
     await query(
       "INSERT INTO users (username, password, name, role, hospital_id, governorate, view_permission) VALUES ($1,$2,$3,'hospital',$4,$5,'own') RETURNING id",
-      [hospUname, '123456', newHosp.name, newHosp.id, newHosp.governorate]
+      [hospUname, bcrypt.hashSync('123456', 10), newHosp.name, newHosp.id, newHosp.governorate]
     );
   }
   
@@ -628,7 +628,7 @@ app.post('/api/hospitals', requireAuth(), requireMaster(), async (req, res) => {
     const uname = 'sup_' + newHosp.governorate.replace(/[^a-zA-Z\u0621-\u064A0-9]/g, '_').toLowerCase().replace(/_+/g, '_').replace(/^_|_$/g, '');
     await query(
       "INSERT INTO users (username, password, name, role, governorate, view_permission) VALUES ($1,$2,$3,'branch_supervisor',$4,'governorate')",
-      [uname, '123456', 'مشرف ' + newHosp.governorate, newHosp.governorate]
+      [uname, bcrypt.hashSync('123456', 10), 'مشرف ' + newHosp.governorate, newHosp.governorate]
     );
   }
   
@@ -677,7 +677,7 @@ app.post('/api/governorates', requireAuth(), requireMaster(), async (req, res) =
     const uname = 'sup_' + name.replace(/[^a-zA-Z\u0621-\u064A0-9]/g, '_').toLowerCase().replace(/_+/g, '_').replace(/^_|_$/g, '');
     await query(
       "INSERT INTO users (username, password, name, role, governorate, view_permission) VALUES ($1,$2,$3,'branch_supervisor',$4,'governorate')",
-      [uname, '123456', 'مشرف ' + name, name]
+      [uname, bcrypt.hashSync('123456', 10), 'مشرف ' + name, name]
     );
   }
   
@@ -747,8 +747,6 @@ app.post('/api/daily-stock', requireAuth(), requirePerm('daily_total', 'edit'), 
   const user = req.session.user;
   if ((user.role === 'hospital' || user.role === 'hospital_manager') && user.hospitalId !== hospitalId) return res.status(403).json({ error: 'غير مصرح' });
   const result = await query('INSERT INTO daily_stock (hospital_id, blood_type, quantity, type, user_id, user_name) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *', [hospitalId, bloodType, quantity, type || 'داخل', user.id, user.name]);
-  if (type === 'داخل') await query('UPDATE inventory SET storage = storage + $1, total_received = total_received + $1 WHERE blood_type = $2', [quantity, bloodType]);
-  else await query('UPDATE inventory SET storage = GREATEST(0, storage - $1) WHERE blood_type = $2', [quantity, bloodType]);
   res.json(result.rows[0]);
 });
 
@@ -769,9 +767,6 @@ app.get('/api/daily-stock', requireAuth(), requirePerm('daily_total', 'view'), a
 app.delete('/api/daily-stock/:id', requireAuth(), requirePerm('daily_total', 'edit'), async (req, res) => {
   const row = await query('SELECT * FROM daily_stock WHERE id = $1', [parseInt(req.params.id)]);
   if (row.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
-  const r = row.rows[0];
-  if (r.type === 'داخل') await query('UPDATE inventory SET storage = GREATEST(0, storage - $1) WHERE blood_type = $2', [r.quantity, r.blood_type]);
-  else await query('UPDATE inventory SET storage = storage + $1 WHERE blood_type = $2', [r.quantity, r.blood_type]);
   await query('DELETE FROM daily_stock WHERE id = $1', [parseInt(req.params.id)]);
   res.json({ ok: true });
 });
@@ -853,8 +848,9 @@ app.post('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'edit')
   const prevRes = await query('SELECT blood_data, plasma_data FROM daily_reports WHERE hospital_id = $1 ORDER BY id DESC LIMIT 1', [hospitalId]);
   if (prevRes.rows.length) {
     const prev = prevRes.rows[0];
-    const prevBlood = typeof prev.blood_data === 'string' ? JSON.parse(prev.blood_data) : (prev.blood_data || {});
-    const prevPlasma = typeof prev.plasma_data === 'string' ? JSON.parse(prev.plasma_data) : (prev.plasma_data || {});
+    let prevBlood = {}, prevPlasma = {};
+    try { prevBlood = typeof prev.blood_data === 'string' ? JSON.parse(prev.blood_data) : (prev.blood_data || {}); } catch { prevBlood = {}; }
+    try { prevPlasma = typeof prev.plasma_data === 'string' ? JSON.parse(prev.plasma_data) : (prev.plasma_data || {}); } catch { prevPlasma = {}; }
     ['A+','A-','B+','B-','AB+','AB-','O+','O-'].forEach(t => {
       if (prevBlood[t] && prevBlood[t].available !== undefined) def.blood[t].previous = prevBlood[t].available;
     });
@@ -899,6 +895,8 @@ app.patch('/api/daily-reports/:id/cell', requireAuth(), requirePerm('daily_stock
     const f = sub === 'type' ? 'license_type' : 'license_status';
     await query(`UPDATE daily_reports SET ${f} = $1 WHERE id = $2`, [value, parseInt(req.params.id)]);
   } else if (group === 'plat_cryo') {
+    const ALLOWED_PC = ['platelets', 'cryo'];
+    if (!ALLOWED_PC.includes(sub)) return res.status(400).json({ error: 'حقل غير صالح' });
     await query(`UPDATE daily_reports SET ${sub} = $1 WHERE id = $2`, [parseInt(value) || 0, parseInt(req.params.id)]);
   } else {
     const field = group === 'plasma' ? 'plasma_data' : 'blood_data';
@@ -911,7 +909,7 @@ app.patch('/api/daily-reports/:id/cell', requireAuth(), requirePerm('daily_stock
 });
 
 // Allow anyone to edit platelets & cryo
-app.patch('/api/daily-reports/:id/pc', requireAuth(), async (req, res) => {
+app.patch('/api/daily-reports/:id/pc', requireAuth(), requirePerm('daily_stock', 'edit'), async (req, res) => {
   const { platelets, cryo } = req.body;
   const sets = []; const vals = []; let idx = 1;
   if (platelets !== undefined) { sets.push(`platelets = $${idx++}`); vals.push(platelets); }
@@ -980,32 +978,33 @@ app.post('/api/monthly-indicators', requireAuth(), requirePerm('monthly_indicato
 
 app.get('/api/monthly-indicators', requireAuth(), requirePerm('monthly_indicators', 'view'), async (req, res) => {
   const user = req.session.user;
-  // Auto-archive on 25th of each month only
-  const now = new Date();
-  if (now.getDate() >= 25) {
-    const curYear = now.getFullYear();
-    const curMonth = now.getMonth() + 1;
-    let cutoffMonth = curMonth - 1;
-    let cutoffYear = curYear;
-    if (cutoffMonth === 0) { cutoffMonth = 12; cutoffYear--; }
-    const all = await query('SELECT mi.*, h.name as hospital_name, h.governorate FROM monthly_indicators mi JOIN hospitals h ON h.id = mi.hospital_id');
-    const toArchive = all.rows.filter(r => r.year < cutoffYear || (r.year === cutoffYear && r.month < cutoffMonth));
-    if (toArchive.length > 0) {
-      const todayStr = new Date().toISOString().slice(0,10);
-      const title = 'مؤشرات الأداء - أرشيف تلقائي ' + todayStr;
-      const existingArch = await query('SELECT id, data FROM archives WHERE type = $1 AND title = $2', ['مؤشرات الأداء', title]);
-      if (existingArch.rows.length > 0) {
-        const oldData = JSON.parse(existingArch.rows[0].data) || [];
-        await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify([...oldData, ...toArchive]), existingArch.rows[0].id]);
-      } else {
-        await query('INSERT INTO archives (type, title, data, user_id, user_name) VALUES ($1,$2,$3,$4,$5)',
-          ['مؤشرات الأداء', title, JSON.stringify(toArchive), user.id, user.name]);
-      }
-      for (const r of toArchive) {
-        await query('DELETE FROM monthly_indicators WHERE id = $1', [r.id]);
+  try {
+    const now = new Date();
+    if (now.getDate() >= 25) {
+      const curYear = now.getFullYear();
+      const curMonth = now.getMonth() + 1;
+      let cutoffMonth = curMonth - 1;
+      let cutoffYear = curYear;
+      if (cutoffMonth === 0) { cutoffMonth = 12; cutoffYear--; }
+      const all = await query('SELECT mi.*, h.name as hospital_name, h.governorate FROM monthly_indicators mi JOIN hospitals h ON h.id = mi.hospital_id');
+      const toArchive = all.rows.filter(r => r.year < cutoffYear || (r.year === cutoffYear && r.month < cutoffMonth));
+      if (toArchive.length > 0) {
+        const todayStr = new Date().toISOString().slice(0,10);
+        const title = 'مؤشرات الأداء - أرشيف تلقائي ' + todayStr;
+        const existingArch = await query('SELECT id, data FROM archives WHERE type = $1 AND title = $2', ['مؤشرات الأداء', title]);
+        if (existingArch.rows.length > 0) {
+          const oldData = JSON.parse(existingArch.rows[0].data) || [];
+          await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify([...oldData, ...toArchive]), existingArch.rows[0].id]);
+        } else {
+          await query('INSERT INTO archives (type, title, data, user_id, user_name) VALUES ($1,$2,$3,$4,$5)',
+            ['مؤشرات الأداء', title, JSON.stringify(toArchive), user.id, user.name]);
+        }
+        for (const r of toArchive) {
+          await query('DELETE FROM monthly_indicators WHERE id = $1', [r.id]);
+        }
       }
     }
-  }
+  } catch (archiveErr) { console.error('Auto-archive indicators skipped:', archiveErr.message); }
   // Query from all three indicator tables (historical data may be in big/small tables)
   let sql1 = 'SELECT mi.*, h.name as hospital_name, h.governorate, u.name as entered_by FROM monthly_indicators mi JOIN hospitals h ON h.id = mi.hospital_id LEFT JOIN users u ON u.id = mi.user_id WHERE 1=1';
   let sql2 = "SELECT mbi.*, h.name as hospital_name, h.governorate, '' as day, '' as time, NULL as entered_by FROM monthly_big_indicators mbi JOIN hospitals h ON h.id = mbi.hospital_id WHERE 1=1";
@@ -1148,33 +1147,33 @@ app.post('/api/monthly-consumption', requireAuth(), requirePerm('monthly_consump
 
 app.get('/api/monthly-consumption', requireAuth(), requirePerm('monthly_consumption', 'view'), async (req, res) => {
   const user = req.session.user;
-  const now = new Date();
-  // Auto-archive on 25th of each month only
-  if (now.getDate() >= 25) {
-    const curYear = now.getFullYear();
-    const curMonth = now.getMonth() + 1;
-    let cutoffMonth = curMonth - 1;
-    let cutoffYear = curYear;
-    if (cutoffMonth === 0) { cutoffMonth = 12; cutoffYear--; }
-    const all = await query('SELECT mc.*, h.name as hospital_name, h.governorate, u.name as entered_by FROM monthly_consumption mc JOIN hospitals h ON h.id = mc.hospital_id LEFT JOIN users u ON u.id = mc.user_id');
-    const toArchive = all.rows.filter(r => r.year < cutoffYear || (r.year === cutoffYear && r.month < cutoffMonth));
-    if (toArchive.length > 0) {
-    const todayStr = new Date().toISOString().slice(0,10);
-    const title = 'منصرف فصائل الدم - أرشيف تلقائي ' + todayStr;
-    // Merge with existing archive entry for today if any
-    const existingArch = await query('SELECT id, data FROM archives WHERE type = $1 AND title = $2', ['منصرف فصائل الدم', title]);
-    if (existingArch.rows.length > 0) {
-      const oldData = JSON.parse(existingArch.rows[0].data) || [];
-      await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify([...oldData, ...toArchive]), existingArch.rows[0].id]);
-    } else {
-      await query('INSERT INTO archives (type, title, data, user_id, user_name) VALUES ($1,$2,$3,$4,$5)',
-        ['منصرف فصائل الدم', title, JSON.stringify(toArchive), user.id, user.name]);
+  try {
+    const now = new Date();
+    if (now.getDate() >= 25) {
+      const curYear = now.getFullYear();
+      const curMonth = now.getMonth() + 1;
+      let cutoffMonth = curMonth - 1;
+      let cutoffYear = curYear;
+      if (cutoffMonth === 0) { cutoffMonth = 12; cutoffYear--; }
+      const all = await query('SELECT mc.*, h.name as hospital_name, h.governorate, u.name as entered_by FROM monthly_consumption mc JOIN hospitals h ON h.id = mc.hospital_id LEFT JOIN users u ON u.id = mc.user_id');
+      const toArchive = all.rows.filter(r => r.year < cutoffYear || (r.year === cutoffYear && r.month < cutoffMonth));
+      if (toArchive.length > 0) {
+        const todayStr = new Date().toISOString().slice(0,10);
+        const title = 'منصرف فصائل الدم - أرشيف تلقائي ' + todayStr;
+        const existingArch = await query('SELECT id, data FROM archives WHERE type = $1 AND title = $2', ['منصرف فصائل الدم', title]);
+        if (existingArch.rows.length > 0) {
+          const oldData = JSON.parse(existingArch.rows[0].data) || [];
+          await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify([...oldData, ...toArchive]), existingArch.rows[0].id]);
+        } else {
+          await query('INSERT INTO archives (type, title, data, user_id, user_name) VALUES ($1,$2,$3,$4,$5)',
+            ['منصرف فصائل الدم', title, JSON.stringify(toArchive), user.id, user.name]);
+        }
+        for (const r of toArchive) {
+          await query('DELETE FROM monthly_consumption WHERE id = $1', [r.id]);
+        }
+      }
     }
-    for (const r of toArchive) {
-      await query('DELETE FROM monthly_consumption WHERE id = $1', [r.id]);
-    }
-    }
-  }
+  } catch (archiveErr) { console.error('Auto-archive consumption skipped:', archiveErr.message); }
   let sql = 'SELECT mc.*, h.name as hospital_name, h.governorate, u.name as entered_by FROM monthly_consumption mc JOIN hospitals h ON h.id = mc.hospital_id LEFT JOIN users u ON u.id = mc.user_id WHERE 1=1';
   let params = [];
   const f = await filterByRole(user, sql, params, 'mc');
@@ -1235,7 +1234,7 @@ app.post('/api/monthly-consumption/archive', requireAuth(), requirePerm('monthly
   res.json({ ok: true, message: 'تم أرشفة ' + records.rows.length + ' سجل' });
 });
 
-app.post('/api/monthly-consumption/archive-direct', requireAuth(), requirePerm('consumption', 'add'), async (req, res) => {
+app.post('/api/monthly-consumption/archive-direct', requireAuth(), requirePerm('monthly_consumption', 'add'), async (req, res) => {
   const { hospitalId, year, month, period, bloodTypes } = req.body;
   if (!hospitalId || !year || !bloodTypes) return res.status(400).json({ error: 'البيانات غير مكتملة' });
   const p = period || 'monthly';
@@ -2186,7 +2185,7 @@ app.get('/api/readiness-notifications', requireAuth(), requirePerm('readiness', 
   res.json(rows);
 });
 
-app.post('/api/readiness-notifications/dismiss/:id', requireAuth(), requirePerm('readiness', 'view'), async (req, res) => {
+app.post('/api/readiness-notifications/dismiss/:id', requireAuth(), requirePerm('readiness', 'edit'), async (req, res) => {
   const id = parseInt(req.params.id);
   await query('UPDATE readiness_notifications SET dismissed = true WHERE id = $1', [id]);
   res.json({ ok: true });
@@ -2716,6 +2715,7 @@ app.post('/api/csp-violation', (req, res) => {
 });
 
 // ============== Indicator Analysis (تحليل مؤشرات الأداء) ==============
+const FORMULA_KEYS = new Set(['total_blood','tested','ct','ratio_uncompleted','ratio_refused','ratio_c','ratio_b','ratio_i','ratio_dollar','virology_total','ratio_exp','ratio_returned','ratio_reaction','ratio_open','ratio_other','pct_exp','pct_returned','pct_reaction','pct_open','pct_other','child_ct','child_pct_exp','child_pct_returned','child_pct_reaction','child_pct_open','child_pct_other']);
 app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysis', 'view'), async (req, res) => {
   try {
     const { year1, months1, year2, months2, governorate, hospitalId } = req.query;
@@ -2724,7 +2724,6 @@ app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysi
     const m2 = months2.split(',').map(Number);
     const y1 = parseInt(year1), y2 = parseInt(year2);
 
-    const FORMULA_KEYS = new Set(['total_blood','tested','ct','ratio_uncompleted','ratio_refused','ratio_c','ratio_b','ratio_i','ratio_dollar','virology_total','ratio_exp','ratio_returned','ratio_reaction','ratio_open','ratio_other','pct_exp','pct_returned','pct_reaction','pct_open','pct_other','child_ct','child_pct_exp','child_pct_returned','child_pct_reaction','child_pct_open','child_pct_other']);
     function aggregateByHospital(rows) {
       const map = {};
       for (const r of rows) {

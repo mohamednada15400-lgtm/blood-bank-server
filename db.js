@@ -315,21 +315,32 @@ class Database {
         if (parseInt(userCount.rows[0].count) === 0) {
           await this._seedPG(client);
         }
-        // Migration: add missing pages to existing role_perms
+        // Migration: fix missing + zeroed-out pages in role_perms
         const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','indicator_analysis','employees','archive','strategic_stock','users','hospitals','governorates','role_perms','readiness','equipment','time_config','emp_accounts'];
+        const { DEF_PERMS: PG_DEF_PERMS } = require('./jsondb');
         const rpResult = await client.query('SELECT role, permissions FROM role_perms');
         for (const row of rpResult.rows) {
           let perms = typeof row.permissions === 'string' ? JSON.parse(row.permissions) : row.permissions;
           let changed = false;
+          const defPerms = PG_DEF_PERMS[row.role];
           for (const k of ALL_PAGES) {
             if (perms[k] === undefined) {
-              perms[k] = { v: 1, a: 1, e: 1, d: 1, x: 1 };
+              perms[k] = JSON.parse(JSON.stringify(defPerms?.[k] || (row.role === 'admin' ? { v: 1, a: 1, e: 1, d: 1, x: 1 } : { v: 0, a: 0, e: 0, d: 0, x: 0 })));
               changed = true;
+            } else if (defPerms?.[k]) {
+              const cur = perms[k];
+              const def = defPerms[k];
+              const isZeroed = cur.v===0 && cur.a===0 && cur.e===0 && cur.d===0 && cur.x===0;
+              const shouldHaveAccess = def.v===1 || def.a===1 || def.e===1 || def.d===1 || def.x===1;
+              if (isZeroed && shouldHaveAccess) {
+                perms[k] = JSON.parse(JSON.stringify(def));
+                changed = true;
+              }
             }
           }
           if (changed) {
             await client.query('UPDATE role_perms SET permissions = $1 WHERE role = $2', [JSON.stringify(perms), row.role]);
-            console.log(`🔧 Added missing pages to role_perms: ${row.role}`);
+            console.log(`🔧 Fixed role_perms: ${row.role}`);
           }
         }
       } finally {

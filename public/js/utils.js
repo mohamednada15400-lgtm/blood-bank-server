@@ -65,7 +65,7 @@ api('GET', '/config/time').then(res => {
               <i class="fas fa-moon"></i> توقيت شتوي (+1)
             </button>
           </div>
-          <div style="margin-top:24px;padding:12px;background:var(--bg-card);border-radius:8px">
+          <div style="margin-top:24px;padding:12px;background:var(--card-bg);border-radius:8px">
             <div style="font-size:13px;color:var(--text-muted)">
               <i class="fas fa-info-circle"></i> الوقت الحالي: <strong id="tcClock">${fmtCairoDate('time')}</strong>
               — التاريخ: <strong id="tcDate">${fmtCairoDate('full')}</strong>
@@ -110,7 +110,8 @@ async function api(method, url, data) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
   if (data) opts.body = JSON.stringify(data);
   const res = await fetch(API_BASE + url, opts);
-  const json = await res.json();
+  let json;
+  try { json = await res.json(); } catch { throw new Error('خطأ في الاتصال بالسيرفر (' + res.status + ')'); }
   if (!res.ok) throw new Error(json.error || 'خطأ في الطلب');
   return json;
 }
@@ -137,7 +138,8 @@ function togglePasswordVisibility(fieldId, el) {
 function toggleDarkMode() {
   const isDark = document.body.classList.toggle('dark-mode');
   localStorage.setItem('darkMode', isDark ? '1' : '0');
-  document.getElementById('darkModeBtn').innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+  const btn = document.getElementById('darkModeBtn');
+  if (btn) btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
 }
 function applyDarkMode() {
   const isDark = localStorage.getItem('darkMode') === '1';
@@ -151,10 +153,11 @@ async function loadTimeConfig() {
     if (res.serverTime) {
       _serverTimeOffset = res.serverTime - Date.now();
     }
-    if (res.time_offset) {
+    if (res.time_offset != null) {
       _timeOffset = res.time_offset;
       updateClock();
-      document.getElementById('dateDisplay').textContent = fmtCairoDate('full');
+      const dd = document.getElementById('dateDisplay');
+      if (dd) dd.textContent = fmtCairoDate('full');
     }
   } catch {}
 }

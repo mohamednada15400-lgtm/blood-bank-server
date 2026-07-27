@@ -1,38 +1,39 @@
 /* event delegation for CSP compliance */
 (function(){var H={},E={click:1,change:1,input:1,focusin:1,paste:1,focusout:1,keydown:1,mouseover:1,mouseout:1};window._dh=function(n,f){H[n]=f;};for(var K in E){if(E.hasOwnProperty(K)){(function(et){document.addEventListener(et,function(e){try{var attr='data-'+et;if(et==='focusin')attr='data-focus';if(et==='focusout')attr='data-blur';if(et==='keydown')attr='data-keydown';var el=e.target.closest('['+attr+']');if(!el)return;var n=el.getAttribute(attr);if(!n)return;var fn=H[n];if(typeof fn!=='function')fn=window[n];if(typeof fn!=='function')return;var args=el.getAttribute('data-args');var parsed=[];if(args){var parts=args.split(',');for(var i=0;i<parts.length;i++){var a=parts[i].trim();if(a==='null'){parsed.push(null);continue;}if(a==='undefined'){parsed.push(undefined);continue;}if(a==='true'){parsed.push(true);continue;}if(a==='false'){parsed.push(false);continue;}var num=Number(a);if(!isNaN(num)&&a.length>0){parsed.push(num);continue;}var s=a;if((s[0]==='"'&&s[s.length-1]==='"')||(s[0]==="'"&&s[s.length-1]==="'"))s=s.slice(1,-1);parsed.push(s);}}fn.apply(el,parsed);}catch(ex){console.error('[delegation]',et,n,ex.message);}});})(K);}}})();
 /* ─── ExcelJS Shared Helpers ─── */
-var _XB={style:'thin',color:{argb:'FFB0BEC5'}};
-var _XBN={top:_XB,bottom:_XB,left:_XB,right:_XB};
+const _XB={style:'thin',color:{argb:'FFB0BEC5'}};
+const _XBN={top:_XB,bottom:_XB,left:_XB,right:_XB};
 function _xlsxDl(wb,fn){
   wb.creator='نظام بنك الدم';wb.created=new Date();
   wb.xlsx.writeBuffer().then(function(b){
-    var bl=new Blob([b],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    var u=URL.createObjectURL(bl),a=document.createElement('a');
+    const bl=new Blob([b],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const u=URL.createObjectURL(bl),a=document.createElement('a');
     a.href=u;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);
     showToast('✅ تم التصدير بنجاح');
   });
 }
 function _xlsxTbl(table,opts){
-  if(!table||typeof ExcelJS==='undefined')return null;
+  if(!table)return null;
+  if(typeof ExcelJS==='undefined'){showToast('❌ مكتبة ExcelJS غير محمّلة — تأكد من اتصال الإنترنت ثم أعد تحميل الصفحة','error');return null;}
   opts=opts||{};
-  var wb=new ExcelJS.Workbook(),ws=wb.addWorksheet(opts.sheetName||'بيانات');
-  var hBg=opts.headerBg||'FF2C3E50',hFg=opts.headerFg||'FFFFFFFF';
-  var skipAct=opts.skipActions!==false;
-  var trs=Array.from(table.querySelectorAll('tr'));
+  const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet(opts.sheetName||'بيانات');
+  const hBg=opts.headerBg||'FF2C3E50',hFg=opts.headerFg||'FFFFFFFF';
+  const skipAct=opts.skipActions!==false;
+  const trs=Array.from(table.querySelectorAll('tr'));
   if(!trs.length)return{wb:wb,ws:ws,r:1,mc:0};
-  var mc=0;trs.forEach(function(tr){var n=tr.querySelectorAll('th,td').length;if(n>mc)mc=n;});
+  let mc=0;trs.forEach(function(tr){const n=tr.querySelectorAll('th,td').length;if(n>mc)mc=n;});
   if(skipAct&&mc>0)mc--;
-  var r=opts.startRow||1;
+  let r=opts.startRow||1;
   trs.forEach(function(tr){
-    var cells=Array.from(tr.querySelectorAll('th,td'));
-    var isH=cells.length>0&&cells[0].tagName==='TH';
+    const cells=Array.from(tr.querySelectorAll('th,td'));
+    const isH=cells.length>0&&cells[0].tagName==='TH';
     if(skipAct&&cells.length===mc+1)cells.pop();
-    var rw=ws.getRow(r);rw.height=isH?24:18;
+    const rw=ws.getRow(r);rw.height=isH?24:18;
     cells.forEach(function(td,ci){
-      var v=td.textContent.trim();
-      var cs=parseInt(td.getAttribute('colspan'))||1;
-      var c=ws.getCell(r,ci+1);
-      var nm=parseFloat(v.replace(/[,]/g,''));
+      const v=td.textContent.trim();
+      const cs=parseInt(td.getAttribute('colspan'))||1;
+      const c=ws.getCell(r,ci+1);
+      const nm=parseFloat(v.replace(/[,]/g,''));
       if(!isNaN(nm)&&v.replace(/[,.\-\s]/g,'').length===0&&v.length>0){c.value=nm;c.numFmt='#,##0';}
       else{c.value=v;}
       c.alignment={horizontal:'center',vertical:'middle',wrapText:true};
@@ -43,19 +44,19 @@ function _xlsxTbl(table,opts){
     });
     r++;
   });
-  for(var i=1;i<=mc;i++)ws.getColumn(i).width=i===1?22:14;
+  for(let i=1;i<=mc;i++)ws.getColumn(i).width=i===1?22:14;
   return{wb:wb,ws:ws,r:r,mc:mc};
 }
 function _xlsxTitleRow(ws,row,title,sub,mc){
-  ws.mergeCells(row,1,row,mc);var c=ws.getCell(row,1);c.value=title;
+  ws.mergeCells(row,1,row,mc);const c=ws.getCell(row,1);c.value=title;
   c.font={bold:true,size:14,color:{argb:'FF2C3E50'}};c.alignment={horizontal:'center',vertical:'middle'};
   ws.getRow(row).height=28;
-  if(sub){ws.mergeCells(row+1,1,row+1,mc);var s=ws.getCell(row+1,1);s.value=sub;
+  if(sub){ws.mergeCells(row+1,1,row+1,mc);const s=ws.getCell(row+1,1);s.value=sub;
   s.font={size:10,color:{argb:'FF7F8C8D'}};s.alignment={horizontal:'center'};ws.getRow(row+1).height=18;return row+2;}
   return row+1;
 }
 function _xlsxFooter(ws,row,mc){
-  ws.mergeCells(row,1,row,mc);var c=ws.getCell(row,1);
+  ws.mergeCells(row,1,row,mc);const c=ws.getCell(row,1);
   c.value='إعداد و برمجة محمد ندا 01068880999';
   c.font={size:9,color:{argb:'FF95A5A6'},italic:true};c.alignment={horizontal:'center'};
 }
@@ -244,9 +245,9 @@ async function renderDailyStock() {
 }
 
 function exportStockExcel() {
-  var table = document.getElementById('dailyStockTable');
+  const table = document.getElementById('dailyStockTable');
   if (!table) return;
-  var res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:3 });
+  const res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:3 });
   if (!res) return;
   _xlsxTitleRow(res.ws, 1, 'المخزون اليومي لبنوك الدم', fmtCairoDate('full'), res.mc);
   _xlsxFooter(res.ws, res.r, res.mc);
@@ -698,11 +699,11 @@ async function doStrategicCalc() {
 }
 
 function exportStrategicExcel() {
-  var wrap = document.getElementById('strategicTableWrap');
+  const wrap = document.getElementById('strategicTableWrap');
   if (!wrap) return;
-  var tbl = wrap.querySelector('table');
+  const tbl = wrap.querySelector('table');
   if (!tbl) return;
-  var res = _xlsxTbl(tbl, { headerBg:'FF2E7D32', skipActions:true, startRow:3 });
+  const res = _xlsxTbl(tbl, { headerBg:'FF2E7D32', skipActions:true, startRow:3 });
   if (!res) return;
   _xlsxTitleRow(res.ws, 1, 'الرصيد الاستراتيجي', 'تاريخ التقرير: ' + new Date().toLocaleDateString('ar-EG'), res.mc);
   _xlsxFooter(res.ws, res.r, res.mc);
@@ -799,9 +800,9 @@ function renderTotalTable(data) {
 }
 
 function exportTotalExcel() {
-  var table = document.getElementById('totalTable');
+  const table = document.getElementById('totalTable');
   if (!table) return;
-  var res = _xlsxTbl(table, { headerBg:'FF2E7D32', skipActions:true, startRow:3 });
+  const res = _xlsxTbl(table, { headerBg:'FF2E7D32', skipActions:true, startRow:3 });
   if (!res) return;
   _xlsxTitleRow(res.ws, 1, 'إجمالي الرصيد ببنوك الدم', 'تاريخ التقرير: ' + new Date().toLocaleDateString('ar-EG'), res.mc);
   _xlsxFooter(res.ws, res.r, res.mc);
@@ -1128,10 +1129,10 @@ async function renderBranchStatement() {
 }
 
 function branchExportExcel() {
-  var table = document.querySelector('#branchStmtReport table');
+  const table = document.querySelector('#branchStmtReport table');
   if (!table) return;
-  var title = (document.querySelector('.stmt-title') || {}).textContent || 'بيان الفرع';
-  var res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:2 });
+  const title = (document.querySelector('.stmt-title') || {}).textContent || 'بيان الفرع';
+  const res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:2 });
   if (!res) return;
   _xlsxTitleRow(res.ws, 1, title, '', res.mc);
   _xlsxFooter(res.ws, res.r, res.mc);
@@ -1978,14 +1979,15 @@ async function printEmployeeTable() {
   </table>
   <div style="text-align:center;margin-top:15px;font-size:10px;color:#888">إعداد و برمجة محمد ندا 01068880999</div>
   <div class="no-print" style="margin-top:20px;text-align:center">
-    <button data-click="windowPrint" style="padding:10px 20px;background:#795548;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px">
+    <button onclick="windowPrint()" style="padding:10px 20px;background:#795548;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px">
       <i class="fas fa-print"></i> طباعة / حفظ PDF
     </button>
-    <button data-click="downloadExcel" style="padding:10px 20px;background:#28a745;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;margin-right:10px">
+    <button onclick="downloadExcel()" style="padding:10px 20px;background:#28a745;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;margin-right:10px">
       <i class="fas fa-file-excel"></i> تحميل Excel
     </button>
   </div>
   <script>
+    function windowPrint() { window.print(); }
     function downloadExcel() {
       let csv = '\\uFEFFالفرع,بنك الدم,الموظف,الفئة,التصنيف,الرقم القومي,التليفون,البريد الإلكتروني\\n';
       const rows = document.querySelectorAll('tbody tr');
@@ -2019,14 +2021,14 @@ async function printEmployeeTable() {
 }
 
 function exportEmployeeExcel() {
-  var data = window._empData || [];
+  const data = window._empData || [];
   if (!data.length) return showToast('لا توجد بيانات');
-  var gov = document.getElementById('empFilterGov')?.value || '';
-  var hosp = document.getElementById('empFilterHosp')?.value || '';
-  var cat = document.getElementById('empFilterCat')?.value || '';
-  var cls = document.getElementById('empFilterClass')?.value || '';
-  var search = (document.getElementById('empSearch')?.value || '').trim().toLowerCase();
-  var filtered = data.filter(function(d) {
+  const gov = document.getElementById('empFilterGov')?.value || '';
+  const hosp = document.getElementById('empFilterHosp')?.value || '';
+  const cat = document.getElementById('empFilterCat')?.value || '';
+  const cls = document.getElementById('empFilterClass')?.value || '';
+  const search = (document.getElementById('empSearch')?.value || '').trim().toLowerCase();
+  const filtered = data.filter(function(d) {
     if (gov && d.governorate !== gov) return false;
     if (hosp && d.hospital_name !== hosp) return false;
     if (cat && d.category !== cat) return false;
@@ -2034,55 +2036,55 @@ function exportEmployeeExcel() {
     if (search && (!d.employee || !d.employee.toLowerCase().includes(search)) && !(d.national_id||'').includes(search)) return false;
     return true;
   });
-  var branchName = gov || 'جميع الفروع';
-  var hospitalName = hosp || 'جميع بنوك الدم';
-  var egroups = {};
+  const branchName = gov || 'جميع الفروع';
+  const hospitalName = hosp || 'جميع بنوك الدم';
+  const egroups = {};
   filtered.forEach(function(d) {
-    var gk = d.governorate || 'أخرى'; var hk = d.hospital_name || 'غير معروف';
+    const gk = d.governorate || 'أخرى'; const hk = d.hospital_name || 'غير معروف';
     if (!egroups[gk]) egroups[gk] = {};
     if (!egroups[gk][hk]) egroups[gk][hk] = [];
     egroups[gk][hk].push(d);
   });
   if (typeof ExcelJS === 'undefined') { showToast('مكتبة ExcelJS غير محملة', 'error'); return; }
-  var wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
-  var ws = wb.addWorksheet('بيان العاملين', { views:[{state:'frozen',ySplit:2,xSplit:1}] });
-  var mc = 7;
-  var dateStr = new Date().toLocaleDateString('ar-EG');
+  const wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
+  const ws = wb.addWorksheet('بيان العاملين', { views:[{state:'frozen',ySplit:2,xSplit:1}] });
+  const mc = 7;
+  const dateStr = new Date().toLocaleDateString('ar-EG');
   _xlsxTitleRow(ws, 1, 'بيان العاملين ببنوك الدم', dateStr + ' | ' + branchName + ' | ' + hospitalName, mc);
-  var hdrs = ['م','الموظف','الفئه','التصنيف','الرقم القومي','التليفون','البريد'];
-  var hBg = 'FF795548';
-  var hRow = ws.getRow(3); hRow.height = 24;
+  const hdrs = ['م','الموظف','الفئه','التصنيف','الرقم القومي','التليفون','البريد'];
+  const hBg = 'FF795548';
+  const hRow = ws.getRow(3); hRow.height = 24;
   hdrs.forEach(function(h, ci) {
-    var c = ws.getCell(3, ci+1); c.value = h;
+    const c = ws.getCell(3, ci+1); c.value = h;
     c.font = {bold:true, color:{argb:'FFFFFFFF'}, size:10};
     c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:hBg}};
     c.alignment = {horizontal:'center',vertical:'middle',wrapText:true}; c.border = _XBN;
   });
-  var egKeys = Object.keys(egroups).sort(function(a,b){return a.localeCompare(b,'ar');});
-  var r = 4, ei = 0;
+  const egKeys = Object.keys(egroups).sort(function(a,b){return a.localeCompare(b,'ar');});
+  let r = 4, ei = 0;
   egKeys.forEach(function(g) {
-    var ehKeys = Object.keys(egroups[g]).sort(function(a,b){return a.localeCompare(b,'ar');});
-    var total = ehKeys.reduce(function(s,k){return s+egroups[g][k].length;},0);
+    const ehKeys = Object.keys(egroups[g]).sort(function(a,b){return a.localeCompare(b,'ar');});
+    const total = ehKeys.reduce(function(s,k){return s+egroups[g][k].length;},0);
     ws.mergeCells(r,1,r,mc);
-    var gc = ws.getCell(r,1); gc.value = 'محافظة ' + g + '  (' + total + ')';
+    const gc = ws.getCell(r,1); gc.value = 'محافظة ' + g + '  (' + total + ')';
     gc.font = {bold:true, size:11, color:{argb:'FF1565C0'}};
     gc.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFE3F2FD'}};
     gc.alignment = {horizontal:'right',vertical:'middle'}; gc.border = _XBN;
     ws.getRow(r).height = 22; r++;
     ehKeys.forEach(function(h) {
-      var emps = egroups[g][h];
+      const emps = egroups[g][h];
       ws.mergeCells(r,1,r,mc);
-      var hc = ws.getCell(r,1); hc.value = h + '  (' + emps.length + ')';
+      const hc = ws.getCell(r,1); hc.value = h + '  (' + emps.length + ')';
       hc.font = {bold:true, size:10, color:{argb:'FFE65100'}};
       hc.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF8E1'}};
       hc.alignment = {horizontal:'right',vertical:'middle',indent:1}; hc.border = _XBN;
       ws.getRow(r).height = 20; r++;
       emps.forEach(function(d) {
         ei++;
-        var row = ws.getRow(r); row.height = 18;
-        var vals = [ei, d.employee, d.category, d.classification, d.national_id, d.phone, d.email];
+        const row = ws.getRow(r); row.height = 18;
+        const vals = [ei, d.employee, d.category, d.classification, d.national_id, d.phone, d.email];
         vals.forEach(function(v, ci) {
-          var c = ws.getCell(r, ci+1); c.value = v || '';
+          const c = ws.getCell(r, ci+1); c.value = v || '';
           c.font = {size:9}; c.alignment = {horizontal:'center',vertical:'middle'};
           c.border = _XBN;
           if (r % 2 === 0) c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFFAFAFA'}};
@@ -2091,7 +2093,7 @@ function exportEmployeeExcel() {
       });
     });
   });
-  for (var i = 1; i <= mc; i++) ws.getColumn(i).width = [6,22,18,16,18,16,20][i-1] || 14;
+  for (let i = 1; i <= mc; i++) ws.getColumn(i).width = [6,22,18,16,18,16,20][i-1] || 14;
   _xlsxFooter(ws, r, mc);
   _xlsxDl(wb, 'بيان_العاملين.xlsx');
   showToast('✅ تم التصدير بنجاح');
@@ -3382,35 +3384,35 @@ async function saveArchiveCell(el) {
 }
 
 function exportArchiveIndicatorsExcel() {
-  var tables = document.querySelectorAll('#archIndTable table.ind-table');
+  const tables = document.querySelectorAll('#archIndTable table.ind-table');
   if (!tables.length) return;
   if (typeof ExcelJS === 'undefined') { showToast('مكتبة ExcelJS غير محملة', 'error'); return; }
-  var wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
-  var ws = wb.addWorksheet('أرشيف مؤشرات الأداء');
-  var hBg = 'FF5A7A9A';
-  var mc = 0;
+  const wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
+  const ws = wb.addWorksheet('أرشيف مؤشرات الأداء');
+  const hBg = 'FF5A7A9A';
+  let mc = 0;
   tables.forEach(function(table) {
-    var trs = Array.from(table.querySelectorAll('tr'));
-    var tmc = 0;
-    trs.forEach(function(tr){var n=tr.querySelectorAll('th,td').length;if(n>tmc)tmc=n;});
+    const trs = Array.from(table.querySelectorAll('tr'));
+    let tmc = 0;
+    trs.forEach(function(tr){const n=tr.querySelectorAll('th,td').length;if(n>tmc)tmc=n;});
     if (tmc - 1 > mc) mc = tmc - 1;
   });
   if (!mc) mc = 5;
-  var sr = _xlsxTitleRow(ws, 1, 'أرشيف مؤشرات الأداء', '', mc);
-  var r = sr;
+  const sr = _xlsxTitleRow(ws, 1, 'أرشيف مؤشرات الأداء', '', mc);
+  let r = sr;
   tables.forEach(function(table, ti) {
-    var trs = Array.from(table.querySelectorAll('tr'));
+    const trs = Array.from(table.querySelectorAll('tr'));
     if (ti > 0) r++;
     trs.forEach(function(tr) {
-      var cells = Array.from(tr.querySelectorAll('th,td'));
-      var isH = cells.length > 0 && cells[0].tagName === 'TH';
+      const cells = Array.from(tr.querySelectorAll('th,td'));
+      const isH = cells.length > 0 && cells[0].tagName === 'TH';
       cells.pop();
-      var rw = ws.getRow(r); rw.height = isH ? 24 : 18;
+      const rw = ws.getRow(r); rw.height = isH ? 24 : 18;
       cells.forEach(function(td, ci) {
-        var v = td.textContent.trim();
-        var cs = parseInt(td.getAttribute('colspan')) || 1;
-        var c = ws.getCell(r, ci + 1);
-        var nm = parseFloat(v.replace(/[,]/g, ''));
+        const v = td.textContent.trim();
+        const cs = parseInt(td.getAttribute('colspan')) || 1;
+        const c = ws.getCell(r, ci + 1);
+        const nm = parseFloat(v.replace(/[,]/g, ''));
         if (!isNaN(nm) && v.replace(/[,.\-\s]/g, '').length === 0 && v.length > 0) { c.value = nm; c.numFmt = '#,##0'; }
         else { c.value = v; }
         c.alignment = {horizontal:'center',vertical:'middle',wrapText:true}; c.border = _XBN;
@@ -3421,7 +3423,7 @@ function exportArchiveIndicatorsExcel() {
       r++;
     });
   });
-  for (var i = 1; i <= mc; i++) ws.getColumn(i).width = i === 1 ? 22 : 14;
+  for (let i = 1; i <= mc; i++) ws.getColumn(i).width = i === 1 ? 22 : 14;
   _xlsxFooter(ws, r, mc);
   _xlsxDl(wb, 'archive_indicators_' + fmtCairoDate('date') + '.xlsx');
 }
@@ -3445,22 +3447,22 @@ function exportArchiveIndicatorsPdf() {
   downloadPdf(bodyHtml, 'indicators-archive.pdf');
 }
 function exportExcel() {
-  var table = document.querySelector('#exportTable table');
+  const table = document.querySelector('#exportTable table');
   if (!table) return;
-  var fGov = document.getElementById('filterGov')?.value || '';
-  var fYear = document.getElementById('filterYear')?.value || '';
-  var fPeriod = document.getElementById('filterPeriod')?.value || '';
-  var fHosp = document.getElementById('filterHosp')?.value || '';
-  var periodLabels = { '': 'شهري', q1: 'الربع الأول', q2: 'الربع الثاني', q3: 'الربع الثالث', q4: 'الربع الرابع', h1: 'النصف الأول', h2: 'النصف الثاني', year: 'سنوي', all: 'الكل' };
-  var hospName = fHosp ? (document.getElementById('filterHosp')?.selectedOptions[0]?.text || '') : '';
-  var title = 'معدل صرف فصائل الدم';
-  var parts = [];
+  const fGov = document.getElementById('filterGov')?.value || '';
+  const fYear = document.getElementById('filterYear')?.value || '';
+  const fPeriod = document.getElementById('filterPeriod')?.value || '';
+  const fHosp = document.getElementById('filterHosp')?.value || '';
+  const periodLabels = { '': 'شهري', q1: 'الربع الأول', q2: 'الربع الثاني', q3: 'الربع الثالث', q4: 'الربع الرابع', h1: 'النصف الأول', h2: 'النصف الثاني', year: 'سنوي', all: 'الكل' };
+  const hospName = fHosp ? (document.getElementById('filterHosp')?.selectedOptions[0]?.text || '') : '';
+  let title = 'معدل صرف فصائل الدم';
+  const parts = [];
   if (fYear) parts.push('سنة ' + fYear);
   if (fPeriod !== undefined && periodLabels[fPeriod]) parts.push(periodLabels[fPeriod]);
   if (fGov) parts.push('فرع ' + fGov);
   if (hospName) parts.push(hospName);
   if (parts.length) title += ' (' + parts.join(' - ') + ')';
-  var res = _xlsxTbl(table, { headerBg:'FF2E7D32', skipActions:true, startRow:2 });
+  const res = _xlsxTbl(table, { headerBg:'FF2E7D32', skipActions:true, startRow:2 });
   if (!res) return;
   _xlsxTitleRow(res.ws, 1, title, '', res.mc);
   _xlsxFooter(res.ws, res.r, res.mc);
@@ -3603,14 +3605,14 @@ function copyUsersTable() {
   navigator.clipboard.writeText(rows.join('\n')).then(() => showToast('✅ تم نسخ الجدول'));
 }
 function exportUsersExcel() {
-  var table = document.getElementById('userTable');
+  const table = document.getElementById('userTable');
   if (!table) return;
-  var clone = table.cloneNode(true);
+  const clone = table.cloneNode(true);
   clone.querySelectorAll('tr').forEach(function(tr) {
-    var last = tr.querySelector('td:last-child, th:last-child');
+    const last = tr.querySelector('td:last-child, th:last-child');
     if (last) last.remove();
   });
-  var res = _xlsxTbl(clone, { headerBg:'FF333333', skipActions:false, startRow:2 });
+  const res = _xlsxTbl(clone, { headerBg:'FF333333', skipActions:false, startRow:2 });
   if (!res) return;
   _xlsxTitleRow(res.ws, 1, 'قائمة المستخدمين', '', res.mc);
   _xlsxFooter(res.ws, res.r, res.mc);
@@ -3765,7 +3767,7 @@ async function renderEmployeeAccounts() {
           if (empUserMap[hid] && empUserMap[hid][e.employee]) hasAccount++;
         });
         return `<div class="card" style="margin-bottom:12px">
-          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-card);border-bottom:1px solid var(--border)">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--card-bg);border-bottom:1px solid var(--border)">
             <strong><i class="fas fa-hospital"></i> ${esc(hInfo?.name || 'مستشفى ' + hid)}</strong>
             <span style="font-size:12px;color:var(--text-muted)">${hasAccount}/${empList.length} لديه حساب</span>
           </div>
@@ -4026,7 +4028,7 @@ async function renderRolePerms() {
     const container = document.getElementById('rolePermsContainer');
     let html = '';
     rolePerms.forEach(rp => {
-      const perms = typeof rp.permissions === 'string' ? JSON.parse(rp.permissions) : (rp.permissions || {});
+      const perms = typeof rp.permissions === 'string' ? (() => { try { return JSON.parse(rp.permissions); } catch { return {}; } })() : (rp.permissions || {});
       const color = defaultColors[rp.role] || '#6c757d';
       const icon = defaultIcons[rp.role] || 'fa-user';
       const userCount = users.filter(u => u.role === rp.role).length;
@@ -5070,9 +5072,13 @@ const BIG_COL_DEFS = [
 
   // ===== الإعدامات =====
   { key: 'disp_exp_blood', label: 'دم', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_blood2', label: 'دم 2', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_exp_plasma', label: 'بلازما', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'صفائح' },
-  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'صفائح' },
+  { key: 'disp_exp_plasma2', label: 'بلازما 2', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_sdp2', label: 'SDP 2', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_rdp2', label: 'RDP 2', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_returned', label: 'مرتجع', group: 'الإعدامات' },
   { key: 'disp_reaction', label: 'تفاعل', group: 'الإعدامات' },
   { key: 'disp_open', label: 'نظام مفتوح', group: 'الإعدامات' },
@@ -5508,7 +5514,6 @@ const INDICATOR_FIELDS = [
   { key: 'uncompleted', label: 'لم يكتمل', type: 'number' },
   { key: 'refused_fatty', label: 'دهون', type: 'number' },
   { key: 'refused_icteric', label: 'Icteric', type: 'number' },
-  { key: 'refused_all', label: 'All', type: 'number' },
   { key: 'virology_c', label: 'C', type: 'number' },
   { key: 'virology_b', label: 'B', type: 'number' },
   { key: 'virology_i', label: 'I', type: 'number' },
@@ -6297,26 +6302,26 @@ function eqExportXlsx() {
   showToast('جاري التجهيز...');
   api('GET', '/equipment').then(function(eq) {
     if (typeof ExcelJS === 'undefined') { showToast('مكتبة ExcelJS غير محملة', 'error'); return; }
-    var types = eq.types || [], hospitals = eq.hospitals || [];
-    var wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
-    var ws = wb.addWorksheet('الأجهزة', { views:[{state:'frozen',ySplit:2,xSplit:1}] });
-    var mc = 2 + types.length * 4;
-    var sr = _xlsxTitleRow(ws, 1, 'أجهزة بنوك الدم', '', mc);
-    var hRow = ws.getRow(sr); hRow.height = 22;
+    const types = eq.types || [], hospitals = eq.hospitals || [];
+    const wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
+    const ws = wb.addWorksheet('الأجهزة', { views:[{state:'frozen',ySplit:2,xSplit:1}] });
+    const mc = 2 + types.length * 4;
+    const sr = _xlsxTitleRow(ws, 1, 'أجهزة بنوك الدم', '', mc);
+    const hRow = ws.getRow(sr); hRow.height = 22;
     ws.getCell(sr,1).value = 'المحافظة'; ws.getCell(sr,2).value = 'اسم بنك الدم';
-    for (var ci = 1; ci <= 2; ci++) {
-      var c = ws.getCell(sr, ci); c.font = {bold:true,color:{argb:'FFFFFFFF'},size:10};
+    for (let ci = 1; ci <= 2; ci++) {
+      const c = ws.getCell(sr, ci); c.font = {bold:true,color:{argb:'FFFFFFFF'},size:10};
       c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF2C3E50'}}; c.alignment = {horizontal:'center',vertical:'middle'}; c.border = _XBN;
     }
-    var cIdx = 3;
+    let cIdx = 3;
     types.forEach(function(t) {
       ws.mergeCells(sr, cIdx, sr, cIdx + 3);
-      var tc = ws.getCell(sr, cIdx); tc.value = t.name;
+      const tc = ws.getCell(sr, cIdx); tc.value = t.name;
       tc.font = {bold:true,color:{argb:'FFFFFFFF'},size:10};
       tc.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF2C3E50'}}; tc.alignment = {horizontal:'center',vertical:'middle'}; tc.border = _XBN;
       cIdx += 4;
     });
-    var r2 = ws.getRow(sr + 1); r2.height = 20;
+    const r2 = ws.getRow(sr + 1); r2.height = 20;
     ws.getCell(sr+1,1).value = ''; ws.getCell(sr+1,2).value = '';
     ws.getCell(sr+1,1).font = {bold:true,color:{argb:'FFFFFFFF'},size:9};
     ws.getCell(sr+1,1).fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF34495E'}}; ws.getCell(sr+1,1).border = _XBN;
@@ -6325,32 +6330,32 @@ function eqExportXlsx() {
     cIdx = 3;
     types.forEach(function(t) {
       ['عدد','حالة','ماركة','سعة'].forEach(function(h) {
-        var c = ws.getCell(sr+1, cIdx); c.value = h;
+        const c = ws.getCell(sr+1, cIdx); c.value = h;
         c.font = {bold:true,color:{argb:'FFFFFFFF'},size:9};
         c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF34495E'}}; c.alignment = {horizontal:'center',vertical:'middle'}; c.border = _XBN;
         cIdx++;
       });
     });
-    var dr = sr + 2;
-    var sorted = hospitals.slice().sort(function(a,b) {
+    let dr = sr + 2;
+    const sorted = hospitals.slice().sort(function(a,b) {
       return (a.governorate || '').localeCompare(b.governorate || '', 'ar') || (a.name || '').localeCompare(b.name || '', 'ar');
     });
     sorted.forEach(function(h) {
-      var row = ws.getRow(dr); row.height = 18;
+      const row = ws.getRow(dr); row.height = 18;
       ws.getCell(dr,1).value = h.governorate || '';
       ws.getCell(dr,2).value = h.name || '';
       ws.getCell(dr,1).font = {size:9}; ws.getCell(dr,1).alignment = {horizontal:'right',vertical:'middle'}; ws.getCell(dr,1).border = _XBN;
       ws.getCell(dr,2).font = {size:9}; ws.getCell(dr,2).alignment = {horizontal:'right',vertical:'middle'}; ws.getCell(dr,2).border = _XBN;
       cIdx = 3;
       types.forEach(function(t) {
-        var eqEntry = (h.equipment || {})[t.id];
+        const eqEntry = (h.equipment || {})[t.id];
         ['count','status','brand','capacity'].forEach(function(f) {
-          var val = '';
+          let val = '';
           if (eqEntry) {
             if (Array.isArray(eqEntry)) val = eqEntry.map(function(e){return e[f]||'';}).filter(Boolean).join(', ');
             else if (eqEntry && typeof eqEntry === 'object') val = eqEntry[f] != null ? eqEntry[f] : '';
           }
-          var c = ws.getCell(dr, cIdx); c.value = val;
+          const c = ws.getCell(dr, cIdx); c.value = val;
           c.font = {size:9}; c.alignment = {horizontal:'center',vertical:'middle'}; c.border = _XBN;
           if (dr % 2 === 0) c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFF8F9FA'}};
           cIdx++;
@@ -6359,7 +6364,7 @@ function eqExportXlsx() {
       dr++;
     });
     ws.getColumn(1).width = 16; ws.getColumn(2).width = 24;
-    for (var i = 3; i <= mc; i++) ws.getColumn(i).width = 12;
+    for (let i = 3; i <= mc; i++) ws.getColumn(i).width = 12;
     _xlsxFooter(ws, dr, mc);
     _xlsxDl(wb, 'اجهزة_بنوك_الدم.xlsx');
   }).catch(function(e) { showToast('❌ ' + e.message); });
@@ -6398,7 +6403,7 @@ function eqExportPdf() {
     '<h1>أجهزة بنوك الدم</h1>' +
     '<div class="toolbar">' +
       '<button onclick="window.print();">طباعة</button>' +
-      '<button class="pdf" onclick="eqExportPdf();">تحميل PDF</button>' +
+      '<button class="pdf" onclick="window.print();">تحميل PDF</button>' +
     '</div>' +
     clone.outerHTML +
     '<div class="footer">إعداد و برمجة محمد ندا 01068880999</div>' +
@@ -7369,11 +7374,11 @@ function rdnPrint() {
 }
 
 function rdnExportXlsx() {
-  var table = document.querySelector('#rdnSummaryTable .data-table');
+  const table = document.querySelector('#rdnSummaryTable .data-table');
   if (!table) { showToast('⚠ لا توجد بيانات للتصدير'); return; }
-  var sel = document.getElementById('rdnOccasionSelect');
-  var title = sel && sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : 'جاهزية بنوك الدم';
-  var res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:3 });
+  const sel = document.getElementById('rdnOccasionSelect');
+  const title = sel && sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : 'جاهزية بنوك الدم';
+  const res = _xlsxTbl(table, { headerBg:'FF2C3E50', skipActions:true, startRow:3 });
   if (!res) return;
   _xlsxTitleRow(res.ws, 1, 'بيان بجاهزية بنوك الدم', title, res.mc);
   _xlsxFooter(res.ws, res.r, res.mc);
@@ -7507,7 +7512,7 @@ async function loadSyncStatus() {
         <div class="sync-stat"><i class="fas fa-clock"></i> <span>آخر تعديل:</span> <strong>${esc(lastSync)}</strong></div>
         <div class="sync-stat"><i class="fas ${driveIcon}" style="color:${driveColor}"></i> <span>Google Drive:</span> <strong style="color:${driveColor}">${driveText}</strong></div>
       </div>
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px">
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600;font-size:15px">
           <i class="fas fa-rotate" style="color:var(--primary)"></i> النسخ الاحتياطي التلقائي
         </div>
@@ -8047,9 +8052,13 @@ const _iaBigFields = [
 
   // ===== الإعدامات =====
   { g:'الإعدامات', key:'disp_exp_blood', label:'دم', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_blood2', label:'دم 2', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_plasma2', label:'بلازما 2', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'صفائح' },
+  { g:'الإعدامات', key:'disp_exp_sdp2', label:'SDP 2', sg:'صفائح' },
   { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'صفائح' },
+  { g:'الإعدامات', key:'disp_exp_rdp2', label:'RDP 2', sg:'صفائح' },
   { g:'الإعدامات', key:'disp_returned', label:'مرتجع' },
   { g:'الإعدامات', key:'disp_reaction', label:'تفاعل' },
   { g:'الإعدامات', key:'disp_open', label:'نظام مفتوح' },
@@ -8168,32 +8177,48 @@ function _iaRenderFieldCheckboxes(fields, cls, accentColor) {
       grp.sgMap.get(f.sg).push(f);
     }
   }
-  let h = '';
+  const cb = `accent-color:${accentColor};width:12px;height:12px;margin:0;vertical-align:middle`;
+  const chip = 'display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:10px;white-space:nowrap;background:var(--card-bg)';
+  let h = '<div style="columns:3;column-gap:8px">';
   for (const grp of groups) {
-    if (grp.name) h += `<div style="width:100%;font-size:11px;font-weight:700;color:${accentColor};margin:6px 0 3px;opacity:.8;border-bottom:1px solid var(--border);padding-bottom:2px">${esc(grp.name)}</div>`;
-    if (grp.sgMap.size > 0) {
+    if (!grp.name) continue;
+    const hasSg = grp.sgMap.size > 0;
+    h += `<div style="break-inside:avoid;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;margin-bottom:8px;overflow:hidden">`;
+    h += `<div style="background:${accentColor};color:#fff;font-size:11px;font-weight:700;padding:4px 8px;display:flex;justify-content:space-between;align-items:center"><span>${esc(grp.name)}</span><span style="opacity:.7;font-size:9px">${grp.items.length}</span></div>`;
+    h += '<div style="padding:6px 8px">';
+    if (hasSg) {
+      const standalone = grp.items.filter(f => !f.sg);
+      if (standalone.length) {
+        h += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px">';
+        for (const f of standalone) {
+          h += `<label style="${chip}"><input type="checkbox" class="${cls}" value="${f.key}" checked style="${cb}"> ${esc(f.label)}</label>`;
+        }
+        h += '</div>';
+      }
       const seen = new Set();
       for (const f of grp.items) {
         if (f.sg && !seen.has(f.sg)) {
           seen.add(f.sg);
           const sgItems = grp.sgMap.get(f.sg);
-          h += `<div style="width:100%;font-size:10px;font-weight:600;color:${accentColor};margin:4px 0 2px;opacity:.65;padding-right:8px">› ${esc(f.sg)}</div>`;
-          h += '<div style="display:flex;flex-wrap:wrap;gap:4px;padding-right:12px">';
+          h += `<div style="background:${accentColor}10;border:1px solid ${accentColor}20;border-radius:4px;padding:4px 6px;margin-bottom:3px">`;
+          h += `<div style="font-size:9px;font-weight:600;color:${accentColor};margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">${esc(f.sg)}</div>`;
+          h += '<div style="display:flex;flex-wrap:wrap;gap:3px">';
           for (const sf of sgItems) {
-            h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="${cls}" value="${sf.key}" checked style="accent-color:${accentColor};width:13px;height:13px">${esc(sf.label)}</label>`;
+            h += `<label style="${chip}"><input type="checkbox" class="${cls}" value="${sf.key}" checked style="${cb}"> ${esc(sf.label)}</label>`;
           }
-          h += '</div>';
+          h += '</div></div>';
         }
       }
     } else {
-      h += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+      h += '<div style="display:flex;flex-wrap:wrap;gap:3px">';
       for (const f of grp.items) {
-        h += `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s"><input type="checkbox" class="${cls}" value="${f.key}" checked style="accent-color:${accentColor};width:13px;height:13px">${esc(f.label)}</label>`;
+        h += `<label style="${chip}"><input type="checkbox" class="${cls}" value="${f.key}" checked style="${cb}"> ${esc(f.label)}</label>`;
       }
       h += '</div>';
     }
+    h += '</div></div>';
   }
-  return h;
+  return h + '</div>';
 }
 
 function _iaGetCheckedCols(section) {
@@ -8242,9 +8267,9 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
   if (!showGrandTotal && !showGovTotal && !showHospDetail) return '';
   if (!cols.length) return '';
   const G = _iaBuildGovGroups(p1Data, p2Data, allGovs);
-  const grpColors = { 'التجميع':'#c5cae9', 'إجمالي الوارد':'#c8e6c9', 'إجمالي المنصرف':'#e1bee7', 'الفصائل والتوافق':'#bbdefb', 'عينات غير مفحوصة':'#ffcdd2', 'الإعدامات':'#ffe0b2', 'تحليل نسب المؤشرات':'#b2dfdb', 'مؤشرات وحدات دم الأطفال':'#f8bbd0', 'النسب المئوية للاعدام - أطفال':'#f8bbd0', 'السب المئوية للاعدام':'#f8bbd0' };
-  const grpTextColors = { 'التجميع':'#283593', 'إجمالي الوارد':'#1b5e20', 'إجمالي المنصرف':'#4a148c', 'الفصائل والتوافق':'#0d47a1', 'عينات غير مفحوصة':'#b71c1c', 'الإعدامات':'#e65100', 'تحليل نسب المؤشرات':'#004d40', 'مؤشرات وحدات دم الأطفال':'#880e4f', 'النسب المئوية للاعدام - أطفال':'#ad1457', 'السب المئوية للاعدام':'#ad1457' };
-  const grpBgs = { 'التibraries':'#f3f0ff', 'التجميع':'#f3f0ff', 'إجمالي الوارد':'#f1f8e9', 'إجمالي المنصرف':'#faf0ff', 'الفصائل والتوافق':'#f0f7ff', 'عينات غير مفحوصة':'#fff5f5', 'الإعدامات':'#fffaf0', 'تحليل نسب المؤشرات':'#f0faf8', 'مؤشرات وحدات دم الأطفال':'#fdf0f5', 'النسب المئوية للاعدام - أطفال':'#fdf0f5', 'السب المئوية للاعدام':'#fdf0f5' };
+  const grpColors = { 'التجميع':'#c5cae9', 'إجمالي الوارد':'#c8e6c9', 'إجمالي المنصرف':'#e1bee7', 'الفصائل والتوافق':'#bbdefb', 'عينات غير مفحوصة':'#ffcdd2', 'الإعدامات':'#ffe0b2', 'تحليل نسب المؤشرات':'#b2dfdb', 'مؤشرات وحدات دم الأطفال':'#f8bbd0', 'النسب المئوية للاعدام - أطفال':'#f8bbd0', 'النسب المئوية للاعدام':'#f8bbd0' };
+  const grpTextColors = { 'التجميع':'#283593', 'إجمالي الوارد':'#1b5e20', 'إجمالي المنصرف':'#4a148c', 'الفصائل والتوافق':'#0d47a1', 'عينات غير مفحوصة':'#b71c1c', 'الإعدامات':'#e65100', 'تحليل نسب المؤشرات':'#004d40', 'مؤشرات وحدات دم الأطفال':'#880e4f', 'النسب المئوية للاعدام - أطفال':'#ad1457', 'النسب المئوية للاعدام':'#ad1457' };
+  const grpBgs = { 'التجميع':'#f3f0ff', 'إجمالي الوارد':'#f1f8e9', 'إجمالي المنصرف':'#faf0ff', 'الفصائل والتوافق':'#f0f7ff', 'عينات غير مفحوصة':'#fff5f5', 'الإعدامات':'#fffaf0', 'تحليل نسب المؤشرات':'#f0faf8', 'مؤشرات وحدات دم الأطفال':'#fdf0f5', 'النسب المئوية للاعدام - أطفال':'#fdf0f5', 'النسب المئوية للاعدام':'#fdf0f5' };
   const hasSub = cols.some(c => c.sg);
   let html = '<div style="overflow-x:auto;padding:2px"><style>.ia-row:hover{background:#f5f8ff!important}.ia-row[data-row-bg="#f5f6fa"]:hover{background:#eef1f7!important}</style><table style="width:100%;border-collapse:collapse;font-size:12px;letter-spacing:0">';
   const groups = [];
@@ -8259,7 +8284,7 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
     }
   }
   html += `<thead><tr>`;
-  html += `<th rowspan="${hasSub ? 3 : 2}" style="background:#e8eaf6;color:#283593;padding:10px 12px;position:sticky;right:0;z-index:3;min-width:160px;text-align:right;font-size:13px;border-bottom:3px solid #90caf9;white-space:nowrap">البيان</th>`;
+  html += `<th rowspan="${hasSub ? 4 : 3}" style="background:#e8eaf6;color:#283593;padding:10px 12px;position:sticky;right:0;z-index:3;min-width:160px;text-align:right;font-size:13px;border-bottom:3px solid #90caf9;white-space:nowrap">البيان</th>`;
   for (const grp of groups) {
     const bg = grpColors[grp.name] || '#e0e0e0';
     const tc = grpTextColors[grp.name] || '#37474f';
@@ -8277,7 +8302,7 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
         html += `<th colspan="${subCols.length * 2}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.sg)}</th>`;
         ci += subCols.length;
       } else {
-        html += `<th rowspan="${hasSub ? 2 : 1}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.label)}</th>`;
+        html += `<th colspan="2" rowspan="${hasSub ? 2 : 1}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.label)}</th>`;
         ci++;
       }
     }
@@ -8397,7 +8422,7 @@ async function renderIndicatorAnalysis() {
   const c = document.getElementById('mainContent');
   const now = new Date();
   const curYear = now.getFullYear();
-  const years = [curYear, curYear - 1, curYear - 2];
+  const years = [curYear, curYear - 1, curYear - 2, curYear - 3, curYear - 4];
   const govs = await api('GET', '/governorates');
   const hospList = await api('GET', '/hospitals');
   let govOpts = '<option value="">كل المحافظات</option>';
@@ -8502,16 +8527,18 @@ async function loadIndicatorAnalysis() {
     if (gov) params.set('governorate', gov);
     if (hosp) params.set('hospitalId', hosp);
     const [result, allGovsRaw] = await Promise.all([api('GET', '/indicator-analysis?' + params.toString()), api('GET', '/governorates')]);
-    const allGovs = allGovsRaw.map(g => typeof g === 'string' ? g : g.name);
+    const bigP1 = result.big?.period1 || [], bigP2 = result.big?.period2 || [];
+    const smallP1 = result.small?.period1 || [], smallP2 = result.small?.period2 || [];
+    const dispP1 = result.disp?.period1 || [], dispP2 = result.disp?.period2 || [];
+    const dataGovSet = new Set();
+    [bigP1,bigP2,smallP1,smallP2,dispP1,dispP2].forEach(arr => arr.forEach(h => { if (h.governorate) dataGovSet.add(h.governorate); }));
+    const allGovs = gov ? [gov] : (dataGovSet.size ? [...dataGovSet].sort((a,b) => a.localeCompare(b,'ar')) : allGovsRaw.map(g => typeof g === 'string' ? g : g.name));
     window._iaLastResult = result;
     window._iaLastGovs = allGovs;
     const iaType = document.getElementById('iaType')?.value || 'all';
     const pL1 = document.getElementById('iaPeriod1Label')?.textContent || 'الفترة 1';
     const pL2 = document.getElementById('iaPeriod2Label')?.textContent || 'الفترة 2';
     let tablesHtml = '';
-    const bigP1 = result.big?.period1 || [], bigP2 = result.big?.period2 || [];
-    const smallP1 = result.small?.period1 || [], smallP2 = result.small?.period2 || [];
-    const dispP1 = result.disp?.period1 || [], dispP2 = result.disp?.period2 || [];
     const hasBig = bigP1.length || bigP2.length, hasSmall = smallP1.length || smallP2.length, hasDisp = dispP1.length || dispP2.length;
     const checkedBig = _iaGetCheckedCols('big').map(k => _iaBigFields.find(f => f.key === k)).filter(Boolean);
     const checkedSmall = _iaGetCheckedCols('small').map(k => _iaSmallFields.find(f => f.key === k)).filter(Boolean);
@@ -8522,8 +8549,8 @@ async function loadIndicatorAnalysis() {
       const groups = [...new Set(checked.map(c => c.g || 'أخرى'))];
       let h = `<div class="card" style="margin-bottom:16px" id="iaCard${secId}"><div class="card-header" style="background:linear-gradient(135deg,${grad});color:#fff;padding:10px 16px"><h3 style="margin:0;font-size:14px"><i class="fa-solid ${icon}" style="margin-left:8px"></i>${secLabel} <span style="font-size:11px;opacity:.7;font-weight:400">(${checked.length} حقل)</span></h3></div><div class="card-body" style="padding:0">`;
       h += _iaBuildSummaryTable(p1, p2, pL1, pL2, allGovs, checked, typeKey);
-      const grpBgMap = {'التجميع':'#e8eaf6,#c5cae9','إجمالي الوارد':'#e8f5e9,#c8e6c9','إجمالي المنصرف':'#f3e5f5,#e1bee7','الفصائل والتوافق':'#e3f2fd,#bbdefb','عينات غير مفحوصة':'#ffebee,#ffcdd2','الإعدامات':'#fff3e0,#ffe0b2','تحليل نسب المؤشرات':'#e0f2f1,#b2dfdb','مؤشرات وحدات دم الأطفال':'#fce4ec,#f8bbd0','النسب المئوية للاعدام - أطفال':'#fce4ec,#f8bbd0','السب المئوية للاعدام':'#fce4ec,#f8bbd0'};
-      const grpTxtMap = {'التجميع':'#1a237e','إجمالي الوارد':'#1b5e20','إجمالي المنصرف':'#4a148c','الفصائل والتوافق':'#0d47a1','عينات غير مفحوصة':'#b71c1c','الإعدامات':'#e65100','تحليل نسب المؤشرات':'#004d40','مؤشرات وحدات دم الأطفال':'#880e4f','النسب المئوية للاعدام - أطفال':'#ad1457','السب المئوية للاعدام':'#ad1457'};
+      const grpBgMap = {'التجميع':'#e8eaf6,#c5cae9','إجمالي الوارد':'#e8f5e9,#c8e6c9','إجمالي المنصرف':'#f3e5f5,#e1bee7','الفصائل والتوافق':'#e3f2fd,#bbdefb','عينات غير مفحوصة':'#ffebee,#ffcdd2','الإعدامات':'#fff3e0,#ffe0b2','تحليل نسب المؤشرات':'#e0f2f1,#b2dfdb','مؤشرات وحدات دم الأطفال':'#fce4ec,#f8bbd0','النسب المئوية للاعدام - أطفال':'#fce4ec,#f8bbd0','النسب المئوية للاعدام':'#fce4ec,#f8bbd0'};
+      const grpTxtMap = {'التجميع':'#1a237e','إجمالي الوارد':'#1b5e20','إجمالي المنصرف':'#4a148c','الفصائل والتوافق':'#0d47a1','عينات غير مفحوصة':'#b71c1c','الإعدامات':'#e65100','تحليل نسب المؤشرات':'#004d40','مؤشرات وحدات دم الأطفال':'#880e4f','النسب المئوية للاعدام - أطفال':'#ad1457','النسب المئوية للاعدام':'#ad1457'};
       for (const grp of groups) {
         const gCols = checked.filter(c => (c.g || 'أخرى') === grp);
         const safeId = grp.replace(/[^\u0600-\u06FFa-zA-Z0-9]/g, '_');
@@ -8741,65 +8768,65 @@ function toggleIaGroup(arg) {
 
 /* --- Group Narrative Analysis (bullet-point Arabic text + contextual domain analysis) --- */
 function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
-  var el = document.getElementById(divId);
+  const el = document.getElementById(divId);
   if (!el) return;
-  var showGrand = document.getElementById('iaShowGrand')?.checked;
-  var showGov = document.getElementById('iaShowGov')?.checked;
-  var showHosp = document.getElementById('iaShowHosp')?.checked;
-  var G = _iaBuildGovGroups(p1Data, p2Data, []);
-  var bullets = [];
+  const showGrand = document.getElementById('iaShowGrand')?.checked;
+  const showGov = document.getElementById('iaShowGov')?.checked;
+  const showHosp = document.getElementById('iaShowHosp')?.checked;
+  const G = _iaBuildGovGroups(p1Data, p2Data, []);
+  const bullets = [];
 
   if (showHosp) {
-    for (var ci = 0; ci < cols.length; ci++) {
-      var col = cols[ci];
-      var hospChanges = [];
-      var govArr = Array.from(G.govG);
-      for (var gi = 0; gi < govArr.length; gi++) {
-        var gov = govArr[gi][0], hosps = govArr[gi][1];
-        for (var hi = 0; hi < hosps.length; hi++) {
-          var h = hosps[hi];
-          var d1raw = G.p1M.get(h.hid) || {}, d2raw = G.p2M.get(h.hid) || {};
-          var v1 = Number(d1raw[col.key]) || 0, v2 = Number(d2raw[col.key]) || 0;
+    for (let ci = 0; ci < cols.length; ci++) {
+      const col = cols[ci];
+      const hospChanges = [];
+      const govArr = Array.from(G.govG);
+      for (let gi = 0; gi < govArr.length; gi++) {
+        const gov = govArr[gi][0], hosps = govArr[gi][1];
+        for (let hi = 0; hi < hosps.length; hi++) {
+          const h = hosps[hi];
+          const d1raw = G.p1M.get(h.hid) || {}, d2raw = G.p2M.get(h.hid) || {};
+          const v1 = Number(d1raw[col.key]) || 0, v2 = Number(d2raw[col.key]) || 0;
           if (v1 === 0 && v2 === 0) continue;
           if (v1 === v2) continue;
           hospChanges.push({ name: h.name, gov: gov, v1: v1, v2: v2, diff: v2 - v1, pct: v1 ? ((v2 - v1) / v1 * 100) : null });
         }
       }
       hospChanges.sort(function(a, b) { return Math.abs(b.diff) - Math.abs(a.diff); });
-      var increases = hospChanges.filter(function(h) { return h.diff > 0; });
-      var decreases = hospChanges.filter(function(h) { return h.diff < 0; });
+      const increases = hospChanges.filter(function(h) { return h.diff > 0; });
+      const decreases = hospChanges.filter(function(h) { return h.diff < 0; });
 
       if (increases.length === 1) {
-        var h = increases[0];
+        const h = increases[0];
         bullets.push('ارتفاع ' + col.label + ' ب' + h.name + ' في ' + h.gov + ' خلال ' + lP2 + ' (' + _iaFmt(h.v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(h.v1) + ')');
       } else if (increases.length > 1) {
-        var grouped = {};
-        for (var ii = 0; ii < increases.length; ii++) { var hh = increases[ii]; if (!grouped[hh.gov]) grouped[hh.gov] = []; grouped[hh.gov].push(hh); }
-        var gKeys = Object.keys(grouped);
-        for (var ki = 0; ki < gKeys.length; ki++) {
-          var gk = gKeys[ki], arr = grouped[gk];
+        const grouped = {};
+        for (let ii = 0; ii < increases.length; ii++) { const hh = increases[ii]; if (!grouped[hh.gov]) grouped[hh.gov] = []; grouped[hh.gov].push(hh); }
+        const gKeys = Object.keys(grouped);
+        for (let ki = 0; ki < gKeys.length; ki++) {
+          const gk = gKeys[ki], arr = grouped[gk];
           if (arr.length === 1) {
             bullets.push('ارتفاع ' + col.label + ' ب' + arr[0].name + ' في ' + gk + ' خلال ' + lP2 + ' (' + _iaFmt(arr[0].v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(arr[0].v1) + ')');
           } else {
-            var names = arr.map(function(x) { return x.name; }).join(' و ');
+            const names = arr.map(function(x) { return x.name; }).join(' و ');
             bullets.push('ارتفاع ' + col.label + ' ب' + names + ' في ' + gk + ' خلال ' + lP2 + ' مقارنة ب' + lP1);
           }
         }
       }
 
       if (decreases.length === 1) {
-        var h = decreases[0];
+        const h = decreases[0];
         bullets.push('انخفاض ' + col.label + ' ب' + h.name + ' في ' + h.gov + ' خلال ' + lP2 + ' (' + _iaFmt(h.v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(h.v1) + ')');
       } else if (decreases.length > 1) {
-        var grouped = {};
-        for (var ii = 0; ii < decreases.length; ii++) { var hh = decreases[ii]; if (!grouped[hh.gov]) grouped[hh.gov] = []; grouped[hh.gov].push(hh); }
-        var gKeys = Object.keys(grouped);
-        for (var ki = 0; ki < gKeys.length; ki++) {
-          var gk = gKeys[ki], arr = grouped[gk];
+        const grouped = {};
+        for (let ii = 0; ii < decreases.length; ii++) { const hh = decreases[ii]; if (!grouped[hh.gov]) grouped[hh.gov] = []; grouped[hh.gov].push(hh); }
+        const gKeys = Object.keys(grouped);
+        for (let ki = 0; ki < gKeys.length; ki++) {
+          const gk = gKeys[ki], arr = grouped[gk];
           if (arr.length === 1) {
             bullets.push('انخفاض ' + col.label + ' ب' + arr[0].name + ' في ' + gk + ' خلال ' + lP2 + ' (' + _iaFmt(arr[0].v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(arr[0].v1) + ')');
           } else {
-            var names = arr.map(function(x) { return x.name; }).join(' و ');
+            const names = arr.map(function(x) { return x.name; }).join(' و ');
             bullets.push('انخفاض ' + col.label + ' ب' + names + ' في ' + gk + ' خلال ' + lP2 + ' مقارنة ب' + lP1);
           }
         }
@@ -8808,15 +8835,15 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   }
 
   if (showGov && !showHosp) {
-    for (var ci = 0; ci < cols.length; ci++) {
-      var col = cols[ci];
-      var govChanges = [];
-      var govArr = Array.from(G.govG);
-      for (var gi = 0; gi < govArr.length; gi++) {
-        var govName = govArr[gi][0], hosps = govArr[gi][1];
-        var sum1 = 0, sum2 = 0;
-        for (var hi = 0; hi < hosps.length; hi++) {
-          var d1raw = G.p1M.get(hosps[hi].hid) || {}, d2raw = G.p2M.get(hosps[hi].hid) || {};
+    for (let ci = 0; ci < cols.length; ci++) {
+      const col = cols[ci];
+      const govChanges = [];
+      const govArr = Array.from(G.govG);
+      for (let gi = 0; gi < govArr.length; gi++) {
+        const govName = govArr[gi][0], hosps = govArr[gi][1];
+        let sum1 = 0, sum2 = 0;
+        for (let hi = 0; hi < hosps.length; hi++) {
+          const d1raw = G.p1M.get(hosps[hi].hid) || {}, d2raw = G.p2M.get(hosps[hi].hid) || {};
           sum1 += Number(d1raw[col.key]) || 0;
           sum2 += Number(d2raw[col.key]) || 0;
         }
@@ -8825,88 +8852,92 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
         govChanges.push({ name: govName, v1: sum1, v2: sum2, diff: sum2 - sum1 });
       }
       govChanges.sort(function(a, b) { return Math.abs(b.diff) - Math.abs(a.diff); });
-      for (var gi2 = 0; gi2 < govChanges.length; gi2++) {
-        var gc = govChanges[gi2];
-        var dir = gc.diff > 0 ? 'ارتفاع' : 'انخفاض';
-        var sign = gc.diff > 0 ? '+' : '';
-        var pct = gc.v1 ? ((gc.v2 - gc.v1) / gc.v1 * 100).toFixed(1) : '-';
+      for (let gi2 = 0; gi2 < govChanges.length; gi2++) {
+        const gc = govChanges[gi2];
+        const dir = gc.diff > 0 ? 'ارتفاع' : 'انخفاض';
+        const sign = gc.diff > 0 ? '+' : '';
+        const pct = gc.v1 ? ((gc.v2 - gc.v1) / gc.v1 * 100).toFixed(1) : '-';
         bullets.push(dir + ' ' + col.label + ' في ' + gc.name + ' خلال ' + lP2 + ' (' + _iaFmt(gc.v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(gc.v1) + ') بنسبة ' + sign + pct + '%');
       }
     }
   }
 
   if (showGrand) {
-    for (var ci = 0; ci < cols.length; ci++) {
-      var col = cols[ci];
+    for (let ci = 0; ci < cols.length; ci++) {
+      const col = cols[ci];
       if (_iaIsFormula(col.key)) continue;
-      var s1 = 0, s2 = 0;
-      for (var i = 0; i < p1Data.length; i++) s1 += (Number(p1Data[i].data?.[col.key]) || 0);
-      for (var i = 0; i < p2Data.length; i++) s2 += (Number(p2Data[i].data?.[col.key]) || 0);
+      let s1 = 0, s2 = 0;
+      for (let i = 0; i < p1Data.length; i++) s1 += (Number(p1Data[i].data?.[col.key]) || 0);
+      for (let i = 0; i < p2Data.length; i++) s2 += (Number(p2Data[i].data?.[col.key]) || 0);
       if (s1 === 0 && s2 === 0) continue;
       if (s1 === s2) continue;
-      var diff = s2 - s1;
-      var dir = diff > 0 ? 'ارتفاع' : 'انخفاض';
-      var pct = s1 ? (((s2 - s1) / s1) * 100).toFixed(1) : '-';
-      var sign = diff > 0 ? '+' : '';
+      const diff = s2 - s1;
+      const dir = diff > 0 ? 'ارتفاع' : 'انخفاض';
+      const pct = s1 ? (((s2 - s1) / s1) * 100).toFixed(1) : '-';
+      const sign = diff > 0 ? '+' : '';
       bullets.push(dir + ' ' + col.label + ' خلال ' + lP2 + ' (' + _iaFmt(s2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(s1) + ') بنسبة ' + sign + pct + '%');
     }
   }
 
   /* ===== Contextual Domain Analysis ===== */
-  var ctxBullets = [];
-  var ctxGroups = new Set(cols.map(function(c) { return c.g || ''; }));
+  const ctxBullets = [];
+  const ctxGroups = new Set(cols.map(function(c) { return c.g || ''; }));
 
   function _ctxSum(dataArr, key) {
-    var s = 0;
+    let s = 0;
     dataArr.forEach(function(h) { s += Number((h.data || {})[key]) || 0; });
     return s;
   }
   function _ctxAggFormulas(dataArr, cardType) {
-    var agg = {};
+    const agg = {};
     dataArr.forEach(function(h) {
-      var d = h.data || {};
-      for (var k in d) {
+      const d = h.data || {};
+      for (const k in d) {
         if (_iaIsFormula(k)) continue;
         if (typeof d[k] === 'number') agg[k] = (agg[k] || 0) + d[k];
       }
     });
     if (cardType === 'big' || cardType === 'small') {
-      var f = _iaRecomputeFormulas(agg, cardType);
-      for (var k in f) agg[k] = f[k];
+      const f = _iaRecomputeFormulas(agg, cardType);
+      for (const k in f) agg[k] = f[k];
     }
     return agg;
   }
 
   /* ===== الفصائل والتوافق ===== */
   if (ctxGroups.has('الفصائل والتوافق')) {
-    var ctKey = cols.some(function(c) { return c.key === 'child_ct'; }) ? 'child_ct' : 'ct';
-    var compatKey = ctKey === 'child_ct' ? 'child_compatibility' : 'compatibility';
-    var bgKey = ctKey === 'child_ct' ? 'child_blood_groups' : 'blood_groups';
-    var outKey = ctKey === 'child_ct' ? 'child_out_blood' : 'out_blood';
-    var hasCt = cols.some(function(c) { return c.key === 'ct' || c.key === 'child_ct'; });
-    var hasCompat = cols.some(function(c) { return c.key === 'compatibility' || c.key === 'child_compatibility'; });
-    var hasBgroups = cols.some(function(c) { return c.key === 'blood_groups' || c.key === 'child_blood_groups'; });
+    const ctKey = cols.some(function(c) { return c.key === 'child_ct'; }) ? 'child_ct' : 'ct';
+    const compatKey = ctKey === 'child_ct' ? 'child_compatibility' : 'compatibility';
+    const bgKey = ctKey === 'child_ct' ? 'child_blood_groups' : 'blood_groups';
+    const isChild = ctKey === 'child_ct';
+    function _ctxOutVal(d) {
+      if (isChild) return Number(d.child_out_blood) || 0;
+      return (Number(d.out_blood_int)||0) + (Number(d.out_blood_branch)||0) + (Number(d.out_blood_auth)||0) + (Number(d.out_blood_ext)||0);
+    }
+    const hasCt = cols.some(function(c) { return c.key === 'ct' || c.key === 'child_ct'; });
+    const hasCompat = cols.some(function(c) { return c.key === 'compatibility' || c.key === 'child_compatibility'; });
+    const hasBgroups = cols.some(function(c) { return c.key === 'blood_groups' || c.key === 'child_blood_groups'; });
 
     if (hasCt) {
       /* Hospital-level C/T analysis */
       if (showHosp) {
-        var lowCtHosps = [], okCtHosps = [];
-        var govArr2 = Array.from(G.govG);
-        for (var gi = 0; gi < govArr2.length; gi++) {
-          var hosps2 = govArr2[gi][1];
-          for (var hi = 0; hi < hosps2.length; hi++) {
-            var h = hosps2[hi];
-            var d2 = G.p2M.get(h.hid) || {};
-            var compatVal = Number(d2[compatKey]) || 0;
-            var outVal = Number(d2[outKey]) || 0;
+        const lowCtHosps = [], okCtHosps = [];
+        const govArr2 = Array.from(G.govG);
+        for (let gi = 0; gi < govArr2.length; gi++) {
+          const hosps2 = govArr2[gi][1];
+          for (let hi = 0; hi < hosps2.length; hi++) {
+            const h = hosps2[hi];
+            const d2 = G.p2M.get(h.hid) || {};
+            const compatVal = Number(d2[compatKey]) || 0;
+            const outVal = _ctxOutVal(d2);
             if (compatVal === 0 && outVal === 0) continue;
-            var ctCalc = outVal ? (compatVal / outVal) : 0;
+            const ctCalc = outVal ? (compatVal / outVal) : 0;
             if (ctCalc < 2) lowCtHosps.push({ name: h.name, gov: govArr2[gi][0], ct: ctCalc });
             else okCtHosps.push({ name: h.name, gov: govArr2[gi][0], ct: ctCalc });
           }
         }
         if (lowCtHosps.length) {
-          var lowNames = lowCtHosps.map(function(h) { return h.name + ' (' + h.ct.toFixed(2) + ')'; }).join('\u060c ');
+          const lowNames = lowCtHosps.map(function(h) { return h.name + ' (' + h.ct.toFixed(2) + ')'; }).join('\u060c ');
           ctxBullets.push('نسبة C/T أقل من 2 في ' + lowCtHosps.length + ' مستشفى: ' + lowNames + ' \u2014 يُنصح بمراجعة سياسة الصرف والتوافق');
         }
         if (okCtHosps.length) {
@@ -8916,15 +8947,15 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
 
       /* Governorate-level C/T analysis */
       if (showGov && !showHosp) {
-        var govArr3 = Array.from(G.govG);
-        for (var gi = 0; gi < govArr3.length; gi++) {
-          var govName2 = govArr3[gi][0], hosps3 = govArr3[gi][1];
-          var gCp2 = 0, gOt2 = 0;
-          for (var hi = 0; hi < hosps3.length; hi++) {
-            var d2 = G.p2M.get(hosps3[hi].hid) || {};
-            gCp2 += Number(d2[compatKey]) || 0; gOt2 += Number(d2[outKey]) || 0;
+        const govArr3 = Array.from(G.govG);
+        for (let gi = 0; gi < govArr3.length; gi++) {
+          const govName2 = govArr3[gi][0], hosps3 = govArr3[gi][1];
+          let gCp2 = 0, gOt2 = 0;
+          for (let hi = 0; hi < hosps3.length; hi++) {
+            const d2 = G.p2M.get(hosps3[hi].hid) || {};
+            gCp2 += Number(d2[compatKey]) || 0; gOt2 += _ctxOutVal(d2);
           }
-          var ctGov2 = gOt2 ? (gCp2 / gOt2) : 0;
+          const ctGov2 = gOt2 ? (gCp2 / gOt2) : 0;
           if (ctGov2 > 0 && ctGov2 < 2) ctxBullets.push('نسبة C/T في ' + govName2 + ' = ' + ctGov2.toFixed(2) + ' (أقل من 2) في ' + lP2);
           else if (ctGov2 >= 2) ctxBullets.push('نسبة C/T في ' + govName2 + ' = ' + ctGov2.toFixed(2) + ' (مقبولة) في ' + lP2);
         }
@@ -8932,15 +8963,19 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
 
       /* Grand total C/T analysis */
       if (showGrand) {
-        var tc1 = _ctxSum(p1Data, compatKey), to1 = _ctxSum(p1Data, outKey);
-        var tc2 = _ctxSum(p2Data, compatKey), to2 = _ctxSum(p2Data, outKey);
-        var ctG1 = to1 ? (tc1 / to1) : 0;
-        var ctG2 = to2 ? (tc2 / to2) : 0;
+        const tc1 = _ctxSum(p1Data, compatKey);
+        let to1 = 0;
+        const tc2 = _ctxSum(p2Data, compatKey);
+        let to2 = 0;
+        for (let ti = 0; ti < p1Data.length; ti++) to1 += _ctxOutVal(p1Data[ti].data || {});
+        for (let ti = 0; ti < p2Data.length; ti++) to2 += _ctxOutVal(p2Data[ti].data || {});
+        const ctG1 = to1 ? (tc1 / to1) : 0;
+        const ctG2 = to2 ? (tc2 / to2) : 0;
         if (ctG2 > 0 && ctG2 < 1) ctxBullets.push('نسبة C/T الإجمالية في ' + lP2 + ' = ' + ctG2.toFixed(2) + ' \u2014 أقل من 1: صرف زائد جداً عن التوافق');
         else if (ctG2 >= 1 && ctG2 < 2) ctxBullets.push('نسبة C/T الإجمالية في ' + lP2 + ' = ' + ctG2.toFixed(2) + ' \u2014 أقل من 2: يُنصح بمراجعة كمية الصرف');
         else if (ctG2 >= 2) ctxBullets.push('نسبة C/T الإجمالية في ' + lP2 + ' = ' + ctG2.toFixed(2) + ' \u2014 مقبولة (2 أو أعلى)');
         if (ctG1 > 0 && ctG2 > 0) {
-          var ctDiff = ctG2 - ctG1;
+          const ctDiff = ctG2 - ctG1;
           if (ctDiff > 0.1) ctxBullets.push('تحسن نسبة C/T من ' + ctG1.toFixed(2) + ' في ' + lP1 + ' إلى ' + ctG2.toFixed(2) + ' في ' + lP2);
           else if (ctDiff < -0.1) ctxBullets.push('تدهور نسبة C/T من ' + ctG1.toFixed(2) + ' في ' + lP1 + ' إلى ' + ctG2.toFixed(2) + ' في ' + lP2);
         }
@@ -8950,10 +8985,10 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
     /* Compatibility rate analysis */
     if (hasCompat && hasBgroups) {
       if (showGrand) {
-        var tBg1 = _ctxSum(p1Data, bgKey), tCp1 = _ctxSum(p1Data, compatKey);
-        var tBg2 = _ctxSum(p2Data, bgKey), tCp2 = _ctxSum(p2Data, compatKey);
-        var r1 = tBg1 ? ((tCp1 / tBg1) * 100).toFixed(1) : '0';
-        var r2 = tBg2 ? ((tCp2 / tBg2) * 100).toFixed(1) : '0';
+        const tBg1 = _ctxSum(p1Data, bgKey), tCp1 = _ctxSum(p1Data, compatKey);
+        const tBg2 = _ctxSum(p2Data, bgKey), tCp2 = _ctxSum(p2Data, compatKey);
+        const r1 = tBg1 ? ((tCp1 / tBg1) * 100).toFixed(1) : '0';
+        const r2 = tBg2 ? ((tCp2 / tBg2) * 100).toFixed(1) : '0';
         ctxBullets.push('نسبة التوافق من الفصائل المفحوصة: ' + r2 + '% في ' + lP2 + ' مقارنة بـ ' + r1 + '% في ' + lP1);
         if (Number(r2) < 80) ctxBullets.push('نسبة التوافق أقل من 80% \u2014 يُنصح بمراجعة طرق الفحص والتوافق');
         else if (Number(r2) >= 95) ctxBullets.push('نسبة التوافق 95% أو أعلى \u2014 أداء ممتاز');
@@ -8963,62 +8998,62 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
 
   /* ===== منصرف الفصائل (disp blood types) ===== */
   if (label === 'منصرف الفصائل') {
-    var dispKeys = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
+    const dispKeys = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
     if (showGrand) {
-      var t1 = {}, t2 = {};
+      const t1 = {}, t2 = {};
       dispKeys.forEach(function(k) { t1[k] = _ctxSum(p1Data, k); t2[k] = _ctxSum(p2Data, k); });
-      var gT1 = 0, gT2 = 0;
+      let gT1 = 0, gT2 = 0;
       dispKeys.forEach(function(k) { gT1 += t1[k]; gT2 += t2[k]; });
       if (gT2 > 0) {
-        var sorted2 = dispKeys.slice().sort(function(a, b) { return t2[b] - t2[a]; });
+        const sorted2 = dispKeys.slice().sort(function(a, b) { return t2[b] - t2[a]; });
         ctxBullets.push('أكثر فصيلة منصرف في ' + lP2 + ': ' + sorted2[0] + ' (' + _iaFmt(t2[sorted2[0]]) + ' وحدة = ' + ((t2[sorted2[0]]/gT2)*100).toFixed(1) + '%)');
-        var last = sorted2[sorted2.length - 1];
+        const last = sorted2[sorted2.length - 1];
         ctxBullets.push('أقل فصيلة منصرف في ' + lP2 + ': ' + last + ' (' + _iaFmt(t2[last]) + ' وحدة = ' + ((t2[last]/gT2)*100).toFixed(1) + '%)');
       }
       /* Positive vs Negative ratio */
-      var posT = ['A+','B+','O+','AB+'], negT = ['A-','B-','O-','AB-'];
-      var pT2 = posT.reduce(function(s,k){return s+t2[k];},0), nT2 = negT.reduce(function(s,k){return s+t2[k];},0);
+      const posT = ['A+','B+','O+','AB+'], negT = ['A-','B-','O-','AB-'];
+      const pT2 = posT.reduce(function(s,k){return s+t2[k];},0), nT2 = negT.reduce(function(s,k){return s+t2[k];},0);
       if (pT2 + nT2 > 0) ctxBullets.push('النسبة المئوية للسالب في ' + lP2 + ': ' + ((nT2/(pT2+nT2))*100).toFixed(1) + '% من إجمالي الصرف (' + _iaFmt(nT2) + ' من ' + _iaFmt(pT2+nT2) + ')');
       /* Per-type changes */
       dispKeys.forEach(function(k) {
-        var v1 = t1[k], v2 = t2[k];
+        const v1 = t1[k], v2 = t2[k];
         if (v1 === 0 && v2 === 0) return;
-        var d = v2 - v1;
+        const d = v2 - v1;
         if (Math.abs(d) < 1) return;
-        var pctCh = v1 ? ((d / v1) * 100).toFixed(0) : null;
-        var dir = d > 0 ? 'ارتفاع' : 'انخفاض';
-        var detail = pctCh ? ' بنسبة ' + (d > 0 ? '+' : '') + pctCh + '%' : '';
+        const pctCh = v1 ? ((d / v1) * 100).toFixed(0) : null;
+        const dir = d > 0 ? 'ارتفاع' : 'انخفاض';
+        const detail = pctCh ? ' بنسبة ' + (d > 0 ? '+' : '') + pctCh + '%' : '';
         ctxBullets.push(dir + ' منصرف ' + k + ' من ' + _iaFmt(v1) + ' إلى ' + _iaFmt(v2) + detail);
       });
     }
     if (showGov && !showHosp) {
-      var dk2 = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
-      var gArr4 = Array.from(G.govG);
-      for (var gi = 0; gi < gArr4.length; gi++) {
-        var gN = gArr4[gi][0], hs4 = gArr4[gi][1];
-        var gT = {}; dk2.forEach(function(k){gT[k]=0;}); var gG = 0;
-        for (var hi = 0; hi < hs4.length; hi++) {
-          var d2 = G.p2M.get(hs4[hi].hid) || {};
-          dk2.forEach(function(k){var v=Number(d2[k])||0; gT[k]+=v; gG+=v;});
+      const dk2 = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
+      const gArr4 = Array.from(G.govG);
+      for (let gi = 0; gi < gArr4.length; gi++) {
+        const gN = gArr4[gi][0], hs4 = gArr4[gi][1];
+        const gT = {}; dk2.forEach(function(k){gT[k]=0;}); let gG = 0;
+        for (let hi = 0; hi < hs4.length; hi++) {
+          const d2 = G.p2M.get(hs4[hi].hid) || {};
+          dk2.forEach(function(k){const v=Number(d2[k])||0; gT[k]+=v; gG+=v;});
         }
         if (gG === 0) continue;
-        var mx = dk2.reduce(function(a,b){return gT[a]>=gT[b]?a:b;});
-        var mn = dk2.reduce(function(a,b){return gT[a]<=gT[b]?a:b;});
+        const mx = dk2.reduce(function(a,b){return gT[a]>=gT[b]?a:b;});
+        const mn = dk2.reduce(function(a,b){return gT[a]<=gT[b]?a:b;});
         ctxBullets.push(gN + ': أكثر فصيلة ' + mx + ' (' + _iaFmt(gT[mx]) + ') وأقل فصيلة ' + mn + ' (' + _iaFmt(gT[mn]) + ')');
       }
     }
     if (showHosp) {
-      var dk3 = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
-      var hAlerts = [];
-      var gArr5 = Array.from(G.govG);
-      for (var gi = 0; gi < gArr5.length; gi++) {
-        var hs5 = gArr5[gi][1];
-        for (var hi = 0; hi < hs5.length; hi++) {
-          var h2 = hs5[hi];
-          var d2 = G.p2M.get(h2.hid) || {};
-          var total = 0; dk3.forEach(function(k){total+=Number(d2[k])||0;});
+      const dk3 = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
+      const hAlerts = [];
+      const gArr5 = Array.from(G.govG);
+      for (let gi = 0; gi < gArr5.length; gi++) {
+        const hs5 = gArr5[gi][1];
+        for (let hi = 0; hi < hs5.length; hi++) {
+          const h2 = hs5[hi];
+          const d2 = G.p2M.get(h2.hid) || {};
+          let total = 0; dk3.forEach(function(k){total+=Number(d2[k])||0;});
           if (total === 0) continue;
-          var zeros = dk3.filter(function(k){return (Number(d2[k])||0)===0;});
+          const zeros = dk3.filter(function(k){return (Number(d2[k])||0)===0;});
           if (zeros.length >= 3) hAlerts.push(h2.name + ' (' + zeros.join('/') + ' = 0)');
         }
       }
@@ -9029,14 +9064,14 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   /* ===== إجمالي المنصرف ===== */
   if (ctxGroups.has('إجمالي المنصرف')) {
     if (showGrand) {
-      var hasBlood = cols.some(function(c){return c.key==='out_blood'||c.key==='out_blood_int';});
-      var hasPlasma = cols.some(function(c){return c.key==='out_plasma'||c.key==='out_plasma_int';});
+      const hasBlood = cols.some(function(c){return c.key==='out_blood'||c.key==='out_blood_int';});
+      const hasPlasma = cols.some(function(c){return c.key==='out_plasma'||c.key==='out_plasma_int';});
       if (hasBlood && hasPlasma) {
-        var bk2 = cols.some(function(c){return c.key==='out_blood_int';}) ? 'out_blood_int' : 'out_blood';
-        var pk2 = cols.some(function(c){return c.key==='out_plasma_int';}) ? 'out_plasma_int' : 'out_plasma';
-        var tb1 = _ctxSum(p1Data, bk2), tp1 = _ctxSum(p1Data, pk2);
-        var tb2 = _ctxSum(p2Data, bk2), tp2 = _ctxSum(p2Data, pk2);
-        var totO2 = tb2 + tp2;
+        const bk2 = cols.some(function(c){return c.key==='out_blood_int';}) ? 'out_blood_int' : 'out_blood';
+        const pk2 = cols.some(function(c){return c.key==='out_plasma_int';}) ? 'out_plasma_int' : 'out_plasma';
+        const tb1 = _ctxSum(p1Data, bk2), tp1 = _ctxSum(p1Data, pk2);
+        const tb2 = _ctxSum(p2Data, bk2), tp2 = _ctxSum(p2Data, pk2);
+        const totO2 = tb2 + tp2;
         if (totO2 > 0) ctxBullets.push('توزيع الصرف في ' + lP2 + ': دم ' + ((tb2/totO2)*100).toFixed(1) + '% (' + _iaFmt(tb2) + ') | بلازما ' + ((tp2/totO2)*100).toFixed(1) + '% (' + _iaFmt(tp2) + ')');
       }
     }
@@ -9045,19 +9080,19 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   /* ===== إجمالي الوارد ===== */
   if (ctxGroups.has('إجمالي الوارد')) {
     if (showGrand) {
-      var hasIncBlood = cols.some(function(c){return c.key==='inc_blood';});
-      var hasIncPlasma = cols.some(function(c){return c.key==='inc_plasma';});
+      const hasIncBlood = cols.some(function(c){return c.key==='inc_blood';});
+      const hasIncPlasma = cols.some(function(c){return c.key==='inc_plasma';});
       if (hasIncBlood && hasIncPlasma) {
-        var ib2 = _ctxSum(p2Data, 'inc_blood'), ip2 = _ctxSum(p2Data, 'inc_plasma');
-        var is2 = _ctxSum(p2Data, 'inc_sdp');
-        var totIn2 = ib2 + ip2 + is2;
+        const ib2 = _ctxSum(p2Data, 'inc_blood'), ip2 = _ctxSum(p2Data, 'inc_plasma');
+        const is2 = _ctxSum(p2Data, 'inc_sdp');
+        const totIn2 = ib2 + ip2 + is2;
         if (totIn2 > 0) ctxBullets.push('توزيع الوارد في ' + lP2 + ': دم ' + ((ib2/totIn2)*100).toFixed(1) + '% | بلازما ' + ((ip2/totIn2)*100).toFixed(1) + '% | SDP ' + ((is2/totIn2)*100).toFixed(1) + '%');
       }
-      var hasIncCollect = cols.some(function(c){return c.key==='inc_collected';});
+      const hasIncCollect = cols.some(function(c){return c.key==='inc_collected';});
       if (hasIncCollect) {
-        var ic2 = _ctxSum(p2Data, 'inc_collected');
-        var ir2 = _ctxSum(p2Data, 'inc_regional');
-        var totI2 = ic2 + ir2;
+        const ic2 = _ctxSum(p2Data, 'inc_collected');
+        const ir2 = _ctxSum(p2Data, 'inc_regional');
+        const totI2 = ic2 + ir2;
         if (totI2 > 0) ctxBullets.push(' مصدر الوارد في ' + lP2 + ': تجميعي ' + ((ic2/totI2)*100).toFixed(1) + '% (' + _iaFmt(ic2) + ') | إقليمي ' + ((ir2/totI2)*100).toFixed(1) + '% (' + _iaFmt(ir2) + ')');
       }
     }
@@ -9066,22 +9101,22 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   /* ===== الإعدامات ===== */
   if (ctxGroups.has('الإعدامات')) {
     if (showGrand) {
-      var expKeys = ['disp_exp_blood','disp_exp_plasma','disp_exp_sdp','disp_exp_rdp'];
-      var expLbl = {'disp_exp_blood':'دم','disp_exp_plasma':'بلازما','disp_exp_sdp':'SDP','disp_exp_rdp':'RDP'};
-      var hasExp = expKeys.some(function(k){return cols.some(function(c){return c.key===k;});});
+      const expKeys = ['disp_exp_blood','disp_exp_blood2','disp_exp_plasma','disp_exp_plasma2','disp_exp_sdp','disp_exp_sdp2','disp_exp_rdp','disp_exp_rdp2'];
+      const expLbl = {'disp_exp_blood':'دم','disp_exp_blood2':'دم 2','disp_exp_plasma':'بلازما','disp_exp_plasma2':'بلازما 2','disp_exp_sdp':'SDP','disp_exp_sdp2':'SDP 2','disp_exp_rdp':'RDP','disp_exp_rdp2':'RDP 2'};
+      const hasExp = expKeys.some(function(k){return cols.some(function(c){return c.key===k;});});
       if (hasExp) {
-        var totE2 = 0; expKeys.forEach(function(k){totE2+=_ctxSum(p2Data,k);});
+        let totE2 = 0; expKeys.forEach(function(k){totE2+=_ctxSum(p2Data,k);});
         if (totE2 > 0) {
-          var ep = [];
-          expKeys.forEach(function(k){var v=_ctxSum(p2Data,k);if(v>0)ep.push(expLbl[k]+' '+_iaFmt(v)+' ('+((v/totE2)*100).toFixed(1)+'%)');});
+          const ep = [];
+          expKeys.forEach(function(k){const v=_ctxSum(p2Data,k);if(v>0)ep.push(expLbl[k]+' '+_iaFmt(v)+' ('+((v/totE2)*100).toFixed(1)+'%)');});
           ctxBullets.push('توزيع الإعدامات في ' + lP2 + ': ' + ep.join(' | '));
         }
       }
-      var hasViral = cols.some(function(c){return c.key==='virology_c';});
+      const hasViral = cols.some(function(c){return c.key==='virology_c';});
       if (hasViral) {
-        var vc=_ctxSum(p2Data,'virology_c'),vb=_ctxSum(p2Data,'virology_b');
-        var vi=_ctxSum(p2Data,'virology_i'),vd=_ctxSum(p2Data,'virology_dollar');
-        var vtot=vc+vb+vi+vd;
+        const vc=_ctxSum(p2Data,'virology_c'),vb=_ctxSum(p2Data,'virology_b');
+        const vi=_ctxSum(p2Data,'virology_i'),vd=_ctxSum(p2Data,'virology_dollar');
+        const vtot=vc+vb+vi+vd;
         if (vtot > 0) {
           ctxBullets.push('إجمالي الإعدامات الفيروسية في ' + lP2 + ': C=' + _iaFmt(vc) + ' (' + ((vc/vtot)*100).toFixed(1) + '%) | B=' + _iaFmt(vb) + ' (' + ((vb/vtot)*100).toFixed(1) + '%) | I=' + _iaFmt(vi) + ' (' + ((vi/vtot)*100).toFixed(1) + '%) | $=' + _iaFmt(vd) + ' (' + ((vd/vtot)*100).toFixed(1) + '%)');
           if (vc > vb * 2) ctxBullets.push('فيروس C متفوق على B بمرتين أو أكثر \u2014 يُنصح بمراجعة مصادر التلوث');
@@ -9093,21 +9128,21 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   /* ===== تحليل نسب المؤشرات ===== */
   if (ctxGroups.has('تحليل نسب المؤشرات')) {
     if (showGrand) {
-      var ratioKeys = ['ratio_uncompleted','ratio_refused','ratio_c','ratio_b','ratio_i','ratio_dollar','ratio_exp','ratio_returned','ratio_reaction','ratio_open','ratio_other'];
-      var ratioLbl = {'ratio_uncompleted':'لم يكتمل','ratio_refused':'مرفوضة','ratio_c':'فيروس C','ratio_b':'فيروس B','ratio_i':'فيروس I','ratio_dollar':'فيروس $','ratio_exp':'انتهاء الصلاحية','ratio_returned':'مرتجع','ratio_reaction':'تفاعل','ratio_open':'نظام مفتوح','ratio_other':'أخرى'};
-      var hasRatio = ratioKeys.some(function(k){return cols.some(function(c){return c.key===k;});});
+      const ratioKeys = ['ratio_uncompleted','ratio_refused','ratio_c','ratio_b','ratio_i','ratio_dollar','ratio_exp','ratio_returned','ratio_reaction','ratio_open','ratio_other'];
+      const ratioLbl = {'ratio_uncompleted':'لم يكتمل','ratio_refused':'مرفوضة','ratio_c':'فيروس C','ratio_b':'فيروس B','ratio_i':'فيروس I','ratio_dollar':'فيروس $','ratio_exp':'انتهاء الصلاحية','ratio_returned':'مرتجع','ratio_reaction':'تفاعل','ratio_open':'نظام مفتوح','ratio_other':'أخرى'};
+      const hasRatio = ratioKeys.some(function(k){return cols.some(function(c){return c.key===k;});});
       if (hasRatio) {
-        var aggP2 = _ctxAggFormulas(p2Data, 'big');
-        var maxR = 0, maxK = '', totR = 0;
-        ratioKeys.forEach(function(k){var v=Number(aggP2[k])||0;totR+=v;if(v>maxR){maxR=v;maxK=k;}});
+        const aggP2 = _ctxAggFormulas(p2Data, 'big');
+        let maxR = 0, maxK = '', totR = 0;
+        ratioKeys.forEach(function(k){const v=Number(aggP2[k])||0;totR+=v;if(v>maxR){maxR=v;maxK=k;}});
         if (maxK && totR > 0) ctxBullets.push('أعلى نسبة إعدام في ' + lP2 + ': ' + ratioLbl[maxK] + ' (' + _iaFmt(maxR) + '% = ' + ((maxR/totR)*100).toFixed(1) + '% من الإجمالي)');
-        var coll2 = Number(aggP2.collect_total)||0, test2 = Number(aggP2.tested)||0;
-        var ref2 = (Number(aggP2.refused_fatty)||0)+(Number(aggP2.refused_icteric)||0);
-        var unc2 = Number(aggP2.uncompleted)||0, thr2 = Number(aggP2.donation_therapeutic)||0;
-        var totReject = ref2+unc2+thr2;
+        const coll2 = Number(aggP2.collect_total)||0, test2 = Number(aggP2.tested)||0;
+        const ref2 = (Number(aggP2.refused_fatty)||0)+(Number(aggP2.refused_icteric)||0);
+        const unc2 = Number(aggP2.uncompleted)||0, thr2 = Number(aggP2.donation_therapeutic)||0;
+        const totReject = ref2+unc2+thr2;
         if (coll2 > 0) ctxBullets.push('نسبة عدم الفحص من التجميع: ' + ((totReject/coll2)*100).toFixed(1) + '% (' + _iaFmt(totReject) + ' من ' + _iaFmt(coll2) + ')');
-        var vC=Number(aggP2.virology_c)||0,vB=Number(aggP2.virology_b)||0,vI=Number(aggP2.virology_i)||0,vD=Number(aggP2.virology_dollar)||0;
-        var totVirus=vC+vB+vI+vD;
+        const vC=Number(aggP2.virology_c)||0,vB=Number(aggP2.virology_b)||0,vI=Number(aggP2.virology_i)||0,vD=Number(aggP2.virology_dollar)||0;
+        const totVirus=vC+vB+vI+vD;
         if (test2 > 0 && totVirus > 0) ctxBullets.push('نسبة الإيجابية الفيروسية من المفحوص: ' + ((totVirus/test2)*100).toFixed(1) + '% (' + _iaFmt(totVirus) + ' من ' + _iaFmt(test2) + ')');
       }
     }
@@ -9116,13 +9151,13 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   /* ===== عينات غير مفحوصة ===== */
   if (ctxGroups.has('عينات غير مفحوصة')) {
     if (showGrand) {
-      var unKeys = ['donation_therapeutic','uncompleted','refused_fatty','refused_icteric'];
-      var unLbl = {'donation_therapeutic':'تبرع علاجي','uncompleted':'لم يكتمل','refused_fatty':'دهون','refused_icteric':'Icteric'};
-      var totUn = 0;
+      const unKeys = ['donation_therapeutic','uncompleted','refused_fatty','refused_icteric'];
+      const unLbl = {'donation_therapeutic':'تبرع علاجي','uncompleted':'لم يكتمل','refused_fatty':'دهون','refused_icteric':'Icteric'};
+      let totUn = 0;
       unKeys.forEach(function(k){totUn+=_ctxSum(p2Data,k);});
       if (totUn > 0) {
-        var maxU = 0, maxUK = '';
-        unKeys.forEach(function(k){var v=_ctxSum(p2Data,k);if(v>maxU){maxU=v;maxUK=k;}});
+        let maxU = 0, maxUK = '';
+        unKeys.forEach(function(k){const v=_ctxSum(p2Data,k);if(v>maxU){maxU=v;maxUK=k;}});
         ctxBullets.push('أكبر سبب عدم الفحص في ' + lP2 + ': ' + unLbl[maxUK] + ' (' + _iaFmt(maxU) + ' = ' + ((maxU/totUn)*100).toFixed(1) + '%)');
       }
     }
@@ -9131,12 +9166,12 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   /* ===== نسب الإعدامات (percentages) ===== */
   if (ctxGroups.has('النسب المئوية للاعدام') || ctxGroups.has('النسب المئوية للاعدام - أطفال')) {
     if (showGrand) {
-      var pctCols = cols.filter(function(c){return c.key.startsWith('pct_')||c.key.startsWith('child_pct_');});
+      const pctCols = cols.filter(function(c){return c.key.startsWith('pct_')||c.key.startsWith('child_pct_');});
       if (pctCols.length) {
-        var pctType = cols.some(function(c){return c.key.startsWith('ratio_');}) ? 'big' : 'small';
-        var aggPct = _ctxAggFormulas(p2Data, pctType);
-        var maxP = 0, maxPC = null;
-        pctCols.forEach(function(c){var v=Number(aggPct[c.key])||0;if(v>maxP){maxP=v;maxPC=c;}});
+        const pctType = cols.some(function(c){return c.key.startsWith('ratio_');}) ? 'big' : 'small';
+        const aggPct = _ctxAggFormulas(p2Data, pctType);
+        let maxP = 0, maxPC = null;
+        pctCols.forEach(function(c){const v=Number(aggPct[c.key])||0;if(v>maxP){maxP=v;maxPC=c;}});
         if (maxPC) ctxBullets.push('أعلى نسبة إعدام في ' + lP2 + ': ' + maxPC.label + ' (' + maxP.toFixed(2) + '%)');
       }
     }
@@ -9144,22 +9179,22 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
 
   /* ===== مؤشرات وحدات دم الأطفال ===== */
   if (ctxGroups.has('مؤشرات وحدات دم الأطفال')) {
-    var hasChildCt = cols.some(function(c){return c.key==='child_ct';});
+    const hasChildCt = cols.some(function(c){return c.key==='child_ct';});
     if (hasChildCt && showGrand) {
-      var cCp = _ctxSum(p2Data, 'child_compatibility');
-      var cOt = _ctxSum(p2Data, 'child_out_blood');
-      var cCt = cOt ? (cCp / cOt) : 0;
+      const cCp = _ctxSum(p2Data, 'child_compatibility');
+      const cOt = _ctxSum(p2Data, 'child_out_blood');
+      const cCt = cOt ? (cCp / cOt) : 0;
       if (cCt < 2) ctxBullets.push('نسبة C/T للأطفال في ' + lP2 + ' = ' + cCt.toFixed(2) + ' \u2014 أقل من 2: يُنصح بمراجعة سياسة الصرف');
       else ctxBullets.push('نسبة C/T للأطفال في ' + lP2 + ' = ' + cCt.toFixed(2) + ' \u2014 مقبولة');
     }
   }
 
   /* ===== Render HTML ===== */
-  var html = '<div style="padding:16px 20px"><div style="font-weight:700;font-size:13px;color:#333;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)"><i class="fa-solid fa-magnifying-glass-chart" style="margin-left:6px;color:#e65100"></i>تحليل ' + esc(label) + '</div>';
+  let html = '<div style="padding:16px 20px"><div style="font-weight:700;font-size:13px;color:#333;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)"><i class="fa-solid fa-magnifying-glass-chart" style="margin-left:6px;color:#e65100"></i>تحليل ' + esc(label) + '</div>';
   if (ctxBullets.length) {
     html += '<div style="margin-bottom:12px;padding:10px 14px;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;font-size:12px;color:#f57f17;font-weight:600"><i class="fa-solid fa-lightbulb" style="margin-left:6px"></i> تحليل خاص بالمجموعات</div>';
     html += '<ul style="margin:0;padding-right:20px;list-style:none">';
-    for (var i = 0; i < ctxBullets.length; i++) {
+    for (let i = 0; i < ctxBullets.length; i++) {
       html += '<li style="padding:5px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:13px;line-height:1.9;color:#333">\u2022 ' + esc(ctxBullets[i]) + '</li>';
     }
     html += '</ul>';
@@ -9167,7 +9202,7 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   if (bullets.length) {
     if (ctxBullets.length) html += '<div style="margin-top:10px;padding:6px 12px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;font-size:11px;color:#2e7d32;font-weight:600"><i class="fa-solid fa-chart-line" style="margin-left:4px"></i> تفاصيل التغييرات</div>';
     html += '<ul style="margin:0;padding-right:20px;list-style:none">';
-    for (var i = 0; i < bullets.length; i++) {
+    for (let i = 0; i < bullets.length; i++) {
       html += '<li style="padding:5px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:13px;line-height:1.9;color:#333">\u2022 ' + esc(bullets[i]) + '</li>';
     }
     html += '</ul>';

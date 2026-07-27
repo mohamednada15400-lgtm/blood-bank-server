@@ -31,10 +31,10 @@ class JSONDB {
   init() {
     try {
       let json = fs.readFileSync(this.filePath, 'utf8');
-      // strip BOM (PowerShell Set-Content adds it)
       if (json.charCodeAt(0) === 0xFEFF) json = json.slice(1);
       this.data = JSON.parse(json);
     } catch {
+      try { fs.copyFileSync(this.filePath, this.filePath + '.backup'); } catch {}
       this.data = this._getDefaultData();
       this._save();
     }
@@ -188,7 +188,7 @@ class JSONDB {
     if (!this.data.role_perms || !Array.isArray(this.data.role_perms)) {
       this.data.role_perms = Object.entries(DEF_PERMS).map(([role, perms]) => ({ role, permissions: JSON.parse(JSON.stringify(perms)) }));
     } else {
-      // Add missing pages to existing role_perms
+      // Add missing pages to existing role_perms + fix zeroed-out permissions
       this.data.role_perms.forEach(rp => {
         if (typeof rp.permissions === 'string') rp.permissions = JSON.parse(rp.permissions);
         const defPerms = DEF_PERMS[rp.role];
@@ -196,6 +196,14 @@ class JSONDB {
           ALL_PAGES.forEach(k => {
             if (rp.permissions[k] === undefined) {
               rp.permissions[k] = JSON.parse(JSON.stringify(defPerms[k] || { v: 0, a: 0, e: 0, d: 0, x: 0 }));
+            } else if (defPerms[k]) {
+              const cur = rp.permissions[k];
+              const def = defPerms[k];
+              const isZeroed = cur.v===0 && cur.a===0 && cur.e===0 && cur.d===0 && cur.x===0;
+              const shouldHaveAccess = def.v===1 || def.a===1 || def.e===1 || def.d===1 || def.x===1;
+              if (isZeroed && shouldHaveAccess) {
+                rp.permissions[k] = JSON.parse(JSON.stringify(def));
+              }
             }
           });
         }
@@ -258,12 +266,9 @@ class JSONDB {
 
   _save() {
     if (this._saveTimer) clearTimeout(this._saveTimer);
-    this._saveTimer = setTimeout(() => {
-      this._write();
-    }, 3000);
-    // If first call, write immediately
-    if (!this._saveTimer._pending) {
-      this._saveTimer._pending = true;
+    this._saveTimer = setTimeout(() => { this._write(); }, 3000);
+    if (!this._savePending) {
+      this._savePending = true;
       this._write();
     }
   }
@@ -272,11 +277,13 @@ class JSONDB {
     try {
       const dir = path.dirname(this.filePath);
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf8');
+      const tmpPath = this.filePath + '.tmp';
+      fs.writeFileSync(tmpPath, JSON.stringify(this.data, null, 2), 'utf8');
+      fs.renameSync(tmpPath, this.filePath);
     } catch(e) {
-      console.error('⚠ JSONDB write error (read-only FS?):', e.message);
+      console.error('⚠ JSONDB write error:', e.message);
     }
-    if (this._saveTimer) this._saveTimer._pending = false;
+    this._savePending = false;
   }
 
   _nextId(table) {
@@ -417,12 +424,12 @@ class JSONDB {
       if (groupMatch) {
         const groupCols = groupMatch[1].split(',').map(c => c.trim());
         const groups = {};
-        const sumCols = {};
+        const aggCols = {};
         const selectMatch = sql.match(/SELECT\s+(.+?)\s+FROM/i);
         if (selectMatch) {
           selectMatch[1].split(',').map(c => c.trim()).forEach(c => {
-            const m = c.match(/(?:SUM|COUNT|AVG|MAX|MIN)\s*\((\w+)\)\s+as\s+(\w+)/i);
-            if (m) sumCols[m[2]] = m[1];
+            const m = c.match(/(SUM|COUNT|AVG|MAX|MIN)\s*\((?:\*|(\w+))\)\s+as\s+(\w+)/i);
+            if (m) aggCols[m[3]] = { col: m[2], op: m[1].toUpperCase() };
           });
         }
         rows.forEach(row => {
@@ -430,13 +437,30 @@ class JSONDB {
           if (!groups[key]) {
             const base = {};
             groupCols.forEach(c => base[c] = row[c]);
-            groups[key] = base;
+            for (const agg of Object.values(aggCols)) {
+              if (agg.op === 'MIN') base[Object.keys(aggCols).find(k => aggCols[k] === agg)] = Infinity;
+              if (agg.op === 'MAX') base[Object.keys(aggCols).find(k => aggCols[k] === agg)] = -Infinity;
+            }
+            groups[key] = { _base: base, _counts: {} };
           }
-          for (const [alias, col] of Object.entries(sumCols)) {
-            groups[key][alias] = (groups[key][alias] || 0) + (row[col] || 0);
+          const g = groups[key];
+          for (const [alias, agg] of Object.entries(aggCols)) {
+            const val = agg.col ? (row[agg.col] || 0) : 1;
+            switch (agg.op) {
+              case 'SUM': g._base[alias] = (g._base[alias] || 0) + val; break;
+              case 'COUNT': g._base[alias] = (g._base[alias] || 0) + 1; break;
+              case 'AVG': g._counts[alias] = (g._counts[alias] || 0) + 1; g._base[alias] = ((g._base[alias] || 0) + val); break;
+              case 'MAX': g._base[alias] = Math.max(g._base[alias] ?? -Infinity, val); break;
+              case 'MIN': g._base[alias] = Math.min(g._base[alias] ?? Infinity, val); break;
+            }
           }
         });
-        rows = Object.values(groups);
+        rows = Object.values(groups).map(g => {
+          for (const [alias, agg] of Object.entries(aggCols)) {
+            if (agg.op === 'AVG' && g._counts[alias]) g._base[alias] = g._base[alias] / g._counts[alias];
+          }
+          return g._base;
+        });
       }
 
       const orderMatch = sql.match(/ORDER\s+BY\s+(.+?)(?:LIMIT|$)/is);
@@ -447,8 +471,11 @@ class JSONDB {
           const col = parts[0].replace(/^ds\.|^h\.|^c\.|^ms\.|^ma\.|^mi\.|^mc\.|^d\.|^dn\./i, '');
           const dir = parts[1] && parts[1].toUpperCase() === 'DESC' ? -1 : 1;
           rows.sort((a, b) => {
-            if ((a[col] || '') < (b[col] || '')) return -1 * dir;
-            if ((a[col] || '') > (b[col] || '')) return 1 * dir;
+            const av = a[col] ?? '', bv = b[col] ?? '';
+            const an = Number(av), bn = Number(bv);
+            if (!isNaN(an) && !isNaN(bn)) return (an - bn) * dir;
+            if (String(av) < String(bv)) return -1 * dir;
+            if (String(av) > String(bv)) return 1 * dir;
             return 0;
           });
         });
@@ -513,7 +540,7 @@ class JSONDB {
             newRow[colName] = val;
           });
         }
-        this.data[table].unshift(newRow);
+        this.data[table].push(newRow);
         if (table === 'daily_stock') {
           const bt = newRow.blood_type;
           const invItem = this.data.inventory.find(i => i.blood_type === bt);
@@ -608,10 +635,13 @@ class JSONDB {
 
   _evalCondition(row, cond, params) {
     cond = cond.replace(/::date/g, '').trim();
-    if (/^\d+=\d+$/.test(cond)) return true;
-    if (/^\d+!=\d+$/.test(cond)) return false;
+    if (/^\d+=\d+$/.test(cond)) { const [a, b] = cond.split('='); return parseInt(a) === parseInt(b); }
+    if (/^\d+!=\d+$/.test(cond)) { const [a, b] = cond.split('!='); return parseInt(a) !== parseInt(b); }
     const notMatch = cond.match(/NOT\s+(\w+\.\w+)/);
-    if (notMatch) return false;
+    if (notMatch) {
+      const inner = cond.replace(/^NOT\s+/, '');
+      return !this._evalCondition(row, inner, params);
+    }
     const inMatch = cond.match(/(\w+)\s+IN\s+\((.+?)\)/i);
     if (inMatch) {
       const col = inMatch[1].replace(/^\w+\./i, '');
@@ -635,7 +665,7 @@ class JSONDB {
       } else val = parseInt(val);
 
       const rowVal = row[col];
-      if (rowVal === undefined) return true;
+      if (rowVal === undefined) return false;
       if (val == null) return false;
 
       const isDateCol = col === 'date' || cond.includes('date');
@@ -663,7 +693,7 @@ class JSONDB {
         if (oper === '<=') return rv <= val;
       }
     }
-    return true;
+    return false;
   }
 
   _evalOn(row, joinRow, onClause, joinAlias) {

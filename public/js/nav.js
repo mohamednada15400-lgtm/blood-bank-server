@@ -113,7 +113,7 @@ function grad(arr) { return `linear-gradient(135deg,${arr[0]},${arr[1]})`; }
 
 function showMenu() { _navStack = [];
   const m = document.getElementById('mainContent');
-  const menuHtml = '<div style="position:relative;display:inline-flex;flex-direction:column;margin-bottom:2px"><div data-click="toggleNotifDropdown" id="menuBellBtn" style="position:relative;cursor:pointer;font-size:28px;color:#e53935;padding:8px;transition:0.15s;align-self:flex-start"><i class="fas fa-bell"></i><span id="menuNotifBadge" style="display:none;position:absolute;top:-4px;left:-4px;background:#e53935;color:#fff;border-radius:50%;min-width:20px;height:20px;line-height:20px;font-size:10px;font-weight:700;text-align:center;padding:0 5px;box-shadow:0 0 6px #e5393580"></span></div><div id="menuNotifDropdown" style="display:none;position:absolute;top:100%;right:0;z-index:997;background:var(--bg-card,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);width:320px;max-height:400px;overflow-y:auto;direction:rtl;font-size:12px"></div></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
+  const menuHtml = '<div style="position:relative;display:inline-flex;flex-direction:column;margin-bottom:2px"><div data-click="toggleNotifDropdown" id="menuBellBtn" style="position:relative;cursor:pointer;font-size:28px;color:#e53935;padding:8px;transition:0.15s;align-self:flex-start"><i class="fas fa-bell"></i><span id="menuNotifBadge" style="display:none;position:absolute;top:-4px;left:-4px;background:#e53935;color:#fff;border-radius:50%;min-width:20px;height:20px;line-height:20px;font-size:10px;font-weight:700;text-align:center;padding:0 5px;box-shadow:0 0 6px #e5393580"></span></div><div id="menuNotifDropdown" style="display:none;position:absolute;top:100%;right:0;z-index:997;background:var(--card-bg,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);width:320px;max-height:400px;overflow-y:auto;direction:rtl;font-size:12px"></div></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
     const bg = Array.isArray(c.color) ? grad(c.color) : c.color;
     const itemsTip = (c.items || []).filter(i => hasPerm(i.key, 'view'));
     const catHasView = (c.page ? hasPerm(c.key, 'view') : false) || itemsTip.length > 0;
@@ -128,11 +128,19 @@ function showMenu() { _navStack = [];
 async function checkAlerts() {
   const el = document.getElementById('alertArea');
   try {
-    const reports = await api('GET', '/daily-reports');
-    const consumption = await api('GET', '/monthly-consumption');
-    const archiveItems = await api('GET', '/archive');
-    const hospitals = await api('GET', '/hospitals');
-    const me = (await api('GET', '/me')).user;
+    const results = await Promise.allSettled([
+      api('GET', '/daily-reports'),
+      api('GET', '/monthly-consumption'),
+      api('GET', '/archive'),
+      api('GET', '/hospitals'),
+      api('GET', '/me')
+    ]);
+    const reports = results[0].status === 'fulfilled' ? results[0].value : [];
+    const consumption = results[1].status === 'fulfilled' ? results[1].value : [];
+    const archiveItems = results[2].status === 'fulfilled' ? results[2].value : [];
+    const hospitals = results[3].status === 'fulfilled' ? results[3].value : [];
+    const meRes = results[4].status === 'fulfilled' ? results[4].value : {};
+    const me = meRes.user || { role: 'visitor' };
     const now = getCairoDate();
     const today = String(now.getUTCFullYear()).padStart(4,'0')+'-'+String(now.getUTCMonth()+1).padStart(2,'0')+'-'+String(now.getUTCDate()).padStart(2,'0');
     const curMonth = now.getUTCMonth() + 1;
@@ -237,7 +245,7 @@ async function checkAlerts() {
       return `<span data-click="showAlertList" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="${sev.bg}" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:${sev.bg};border:1px solid ${sev.border}22;border-right:3px solid ${sev.border};border-radius:6px;padding:4px 8px;margin-left:4px;font-size:10px;white-space:nowrap;transition:0.15s;box-shadow:0 1px 2px #00000008">
         <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};display:inline-block;flex-shrink:0"></span>
         <i class="fas ${a.icon}" style="color:${sev.dot};font-size:9px;flex-shrink:0"></i>
-        <span style="font-weight:600;color:#333">${a.title}</span>
+        <span style="font-weight:600;color:#333">${esc(a.title)}</span>
         ${count > 0 ? `<span style="background:${sev.dot};color:#fff;border-radius:10px;padding:0 5px;font-size:9px;font-weight:700;line-height:16px">${count}</span>` : ''}
         ${a._rdnNotifDismiss ? `<i class="fas fa-times" data-click="rdnDismissNotifAlert" data-args="${i}" style="color:#999;font-size:8px;padding:2px;cursor:pointer"></i>` : ''}
       </span>`;
@@ -285,7 +293,7 @@ function toggleNotifDropdown() {
       const count = a.all ? a.all.length : 0;
       return `<div data-click="notifNavToPage" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="transparent" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border,#f0f0f0);transition:0.1s">
         <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};flex-shrink:0"></span>
-        <span style="flex:1;font-size:10px;color:var(--text,#333)">${a.title}</span>
+        <span style="flex:1;font-size:10px;color:var(--text,#333)">${esc(a.title)}</span>
         ${count > 0 ? `<span style="background:${sev.dot};color:#fff;border-radius:10px;padding:0 5px;font-size:8px;font-weight:700;line-height:15px;flex-shrink:0">${count}</span>` : ''}
       </div>`;
     }).join('');
@@ -350,7 +358,7 @@ function showAlertList(idx) {
     html += `<div style="margin-top:8px;font-weight:700;font-size:12px;color:${sev.dot};border-bottom:2px solid ${sev.dot}22;padding-bottom:2px;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};display:inline-block"></span>${esc(g)} <span style="font-weight:400;font-size:10px;color:#999">(${govMap[g].length})</span></div>`;
     html += govMap[g].map(n => `<div style="padding:3px 12px;font-size:12px;border-bottom:1px solid #f0f0f0">${esc(n)}</div>`).join('');
   });
-  openModal(`<span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${sev.dot};display:inline-block"></span> ${a.title}</span>`,
+  openModal(`<span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${sev.dot};display:inline-block"></span> ${esc(a.title)}</span>`,
     `<div style="max-height:400px;overflow-y:auto;direction:rtl;text-align:right">${html}</div>`,
     `<button class="btn btn-secondary" data-click="closeModal">إغلاق</button>`);
 }
