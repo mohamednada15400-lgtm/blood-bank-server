@@ -5109,13 +5109,9 @@ const BIG_COL_DEFS = [
 
   // ===== الإعدامات =====
   { key: 'disp_exp_blood', label: 'دم', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_blood2', label: 'دم 2', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_exp_plasma', label: 'بلازما', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_plasma2', label: 'بلازما 2', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_sdp2', label: 'SDP 2', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_rdp2', label: 'RDP 2', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'صفائح' },
+  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'صفائح' },
   { key: 'disp_returned', label: 'مرتجع', group: 'الإعدامات' },
   { key: 'disp_reaction', label: 'تفاعل', group: 'الإعدامات' },
   { key: 'disp_open', label: 'نظام مفتوح', group: 'الإعدامات' },
@@ -8093,13 +8089,9 @@ const _iaBigFields = [
 
   // ===== الإعدامات =====
   { g:'الإعدامات', key:'disp_exp_blood', label:'دم', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_blood2', label:'دم 2', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_plasma2', label:'بلازما 2', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'صفائح' },
-  { g:'الإعدامات', key:'disp_exp_sdp2', label:'SDP 2', sg:'صفائح' },
   { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'صفائح' },
-  { g:'الإعدامات', key:'disp_exp_rdp2', label:'RDP 2', sg:'صفائح' },
   { g:'الإعدامات', key:'disp_returned', label:'مرتجع' },
   { g:'الإعدامات', key:'disp_reaction', label:'تفاعل' },
   { g:'الإعدامات', key:'disp_open', label:'نظام مفتوح' },
@@ -9142,8 +9134,8 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   /* ===== الإعدامات ===== */
   if (ctxGroups.has('الإعدامات')) {
     if (showGrand) {
-      const expKeys = ['disp_exp_blood','disp_exp_blood2','disp_exp_plasma','disp_exp_plasma2','disp_exp_sdp','disp_exp_sdp2','disp_exp_rdp','disp_exp_rdp2'];
-      const expLbl = {'disp_exp_blood':'دم','disp_exp_blood2':'دم 2','disp_exp_plasma':'بلازما','disp_exp_plasma2':'بلازما 2','disp_exp_sdp':'SDP','disp_exp_sdp2':'SDP 2','disp_exp_rdp':'RDP','disp_exp_rdp2':'RDP 2'};
+      const expKeys = ['disp_exp_blood','disp_exp_plasma','disp_exp_sdp','disp_exp_rdp'];
+      const expLbl = {'disp_exp_blood':'دم','disp_exp_plasma':'بلازما','disp_exp_sdp':'SDP','disp_exp_rdp':'RDP'};
       const hasExp = expKeys.some(function(k){return cols.some(function(c){return c.key===k;});});
       if (hasExp) {
         let totE2 = 0; expKeys.forEach(function(k){totE2+=_ctxSum(p2Data,k);});
