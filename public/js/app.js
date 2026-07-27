@@ -27,16 +27,20 @@ function _xlsxTbl(table,opts){
   if(!trs.length)return{wb:wb,ws:ws,r:1,mc:0};
   let mc=0;trs.forEach(function(tr){const n=tr.querySelectorAll('th,td').length;if(n>mc)mc=n;});
   if(skipAct&&mc>0)mc--;
+  let maxAc=0;
+  const occ={};
   let r=opts.startRow||1;
-  trs.forEach(function(tr){
+  trs.forEach(function(tr,tri){
     const cells=Array.from(tr.querySelectorAll('th,td'));
     const isH=cells.length>0&&cells[0].tagName==='TH';
     if(skipAct&&cells.length===mc+1)cells.pop();
     const rw=ws.getRow(r);rw.height=isH?24:18;
     let ac=1;
-    cells.forEach(function(td,ci){
+    cells.forEach(function(td){
+      while(occ[tri+','+ac])ac++;
       const v=td.textContent.trim();
       const cs=parseInt(td.getAttribute('colspan'))||1;
+      const rs=parseInt(td.getAttribute('rowspan'))||1;
       const c=ws.getCell(r,ac);
       const nm=parseFloat(v.replace(/[,]/g,''));
       if(!isNaN(nm)&&v.replace(/[,.\-\s]/g,'').length===0&&v.length>0){c.value=nm;c.numFmt='#,##0';}
@@ -45,13 +49,18 @@ function _xlsxTbl(table,opts){
       c.border=_XBN;
       if(isH){c.font={bold:true,color:{argb:hFg},size:10};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:hBg}};}
       else{c.font={size:9};if(r%2===0)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF8F9FA'}};}
-      if(cs>1)ws.mergeCells(r,ac,r,ac+cs-1);
+      if(cs>1&&rs>1)ws.mergeCells(r,ac,r+rs-1,ac+cs-1);
+      else if(cs>1)ws.mergeCells(r,ac,r,ac+cs-1);
+      else if(rs>1)ws.mergeCells(r,ac,r+rs-1,ac);
+      for(let dr=0;dr<rs;dr++)for(let dc=0;dc<cs;dc++)occ[(tri+dr)+','+(ac+dc)]=1;
       ac+=cs;
     });
+    if(ac-1>maxAc)maxAc=ac-1;
     r++;
   });
-  for(let i=1;i<=mc;i++)ws.getColumn(i).width=i===1?22:14;
-  return{wb:wb,ws:ws,r:r,mc:mc};
+  const actualMc=maxAc||mc;
+  for(let i=1;i<=actualMc;i++)ws.getColumn(i).width=i===1?22:14;
+  return{wb:wb,ws:ws,r:r,mc:actualMc};
 }
 function _xlsxTitleRow(ws,row,title,sub,mc){
   ws.mergeCells(row,1,row,mc);const c=ws.getCell(row,1);c.value=title;
@@ -3409,28 +3418,24 @@ function exportArchiveIndicatorsExcel() {
   const wb = new ExcelJS.Workbook(); wb.creator = 'نظام بنك الدم'; wb.created = new Date();
   const ws = wb.addWorksheet('أرشيف مؤشرات الأداء');
   const hBg = 'FF5A7A9A';
-  let mc = 0;
-  tables.forEach(function(table) {
-    const trs = Array.from(table.querySelectorAll('tr'));
-    let tmc = 0;
-    trs.forEach(function(tr){const n=tr.querySelectorAll('th,td').length;if(n>tmc)tmc=n;});
-    if (tmc - 1 > mc) mc = tmc - 1;
-  });
-  if (!mc) mc = 5;
-  const sr = _xlsxTitleRow(ws, 1, 'أرشيف مؤشرات الأداء', '', mc);
-  let r = sr;
+  let maxAc = 0;
+  const occ = {};
+  let r = 1;
   tables.forEach(function(table, ti) {
     const trs = Array.from(table.querySelectorAll('tr'));
     if (ti > 0) r++;
-    trs.forEach(function(tr) {
+    trs.forEach(function(tr, tri) {
       const cells = Array.from(tr.querySelectorAll('th,td'));
       const isH = cells.length > 0 && cells[0].tagName === 'TH';
       cells.pop();
       const rw = ws.getRow(r); rw.height = isH ? 24 : 18;
       let ac = 1;
       cells.forEach(function(td) {
+        const gtKey = ti + '_' + (tri);
+        while (occ[gtKey + ',' + ac]) ac++;
         const v = td.textContent.trim();
         const cs = parseInt(td.getAttribute('colspan')) || 1;
+        const rs = parseInt(td.getAttribute('rowspan')) || 1;
         const c = ws.getCell(r, ac);
         const nm = parseFloat(v.replace(/[,]/g, ''));
         if (!isNaN(nm) && v.replace(/[,.\-\s]/g, '').length === 0 && v.length > 0) { c.value = nm; c.numFmt = '#,##0'; }
@@ -3438,14 +3443,20 @@ function exportArchiveIndicatorsExcel() {
         c.alignment = {horizontal:'center',vertical:'middle',wrapText:true}; c.border = _XBN;
         if (isH) { c.font = {bold:true,color:{argb:'FFFFFFFF'},size:10}; c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:hBg}}; }
         else { c.font = {size:9}; if (r%2===0) c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFF8F9FA'}}; }
-        if (cs > 1) ws.mergeCells(r, ac, r, ac + cs - 1);
+        if (cs > 1 && rs > 1) ws.mergeCells(r, ac, r + rs - 1, ac + cs - 1);
+        else if (cs > 1) ws.mergeCells(r, ac, r, ac + cs - 1);
+        else if (rs > 1) ws.mergeCells(r, ac, r + rs - 1, ac);
+        for (let dr = 0; dr < rs; dr++) for (let dc = 0; dc < cs; dc++) occ[gtKey + '_' + dr + ',' + (ac + dc)] = 1;
         ac += cs;
       });
+      if (ac - 1 > maxAc) maxAc = ac - 1;
       r++;
     });
   });
-  for (let i = 1; i <= mc; i++) ws.getColumn(i).width = i === 1 ? 22 : 14;
-  _xlsxFooter(ws, r, mc);
+  const actualMc = maxAc || 5;
+  const sr = _xlsxTitleRow(ws, 1, 'أرشيف مؤشرات الأداء', '', actualMc);
+  for (let i = 1; i <= actualMc; i++) ws.getColumn(i).width = i === 1 ? 22 : 14;
+  _xlsxFooter(ws, r, actualMc);
   _xlsxDl(wb, 'archive_indicators_' + fmtCairoDate('date') + '.xlsx');
   } catch(e) { console.error('[exportArchiveIndicatorsExcel]', e); showToast('❌ خطأ في التصدير: ' + e.message, 'error'); }
 }
