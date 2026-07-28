@@ -108,6 +108,7 @@ body.dark-mode .ind-table thead { position: sticky; top: 0; z-index: 10; }
 body.dark-mode .ind-table .grp1 th { background: #1c2128; color: #e6edf3; }
 body.dark-mode .ind-table .grp2 th { background: #21262d; color: #8b949e; }
 body.dark-mode .ind-table .grp3 th { background: #21262d; color: #8b949e; }
+body.dark-mode .ind-table .grp4 th { background: #21262d; color: #8b949e; }
 body.dark-mode .ind-table tbody tr:nth-child(even) td { background: #161b22; }
 body.dark-mode .ind-table tbody tr:hover td { background: rgba(255,255,255,0.03) !important; }
 body.dark-mode .ind-table td { background: var(--card-bg); }
@@ -623,6 +624,7 @@ textarea.form-control { min-height: 80px; resize: vertical; }
 .ind-table .grp1 th { position: sticky; top: 0; z-index: 11; font-weight: 700; font-size: 10px; color: #2c3e50; letter-spacing: 0.3px; border-bottom: 2px solid rgba(0,0,0,0.08); }
 .ind-table .grp2 th { position: sticky; top: 28px; z-index: 10; font-weight: 600; font-size: 9px; color: #34495e; }
 .ind-table .grp3 th { background: var(--thead-bg); font-size: 8px; color: var(--text-soft); font-weight: 600; padding: 3px 6px; }
+.ind-table .grp4 th { background: var(--thead-bg); font-size: 8px; color: var(--text-soft); font-weight: 600; padding: 3px 6px; border-top: 1px dashed rgba(0,0,0,0.1); }
 .ind-table .grp-detail { font-size: 8px; font-weight: 600; color: var(--text-soft); }
 .ind-table tbody tr { transition: background 0.15s; }
 .ind-table tbody tr:hover { background: rgba(0,0,0,0.02); }
@@ -662,6 +664,7 @@ textarea.form-control { min-height: 80px; resize: vertical; }
 .ind-table .grp2 th[data-sg="دم"] { background: linear-gradient(135deg, #d5ecd5, #bddabd) !important; }
 .ind-table .grp2 th[data-sg="صفائح"] { background: linear-gradient(135deg, #f5ecd5, #e8dfc0) !important; }
 .ind-table .grp2 th[data-sg="انتهاء الصلاحيه"] { background: linear-gradient(135deg, #f0e0d0, #e5d2c0) !important; }
+.ind-table .grp3 th[data-ssg="صفائح"], .ind-table .grp-child[data-ssg="صفائح"] { background: linear-gradient(135deg, #f5ecd5, #e8dfc0) !important; }
 .ind-table .grp2 th[data-sg="وارد الدم"] { background: linear-gradient(135deg, #d5ecec, #bddada) !important; }
 .ind-table .grp2 th[data-sg="اعدامات الدم"] { background: linear-gradient(135deg, #ecd5d8, #e0c0c5) !important; }
 .table-wrap { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y pinch-zoom; }
