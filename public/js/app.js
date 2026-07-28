@@ -3197,7 +3197,9 @@ function renderArchiveIndicatorsTable() {
       if (!records.length) return '';
       records.sort((a, b) => (a.year || 0) * 100 + (a.month || 0) - (b.year || 0) * 100 - (b.month || 0));
       const canEditDel = isAdmin;
-      const mh = makeGroupHeader(colDefs).replace(/(rowspan="[23]">بنك الدم<\/th>)/, '$1<th rowspan="3" style="min-width:44px;font-size:11px;color:#5A7A9A">الشهر</th>');
+      const _hasSSG = colDefs.some(c => c.ssg);
+      const _rs = _hasSSG ? 4 : 3;
+      const mh = makeGroupHeader(colDefs).replace(/(rowspan="[234]">بنك الدم<\/th>)/, `$1<th rowspan="${_rs}" style="min-width:44px;font-size:11px;color:#5A7A9A">الشهر</th>`);
       let h = `<div style="margin-top:20px"><div class="table-scroll"><table class="data-table ind-table" style="min-width:800px"><thead>
         <tr><th colspan="${colDefs.length + 1 + (canEditDel ? 1 : 0)}" style="text-align:center;background:linear-gradient(135deg,#5A80A8,#7BA0C8);color:#fff;font-size:15px;font-weight:800;padding:10px 16px;letter-spacing:0.5px;border-bottom:3px solid #90b8d8">${title}</th></tr>
         ${mh}
@@ -4388,7 +4390,9 @@ async function renderBigIndicators() {
       </div>`;
     }
 
-    const mh = makeGroupHeader(BIG_COL_DEFS).replace(/(rowspan="[23]">بنك الدم<\/th>)/, '$1<th rowspan="3" style="min-width:44px;font-size:11px;color:#5A7A9A">الشهر</th>');
+    const _hasSSGBig = BIG_COL_DEFS.some(c => c.ssg);
+    const _rsBig = _hasSSGBig ? 4 : 3;
+    const mh = makeGroupHeader(BIG_COL_DEFS).replace(/(rowspan="[234]">بنك الدم<\/th>)/, `$1<th rowspan="${_rsBig}" style="min-width:44px;font-size:11px;color:#5A7A9A">الشهر</th>`);
     el.innerHTML += `<div class="card"><div class="card-body table-scroll">
       <table class="data-table ind-table" style="min-width:800px"><thead>
         <tr><th colspan="${BIG_COL_DEFS.length + 1 + (canDelete ? 1 : 0)}" style="text-align:center;background:linear-gradient(135deg,#5A7A9A,#7A9ABA);color:#fff;font-size:13px">مؤشرات أداء البنوك التجميعية</th></tr>
@@ -4537,7 +4541,9 @@ async function renderSmallIndicators() {
       </div>`;
     }
 
-    const smh = makeGroupHeader(SMALL_COL_DEFS).replace(/(rowspan="[23]">بنك الدم<\/th>)/, '$1<th rowspan="3" style="min-width:44px;font-size:11px;color:#5A7A9A">الشهر</th>');
+    const _hasSSGSmall = SMALL_COL_DEFS.some(c => c.ssg);
+    const _rsSmall = _hasSSGSmall ? 4 : 3;
+    const smh = makeGroupHeader(SMALL_COL_DEFS).replace(/(rowspan="[234]">بنك الدم<\/th>)/, `$1<th rowspan="${_rsSmall}" style="min-width:44px;font-size:11px;color:#5A7A9A">الشهر</th>`);
     el.innerHTML += `<div class="card"><div class="card-body table-scroll">
       <table class="data-table ind-table" style="min-width:800px"><thead>
         <tr><th colspan="${SMALL_COL_DEFS.length + 1 + (canDelete ? 1 : 0)}" style="text-align:center;background:linear-gradient(135deg,#5A7A9A,#7A9ABA);color:#fff;font-size:13px">مؤشرات أداء البنوك التخزينية</th></tr>
@@ -5110,8 +5116,8 @@ const BIG_COL_DEFS = [
   // ===== الإعدامات =====
   { key: 'disp_exp_blood', label: 'دم', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_exp_plasma', label: 'بلازما', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه', ssg: 'صفائح' },
+  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه', ssg: 'صفائح' },
   { key: 'disp_returned', label: 'مرتجع', group: 'الإعدامات' },
   { key: 'disp_reaction', label: 'تفاعل', group: 'الإعدامات' },
   { key: 'disp_open', label: 'نظام مفتوح', group: 'الإعدامات' },
@@ -5182,8 +5188,8 @@ const SMALL_COL_DEFS = [
   // ===== الإعدامات =====
   { key: 'disp_exp_blood', label: 'دم', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_exp_plasma', label: 'بلازما', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه', ssg: 'صفائح' },
+  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه', ssg: 'صفائح' },
   { key: 'disp_returned', label: 'مرتجع', group: 'الإعدامات' },
   { key: 'disp_reaction', label: 'تفاعل', group: 'الإعدامات' },
   { key: 'disp_open', label: 'نظام مفتوح', group: 'الإعدامات' },
@@ -5310,13 +5316,17 @@ function makeGroupHeader(colDefs) {
       currentGroup.subs.get(c.sg).push(c);
     }
   });
+  let hasSubSub = false;
+  groups.forEach(g => { g.subs.forEach(cols => { if (cols.some(c => c.ssg)) hasSubSub = true; }); });
   const hasSub = groups.some(g => g.subs.size > 0);
+  const rs = hasSubSub ? 4 : hasSub ? 3 : 2;
   let r1 = '<tr class="grp1">';
   let r2 = '<tr class="grp2">';
   let r3 = '<tr class="grp3">';
+  let r4 = hasSubSub ? '<tr class="grp4">' : '';
   groups.forEach(g => {
     if (!g.label) {
-      g.cols.forEach(c => { r1 += `<th rowspan="${hasSub ? 3 : 2}">${c.label}</th>`; });
+      g.cols.forEach(c => { r1 += `<th rowspan="${rs}">${c.label}</th>`; });
     } else if (g.subs.size > 0) {
       r1 += `<th colspan="${g.cols.length}" class="grp-parent" data-group="${g.label}">${g.label}</th>`;
       let colIdx = 0;
@@ -5325,21 +5335,44 @@ function makeGroupHeader(colDefs) {
         if (c.sg && g.subs.has(c.sg)) {
           const subCols = g.subs.get(c.sg);
           r2 += `<th colspan="${subCols.length}" class="grp-child" data-sg="${c.sg}">${c.sg}</th>`;
-          subCols.forEach(sc => { r3 += `<th class="grp-detail">${sc.label}</th>`; });
+          const ssgMap = new Map();
+          subCols.forEach(sc => {
+            if (sc.ssg) {
+              if (!ssgMap.has(sc.ssg)) ssgMap.set(sc.ssg, []);
+              ssgMap.get(sc.ssg).push(sc);
+            }
+          });
+          if (ssgMap.size > 0) {
+            let subIdx = 0;
+            while (subIdx < subCols.length) {
+              const sc = subCols[subIdx];
+              if (sc.ssg && ssgMap.has(sc.ssg)) {
+                const ssgCols = ssgMap.get(sc.ssg);
+                r3 += `<th colspan="${ssgCols.length}" class="grp-child" data-ssg="${sc.ssg}">${sc.ssg}</th>`;
+                ssgCols.forEach(ssc => { r4 += `<th class="grp-detail">${ssc.label}</th>`; });
+                subIdx += ssgCols.length;
+              } else {
+                r3 += `<th rowspan="2" class="grp-child">${sc.label}</th>`;
+                subIdx++;
+              }
+            }
+          } else {
+            subCols.forEach(sc => { r3 += `<th${hasSubSub ? ' rowspan="2"' : ''} class="grp-detail">${sc.label}</th>`; });
+          }
           colIdx += subCols.length;
         } else {
-          r2 += `<th rowspan="2" class="grp-child">${c.label}</th>`;
+          r2 += `<th rowspan="${rs}" class="grp-child">${c.label}</th>`;
           colIdx++;
         }
       }
     } else if (g.cols.length > 1) {
       r1 += `<th colspan="${g.cols.length}" class="grp-parent" data-group="${g.label}">${g.label}</th>`;
-      g.cols.forEach(c => { r2 += `<th rowspan="${hasSub ? 2 : 1}" class="grp-child">${c.label}</th>`; });
+      g.cols.forEach(c => { r2 += `<th rowspan="${hasSubSub ? 3 : hasSub ? 2 : 1}" class="grp-child">${c.label}</th>`; });
     } else {
-      r1 += `<th rowspan="${hasSub ? 3 : 2}" data-group="${g.label}">${g.label}</th>`;
+      r1 += `<th rowspan="${rs}" data-group="${g.label}">${g.label}</th>`;
     }
   });
-  return r1 + '</tr>' + r2 + '</tr>' + (hasSub ? r3 + '</tr>' : '');
+  return r1 + '</tr>' + r2 + '</tr>' + r3 + '</tr>' + (r4 ? r4 + '</tr>' : '');
 }
 
 function renderIndicatorsTable(hospitals, data, canEdit, presetType) {
@@ -5372,7 +5405,9 @@ function renderIndicatorsTable(hospitals, data, canEdit, presetType) {
     const filtYear = document.getElementById('indYearFilter')?.value || '';
     const filtMonth = parseInt(document.getElementById('indMonthFilter')?.value) || 0;
     let headerHtml = makeGroupHeader(colDefs);
-    headerHtml = headerHtml.replace(/(rowspan="[23]">بنك الدم<\/th>)/, '$1<th rowspan="3" style="min-width:44px;font-size:11px;color:#5A7A9A">الشهر</th><th rowspan="3" style="min-width:55px;font-size:11px;color:#5A7A9A">المدخل</th>');
+    const _hasSSGMain = colDefs.some(c => c.ssg);
+    const _rsMain = _hasSSGMain ? 4 : 3;
+    headerHtml = headerHtml.replace(/(rowspan="[234]">بنك الدم<\/th>)/, `$1<th rowspan="${_rsMain}" style="min-width:44px;font-size:11px;color:#5A7A9A">الشهر</th><th rowspan="${_rsMain}" style="min-width:55px;font-size:11px;color:#5A7A9A">المدخل</th>`);
     let h = `<h3 style="margin:24px 0 10px;font-size:16px;color:#2c3e50;border-right:4px solid #dc3545;padding-right:10px">${label}</h3>
       <div class="table-wrap"><table class="ind-table"><thead>${headerHtml}</thead><tbody>`;
     showHospitals.forEach(hosp => {
@@ -8090,8 +8125,8 @@ const _iaBigFields = [
   // ===== الإعدامات =====
   { g:'الإعدامات', key:'disp_exp_blood', label:'دم', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'انتهاء الصلاحيه', ssg:'صفائح' },
+  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'انتهاء الصلاحيه', ssg:'صفائح' },
   { g:'الإعدامات', key:'disp_returned', label:'مرتجع' },
   { g:'الإعدامات', key:'disp_reaction', label:'تفاعل' },
   { g:'الإعدامات', key:'disp_open', label:'نظام مفتوح' },
@@ -8158,8 +8193,8 @@ const _iaSmallFields = [
   // ===== الإعدامات =====
   { g:'الإعدامات', key:'disp_exp_blood', label:'دم', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'انتهاء الصلاحيه', ssg:'صفائح' },
+  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'انتهاء الصلاحيه', ssg:'صفائح' },
   { g:'الإعدامات', key:'disp_returned', label:'مرتجع' },
   { g:'الإعدامات', key:'disp_reaction', label:'تفاعل' },
   { g:'الإعدامات', key:'disp_open', label:'نظام مفتوح' },
@@ -8304,6 +8339,8 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
   const grpTextColors = { 'التجميع':'#283593', 'إجمالي الوارد':'#1b5e20', 'إجمالي المنصرف':'#4a148c', 'الفصائل والتوافق':'#0d47a1', 'عينات غير مفحوصة':'#b71c1c', 'الإعدامات':'#e65100', 'تحليل نسب المؤشرات':'#004d40', 'مؤشرات وحدات دم الأطفال':'#880e4f', 'النسب المئوية للاعدام - أطفال':'#ad1457', 'النسب المئوية للاعدام':'#ad1457' };
   const grpBgs = { 'التجميع':'#f3f0ff', 'إجمالي الوارد':'#f1f8e9', 'إجمالي المنصرف':'#faf0ff', 'الفصائل والتوافق':'#f0f7ff', 'عينات غير مفحوصة':'#fff5f5', 'الإعدامات':'#fffaf0', 'تحليل نسب المؤشرات':'#f0faf8', 'مؤشرات وحدات دم الأطفال':'#fdf0f5', 'النسب المئوية للاعدام - أطفال':'#fdf0f5', 'النسب المئوية للاعدام':'#fdf0f5' };
   const hasSub = cols.some(c => c.sg);
+  const hasSubSub = cols.some(c => c.ssg);
+  const dataRowSpan = hasSubSub ? 5 : hasSub ? 4 : 3;
   let html = '<div style="overflow-x:auto;padding:2px"><style>.ia-row:hover{background:#f5f8ff!important}.ia-row[data-row-bg="#f5f6fa"]:hover{background:#eef1f7!important}</style><table style="width:100%;border-collapse:collapse;font-size:12px;letter-spacing:0">';
   const groups = [];
   for (const c of cols) {
@@ -8317,7 +8354,7 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
     }
   }
   html += `<thead><tr>`;
-  html += `<th rowspan="${hasSub ? 4 : 3}" style="background:#e8eaf6;color:#283593;padding:10px 12px;position:sticky;right:0;z-index:3;min-width:160px;text-align:right;font-size:13px;border-bottom:3px solid #90caf9;white-space:nowrap">البيان</th>`;
+  html += `<th rowspan="${dataRowSpan}" style="background:#e8eaf6;color:#283593;padding:10px 12px;position:sticky;right:0;z-index:3;min-width:160px;text-align:right;font-size:13px;border-bottom:3px solid #90caf9;white-space:nowrap">البيان</th>`;
   for (const grp of groups) {
     const bg = grpColors[grp.name] || '#e0e0e0';
     const tc = grpTextColors[grp.name] || '#37474f';
@@ -8335,7 +8372,7 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
         html += `<th colspan="${subCols.length * 2}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.sg)}</th>`;
         ci += subCols.length;
       } else {
-        html += `<th colspan="2" rowspan="${hasSub ? 2 : 1}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.label)}</th>`;
+        html += `<th colspan="2" rowspan="${hasSubSub ? 3 : hasSub ? 2 : 1}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.label)}</th>`;
         ci++;
       }
     }
@@ -8349,8 +8386,54 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
         if (f.sg && grp.subs.has(f.sg)) {
           const subCols = grp.subs.get(f.sg);
           if (subCols[0].key === f.key) {
-            for (const sc of subCols) {
-              html += `<th colspan="2" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(sc.label)}</th>`;
+            const subHasSSG = subCols.some(sc => sc.ssg);
+            if (subHasSSG) {
+              const ssgMap = new Map();
+              subCols.forEach(sc => {
+                const ssgKey = sc.ssg || '_default';
+                if (!ssgMap.has(ssgKey)) ssgMap.set(ssgKey, []);
+                ssgMap.get(ssgKey).push(sc);
+              });
+              for (const [ssgKey, ssgCols] of ssgMap) {
+                if (ssgKey === '_default') {
+                  ssgCols.forEach(sc => {
+                    html += `<th colspan="2" rowspan="2" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(sc.label)}</th>`;
+                  });
+                } else {
+                  html += `<th colspan="${ssgCols.length * 2}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(ssgKey)}</th>`;
+                }
+              }
+            } else {
+              subCols.forEach(sc => {
+                html += `<th colspan="2" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(sc.label)}</th>`;
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+  if (hasSubSub) {
+    html += `</tr><tr>`;
+    for (const grp of groups) {
+      const bg = grpColors[grp.name] || '#e0e0e0';
+      const tc = grpTextColors[grp.name] || '#37474f';
+      for (const f of grp.items) {
+        if (f.ssg && f.sg && grp.subs.has(f.sg)) {
+          const subCols = grp.subs.get(f.sg);
+          if (subCols[0].key === f.key && subCols.some(sc => sc.ssg)) {
+            const ssgMap = new Map();
+            subCols.forEach(sc => {
+              const ssgKey = sc.ssg || '_default';
+              if (!ssgMap.has(ssgKey)) ssgMap.set(ssgKey, []);
+              ssgMap.get(ssgKey).push(sc);
+            });
+            for (const [ssgKey, ssgCols] of ssgMap) {
+              if (ssgKey !== '_default') {
+                ssgCols.forEach(sc => {
+                  html += `<th colspan="2" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(sc.label)}</th>`;
+                });
+              }
             }
           }
         }
