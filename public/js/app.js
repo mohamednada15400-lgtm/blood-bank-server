@@ -8419,7 +8419,7 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
       const bg = grpColors[grp.name] || '#e0e0e0';
       const tc = grpTextColors[grp.name] || '#37474f';
       for (const f of grp.items) {
-        if (f.ssg && f.sg && grp.subs.has(f.sg)) {
+        if (f.sg && grp.subs.has(f.sg)) {
           const subCols = grp.subs.get(f.sg);
           if (subCols[0].key === f.key && subCols.some(sc => sc.ssg)) {
             const ssgMap = new Map();
