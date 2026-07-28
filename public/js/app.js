@@ -5110,8 +5110,8 @@ const BIG_COL_DEFS = [
   // ===== الإعدامات =====
   { key: 'disp_exp_blood', label: 'دم', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_exp_plasma', label: 'بلازما', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'صفائح' },
-  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'صفائح' },
+  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_returned', label: 'مرتجع', group: 'الإعدامات' },
   { key: 'disp_reaction', label: 'تفاعل', group: 'الإعدامات' },
   { key: 'disp_open', label: 'نظام مفتوح', group: 'الإعدامات' },
@@ -5182,8 +5182,8 @@ const SMALL_COL_DEFS = [
   // ===== الإعدامات =====
   { key: 'disp_exp_blood', label: 'دم', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_exp_plasma', label: 'بلازما', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
-  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'صفائح' },
-  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'صفائح' },
+  { key: 'disp_exp_sdp', label: 'SDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
+  { key: 'disp_exp_rdp', label: 'RDP', group: 'الإعدامات', sg: 'انتهاء الصلاحيه' },
   { key: 'disp_returned', label: 'مرتجع', group: 'الإعدامات' },
   { key: 'disp_reaction', label: 'تفاعل', group: 'الإعدامات' },
   { key: 'disp_open', label: 'نظام مفتوح', group: 'الإعدامات' },
@@ -8090,8 +8090,8 @@ const _iaBigFields = [
   // ===== الإعدامات =====
   { g:'الإعدامات', key:'disp_exp_blood', label:'دم', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'صفائح' },
-  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'صفائح' },
+  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_returned', label:'مرتجع' },
   { g:'الإعدامات', key:'disp_reaction', label:'تفاعل' },
   { g:'الإعدامات', key:'disp_open', label:'نظام مفتوح' },
@@ -8158,8 +8158,8 @@ const _iaSmallFields = [
   // ===== الإعدامات =====
   { g:'الإعدامات', key:'disp_exp_blood', label:'دم', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_exp_plasma', label:'بلازما', sg:'انتهاء الصلاحيه' },
-  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'صفائح' },
-  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'صفائح' },
+  { g:'الإعدامات', key:'disp_exp_sdp', label:'SDP', sg:'انتهاء الصلاحيه' },
+  { g:'الإعدامات', key:'disp_exp_rdp', label:'RDP', sg:'انتهاء الصلاحيه' },
   { g:'الإعدامات', key:'disp_returned', label:'مرتجع' },
   { g:'الإعدامات', key:'disp_reaction', label:'تفاعل' },
   { g:'الإعدامات', key:'disp_open', label:'نظام مفتوح' },
