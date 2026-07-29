@@ -8369,7 +8369,14 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
       const f = grp.items[ci];
       if (f.sg && grp.subs.has(f.sg)) {
         const subCols = grp.subs.get(f.sg);
-        html += `<th colspan="${subCols.length * 2}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.sg)}</th>`;
+        if (subCols.length === 1) {
+          const r2rs = hasSubSub ? 3 : hasSub ? 2 : 1;
+          subCols.forEach(sc => {
+            html += `<th colspan="2" rowspan="${r2rs}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(sc.label)}</th>`;
+          });
+        } else {
+          html += `<th colspan="${subCols.length * 2}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.sg)}</th>`;
+        }
         ci += subCols.length;
       } else {
         html += `<th colspan="2" rowspan="${hasSubSub ? 3 : hasSub ? 2 : 1}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(f.label)}</th>`;
@@ -8383,7 +8390,7 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
       const bg = grpColors[grp.name] || '#e0e0e0';
       const tc = grpTextColors[grp.name] || '#37474f';
       for (const f of grp.items) {
-        if (f.sg && grp.subs.has(f.sg)) {
+        if (f.sg && grp.subs.has(f.sg) && grp.subs.get(f.sg).length > 1) {
           const subCols = grp.subs.get(f.sg);
           if (subCols[0].key === f.key) {
             const subHasSSG = subCols.some(sc => sc.ssg);
@@ -8404,8 +8411,9 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
                 }
               }
             } else {
+              const rs = hasSubSub ? '2' : '1';
               subCols.forEach(sc => {
-                html += `<th colspan="2" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(sc.label)}</th>`;
+                html += `<th colspan="2" rowspan="${rs}" style="background:${bg};color:${tc};text-align:center;padding:5px 4px;font-size:10px;font-weight:600;border:1px solid rgba(0,0,0,.06);white-space:nowrap">${esc(sc.label)}</th>`;
               });
             }
           }
@@ -8419,7 +8427,7 @@ function _iaBuildSummaryTable(p1Data, p2Data, pL1, pL2, allGovs, cols, typeKey) 
       const bg = grpColors[grp.name] || '#e0e0e0';
       const tc = grpTextColors[grp.name] || '#37474f';
       for (const f of grp.items) {
-        if (f.sg && grp.subs.has(f.sg)) {
+        if (f.sg && grp.subs.has(f.sg) && grp.subs.get(f.sg).length > 1) {
           const subCols = grp.subs.get(f.sg);
           if (subCols[0].key === f.key && subCols.some(sc => sc.ssg)) {
             const ssgMap = new Map();
@@ -8892,69 +8900,27 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   const G = _iaBuildGovGroups(p1Data, p2Data, []);
   const bullets = [];
 
-  if (showHosp) {
-    for (let ci = 0; ci < cols.length; ci++) {
-      const col = cols[ci];
-      const hospChanges = [];
-      const govArr = Array.from(G.govG);
-      for (let gi = 0; gi < govArr.length; gi++) {
-        const gov = govArr[gi][0], hosps = govArr[gi][1];
-        for (let hi = 0; hi < hosps.length; hi++) {
-          const h = hosps[hi];
-          const d1raw = G.p1M.get(h.hid) || {}, d2raw = G.p2M.get(h.hid) || {};
-          const v1 = Number(d1raw[col.key]) || 0, v2 = Number(d2raw[col.key]) || 0;
-          if (v1 === 0 && v2 === 0) continue;
-          if (v1 === v2) continue;
-          hospChanges.push({ name: h.name, gov: gov, v1: v1, v2: v2, diff: v2 - v1, pct: v1 ? ((v2 - v1) / v1 * 100) : null });
-        }
-      }
-      hospChanges.sort(function(a, b) { return Math.abs(b.diff) - Math.abs(a.diff); });
-      const increases = hospChanges.filter(function(h) { return h.diff > 0; });
-      const decreases = hospChanges.filter(function(h) { return h.diff < 0; });
+  for (let ci = 0; ci < cols.length; ci++) {
+    const col = cols[ci];
+    if (_iaIsFormula(col.key)) continue;
+    const colBullets = [];
 
-      if (increases.length === 1) {
-        const h = increases[0];
-        bullets.push('ارتفاع ' + col.label + ' ب' + h.name + ' في ' + h.gov + ' خلال ' + lP2 + ' (' + _iaFmt(h.v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(h.v1) + ')');
-      } else if (increases.length > 1) {
-        const grouped = {};
-        for (let ii = 0; ii < increases.length; ii++) { const hh = increases[ii]; if (!grouped[hh.gov]) grouped[hh.gov] = []; grouped[hh.gov].push(hh); }
-        const gKeys = Object.keys(grouped);
-        for (let ki = 0; ki < gKeys.length; ki++) {
-          const gk = gKeys[ki], arr = grouped[gk];
-          if (arr.length === 1) {
-            bullets.push('ارتفاع ' + col.label + ' ب' + arr[0].name + ' في ' + gk + ' خلال ' + lP2 + ' (' + _iaFmt(arr[0].v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(arr[0].v1) + ')');
-          } else {
-            const names = arr.map(function(x) { return x.name; }).join(' و ');
-            bullets.push('ارتفاع ' + col.label + ' ب' + names + ' في ' + gk + ' خلال ' + lP2 + ' مقارنة ب' + lP1);
-          }
-        }
-      }
-
-      if (decreases.length === 1) {
-        const h = decreases[0];
-        bullets.push('انخفاض ' + col.label + ' ب' + h.name + ' في ' + h.gov + ' خلال ' + lP2 + ' (' + _iaFmt(h.v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(h.v1) + ')');
-      } else if (decreases.length > 1) {
-        const grouped = {};
-        for (let ii = 0; ii < decreases.length; ii++) { const hh = decreases[ii]; if (!grouped[hh.gov]) grouped[hh.gov] = []; grouped[hh.gov].push(hh); }
-        const gKeys = Object.keys(grouped);
-        for (let ki = 0; ki < gKeys.length; ki++) {
-          const gk = gKeys[ki], arr = grouped[gk];
-          if (arr.length === 1) {
-            bullets.push('انخفاض ' + col.label + ' ب' + arr[0].name + ' في ' + gk + ' خلال ' + lP2 + ' (' + _iaFmt(arr[0].v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(arr[0].v1) + ')');
-          } else {
-            const names = arr.map(function(x) { return x.name; }).join(' و ');
-            bullets.push('انخفاض ' + col.label + ' ب' + names + ' في ' + gk + ' خلال ' + lP2 + ' مقارنة ب' + lP1);
-          }
-        }
-      }
+    /* --- Grand total --- */
+    if (showGrand) {
+      let s1 = 0, s2 = 0;
+      for (let i = 0; i < p1Data.length; i++) s1 += (Number(p1Data[i].data?.[col.key]) || 0);
+      for (let i = 0; i < p2Data.length; i++) s2 += (Number(p2Data[i].data?.[col.key]) || 0);
+      const diff = s2 - s1;
+      const dir = diff > 0 ? 'ارتفاع' : (diff < 0 ? 'انخفاض' : 'ثبات');
+      const pct = s1 ? (((s2 - s1) / s1) * 100).toFixed(1) : (s2 ? '-' : '0');
+      const sign = diff > 0 ? '+' : '';
+      colBullets.push(col.label + ' — الإجمالي: ' + _iaFmt(s1) + ' ← ' + _iaFmt(s2) + ' (' + dir + ' ' + _iaFmt(Math.abs(diff)) + (pct !== '0' ? ' بنسبة ' + sign + pct + '%' : '') + ')');
     }
-  }
 
-  if (showGov && !showHosp) {
-    for (let ci = 0; ci < cols.length; ci++) {
-      const col = cols[ci];
-      const govChanges = [];
+    /* --- Governorate totals --- */
+    if (showGov) {
       const govArr = Array.from(G.govG);
+      const govResults = [];
       for (let gi = 0; gi < govArr.length; gi++) {
         const govName = govArr[gi][0], hosps = govArr[gi][1];
         let sum1 = 0, sum2 = 0;
@@ -8963,36 +8929,54 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
           sum1 += Number(d1raw[col.key]) || 0;
           sum2 += Number(d2raw[col.key]) || 0;
         }
-        if (sum1 === 0 && sum2 === 0) continue;
-        if (sum1 === sum2) continue;
-        govChanges.push({ name: govName, v1: sum1, v2: sum2, diff: sum2 - sum1 });
+        if (sum1 !== 0 || sum2 !== 0) {
+          govResults.push({ name: govName, v1: sum1, v2: sum2 });
+        }
       }
-      govChanges.sort(function(a, b) { return Math.abs(b.diff) - Math.abs(a.diff); });
-      for (let gi2 = 0; gi2 < govChanges.length; gi2++) {
-        const gc = govChanges[gi2];
-        const dir = gc.diff > 0 ? 'ارتفاع' : 'انخفاض';
-        const sign = gc.diff > 0 ? '+' : '';
-        const pct = gc.v1 ? ((gc.v2 - gc.v1) / gc.v1 * 100).toFixed(1) : '-';
-        bullets.push(dir + ' ' + col.label + ' في ' + gc.name + ' خلال ' + lP2 + ' (' + _iaFmt(gc.v2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(gc.v1) + ') بنسبة ' + sign + pct + '%');
+      if (govResults.length) {
+        govResults.sort(function(a, b) { return b.v2 - a.v2; });
+        const parts = [];
+        for (let gi = 0; gi < govResults.length; gi++) {
+          const g = govResults[gi];
+          const d = g.v2 - g.v1;
+          const arrow = d > 0 ? '▲' : (d < 0 ? '▼' : '=');
+          parts.push(g.name + ' ' + _iaFmt(g.v2) + ' ' + arrow);
+        }
+        colBullets.push(col.label + ' — المحافظات: ' + parts.join(' | '));
       }
     }
-  }
 
-  if (showGrand) {
-    for (let ci = 0; ci < cols.length; ci++) {
-      const col = cols[ci];
-      if (_iaIsFormula(col.key)) continue;
-      let s1 = 0, s2 = 0;
-      for (let i = 0; i < p1Data.length; i++) s1 += (Number(p1Data[i].data?.[col.key]) || 0);
-      for (let i = 0; i < p2Data.length; i++) s2 += (Number(p2Data[i].data?.[col.key]) || 0);
-      if (s1 === 0 && s2 === 0) continue;
-      if (s1 === s2) continue;
-      const diff = s2 - s1;
-      const dir = diff > 0 ? 'ارتفاع' : 'انخفاض';
-      const pct = s1 ? (((s2 - s1) / s1) * 100).toFixed(1) : '-';
-      const sign = diff > 0 ? '+' : '';
-      bullets.push(dir + ' ' + col.label + ' خلال ' + lP2 + ' (' + _iaFmt(s2) + ') مقارنة ب' + lP1 + ' (' + _iaFmt(s1) + ') بنسبة ' + sign + pct + '%');
+    /* --- Hospital breakdown with intra-governorate comparison --- */
+    if (showHosp) {
+      const govArr = Array.from(G.govG);
+      for (let gi = 0; gi < govArr.length; gi++) {
+        const govName = govArr[gi][0], hosps = govArr[gi][1];
+        const vals = [];
+        for (let hi = 0; hi < hosps.length; hi++) {
+          const h = hosps[hi];
+          const d1raw = G.p1M.get(h.hid) || {}, d2raw = G.p2M.get(h.hid) || {};
+          const v1 = Number(d1raw[col.key]) || 0, v2 = Number(d2raw[col.key]) || 0;
+          if (v1 !== 0 || v2 !== 0) vals.push({ name: h.name, v1: v1, v2: v2 });
+        }
+        if (vals.length) {
+          vals.sort(function(a, b) { return b.v2 - a.v2; });
+          const parts = [];
+          for (let vi = 0; vi < vals.length; vi++) {
+            const v = vals[vi];
+            const d = v.v2 - v.v1;
+            let dirStr = '';
+            if (d > 0) dirStr = ' ▲' + v.v1 + '→' + v.v2;
+            else if (d < 0) dirStr = ' ▼' + v.v1 + '→' + v.v2;
+            else if (v.v1 === v.v2 && v.v1 > 0) dirStr = ' =' + _iaFmt(v.v1);
+            parts.push('#' + (vi + 1) + ' ' + v.name + ' ' + _iaFmt(v.v2) + dirStr);
+          }
+          colBullets.push(col.label + ' — ' + govName + ': ' + parts.join(' | '));
+        }
+      }
     }
+
+    for (let bi = 0; bi < colBullets.length; bi++) bullets.push(colBullets[bi]);
+    if (colBullets.length) bullets.push('');
   }
 
   /* ===== Contextual Domain Analysis ===== */
@@ -9318,8 +9302,18 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
   if (bullets.length) {
     if (ctxBullets.length) html += '<div style="margin-top:10px;padding:6px 12px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;font-size:11px;color:#2e7d32;font-weight:600"><i class="fa-solid fa-chart-line" style="margin-left:4px"></i> تفاصيل التغييرات</div>';
     html += '<ul style="margin:0;padding-right:20px;list-style:none">';
+    let prevField = '';
     for (let i = 0; i < bullets.length; i++) {
-      html += '<li style="padding:5px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:13px;line-height:1.9;color:#333">\u2022 ' + esc(bullets[i]) + '</li>';
+      if (bullets[i] === '') {
+        html += '<li style="height:1px;background:linear-gradient(to right,transparent,rgba(0,0,0,.08),transparent);margin:4px 0;list-style:none;border:none"></li>';
+        continue;
+      }
+      const curField = bullets[i].split(' — ')[0];
+      if (curField !== prevField && prevField !== '') {
+        html += '<li style="height:6px;list-style:none;border:none"></li>';
+      }
+      prevField = curField;
+      html += '<li style="font-size:13px;line-height:1.9;color:#37474f;padding:1px 0">\u2022 ' + esc(bullets[i]) + '</li>';
     }
     html += '</ul>';
   }

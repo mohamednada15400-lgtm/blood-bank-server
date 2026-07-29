@@ -900,7 +900,8 @@ app.patch('/api/daily-reports/:id/cell', requireAuth(), requirePerm('daily_stock
     await query(`UPDATE daily_reports SET ${sub} = $1 WHERE id = $2`, [parseInt(value) || 0, parseInt(req.params.id)]);
   } else {
     const field = group === 'plasma' ? 'plasma_data' : 'blood_data';
-    const data = typeof r[field] === 'object' && r[field] ? r[field] : {};
+    const raw = r[field];
+    const data = raw && typeof raw === 'object' ? raw : (raw ? JSON.parse(raw) : {});
     if (!data[type]) data[type] = {};
     data[type][sub] = parseInt(value) || 0;
     await query(`UPDATE daily_reports SET ${field} = $1 WHERE id = $2`, [JSON.stringify(data), parseInt(req.params.id)]);
