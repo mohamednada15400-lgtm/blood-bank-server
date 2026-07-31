@@ -29,6 +29,13 @@ function _xlsxTbl(table,opts){
   if(skipAct&&mc>0)mc--;
   let maxAc=0;
   const occ={};
+  const merged=[];
+  function _m(r1,c1,r2,c2){
+    for(let i=0;i<merged.length;i++){const m=merged[i];
+      if(r1<=m[2]&&r2>=m[0]&&c1<=m[3]&&c2>=m[1])return;}
+    merged.push([r1,c1,r2,c2]);
+    try{ws.mergeCells(r1,c1,r2,c2);}catch(e){}
+  }
   let r=opts.startRow||1;
   trs.forEach(function(tr,tri){
     const cells=Array.from(tr.querySelectorAll('th,td'));
@@ -49,9 +56,9 @@ function _xlsxTbl(table,opts){
       c.border=_XBN;
       if(isH){c.font={bold:true,color:{argb:hFg},size:10};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:hBg}};}
       else{c.font={size:9};if(r%2===0)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF8F9FA'}};}
-      if(cs>1&&rs>1)ws.mergeCells(r,ac,r+rs-1,ac+cs-1);
-      else if(cs>1)ws.mergeCells(r,ac,r,ac+cs-1);
-      else if(rs>1)ws.mergeCells(r,ac,r+rs-1,ac);
+      if(cs>1&&rs>1)_m(r,ac,r+rs-1,ac+cs-1);
+      else if(cs>1)_m(r,ac,r,ac+cs-1);
+      else if(rs>1)_m(r,ac,r+rs-1,ac);
       for(let dr=0;dr<rs;dr++)for(let dc=0;dc<cs;dc++)occ[(tri+dr)+','+(ac+dc)]=1;
       ac+=cs;
     });
@@ -3422,19 +3429,25 @@ function exportArchiveIndicatorsExcel() {
   const hBg = 'FF5A7A9A';
   let maxAc = 0;
   const occ = {};
+  const merged = [];
+  function _m(r1, c1, r2, c2) {
+    for (let i = 0; i < merged.length; i++) { const m = merged[i]; if (r1 <= m[2] && r2 >= m[0] && c1 <= m[3] && c2 >= m[1]) return; }
+    merged.push([r1, c1, r2, c2]);
+    try { ws.mergeCells(r1, c1, r2, c2); } catch (e) { /* skip overlap */ }
+  }
   let r = 1;
   tables.forEach(function(table, ti) {
     const trs = Array.from(table.querySelectorAll('tr'));
     if (ti > 0) r++;
     trs.forEach(function(tr, tri) {
+      if (tri === 0) { r++; return; }
       const cells = Array.from(tr.querySelectorAll('th,td'));
       const isH = cells.length > 0 && cells[0].tagName === 'TH';
-      cells.pop();
+      if (!isH) cells.pop();
       const rw = ws.getRow(r); rw.height = isH ? 24 : 18;
       let ac = 1;
       cells.forEach(function(td) {
-        const gtKey = ti + '_' + (tri);
-        while (occ[gtKey + ',' + ac]) ac++;
+        while (occ[ti + '_' + tri + ',' + ac]) ac++;
         const v = td.textContent.trim();
         const cs = parseInt(td.getAttribute('colspan')) || 1;
         const rs = parseInt(td.getAttribute('rowspan')) || 1;
@@ -3445,10 +3458,10 @@ function exportArchiveIndicatorsExcel() {
         c.alignment = {horizontal:'center',vertical:'middle',wrapText:true}; c.border = _XBN;
         if (isH) { c.font = {bold:true,color:{argb:'FFFFFFFF'},size:10}; c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:hBg}}; }
         else { c.font = {size:9}; if (r%2===0) c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFF8F9FA'}}; }
-        if (cs > 1 && rs > 1) ws.mergeCells(r, ac, r + rs - 1, ac + cs - 1);
-        else if (cs > 1) ws.mergeCells(r, ac, r, ac + cs - 1);
-        else if (rs > 1) ws.mergeCells(r, ac, r + rs - 1, ac);
-        for (let dr = 0; dr < rs; dr++) for (let dc = 0; dc < cs; dc++) occ[gtKey + '_' + dr + ',' + (ac + dc)] = 1;
+        if (cs > 1 && rs > 1) _m(r, ac, r + rs - 1, ac + cs - 1);
+        else if (cs > 1) _m(r, ac, r, ac + cs - 1);
+        else if (rs > 1) _m(r, ac, r + rs - 1, ac);
+        for (let dr = 0; dr < rs; dr++) for (let dc = 0; dc < cs; dc++) occ[ti + '_' + (tri + dr) + ',' + (ac + dc)] = 1;
         ac += cs;
       });
       if (ac - 1 > maxAc) maxAc = ac - 1;
