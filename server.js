@@ -961,6 +961,53 @@ app.delete('/api/daily-statement/:id', requireAuth(), requirePerm('daily_stateme
 
 
 
+// Archive a monthly indicator table (big/small) into per-month archive records (type تجميعيه/تخزينيه)
+// Upserts into an existing archive of the same type+title (merged by hospital_id+year+month), else creates one.
+// When cutoffYear/cutoffMonth are provided, only records older/equal to that cutoff are archived.
+// expectedType ('تجميعي'/'تخزيني') filters by hospital type so misplaced rows never enter the wrong archive.
+async function archiveIndicatorTable(table, typeLabel, cutoffYear, cutoffMonth, user, expectedType) {
+  try {
+    const all = await query(`SELECT mi.*, h.name as hospital_name, h.governorate, h.type as hosp_type FROM ${table} mi JOIN hospitals h ON h.id = mi.hospital_id`);
+    let toArchive = all.rows;
+    if (expectedType) toArchive = toArchive.filter(r => r.hosp_type === expectedType);
+    if (cutoffYear != null && cutoffMonth != null) {
+      toArchive = toArchive.filter(r => r.year < cutoffYear || (r.year === cutoffYear && r.month <= cutoffMonth));
+    }
+    if (toArchive.length === 0) return 0;
+    const byKey = {};
+    toArchive.forEach(r => { const k = r.year + '-' + r.month; (byKey[k] = byKey[k] || []).push(r); });
+    let archived = 0;
+    for (const k in byKey) {
+      const [y, m] = k.split('-');
+      const title = typeLabel + ' - أرشيف ' + y + '/' + m;
+      const recs = byKey[k].map(r => {
+        let data = r.data;
+        if (typeof data === 'string') { try { data = JSON.parse(data); } catch (e) {} }
+        return { data, year: r.year, month: r.month, period: 'monthly', governorate: r.governorate, hospital_id: r.hospital_id, hospital_name: r.hospital_name, user_id: r.user_id };
+      });
+      const existing = await query('SELECT id, data FROM archives WHERE type = $1 AND title = $2', [typeLabel, title]);
+      if (existing.rows.length > 0) {
+        let oldData = existing.rows[0].data;
+        if (typeof oldData === 'string') { try { oldData = JSON.parse(oldData) || []; } catch (e) { oldData = []; } }
+        if (!Array.isArray(oldData)) oldData = [];
+        const idxMap = {};
+        oldData.forEach((rec, i) => { idxMap[(rec.hospital_id||'') + '_' + (rec.year||'') + '_' + (rec.month||'')] = i; });
+        recs.forEach(rec => {
+          const ck = (rec.hospital_id||'') + '_' + (rec.year||'') + '_' + (rec.month||'');
+          if (ck in idxMap) oldData[idxMap[ck]] = rec; else oldData.push(rec);
+        });
+        await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify(oldData), existing.rows[0].id]);
+      } else {
+        await query('INSERT INTO archives (type, title, data, user_id, user_name) VALUES ($1,$2,$3,$4,$5)',
+          [typeLabel, title, JSON.stringify(recs), user.id, user.name]);
+      }
+      archived += recs.length;
+      for (const r of byKey[k]) await query(`DELETE FROM ${table} WHERE id = $1`, [r.id]);
+    }
+    return archived;
+  } catch (e) { console.error('archiveIndicatorTable ' + table + ':', e.message); return 0; }
+}
+
 app.post('/api/monthly-indicators', requireAuth(), requirePerm('monthly_indicators', 'edit'), async (req, res) => {
   const { hospitalId, year, month, data, day, time } = req.body;
   const d = data || {};
@@ -988,13 +1035,15 @@ app.get('/api/monthly-indicators', requireAuth(), requirePerm('monthly_indicator
       let cutoffYear = curYear;
       if (cutoffMonth === 0) { cutoffMonth = 12; cutoffYear--; }
       const all = await query('SELECT mi.*, h.name as hospital_name, h.governorate FROM monthly_indicators mi JOIN hospitals h ON h.id = mi.hospital_id');
-      const toArchive = all.rows.filter(r => r.year < cutoffYear || (r.year === cutoffYear && r.month < cutoffMonth));
+      const toArchive = all.rows.filter(r => r.year < cutoffYear || (r.year === cutoffYear && r.month <= cutoffMonth));
       if (toArchive.length > 0) {
         const todayStr = new Date().toISOString().slice(0,10);
         const title = 'مؤشرات الأداء - أرشيف تلقائي ' + todayStr;
         const existingArch = await query('SELECT id, data FROM archives WHERE type = $1 AND title = $2', ['مؤشرات الأداء', title]);
         if (existingArch.rows.length > 0) {
-          const oldData = JSON.parse(existingArch.rows[0].data) || [];
+          let oldData = existingArch.rows[0].data;
+          if (typeof oldData === 'string') { try { oldData = JSON.parse(oldData) || []; } catch (e) { oldData = []; } }
+          if (!Array.isArray(oldData)) oldData = [];
           await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify([...oldData, ...toArchive]), existingArch.rows[0].id]);
         } else {
           await query('INSERT INTO archives (type, title, data, user_id, user_name) VALUES ($1,$2,$3,$4,$5)',
@@ -1004,6 +1053,8 @@ app.get('/api/monthly-indicators', requireAuth(), requirePerm('monthly_indicator
           await query('DELETE FROM monthly_indicators WHERE id = $1', [r.id]);
         }
       }
+      await archiveIndicatorTable('monthly_big_indicators', 'مؤشرات تجميعيه', cutoffYear, cutoffMonth, user, 'تجميعي');
+      await archiveIndicatorTable('monthly_small_indicators', 'مؤشرات تخزينيه', cutoffYear, cutoffMonth, user, 'تخزيني');
     }
   } catch (archiveErr) { console.error('Auto-archive indicators skipped:', archiveErr.message); }
   // Query from all three indicator tables (historical data may be in big/small tables)
@@ -1091,13 +1142,20 @@ app.delete('/api/monthly-indicators/:id', requireAuth(), requirePerm('monthly_in
 });
 
 app.post('/api/monthly-indicators/archive', requireAuth(), requirePerm('monthly_indicators', 'delete'), async (req, res) => {
+  const user = req.session.user;
   const records = await query('SELECT mi.*, h.name as hospital_name, h.governorate FROM monthly_indicators mi JOIN hospitals h ON h.id = mi.hospital_id');
-  if (records.rows.length === 0) return res.json({ ok: true, message: 'لا توجد بيانات للأرشفة' });
-  const title = 'مؤشرات الأداء - ' + new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
-  await query('INSERT INTO archives (type, title, data, user_id, user_name) VALUES ($1,$2,$3,$4,$5)',
-    ['مؤشرات الأداء', title, JSON.stringify(records.rows), req.session.user.id, req.session.user.name]);
-  await query('DELETE FROM monthly_indicators');
-  res.json({ ok: true, message: 'تم أرشفة ' + records.rows.length + ' سجل' });
+  let total = 0;
+  if (records.rows.length > 0) {
+    const title = 'مؤشرات الأداء - ' + new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+    await query('INSERT INTO archives (type, title, data, user_id, user_name) VALUES ($1,$2,$3,$4,$5)',
+      ['مؤشرات الأداء', title, JSON.stringify(records.rows), user.id, user.name]);
+    await query('DELETE FROM monthly_indicators');
+    total += records.rows.length;
+  }
+  total += await archiveIndicatorTable('monthly_big_indicators', 'مؤشرات تجميعيه', null, null, user, 'تجميعي');
+  total += await archiveIndicatorTable('monthly_small_indicators', 'مؤشرات تخزينيه', null, null, user, 'تخزيني');
+  if (total === 0) return res.json({ ok: true, message: 'لا توجد بيانات للأرشفة' });
+  res.json({ ok: true, message: 'تم أرشفة ' + total + ' سجل' });
 });
 
 app.post('/api/monthly-indicators/archive-direct', requireAuth(), async (req, res) => {
@@ -1110,7 +1168,9 @@ app.post('/api/monthly-indicators/archive-direct', requireAuth(), async (req, re
   const hosp = await query('SELECT name, governorate FROM hospitals WHERE id = $1', [hospitalId]);
   const record = { hospital_id: hospitalId, hospital_name: hosp.rows[0]?.name || '', governorate: hosp.rows[0]?.governorate || '', year, month, period, data: JSON.stringify(data), day: day || '', time: time || '', user_id: req.session.user.id };
   if (existing.rows.length > 0) {
-    const archData = JSON.parse(existing.rows[0].data);
+    let archData = existing.rows[0].data;
+    if (typeof archData === 'string') { try { archData = JSON.parse(archData) || []; } catch (e) { archData = []; } }
+    if (!Array.isArray(archData)) archData = [];
     const idx = archData.findIndex(r => r.hospital_id === hospitalId && r.year === year && (r.month === month || r.period === period));
     if (idx >= 0) archData[idx] = record; else archData.push(record);
     await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify(archData), existing.rows[0].id]);
@@ -1163,7 +1223,9 @@ app.get('/api/monthly-consumption', requireAuth(), requirePerm('monthly_consumpt
         const title = 'منصرف فصائل الدم - أرشيف تلقائي ' + todayStr;
         const existingArch = await query('SELECT id, data FROM archives WHERE type = $1 AND title = $2', ['منصرف فصائل الدم', title]);
         if (existingArch.rows.length > 0) {
-          const oldData = JSON.parse(existingArch.rows[0].data) || [];
+          let oldData = existingArch.rows[0].data;
+          if (typeof oldData === 'string') { try { oldData = JSON.parse(oldData) || []; } catch (e) { oldData = []; } }
+          if (!Array.isArray(oldData)) oldData = [];
           await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify([...oldData, ...toArchive]), existingArch.rows[0].id]);
         } else {
           await query('INSERT INTO archives (type, title, data, user_id, user_name) VALUES ($1,$2,$3,$4,$5)',
@@ -1244,7 +1306,9 @@ app.post('/api/monthly-consumption/archive-direct', requireAuth(), requirePerm('
   const hosp = await query('SELECT name, governorate FROM hospitals WHERE id = $1', [hospitalId]);
   const record = { hospital_id: hospitalId, hospital_name: hosp.rows[0]?.name || '', governorate: hosp.rows[0]?.governorate || '', year, month, period: p, blood_types: bloodTypes, user_id: req.session.user.id };
   if (existing.rows.length > 0) {
-    const data = JSON.parse(existing.rows[0].data);
+    let data = existing.rows[0].data;
+    if (typeof data === 'string') { try { data = JSON.parse(data) || []; } catch (e) { data = []; } }
+    if (!Array.isArray(data)) data = [];
     const idx = data.findIndex(r => r.hospital_id === hospitalId && r.year === year && (r.month === month || r.period === p));
     if (idx >= 0) data[idx] = record; else data.push(record);
     await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify(data), existing.rows[0].id]);
@@ -1319,7 +1383,9 @@ app.post('/api/monthly-big-indicators/archive-direct', requireAuth(), requirePer
   const hosp = await query('SELECT name, governorate FROM hospitals WHERE id = $1', [hospitalId]);
   const record = { hospital_id: hospitalId, hospital_name: hosp.rows[0]?.name || '', governorate: hosp.rows[0]?.governorate || '', year, month, period: p, data, user_id: req.session.user.id };
   if (existing.rows.length > 0) {
-    const oldData = JSON.parse(existing.rows[0].data) || [];
+    let oldData = existing.rows[0].data;
+    if (typeof oldData === 'string') { try { oldData = JSON.parse(oldData) || []; } catch (e) { oldData = []; } }
+    if (!Array.isArray(oldData)) oldData = [];
     const idx = oldData.findIndex(r => r.hospital_id === hospitalId && r.year === year && (r.month === month || r.period === p));
     if (idx >= 0) oldData[idx] = record; else oldData.push(record);
     await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify(oldData), existing.rows[0].id]);
@@ -1394,7 +1460,9 @@ app.post('/api/monthly-small-indicators/archive-direct', requireAuth(), requireP
   const hosp = await query('SELECT name, governorate FROM hospitals WHERE id = $1', [hospitalId]);
   const record = { hospital_id: hospitalId, hospital_name: hosp.rows[0]?.name || '', governorate: hosp.rows[0]?.governorate || '', year, month, period: p, data, user_id: req.session.user.id };
   if (existing.rows.length > 0) {
-    const oldData = JSON.parse(existing.rows[0].data) || [];
+    let oldData = existing.rows[0].data;
+    if (typeof oldData === 'string') { try { oldData = JSON.parse(oldData) || []; } catch (e) { oldData = []; } }
+    if (!Array.isArray(oldData)) oldData = [];
     const idx = oldData.findIndex(r => r.hospital_id === hospitalId && r.year === year && (r.month === month || r.period === p));
     if (idx >= 0) oldData[idx] = record; else oldData.push(record);
     await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify(oldData), existing.rows[0].id]);
