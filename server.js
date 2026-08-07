@@ -52,10 +52,73 @@ if (needsCopy && fs.existsSync(srcDb)) {
 }
 
 const db = require('./db');
+const FormulaEngine = require('./public/js/formula.js');
+const IndicatorDefs = require('./public/js/indicator-defs.js');
 let query;
+
+// ============== Indicator Columns (العمليات الحسابية) ==============
+let FORMULA_KEYS = new Set();
+
+async function refreshFormulaKeys() {
+  try {
+    const rows = await db.query("SELECT col_key FROM indicator_columns WHERE formula = 1");
+    FORMULA_KEYS = new Set(rows.rows.map(r => r.col_key));
+  } catch (e) {
+    console.error('refreshFormulaKeys error:', e.message);
+  }
+}
+
+function normalizeIndicatorCol(raw) {
+  return {
+    id: raw.id,
+    category: raw.category,
+    key: raw.col_key,
+    label: raw.label,
+    ord: raw.ord || 0,
+    enabled: raw.enabled === 1 || raw.enabled === true ? 1 : 0,
+    static: raw.static === 1 || raw.static === true ? 1 : 0,
+    formula: raw.formula === 1 || raw.formula === true ? 1 : 0,
+    formula_expr: raw.formula_expr || '',
+    unit: raw.unit || '',
+    target: raw.target || '',
+    group: raw.grp || '',
+    sg: raw.sg || '',
+    ssg: raw.ssg || '',
+    cls: raw.cls || ''
+  };
+}
+
+async function getIndicatorColumns(category) {
+  const rows = await db.query('SELECT * FROM indicator_columns WHERE category = $1 ORDER BY ord ASC, id ASC', [category]);
+  return rows.rows.map(normalizeIndicatorCol);
+}
+
+async function ensureIndicatorColumns() {
+  try {
+    const count = await db.query('SELECT COUNT(*) as cnt FROM indicator_columns');
+    if (count.rows.length > 0 && parseInt(count.rows[0].cnt) > 0) return;
+    const defs = [
+      ...IndicatorDefs.DEFAULT_BIG_DEFS.map((c, i) => Object.assign({}, c, { category: 'big', ord: i })),
+      ...IndicatorDefs.DEFAULT_SMALL_DEFS.map((c, i) => Object.assign({}, c, { category: 'small', ord: i }))
+    ];
+    let added = 0;
+    for (const d of defs) {
+      await db.query(
+        'INSERT INTO indicator_columns (category, col_key, label, ord, enabled, static, formula, formula_expr, unit, target, grp, sg, ssg, cls) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)',
+        [d.category, d.key, d.label, d.ord, d.enabled === 1 || d.enabled === true ? 1 : 0, d.static === 1 || d.static === true ? 1 : 0, d.formula ? 1 : 0, d.formula_expr || '', d.unit || '', d.target || '', d.group || '', d.sg || '', d.ssg || '', d.cls || '']
+      );
+      added++;
+    }
+    console.log(`✅ Seeded ${added} indicator columns`);
+  } catch (e) {
+    console.error('ensureIndicatorColumns error:', e.message);
+  }
+}
 
 async function startServer() {
   await db.init();
+  await ensureIndicatorColumns();
+  await refreshFormulaKeys();
   const isPG = db.mode === 'pg';
 
   // Session store: Redis → PostgreSQL → memorystore (priority order)
@@ -1210,14 +1273,13 @@ app.get('/api/monthly-consumption', requireAuth(), requirePerm('monthly_consumpt
   const user = req.session.user;
   try {
     const now = new Date();
-    if (now.getDate() >= 25) {
-      const curYear = now.getFullYear();
-      const curMonth = now.getMonth() + 1;
-      let cutoffMonth = curMonth - 1;
-      let cutoffYear = curYear;
-      if (cutoffMonth === 0) { cutoffMonth = 12; cutoffYear--; }
-      const all = await query('SELECT mc.*, h.name as hospital_name, h.governorate, u.name as entered_by FROM monthly_consumption mc JOIN hospitals h ON h.id = mc.hospital_id LEFT JOIN users u ON u.id = mc.user_id');
-      const toArchive = all.rows.filter(r => r.year < cutoffYear || (r.year === cutoffYear && r.month < cutoffMonth));
+    const curYear = now.getFullYear();
+    const curMonth = now.getMonth() + 1;
+    let cutoffMonth = curMonth - 1;
+    let cutoffYear = curYear;
+    if (cutoffMonth === 0) { cutoffMonth = 12; cutoffYear--; }
+    const all = await query('SELECT mc.*, h.name as hospital_name, h.governorate, u.name as entered_by FROM monthly_consumption mc JOIN hospitals h ON h.id = mc.hospital_id LEFT JOIN users u ON u.id = mc.user_id');
+    const toArchive = all.rows.filter(r => r.year < cutoffYear || (r.year === cutoffYear && r.month < cutoffMonth));
       if (toArchive.length > 0) {
         const todayStr = new Date().toISOString().slice(0,10);
         const title = 'منصرف فصائل الدم - أرشيف تلقائي ' + todayStr;
@@ -1235,7 +1297,6 @@ app.get('/api/monthly-consumption', requireAuth(), requirePerm('monthly_consumpt
           await query('DELETE FROM monthly_consumption WHERE id = $1', [r.id]);
         }
       }
-    }
   } catch (archiveErr) { console.error('Auto-archive consumption skipped:', archiveErr.message); }
   let sql = 'SELECT mc.*, h.name as hospital_name, h.governorate, u.name as entered_by FROM monthly_consumption mc JOIN hospitals h ON h.id = mc.hospital_id LEFT JOIN users u ON u.id = mc.user_id WHERE 1=1';
   let params = [];
@@ -2449,7 +2510,7 @@ app.get('/api/sync/export', requireAuth(), requireMaster(), async (req, res) => 
         'consumption', 'archives', 'employee_statements',
         'equipment_types', 'readiness_occasions', 'readiness_reports',
         'readiness_notifications', 'role_perms', 'strategic_settings',
-        'strategic_reserves', 'equipment_hospitals'
+        'strategic_reserves', 'equipment_hospitals', 'hospital_departments'
       ];
       const result = {};
       for (const table of tables) {
@@ -2523,7 +2584,7 @@ app.post('/api/sync/import', requireAuth(), requireMaster(), async (req, res) =>
   if (!data) return res.status(400).json({ error: 'البيانات مطلوبة' });
   try {
     if (isPG) {
-      const tables = ['users','hospitals','governorates','hospital_types','daily_stock','daily_reports','daily_statements','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big_indicators','monthly_small_indicators','consumption','archives','employee_statements','equipment_types','readiness_occasions','readiness_reports','readiness_notifications','role_perms','strategic_settings','strategic_reserves','equipment_hospitals'];
+      const tables = ['users','hospitals','governorates','hospital_types','daily_stock','daily_reports','daily_statements','monthly_storage','monthly_aggregate','monthly_indicators','monthly_consumption','monthly_big_indicators','monthly_small_indicators','consumption','archives','employee_statements','equipment_types','readiness_occasions','readiness_reports','readiness_notifications','role_perms','strategic_settings','strategic_reserves','equipment_hospitals','hospital_departments'];
       for (const table of tables) {
         const rows = data[table];
         if (Array.isArray(rows) && rows.length > 0) {
@@ -2783,8 +2844,1027 @@ app.post('/api/csp-violation', (req, res) => {
   res.status(204).end();
 });
 
+// ============== Indicator Columns CRUD (العمليات الحسابية) ==============
+app.get('/api/indicator-columns', requireAuth(), async (req, res) => {
+  try {
+    const [big, small] = await Promise.all([getIndicatorColumns('big'), getIndicatorColumns('small')]);
+    res.json({ big, small });
+  } catch (e) {
+    console.error('GET indicator-columns:', e.message);
+    res.status(500).json({ error: errMsg(e) });
+  }
+});
+
+app.post('/api/indicator-columns', requireAuth(), requirePerm('indicator_columns', 'edit'), async (req, res) => {
+  try {
+    const { category, key, label, formula, formula_expr, unit, target, group, sg, ssg, cls } = req.body || {};
+    if (!category || !key || !label) return res.status(400).json({ error: 'بيانات ناقصة' });
+    if (category !== 'big' && category !== 'small') return res.status(400).json({ error: 'فئة غير صحيحة' });
+    const keyRe = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+    if (!keyRe.test(key)) return res.status(400).json({ error: 'مفتاح العمود غير صالح' });
+    const exist = await db.query('SELECT id FROM indicator_columns WHERE col_key = $1', [key]);
+    if (exist.rows.length > 0) return res.status(400).json({ error: 'المفتاح موجود بالفعل' });
+    let fExpr = '';
+    if (formula) {
+      if (!formula_expr || !FormulaEngine.parseExpr(formula_expr) || /[\u0600-\u06FF]/.test(formula_expr)) return res.status(400).json({ error: 'معادلة غير صالحة' });
+      fExpr = formula_expr;
+    }
+    const maxOrd = await db.query('SELECT MAX(ord) as m FROM indicator_columns WHERE category = $1', [category]);
+    const m = maxOrd.rows[0] ? maxOrd.rows[0].m : null;
+    const ord = (m === null || m === undefined || isNaN(parseInt(m))) ? 1 : parseInt(m) + 1;
+    await db.query(
+      'INSERT INTO indicator_columns (category, col_key, label, ord, enabled, static, formula, formula_expr, unit, target, grp, sg, ssg, cls) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)',
+      [category, key, label, ord, 1, 0, formula ? 1 : 0, fExpr, unit || '', target || '', group || '', sg || '', ssg || '', cls || '']
+    );
+    await refreshFormulaKeys();
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('POST indicator-columns:', e.message);
+    res.status(500).json({ error: errMsg(e) });
+  }
+});
+
+app.put('/api/indicator-columns/:id', requireAuth(), requirePerm('indicator_columns', 'edit'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!id) return res.status(400).json({ error: 'معرف غير صالح' });
+    const { label, formula, formula_expr, unit, target, group, sg, ssg, cls, enabled } = req.body || {};
+    if (!label) return res.status(400).json({ error: 'بيانات ناقصة' });
+    let fExpr = '';
+    if (formula) {
+      if (!formula_expr || !FormulaEngine.parseExpr(formula_expr) || /[\u0600-\u06FF]/.test(formula_expr)) return res.status(400).json({ error: 'معادلة غير صالحة' });
+      fExpr = formula_expr;
+    }
+    await db.query(
+      'UPDATE indicator_columns SET label = $1, formula = $2, formula_expr = $3, unit = $4, target = $5, grp = $6, sg = $7, ssg = $8, cls = $9, enabled = $10 WHERE id = $11',
+      [label, formula ? 1 : 0, fExpr, unit || '', target || '', group || '', sg || '', ssg || '', cls || '', enabled === 0 || enabled === false ? 0 : 1, id]
+    );
+    await refreshFormulaKeys();
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('PUT indicator-columns:', e.message);
+    res.status(500).json({ error: errMsg(e) });
+  }
+});
+
+app.delete('/api/indicator-columns/:id', requireAuth(), requirePerm('indicator_columns', 'edit'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!id) return res.status(400).json({ error: 'معرف غير صالح' });
+    const row = await db.query('SELECT static FROM indicator_columns WHERE id = $1', [id]);
+    if (row.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
+    if (row.rows[0].static === 1 || row.rows[0].static === true) return res.status(400).json({ error: 'لا يمكن حذف عمود ثابت' });
+    await db.query('DELETE FROM indicator_columns WHERE id = $1', [id]);
+    await refreshFormulaKeys();
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('DELETE indicator-columns:', e.message);
+    res.status(500).json({ error: errMsg(e) });
+  }
+});
+
+app.post('/api/indicator-columns/reorder', requireAuth(), requirePerm('indicator_columns', 'edit'), async (req, res) => {
+  try {
+    const { category, ids } = req.body || {};
+    if ((category !== 'big' && category !== 'small') || !Array.isArray(ids)) return res.status(400).json({ error: 'بيانات غير صحيحة' });
+    for (let i = 0; i < ids.length; i++) {
+      await db.query('UPDATE indicator_columns SET ord = $1 WHERE id = $2 AND category = $3', [i, parseInt(ids[i]), category]);
+    }
+    await refreshFormulaKeys();
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('POST indicator-columns/reorder:', e.message);
+    res.status(500).json({ error: errMsg(e) });
+  }
+});
+
+// ============== Blood Bags Module (أكياس الدم — التتبع الكامل) ==============
+const BB_STATUS_LABELS = {
+  collected: 'تم التجميع', incomplete: 'لم يكتمل', therapeutic: 'تبرع علاجي',
+  fatty: 'دهون', icteric: 'صفراء', lipemic: 'Lipemic plasma', hemolyzed: 'Hemolyzed plasma',
+  positive: 'إيجابي فيروس',
+  available: 'متاح', returned: 'مرتجع', dispatched: 'مُرسل', reserved: 'محجوز',
+  issued: 'مُصرف', reaction: 'تفاعل', disposed: 'مُعدَم'
+};
+const BB_STOCK_STATUSES = ['available', 'returned'];
+const BB_ISSUE_TYPES = ['داخلي', 'فرع', 'هيئة', 'خارجي'];
+const BB_COMPAT = {
+  'O-': ['O-'], 'O+': ['O+', 'O-'], 'A-': ['A-', 'O-'], 'A+': ['A+', 'A-', 'O+', 'O-'],
+  'B-': ['B-', 'O-'], 'B+': ['B+', 'B-', 'O+', 'O-'], 'AB-': ['AB-', 'A-', 'B-', 'O-'],
+  'AB+': ['AB+', 'AB-', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-']
+};
+function bbCanDonateTo(donorBt, recipientBt) {
+  if (!donorBt || !recipientBt) return true;
+  const list = BB_COMPAT[donorBt];
+  if (!list) return donorBt === recipientBt;
+  return list.indexOf(recipientBt) !== -1;
+}
+function bbTs() { return new Date().toISOString(); }
+const bbPad2 = n => String(n).padStart(2, '0');
+async function bbAddEvent(bag, event, detail, user, fromHosp, toHosp) {
+  try {
+    await db.query(
+      'INSERT INTO blood_bag_events (bag_id, bag_no, event, from_hospital_id, to_hospital_id, detail, user_id, user_name, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())',
+      [bag.id, bag.bag_no || '', event, fromHosp || null, toHosp || null, detail || '', user ? user.id : null, user ? user.name : '']
+    );
+  } catch (e) { console.error('bbAddEvent:', e.message); }
+}
+async function bbAllBags() { const r = await db.query('SELECT * FROM blood_bags'); return r.rows; }
+async function bbAllHospitals() { const r = await db.query('SELECT * FROM hospitals ORDER BY id'); return r.rows; }
+
+// الأكياس: نطاق الرؤية حسب الدور — كل مستشفى يشوف متاحه فقط (+ الكيس الوارد إليه من إرسال معلّق)
+async function bbAllowedHospitalIds(user) {
+  if (!user) return null;
+  if (user.role === 'admin' || user.role === 'org_supervisor') return null;
+  if (user.role === 'hospital' || user.role === 'hospital_manager') {
+    const my = parseInt(user.hospitalId) || 0;
+    return my ? [my] : [];
+  }
+  if (user.role === 'branch_supervisor') {
+    const g = user.governorate;
+    if (!g) return null;
+    return (await bbAllHospitals()).filter(h => h.governorate === g).map(h => h.id);
+  }
+  if (user.role === 'visitor') {
+    const ids = (user.viewHospitalIds || []).map(Number).filter(Boolean);
+    if (ids.length > 0) return ids;
+    if (user.viewPermission === 'limited') return [];
+    return null;
+  }
+  return null;
+}
+async function bbRoleFilterBags(bags, user) {
+  const allowed = await bbAllowedHospitalIds(user);
+  if (!allowed) return bags;
+  return bags.filter(b =>
+    allowed.indexOf(b.hospital_id) !== -1 ||
+    (b.status === 'dispatched' && allowed.indexOf(parseInt(b.dispatch_to)) !== -1)
+  );
+}
+async function bbNextBagNo(hospitalId) {
+  for (let tries = 0; tries < 50; tries++) {
+    let seq = await db.getConfig('bb_seq');
+    if (!seq || isNaN(parseInt(seq))) seq = 1; else seq = parseInt(seq) + 1;
+    await db.setConfig('bb_seq', seq);
+    const d = new Date();
+    const no = 'BB-' + bbPad2(d.getFullYear() % 100) + bbPad2(d.getMonth() + 1) + '-' + String(hospitalId).padStart(2, '0') + '-' + String(seq).padStart(4, '0');
+    const ex = await db.query('SELECT id FROM blood_bags WHERE bag_no = $1 LIMIT 1', [no]);
+    if (ex.rows.length === 0) return no;
+  }
+  const d = new Date();
+  return 'BB-' + bbPad2(d.getFullYear() % 100) + bbPad2(d.getMonth() + 1) + '-' + String(hospitalId).padStart(2, '0') + '-' + String(Date.now() % 100000).padStart(5, '0');
+}
+
+// رقم اللي / الباركود لا يتكرران أبداً — يُستثنى فقط مكوّنات نفس التبرع (نفس المجموعة) التي تتشارك نفس الأرقام
+// ملاحظة: استعلامات بسيطة عمود واحد (متوافقة مع jsondb الذي لا يدعم OR عالية المستوى في WHERE)
+async function bbCheckUniqueNumbers(bagNo, barcode, excludeIds) {
+  const ex = new Set((excludeIds || []).map(Number).filter(Boolean));
+  const bNo = bagNo ? String(bagNo).trim() : '';
+  const bc = barcode ? String(barcode).trim() : '';
+  if (bNo) {
+    const rows = (await db.query('SELECT id, bag_no FROM blood_bags WHERE bag_no = $1', [bNo])).rows;
+    const hit = rows.find(r => !ex.has(Number(r.id)));
+    if (hit) return 'رقم اللي «' + hit.bag_no + '» مستخدم بالفعل لكيس آخر — الأرقام لا تتكرر أبداً';
+  }
+  if (bc) {
+    const rows = (await db.query('SELECT id, barcode FROM blood_bags WHERE barcode = $1', [bc])).rows;
+    const hit = rows.find(r => !ex.has(Number(r.id)));
+    if (hit) return 'الباركود «' + hit.barcode + '» مستخدم بالفعل لكيس آخر — الأرقام لا تتكرر أبداً';
+  }
+  return null;
+}
+// فصيلة المنتجات غير الدم (بلازما / صفائح / كرايو) تكون A/B/O/AB بدون موجب أو سالب
+function bbNormBt(bt, productType) {
+  const s = String(bt || '').trim().toUpperCase();
+  if (!s) return '';
+  if ((productType || 'دم') !== 'دم') return s.replace(/[+-]/g, '');
+  return s;
+}
+// صلاحية الكيس المتوقعة حسب المنتج (بالأيام): دم 35 يوماً، بلازما وكرايو سنة (365)، صفائح 5 أيام
+const BB_SHELF_DAYS = { 'دم': 35, 'بلازما': 365, 'كرايو': 365, 'صفائح SDP': 5, 'صفائح RDP': 5 };
+function bbShelfDays(productType) {
+  const p = (productType || '').trim();
+  return BB_SHELF_DAYS[p] != null ? BB_SHELF_DAYS[p] : 35;
+}
+// حساب تاريخ انتهاء الصلاحية = تاريخ الأساس (التجميع/الاستلام) + مدة صلاحية المنتج — يرجع YYYY-MM-DD (اليوم إذا لم يوجد تاريخ أساس)
+function bbAddDays(dateStr, days) {
+  let d;
+  if (dateStr) {
+    d = new Date(String(dateStr).slice(0, 10) + 'T00:00:00');
+    if (isNaN(d.getTime())) d = null;
+  }
+  if (!d) d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function bbDefaultExpiry(dateStr, productType) {
+  return bbAddDays(dateStr, bbShelfDays(productType));
+}
+
+async function bbReleaseExpiredReservations() {
+  try {
+    const now = Date.now();
+    const res = await db.query("SELECT * FROM bag_reservations WHERE status = 'active'");
+    for (const r of res.rows) {
+      const until = new Date(r.reserved_until).getTime();
+      if (!isNaN(until) && until < now) {
+        await db.query("UPDATE bag_reservations SET status = 'expired', released_at = NOW() WHERE id = $1", [r.id]);
+        await db.query("UPDATE blood_bags SET status = 'available', recipient_id = NULL, recipient_name = '' WHERE id = $1", [r.bag_id]);
+        const b = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [r.bag_id])).rows[0];
+        if (b) await bbAddEvent(b, 'انتهاء مدة الحجز', 'انتهت مدة الحجز (48 ساعة) وتم تفكيكه تلقائياً', null, null, null);
+      }
+    }
+  } catch (e) { console.error('bbReleaseExpiredReservations:', e.message); }
+}
+async function bbMarkExpiredBags() {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const bags = await bbAllBags();
+    for (const b of bags) {
+      const exp = b.expiry_date ? String(b.expiry_date).slice(0, 10) : '';
+      if (exp && exp < today && ['collected', 'available', 'returned', 'dispatched', 'reserved'].indexOf(b.status) !== -1) {
+        if (b.status === 'reserved') {
+          await db.query("UPDATE bag_reservations SET status = 'expired', released_at = NOW() WHERE bag_id = $1 AND status = 'active'", [b.id]);
+        }
+        await db.query("UPDATE blood_bags SET status = 'disposed', return_reason = 'انتهاء الصلاحية' WHERE id = $1", [b.id]);
+        await bbAddEvent(b, 'انتهاء الصلاحية', 'تم تحويل الكيس للإعدام لانتهاء الصلاحية', null, null, null);
+      }
+    }
+  } catch (e) { console.error('bbMarkExpiredBags:', e.message); }
+}
+
+// ----- الأكياس: القائمة -----
+app.get('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'view'), async (req, res) => {
+  try {
+    await bbReleaseExpiredReservations();
+    await bbMarkExpiredBags();
+    const { hospitalId, sourceHospitalId, status, bloodType, q, expiring } = req.query;
+    let bags = await bbAllBags();
+    bags = await bbRoleFilterBags(bags, req.session.user);
+    const hospitals = await bbAllHospitals();
+    const hospMap = {}; hospitals.forEach(h => { hospMap[h.id] = h; });
+    if (hospitalId) bags = bags.filter(b => b.hospital_id === parseInt(hospitalId));
+    if (sourceHospitalId) bags = bags.filter(b => b.source_hospital_id === parseInt(sourceHospitalId));
+    if (status) bags = bags.filter(b => b.status === status);
+    if (bloodType) bags = bags.filter(b => b.blood_type === bloodType);
+    if (q) {
+      const ql = String(q).toLowerCase();
+      bags = bags.filter(b =>
+        (b.bag_no || '').toLowerCase().indexOf(ql) !== -1 ||
+        (b.barcode || '').toLowerCase().indexOf(ql) !== -1 ||
+        (b.donor_name || '').toLowerCase().indexOf(ql) !== -1 ||
+        (b.donor_national_id || '').indexOf(ql) !== -1
+      );
+    }
+    if (expiring) {
+      const days = parseInt(expiring) || 10;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const limit = new Date(today); limit.setDate(limit.getDate() + days);
+      bags = bags.filter(b => {
+        if (!b.expiry_date || BB_STOCK_STATUSES.concat(['dispatched', 'reserved', 'collected']).indexOf(b.status) === -1) return false;
+        const ed = new Date(b.expiry_date); ed.setHours(0, 0, 0, 0);
+        return ed <= limit;
+      });
+    }
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const out = bags.map(b => {
+      const hosp = hospMap[b.hospital_id], src = hospMap[b.source_hospital_id];
+      let daysLeft = null;
+      if (b.expiry_date) { const ed = new Date(b.expiry_date); ed.setHours(0, 0, 0, 0); daysLeft = Math.round((ed - today) / 86400000); }
+      return Object.assign({}, b, {
+        hospital_name: hosp ? hosp.name : '',
+        hospital_governorate: hosp ? hosp.governorate : '',
+        hospital_type: hosp ? hosp.type : '',
+        source_hospital_name: b.source_hospital_id === 0 ? (b.source_name || 'وارد إقليمي (خارجي)') : (src ? src.name : ''),
+        status_label: BB_STATUS_LABELS[b.status] || b.status,
+        days_left: daysLeft,
+        expiring_soon: daysLeft !== null && daysLeft <= 10 && BB_STOCK_STATUSES.concat(['dispatched', 'reserved', 'collected']).indexOf(b.status) !== -1
+      });
+    });
+    out.sort((a, b) => b.id - a.id);
+    res.json({ bags: out });
+  } catch (e) { console.error('GET blood-bags:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الأكياس: إحصائيات اللوحة -----
+app.get('/api/blood-bags/stats', requireAuth(), requirePerm('blood_bags', 'view'), async (req, res) => {
+  try {
+    await bbReleaseExpiredReservations();
+    await bbMarkExpiredBags();
+    const { hospitalId } = req.query;
+    let bags = await bbAllBags();
+    bags = await bbRoleFilterBags(bags, req.session.user);
+    const hospitals = await bbAllHospitals();
+    const hospMap = {}; hospitals.forEach(h => { hospMap[h.id] = h; });
+    if (hospitalId) bags = bags.filter(b => b.hospital_id === parseInt(hospitalId));
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const limit10 = new Date(today); limit10.setDate(limit10.getDate() + 10);
+    const byHosp = {};
+    bags.forEach(b => {
+      if (!byHosp[b.hospital_id]) {
+        byHosp[b.hospital_id] = {
+          hospital_id: b.hospital_id,
+          hospital_name: hospMap[b.hospital_id] ? hospMap[b.hospital_id].name : '',
+          governorate: hospMap[b.hospital_id] ? hospMap[b.hospital_id].governorate : '',
+          type: hospMap[b.hospital_id] ? hospMap[b.hospital_id].type : '',
+          total: 0, available: 0, availableByType: {}, byProduct: {}, availableByProduct: {}, collected: 0, dispatched: 0, reserved: 0, issued: 0, expiring: 0, expired: 0, positive: 0, disposed: 0
+        };
+      }
+      const s = byHosp[b.hospital_id];
+      const prod = b.product_type || 'دم';
+      s.total++;
+      s.byProduct[prod] = (s.byProduct[prod] || 0) + 1;
+      if (BB_STOCK_STATUSES.indexOf(b.status) !== -1) {
+        s.available++;
+        s.availableByType[b.blood_type || 'غير محدد'] = (s.availableByType[b.blood_type || 'غير محدد'] || 0) + 1;
+        s.availableByProduct[prod] = (s.availableByProduct[prod] || 0) + 1;
+      }
+      if (b.status === 'collected') s.collected++;
+      if (b.status === 'dispatched') s.dispatched++;
+      if (b.status === 'reserved') s.reserved++;
+      if (b.status === 'issued') s.issued++;
+      if (b.status === 'positive') s.positive++;
+      if (b.status === 'disposed') s.disposed++;
+      if (b.expiry_date && ['available', 'returned', 'dispatched', 'reserved', 'collected'].indexOf(b.status) !== -1) {
+        const ed = new Date(b.expiry_date); ed.setHours(0, 0, 0, 0);
+        if (ed <= limit10) s.expiring++;
+        if (ed < today) s.expired++;
+      }
+    });
+    const list = Object.values(byHosp).sort((a, b) => (a.hospital_name || '').localeCompare(b.hospital_name || '', 'ar'));
+    const totals = { total: 0, available: 0, collected: 0, dispatched: 0, reserved: 0, issued: 0, expiring: 0, positive: 0, disposed: 0, availableByType: {}, byProduct: {}, availableByProduct: {} };
+    list.forEach(s => {
+      totals.total += s.total; totals.available += s.available; totals.collected += s.collected;
+      totals.dispatched += s.dispatched; totals.reserved += s.reserved; totals.issued += s.issued;
+      totals.expiring += s.expiring; totals.positive += s.positive; totals.disposed += s.disposed;
+      Object.entries(s.availableByType).forEach(([k, v]) => { totals.availableByType[k] = (totals.availableByType[k] || 0) + v; });
+      Object.entries(s.byProduct).forEach(([k, v]) => { totals.byProduct[k] = (totals.byProduct[k] || 0) + v; });
+      Object.entries(s.availableByProduct).forEach(([k, v]) => { totals.availableByProduct[k] = (totals.availableByProduct[k] || 0) + v; });
+    });
+    res.json({ hospitals: list, totals });
+  } catch (e) { console.error('GET blood-bags/stats:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الأكياس: إضافة (تسجيل التجميع — دفعة واحدة) -----
+app.post('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'add'), async (req, res) => {
+  try {
+    const { hospitalId, collectionDate, bags } = req.body || {};
+    const hid = parseInt(hospitalId);
+    if (!hid || !Array.isArray(bags) || bags.length === 0) return res.status(400).json({ error: 'بيانات ناقصة' });
+    if (bags.length > 500) return res.status(400).json({ error: 'الحد الأقصى 500 كيس في المرة الواحدة' });
+    const hosp = (await db.query('SELECT type FROM hospitals WHERE id = $1', [hid])).rows[0];
+    if (hosp && hosp.type !== 'تجميعي') return res.status(403).json({ error: 'التجميع متاح لبنوك الدم التجميعية فقط' });
+    const user = req.session.user;
+    const created = [];
+    // تمريرة تحقق مسبقة — لا يُكتب أي شيء قبل التأكد من خلو الأرقام من التكرار (لا تكرار في نفس الدفعة ولا في القاعدة)
+    const seen = {};
+    for (const item of bags) {
+      const bagNo = (item.bag_no || '').trim();
+      const barcode = (item.barcode || '').trim();
+      if (bagNo && seen['n:' + bagNo]) return res.status(409).json({ error: 'رقم اللي «' + bagNo + '» مكرر في نفس الدفعة — الأرقام لا تتكرر أبداً' });
+      if (barcode && seen['b:' + barcode]) return res.status(409).json({ error: 'الباركود «' + barcode + '» مكرر في نفس الدفعة — الأرقام لا تتكرر أبداً' });
+      if (bagNo) seen['n:' + bagNo] = 1;
+      if (barcode) seen['b:' + barcode] = 1;
+      const dupe = await bbCheckUniqueNumbers(bagNo, barcode, []);
+      if (dupe) return res.status(409).json({ error: dupe });
+    }
+    for (const item of bags) {
+      const bagNo = (item.bag_no || '').trim() || await bbNextBagNo(hid);
+      const barcode = (item.barcode || '').trim();
+      const exp = item.expiry_date || null;
+      const makeCryo = !!item.cryo;
+      const productType = (item.product_type || '').trim() || 'دم';
+      const units = parseInt(item.units) || 1;
+      // أسباب الإعدام حسب المنتج: دم = إعدام التبرع كاملاً (أسباب عامة فقط)، بلازما/كرايو/صفائح = قد تُعدم بأسباب عامة أو أسباب خاصة بالبلازما
+      const generalDiscard = ['incomplete', 'therapeutic', 'fatty', 'icteric'];
+      const plasmaDiscard = ['lipemic', 'hemolyzed'];
+      const status = productType !== 'دم'
+        ? generalDiscard.concat(plasmaDiscard).indexOf(item.status) !== -1 ? item.status : 'collected'
+        : generalDiscard.indexOf(item.status) !== -1 ? item.status : 'collected';
+      // الصفائح (SDP/RDP) تُجمع كيساً واحداً مستقلاً — لا فصل
+      if (productType !== 'دم') {
+        const cExp = exp || bbDefaultExpiry(collectionDate, productType);
+        const r = await db.query(
+          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, notes, created_at, updated_at, user_id, donation_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW(),NOW(),$20,NULL)`,
+          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, units, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', status, '', '', '', '', item.notes || '', user ? user.id : null]
+        );
+        const bag = r.rows[0];
+        const stLabel = BB_STATUS_LABELS[status] || '';
+        const det = 'تم تسجيل الكيس (تجميع) | المنتج: ' + productType + ' | عدد الوحدات: ' + units + ' | رقم اللي: ' + bagNo + (stLabel ? ' | إعدام: ' + stLabel : '');
+        await bbAddEvent(bag, 'تسجيل كيس جديد', det, user, null, null);
+        created.push(bag);
+        continue;
+      }
+      // كل كيس دم مجمّع يُفصل تلقائياً إلى مكونات (دم + بلازما + كرايو اختياري) بنفس رقم اللي والباركود
+      const insertComp = async (productType, donationId) => {
+        // حقل الصلاحية في صف التجميع خاص بدم فقط — بلازما/كرايو المفصولة تأخذ دائماً مدة صلاحية منتجها (سنة)
+        const cExp = productType === 'دم' ? (exp || bbDefaultExpiry(collectionDate, 'دم')) : bbDefaultExpiry(collectionDate, productType);
+        const r = await db.query(
+          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, notes, created_at, updated_at, user_id, donation_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW(),NOW(),$20,$21)`,
+          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, 1, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', status, '', '', '', '', item.notes || '', user ? user.id : null, donationId]
+        );
+        return r.rows[0];
+      };
+      const rb = await insertComp('دم', null);
+      const donId = rb.id;
+      await db.query('UPDATE blood_bags SET donation_id = $1 WHERE id = $2', [donId, rb.id]);
+      const comps = [rb, await insertComp('بلازما', donId)];
+      if (makeCryo) comps.push(await insertComp('كرايو', donId));
+      for (const c of comps) {
+        c.donation_id = donId;
+        const stLabel = BB_STATUS_LABELS[status] || '';
+        const det = 'تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: ' + c.product_type + ' | رقم اللي: ' + bagNo + (makeCryo ? ' | المكونات: دم + بلازما + كرايو' : ' | المكونات: دم + بلازما') + (stLabel ? ' | إعدام: ' + stLabel : '');
+        await bbAddEvent(c, 'تسجيل كيس جديد', det, user, null, null);
+        created.push(c);
+      }
+    }
+    res.json({ ok: true, bags: created });
+  } catch (e) { console.error('POST blood-bags:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الأكياس: وارد من خارج النظام (وارد إقليمي) — لأي بنك دم (تجميعي أو تخزيني) -----
+app.post('/api/blood-bags/external-in', requireAuth(), requirePerm('blood_bags', 'add'), async (req, res) => {
+  try {
+    const { hospitalId, sourceName, receivedDate, bags } = req.body || {};
+    const hid = parseInt(hospitalId);
+    const srcName = (sourceName || '').trim();
+    if (!hid || !Array.isArray(bags) || bags.length === 0) return res.status(400).json({ error: 'بيانات ناقصة' });
+    if (bags.length > 500) return res.status(400).json({ error: 'الحد الأقصى 500 كيس في المرة الواحدة' });
+    const user = req.session.user;
+    const created = [];
+    // تمريرة تحقق مسبقة — لا يُكتب أي شيء قبل التأكد من خلو الأرقام من التكرار
+    const seen = {};
+    for (const item of bags) {
+      const bagNo = (item.bag_no || '').trim();
+      const barcode = (item.barcode || '').trim();
+      if (bagNo && seen['n:' + bagNo]) return res.status(409).json({ error: 'رقم اللي «' + bagNo + '» مكرر في نفس الدفعة — الأرقام لا تتكرر أبداً' });
+      if (barcode && seen['b:' + barcode]) return res.status(409).json({ error: 'الباركود «' + barcode + '» مكرر في نفس الدفعة — الأرقام لا تتكرر أبداً' });
+      if (bagNo) seen['n:' + bagNo] = 1;
+      if (barcode) seen['b:' + barcode] = 1;
+      const dupe = await bbCheckUniqueNumbers(bagNo, barcode, []);
+      if (dupe) return res.status(409).json({ error: dupe });
+    }
+    for (const item of bags) {
+      const bagNo = (item.bag_no || '').trim() || await bbNextBagNo(hid);
+      const productType = (item.product_type || '').trim() || 'دم';
+      const units = parseInt(item.units) || 1;
+      const barcode = (item.barcode || '').trim();
+      const r = await db.query(
+        `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, source_name, collection_date, expiry_date, blood_type, product_type, units, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, received_at, received_by, notes, created_at, updated_at, user_id)
+         VALUES ($1,$2,$3,0,$4,NULL,$5,$6,$7,$8,'','',NULL,'','available','','','','',$9,$10,$11,NOW(),NOW(),$12)`,
+        [bagNo, barcode, hid, srcName, item.expiry_date || bbDefaultExpiry(receivedDate || null, productType), bbNormBt(item.blood_type, productType), productType, units, receivedDate || null, user ? user.name : '', item.notes || '', user ? user.id : null]
+      );
+      const bag = r.rows[0];
+      const det = srcName ? ('وارد من: ' + srcName) : 'وارد إقليمي (خارجي)';
+      await bbAddEvent(bag, 'وارد', det + ' — تم تسجيله متاحاً | المنتج: ' + productType + (units > 1 ? ' | عدد الوحدات: ' + units : '') + (bag.blood_type ? ' | الفصيلة: ' + bag.blood_type : ''), user, null, hid);
+      created.push(bag);
+    }
+    res.json({ ok: true, bags: created });
+  } catch (e) { console.error('POST external-in:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الأكياس: تعديل بيانات كيس -----
+app.put('/api/blood-bags/:id', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!id) return res.status(400).json({ error: 'معرف غير صالح' });
+    const { bag_no, barcode, donor_name, donor_national_id, donor_age, donor_gender, collection_date, expiry_date, blood_type, product_type, units, notes } = req.body || {};
+    const old = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [id])).rows[0];
+    if (!old) return res.status(404).json({ error: 'الكيس غير موجود' });
+    const newBagNo = (bag_no != null ? String(bag_no).trim() : old.bag_no);
+    const newBarcode = (barcode != null ? String(barcode).trim() : old.barcode);
+    let groupIds = [id];
+    if (old.donation_id) {
+      groupIds = (await db.query('SELECT id FROM blood_bags WHERE donation_id = $1', [old.donation_id])).rows.map(r => r.id);
+    }
+    if (newBagNo && newBagNo !== old.bag_no) {
+      const dupe = await bbCheckUniqueNumbers(newBagNo, '', groupIds);
+      if (dupe) return res.status(409).json({ error: dupe });
+    }
+    if (newBarcode && newBarcode !== old.barcode) {
+      const dupe = await bbCheckUniqueNumbers('', newBarcode, groupIds);
+      if (dupe) return res.status(409).json({ error: dupe });
+    }
+    const newProd = product_type != null ? (product_type.trim() || 'دم') : (old.product_type || 'دم');
+    const newBt = blood_type != null ? bbNormBt(blood_type, newProd) : (old.blood_type || '');
+    // الصلاحية: قيمة صريحة يرسلها المستخدم تُحترم، تغيير المنتج يعيد حسابها تلقائياً حسب مدة صلاحية المنتج الجديد
+    const newColl = collection_date != null ? collection_date : old.collection_date;
+    let newExpiry;
+    if (expiry_date != null && String(expiry_date).trim() !== '') {
+      newExpiry = expiry_date;
+    } else if (newProd !== (old.product_type || 'دم')) {
+      newExpiry = bbDefaultExpiry(newColl, newProd);
+    } else {
+      newExpiry = old.expiry_date;
+    }
+    await db.query(
+      `UPDATE blood_bags SET bag_no = $1, barcode = $2, donor_name = $3, donor_national_id = $4, donor_age = $5, donor_gender = $6, collection_date = $7, expiry_date = $8, blood_type = $9, product_type = $10, units = $11, notes = $12, updated_at = NOW() WHERE id = $13`,
+      [bag_no != null ? bag_no : old.bag_no, barcode != null ? barcode : old.barcode, donor_name != null ? donor_name : old.donor_name, donor_national_id != null ? donor_national_id : old.donor_national_id, donor_age != null ? parseInt(donor_age) : old.donor_age, donor_gender != null ? donor_gender : old.donor_gender, newColl, newExpiry, newBt, newProd, units != null ? (parseInt(units) || 1) : (old.units || 1), notes != null ? notes : old.notes, id]
+    );
+    let synced = false;
+    if (old.donation_id) {
+      const shared = {
+        bag_no: bag_no != null ? bag_no : old.bag_no,
+        barcode: barcode != null ? barcode : old.barcode,
+        collection_date: newColl,
+        blood_type: newBt,
+        donor_name: donor_name != null ? donor_name : old.donor_name,
+        donor_national_id: donor_national_id != null ? donor_national_id : old.donor_national_id,
+        donor_age: donor_age != null ? parseInt(donor_age) : old.donor_age,
+        donor_gender: donor_gender != null ? donor_gender : old.donor_gender
+      };
+      const sibs = (await db.query("SELECT * FROM blood_bags WHERE donation_id = $1 AND id <> $2 AND status NOT IN ('dispatched','reserved','issued')", [old.donation_id, id])).rows;
+      for (const sib of sibs) {
+        const sibBt = blood_type != null ? bbNormBt(blood_type, sib.product_type) : (sib.blood_type || '');
+        // لا تُنسخ الصلاحية بين المكونات — كل منتج يحتفظ بمدة صلاحيته الخاصة (دم 35 / بلازما وكرايو سنة / صفائح 5)
+        await db.query(
+          `UPDATE blood_bags SET bag_no = $1, barcode = $2, collection_date = $3, blood_type = $5, donor_name = $6, donor_national_id = $7, donor_age = $8, donor_gender = $9, updated_at = NOW() WHERE id = $10`,
+          [shared.bag_no, shared.barcode, shared.collection_date, sibBt, shared.donor_name, shared.donor_national_id, shared.donor_age, shared.donor_gender, sib.id]
+        );
+      }
+      synced = sibs.length > 0;
+    }
+    await bbAddEvent(old, 'تعديل بيانات الكيس', 'تم تعديل بيانات الكيس' + (synced ? ' وتم تحديث باقي مكونات نفس التبرع' : ''), req.session.user, null, null);
+    res.json({ ok: true });
+  } catch (e) { console.error('PUT blood-bags:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الأكياس: حذف -----
+app.delete('/api/blood-bags/:id', requireAuth(), requirePerm('blood_bags', 'delete'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!id) return res.status(400).json({ error: 'معرف غير صالح' });
+    await db.query('DELETE FROM blood_bag_events WHERE bag_id = $1', [id]);
+    await db.query('DELETE FROM bag_reservations WHERE bag_id = $1', [id]);
+    await db.query('DELETE FROM blood_bags WHERE id = $1', [id]);
+    res.json({ ok: true });
+  } catch (e) { console.error('DELETE blood-bags:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الأكياس: الفحص والنتائج -----
+app.post('/api/blood-bags/:id/test', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { blood_type, hcv, hbv, hiv, syphilis } = req.body || {};
+    if (!id) return res.status(400).json({ error: 'معرف غير صالح' });
+    if (!blood_type) return res.status(400).json({ error: 'أدخل الفصيلة أولاً' });
+    const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [id])).rows[0];
+    if (!bag) return res.status(404).json({ error: 'الكيس غير موجود' });
+    if (bag.status !== 'collected') return res.status(400).json({ error: 'الفحص متاح فقط للأكياس غير المفحوصة' });
+    const bagHosp = (await db.query('SELECT type FROM hospitals WHERE id = $1', [bag.hospital_id])).rows[0];
+    if (bagHosp && bagHosp.type !== 'تجميعي') return res.status(403).json({ error: 'الفحص متاح لبنوك الدم التجميعية فقط' });
+    const results = [hcv, hbv, hiv, syphilis].filter(x => x === 'إيجابي');
+    const status = results.length > 0 ? 'positive' : 'available';
+    const user = req.session.user;
+    // الفحص يسري على التبرع كاملاً: كل مكونات نفس التبرع (نفس donation_id) تتأثر بالنتيجة
+    const targets = [];
+    if (bag.donation_id) {
+      targets.push(...(await db.query('SELECT * FROM blood_bags WHERE donation_id = $1', [bag.donation_id])).rows);
+    }
+    if (!targets.length) targets.push(bag);
+    for (const t of targets) {
+      const tBt = bbNormBt(blood_type, t.product_type);
+      await db.query(
+        `UPDATE blood_bags SET blood_type = $1, test_hcv = $2, test_hbv = $3, test_hiv = $4, test_syphilis = $5, status = $6, tested_at = NOW(), tested_by = $7, updated_at = NOW() WHERE id = $8`,
+        [tBt, hcv || '', hbv || '', hiv || '', syphilis || '', status, user ? user.name : '', t.id]
+      );
+      await bbAddEvent(t, status === 'positive' ? 'نتيجة إيجابية' : 'اكتمال الفحص',
+        (status === 'positive' ? 'إيجابي — تم إعدام التبرع كاملاً (كل المكونات)' : 'الفحص سليم — المكون متاح') + ' | المنتج: ' + (t.product_type || 'دم') + ' | الفصيلة: ' + (tBt || 'غير محدد') + (results.length ? ' | إيجابي: ' + results.join(',') : ''), user, null, null);
+    }
+    res.json({ ok: true, status, affected: targets.length });
+  } catch (e) { console.error('POST blood-bags/test:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الأكياس: تغيير الحالة (لم يكتمل / تبرع علاجي / دهون / صفراء / إعدام) -----
+app.post('/api/blood-bags/:id/status', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { status, reason } = req.body || {};
+    if (!id || !status) return res.status(400).json({ error: 'بيانات ناقصة' });
+    const allowed = ['incomplete', 'therapeutic', 'fatty', 'icteric', 'disposed'];
+    if (allowed.indexOf(status) === -1) return res.status(400).json({ error: 'حالة غير مسموحة' });
+    const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [id])).rows[0];
+    if (!bag) return res.status(404).json({ error: 'الكيس غير موجود' });
+    const isStock = ['available', 'returned'].indexOf(bag.status) !== -1;
+    if (bag.status !== 'collected' && !isStock) return res.status(400).json({ error: 'تغيير الحالة متاح لأكياس التجميع فقط' });
+    if (isStock && status !== 'disposed') return res.status(400).json({ error: 'الإعدام من الرصيد المتاح فقط (نظام مفتوح / أخرى) — فردي على الكيس' });
+    let affected = 1;
+    let targets = [bag];
+    if (bag.status === 'collected' && status === 'disposed' && (bag.product_type || 'دم') === 'دم' && bag.donation_id) {
+      const grp = (await db.query('SELECT * FROM blood_bags WHERE donation_id = $1', [bag.donation_id])).rows;
+      if (grp.length > 1) targets = grp;
+    }
+    const dispLabel = reason || BB_STATUS_LABELS[status] || status;
+    for (const t of targets) {
+      await db.query('UPDATE blood_bags SET status = $1, return_reason = $2, updated_at = NOW() WHERE id = $3', [status, reason || BB_STATUS_LABELS[status] || '', t.id]);
+      await bbAddEvent(t, 'تغيير حالة', (targets.length > 1 ? 'إعدام — ' + dispLabel + ' (كل مكونات التبرع)' : 'إعدام فردي — ' + dispLabel) + ' | المنتج: ' + (t.product_type || 'دم'), req.session.user, null, null);
+    }
+    affected = targets.length;
+    res.json({ ok: true, affected });
+  } catch (e) { console.error('POST blood-bags/status:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الإرسال بين المستشفيات -----
+app.post('/api/blood-bags/dispatch', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const { bagIds, toHospitalId, note } = req.body || {};
+    const to = parseInt(toHospitalId);
+    if (!Array.isArray(bagIds) || bagIds.length === 0 || !to) return res.status(400).json({ error: 'بيانات ناقصة' });
+    const user = req.session.user;
+    const sent = [];
+    for (const bid of bagIds) {
+      const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [parseInt(bid)])).rows[0];
+      if (!bag) continue;
+      if (user && user.hospitalId && parseInt(user.hospitalId) !== bag.hospital_id) continue;
+      if (BB_STOCK_STATUSES.indexOf(bag.status) === -1) continue;
+      if (bag.hospital_id === to) continue;
+      await db.query("UPDATE blood_bags SET status = 'dispatched', dispatch_from = $1, dispatch_to = $2, dispatched_at = NOW(), updated_at = NOW() WHERE id = $3", [bag.hospital_id, to, bag.id]);
+      await bbAddEvent(bag, 'إرسال كيس', 'أُرسل إلى المستشفى المستقبل' + (note ? ' — ' + note : ''), user, bag.hospital_id, to);
+      sent.push(bag.id);
+    }
+    res.json({ ok: true, sent });
+  } catch (e) { console.error('POST blood-bags/dispatch:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الاستلام: قبول / رفض -----
+app.post('/api/blood-bags/receive', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const { items } = req.body || {};
+    if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'بيانات ناقصة' });
+    const user = req.session.user;
+    const accepted = [], rejected = [];
+    for (const it of items) {
+      const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [parseInt(it.id)])).rows[0];
+      if (!bag || bag.status !== 'dispatched') continue;
+      if (it.action === 'accept') {
+        const to = bag.dispatch_to || bag.hospital_id;
+        await db.query("UPDATE blood_bags SET status = 'available', hospital_id = $1, dispatch_from = NULL, dispatch_to = NULL, received_at = NOW(), received_by = $2, updated_at = NOW() WHERE id = $3", [to, user ? user.name : '', bag.id]);
+        await bbAddEvent(bag, 'قبول كيس', 'تم القبول والاستلام بنجاح', user, bag.dispatch_from, to);
+        accepted.push(bag.id);
+      } else {
+        const back = bag.dispatch_from || bag.hospital_id;
+        await db.query("UPDATE blood_bags SET status = 'available', hospital_id = $1, dispatch_from = NULL, dispatch_to = NULL, received_at = NULL, notes = CONCAT(COALESCE(notes, ''), ' رفض الاستلام: ', $2), updated_at = NOW() WHERE id = $3", [back, it.reason || 'بدون سبب', bag.id]);
+        await bbAddEvent(bag, 'رفض استلام', 'رُفض الاستلام — عاد للمصدر' + (it.reason ? ' — ' + it.reason : ''), user, bag.dispatch_from, bag.hospital_id);
+        rejected.push(bag.id);
+      }
+    }
+    res.json({ ok: true, accepted, rejected });
+  } catch (e) { console.error('POST blood-bags/receive:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- سجل الأحداث لكيس -----
+app.get('/api/blood-bags/events', requireAuth(), requirePerm('blood_bags', 'view'), async (req, res) => {
+  try {
+    const bagId = parseInt(req.query.bagId);
+    const r = await db.query('SELECT * FROM blood_bag_events WHERE bag_id = $1 ORDER BY id DESC', [bagId]);
+    const hospitals = await bbAllHospitals();
+    const hospMap = {}; hospitals.forEach(h => { hospMap[h.id] = h; });
+    const out = r.rows.map(e => Object.assign({}, e, {
+      from_hospital_name: e.from_hospital_id ? (hospMap[e.from_hospital_id] ? hospMap[e.from_hospital_id].name : '') : '',
+      to_hospital_name: e.to_hospital_id ? (hospMap[e.to_hospital_id] ? hospMap[e.to_hospital_id].name : '') : ''
+    }));
+    res.json({ events: out });
+  } catch (e) { console.error('GET blood-bags/events:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- المرضى: بحث -----
+app.get('/api/patients', requireAuth(), requirePerm('blood_bags', 'view'), async (req, res) => {
+  try {
+    const { q } = req.query;
+    const rows = (await db.query('SELECT * FROM patients')).rows;
+    let out = rows;
+    if (q) {
+      const ql = String(q).trim().toLowerCase();
+      out = rows.filter(p =>
+        (p.national_id || '').indexOf(ql) !== -1 ||
+        (p.name || '').toLowerCase().indexOf(ql) !== -1
+      );
+    }
+    out = out.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
+    res.json({ patients: out });
+  } catch (e) { console.error('GET patients:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- المرضى: إنشاء / تحديث (برقم قومي فريد) -----
+app.post('/api/patients', requireAuth(), requirePerm('blood_bags', 'add'), async (req, res) => {
+  try {
+    const { national_id, name, gender, birth_date, age, blood_type, phone, governorate, hospital_id, department, notes, bt_cards, bt_date, req_rbc, req_plasma, req_plt, req_cryo } = req.body || {};
+    if (!national_id || !name) return res.status(400).json({ error: 'الرقم القومي والاسم مطلوبان' });
+    const btD = bt_date || null;
+    const nReq = v => (v != null && v !== '') ? parseInt(v) || 0 : 0;
+    const exist = (await db.query('SELECT * FROM patients WHERE national_id = $1', [national_id])).rows[0];
+    if (exist) {
+      await db.query(
+        'UPDATE patients SET name = $1, gender = $2, birth_date = $3, age = $4, blood_type = $5, phone = $6, governorate = $7, hospital_id = $8, department = $9, notes = $10, bt_cards = $11, bt_date = $12, req_rbc = $13, req_plasma = $14, req_plt = $15, req_cryo = $16, updated_at = NOW() WHERE id = $17',
+        [name, gender || exist.gender, birth_date || exist.birth_date, age != null ? parseInt(age) : exist.age, blood_type || exist.blood_type, phone || exist.phone, governorate || exist.governorate, hospital_id || exist.hospital_id, department || exist.department, notes != null ? notes : exist.notes, bt_cards != null ? parseInt(bt_cards) : exist.bt_cards, btD, nReq(req_rbc), nReq(req_plasma), nReq(req_plt), nReq(req_cryo), exist.id]
+      );
+      res.json({ patient: Object.assign({}, exist, { name, gender: gender || exist.gender, birth_date: birth_date || exist.birth_date, age: age != null ? parseInt(age) : exist.age, blood_type: blood_type || exist.blood_type, phone: phone || exist.phone, governorate: governorate || exist.governorate, hospital_id: hospital_id || exist.hospital_id, department: department || exist.department, notes: notes != null ? notes : exist.notes, bt_cards: bt_cards != null ? parseInt(bt_cards) : exist.bt_cards, bt_date: btD, req_rbc: nReq(req_rbc), req_plasma: nReq(req_plasma), req_plt: nReq(req_plt), req_cryo: nReq(req_cryo) }) });
+    } else {
+      const r = await db.query(
+        'INSERT INTO patients (national_id, name, gender, birth_date, age, blood_type, phone, governorate, hospital_id, department, notes, bt_cards, bt_date, req_rbc, req_plasma, req_plt, req_cryo, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW())',
+        [national_id, name, gender || '', birth_date || null, age != null ? parseInt(age) : null, blood_type || '', phone || '', governorate || '', hospital_id || null, department || '', notes || '', bt_cards != null ? parseInt(bt_cards) : 0, btD, nReq(req_rbc), nReq(req_plasma), nReq(req_plt), nReq(req_cryo)]
+      );
+      res.json({ patient: r.rows[0] });
+    }
+  } catch (e) { console.error('POST patients:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الأقسام الخاصة بكل مستشفي -----
+app.get('/api/hospital-departments', requireAuth(), requirePerm('blood_bags', 'view'), async (req, res) => {
+  try {
+    const rows = (await db.query('SELECT * FROM hospital_departments ORDER BY id')).rows;
+    res.json({ departments: rows });
+  } catch (e) { console.error('GET hospital-departments:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+app.post('/api/hospital-departments', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const { hospital_id, name } = req.body || {};
+    const hid = parseInt(hospital_id);
+    const dname = String(name || '').trim();
+    if (!hid || !dname) return res.status(400).json({ error: 'بنك الدم واسم القسم مطلوبان' });
+    const r = await db.query('INSERT INTO hospital_departments (hospital_id, name) VALUES ($1,$2) RETURNING *', [hid, dname]);
+    res.json({ department: r.rows[0] });
+  } catch (e) { console.error('POST hospital-departments:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+app.delete('/api/hospital-departments/:id', requireAuth(), requirePerm('blood_bags', 'delete'), async (req, res) => {
+  try {
+    await db.query('DELETE FROM hospital_departments WHERE id = $1', [parseInt(req.params.id)]);
+    res.json({ ok: true });
+  } catch (e) { console.error('DELETE hospital-departments:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الحجوزات: القائمة -----
+app.get('/api/blood-bags/reservations', requireAuth(), requirePerm('blood_bags', 'view'), async (req, res) => {
+  try {
+    await bbReleaseExpiredReservations();
+    const { hospitalId, status } = req.query;
+    let rows = (await db.query('SELECT * FROM bag_reservations')).rows;
+    const allowedH = await bbAllowedHospitalIds(req.session.user);
+    if (allowedH) rows = rows.filter(r => allowedH.indexOf(r.hospital_id) !== -1);
+    if (hospitalId) rows = rows.filter(r => r.hospital_id === parseInt(hospitalId));
+    if (status) rows = rows.filter(r => r.status === status);
+    const bags = await bbAllBags();
+    const bagMap = {}; bags.forEach(b => { bagMap[b.id] = b; });
+    const patients = (await db.query('SELECT * FROM patients')).rows;
+    const patMap = {}; patients.forEach(p => { patMap[p.id] = p; });
+    const hospitals = await bbAllHospitals();
+    const hospMap = {}; hospitals.forEach(h => { hospMap[h.id] = h; });
+    const now = Date.now();
+    const out = rows.map(r => {
+      const b = bagMap[r.bag_id] || {};
+      const p = patMap[r.patient_id] || {};
+      const until = new Date(r.reserved_until).getTime();
+      const remainingH = !isNaN(until) ? Math.round((until - now) / 3600000) : null;
+      return Object.assign({}, r, {
+        bag_no: b.bag_no || '', barcode: b.barcode || '', blood_type: b.blood_type || '',
+        product_type: b.product_type || 'دم', units: b.units != null ? b.units : 1,
+        expiry_date: b.expiry_date || '', hospital_name: hospMap[r.hospital_id] ? hospMap[r.hospital_id].name : '',
+        patient_name: r.patient_name || p.name || '', patient_blood_type: p.blood_type || '',
+        remaining_hours: remainingH, status_label: r.status === 'active' ? 'محجوز' : r.status === 'issued' ? 'مُصرف' : r.status === 'expired' ? 'منتهي' : 'مُحرر'
+      });
+    });
+    out.sort((a, b) => b.id - a.id);
+    res.json({ reservations: out });
+  } catch (e) { console.error('GET reservations:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الحجز (cross-match — 48 ساعة) -----
+app.post('/api/blood-bags/reserve', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const { bagId, patientId, hospitalId, issueType, compatCards } = req.body || {};
+    const bid = parseInt(bagId), pid = parseInt(patientId), hid = parseInt(hospitalId);
+    if (!bid || !pid || !hid) return res.status(400).json({ error: 'بيانات ناقصة' });
+    const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [bid])).rows[0];
+    if (!bag) return res.status(404).json({ error: 'الكيس غير موجود' });
+    if (BB_STOCK_STATUSES.indexOf(bag.status) === -1) return res.status(400).json({ error: 'الكيس غير متاح للحجز' });
+    if (bag.hospital_id !== hid) return res.status(400).json({ error: 'هذا الكيس ليس من رصيد بنك الدم المحدد — لا يمكن حجزه' });
+    const user = req.session.user;
+    if (user && user.hospitalId && parseInt(user.hospitalId) !== bag.hospital_id) {
+      return res.status(403).json({ error: 'يمكنك حجز كيس من رصيد مستشفاك فقط' });
+    }
+    const patient = (await db.query('SELECT * FROM patients WHERE id = $1', [pid])).rows[0];
+    if (!patient) return res.status(404).json({ error: 'المريض غير موجود' });
+    if (patient.blood_type && bag.blood_type && !bbCanDonateTo(bag.blood_type, patient.blood_type)) {
+      return res.status(400).json({ error: 'عدم توافق الفصائل — كيس ' + bag.blood_type + ' لا يصلح لمريض ' + patient.blood_type });
+    }
+    const until = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
+    const cards = compatCards != null ? parseInt(compatCards) : 0;
+    const r = await db.query(
+      'INSERT INTO bag_reservations (bag_id, patient_id, patient_name, hospital_id, reserved_at, reserved_until, status, compat_cards, user_id) VALUES ($1,$2,$3,$4,NOW(),$5,$6,$7,$8)',
+      [bid, pid, patient.name, hid, until, 'active', cards, user ? user.id : null]
+    );
+    await db.query("UPDATE blood_bags SET status = 'reserved', recipient_id = $1, recipient_name = $2, issue_type = $3, updated_at = NOW() WHERE id = $4", [pid, patient.name, BB_ISSUE_TYPES.indexOf(issueType) !== -1 ? issueType : 'داخلي', bid]);
+    await bbAddEvent(bag, 'حجز كيس', 'حجز لمريض: ' + patient.name + ' — ' + bag.blood_type + ' → ' + (patient.blood_type || 'غير محدد') + ' | كروت التوافق: ' + cards + ' | الصرف خلال 48 ساعة', user, null, null);
+    res.json({ ok: true, reservation: r.rows[0] });
+  } catch (e) { console.error('POST reserve:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الصرف للمريض -----
+app.post('/api/blood-bags/issue', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const { reservationId } = req.body || {};
+    const rid = parseInt(reservationId);
+    if (!rid) return res.status(400).json({ error: 'معرف غير صالح' });
+    const resv = (await db.query('SELECT * FROM bag_reservations WHERE id = $1', [rid])).rows[0];
+    if (!resv) return res.status(404).json({ error: 'الحجز غير موجود' });
+    if (resv.status !== 'active') return res.status(400).json({ error: 'الحجز غير نشط' });
+    const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [resv.bag_id])).rows[0];
+    if (!bag || bag.status !== 'reserved') return res.status(400).json({ error: 'الكيس غير محجوز' });
+    const user = req.session.user;
+    await db.query("UPDATE blood_bags SET status = 'issued', issued_at = NOW(), issued_by = $1, updated_at = NOW() WHERE id = $2", [user ? user.name : '', bag.id]);
+    await db.query("UPDATE bag_reservations SET status = 'issued', issued_at = NOW(), issued_by = $1 WHERE id = $2", [user ? user.name : '', rid]);
+    await bbAddEvent(bag, 'صرف كيس', 'صُرف للمريض: ' + (resv.patient_name || '') + ' (' + (bag.issue_type || 'داخلي') + ')', user, null, null);
+    res.json({ ok: true });
+  } catch (e) { console.error('POST issue:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- تفكيك الحجز يدوياً -----
+app.post('/api/blood-bags/release-reservation', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const { reservationId, reason } = req.body || {};
+    const rid = parseInt(reservationId);
+    if (!rid) return res.status(400).json({ error: 'معرف غير صالح' });
+    const resv = (await db.query('SELECT * FROM bag_reservations WHERE id = $1', [rid])).rows[0];
+    if (!resv) return res.status(404).json({ error: 'الحجز غير موجود' });
+    if (resv.status !== 'active') return res.status(400).json({ error: 'الحجز غير نشط' });
+    await db.query("UPDATE bag_reservations SET status = 'released', released_at = NOW() WHERE id = $1", [rid]);
+    await db.query("UPDATE blood_bags SET status = 'available', recipient_id = NULL, recipient_name = '' WHERE id = $1", [resv.bag_id]);
+    const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [resv.bag_id])).rows[0];
+    if (bag) await bbAddEvent(bag, 'تفكيك حجز', 'تم تفكيك الحجز وإعادة الكيس للرصيد' + (reason ? ' — ' + reason : ''), req.session.user, null, null);
+    res.json({ ok: true });
+  } catch (e) { console.error('POST release-reservation:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- تجديد الحجز (48 ساعة إضافية) -----
+app.post('/api/blood-bags/renew-reservation', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const { reservationId } = req.body || {};
+    const rid = parseInt(reservationId);
+    if (!rid) return res.status(400).json({ error: 'معرف غير صالح' });
+    const resv = (await db.query('SELECT * FROM bag_reservations WHERE id = $1', [rid])).rows[0];
+    if (!resv) return res.status(404).json({ error: 'الحجز غير موجود' });
+    if (resv.status !== 'active') return res.status(400).json({ error: 'الحجز غير نشط' });
+    const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [resv.bag_id])).rows[0];
+    if (!bag || bag.status !== 'reserved') return res.status(400).json({ error: 'الكيس غير محجوز' });
+    const until = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
+    await db.query('UPDATE bag_reservations SET reserved_until = $1, status = \'active\' WHERE id = $2', [until, rid]);
+    await bbAddEvent(bag, 'تجديد حجز', 'تم تجديد حجز الكيس لمريض: ' + (resv.patient_name || '') + ' — 48 ساعة إضافية', req.session.user, null, null);
+    res.json({ ok: true, reserved_until: until });
+  } catch (e) { console.error('POST renew-reservation:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- المرتجع / التفاعل / أخرى -----
+app.post('/api/blood-bags/return', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const { bagId, returnType, detail } = req.body || {};
+    const bid = parseInt(bagId);
+    if (!bid || !returnType) return res.status(400).json({ error: 'بيانات ناقصة' });
+    const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [bid])).rows[0];
+    if (!bag) return res.status(404).json({ error: 'الكيس غير موجود' });
+    if (bag.status !== 'issued') return res.status(400).json({ error: 'المرتجع/التفاعل متاح فقط للكيس المُصرف' });
+    let newStatus = 'disposed', label = 'أخرى';
+    if (returnType === 'returned') { newStatus = 'returned'; label = 'مرتجع'; }
+    else if (returnType === 'reaction') { newStatus = 'reaction'; label = 'تفاعل'; }
+    else if (returnType === 'open') { newStatus = 'disposed'; label = 'نظام مفتوح'; }
+    await db.query('UPDATE blood_bags SET status = $1, return_reason = $2, notes = CONCAT(COALESCE(notes, \'\'), \' [\', $3, \']\'), updated_at = NOW() WHERE id = $4', [newStatus, label, detail || '', bid]);
+    await bbAddEvent(bag, 'إرجاع / إعدام', label + (detail ? ' — ' + detail : ''), req.session.user, null, null);
+    res.json({ ok: true, status: newStatus });
+  } catch (e) { console.error('POST return:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- البيانات الشهرية: الحساب التلقائي من الأكياس -----
+const BB_BTYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+function bbZeroCons() { const o = {}; BB_BTYPES.forEach(t => { o[t] = 0; }); return o; }
+function bbZeroBig() {
+  return { collect_total: 0, donation_therapeutic: 0, uncompleted: 0, refused_fatty: 0, refused_icteric: 0, virology_c: 0, virology_b: 0, virology_i: 0, virology_dollar: 0, blood_groups: 0, compatibility: 0, inc_regional: 0, disp_returned: 0, disp_reaction: 0, disp_open: 0, disp_other: 0, disp_exp_blood: 0 };
+}
+function bbZeroSmall() {
+  return { inc_collected: 0, inc_regional: 0, out_blood: 0, out_blood_int: 0, out_blood_branch: 0, out_blood_auth: 0, out_blood_ext: 0, compatibility: 0, disp_returned: 0, disp_reaction: 0, disp_open: 0, disp_other: 0, disp_exp_blood: 0 };
+}
+async function bbComputeMonthly(year, month, user) {
+  await bbReleaseExpiredReservations();
+  await bbMarkExpiredBags();
+  let bags = await bbAllBags();
+  if (user) bags = await bbRoleFilterBags(bags, user);
+  const hospitals = await bbAllHospitals();
+  const allowedH = await bbAllowedHospitalIds(user);
+  const hospList = allowedH ? hospitals.filter(h => allowedH.indexOf(h.id) !== -1) : hospitals;
+  const reservations = (await db.query('SELECT * FROM bag_reservations')).rows;
+  const ym = year + '-' + bbPad2(month);
+  const inMonth = d => { if (!d) return false; return String(d).slice(0, 7) === ym; };
+  const big = {}, small = {}, cons = {};
+  hospList.forEach(h => {
+    if (h.type === 'تجميعي') big[h.id] = bbZeroBig();
+    else if (h.type === 'تخزيني') small[h.id] = bbZeroSmall();
+    cons[h.id] = bbZeroCons();
+  });
+  for (const b of bags) {
+    // مؤشرات التجميع تُحسب مرة واحدة لكل تبرع (مكوّن الدم فقط) — التبرع الواحد = عملية تجميع واحدة
+    if (big[b.source_hospital_id] && inMonth(b.collection_date) && (b.product_type || 'دم') === 'دم') {
+      const row = big[b.source_hospital_id];
+      row.collect_total++;
+      if (b.status === 'therapeutic') row.donation_therapeutic++;
+      else if (b.status === 'incomplete') row.uncompleted++;
+      else if (b.status === 'fatty') row.refused_fatty++;
+      else if (b.status === 'icteric') row.refused_icteric++;
+      else if (b.test_hcv === 'إيجابي') row.virology_c++;
+      else if (b.test_hbv === 'إيجابي') row.virology_b++;
+      else if (b.test_hiv === 'إيجابي') row.virology_i++;
+      else if (b.test_syphilis === 'إيجابي') row.virology_dollar++;
+      if (b.blood_type && b.status !== 'positive') row.blood_groups++;
+    }
+    // الإعدامات والمرتجعات والتفاعل: لكل وحدة فعلية (المكونات المنفصلة تُحسب كل منها)
+    // مرتجع (صرف) → disp_returned، تفاعل (صرف) → disp_reaction، نظام مفتوح (صرف) → disp_open، Lipemic/Hemolyzed (تجميع) أو أخرى (صرف) → disp_other
+    // إعدام «انتهاء الصلاحية» يُحسب لاحقاً (يُعدَم تلقائياً كسبب مستقل وليس سبب تجميع/صرف)
+    if (big[b.source_hospital_id] && inMonth(b.collection_date)) {
+      const row = big[b.source_hospital_id];
+      if (b.return_reason === 'مرتجع') row.disp_returned++;
+      if (b.status === 'reaction') row.disp_reaction++;
+      if (b.status === 'disposed' && b.return_reason === 'نظام مفتوح') row.disp_open++;
+      if (b.status === 'lipemic' || b.status === 'hemolyzed') row.disp_other++;
+      else if (b.status === 'disposed' && b.return_reason === 'أخرى') row.disp_other++;
+    }
+    if (b.source_hospital_id !== 0 && small[b.hospital_id] && inMonth(b.received_at)) small[b.hospital_id].inc_collected++;
+    if (b.source_hospital_id === 0 && small[b.hospital_id] && inMonth(b.received_at)) small[b.hospital_id].inc_regional++;
+    if (b.source_hospital_id === 0 && big[b.hospital_id] && inMonth(b.received_at)) big[b.hospital_id].inc_regional++;
+    if (small[b.hospital_id] && inMonth(b.issued_at)) {
+      const row = small[b.hospital_id];
+      row.out_blood++;
+      if (b.issue_type === 'فرع') row.out_blood_branch++;
+      else if (b.issue_type === 'هيئة') row.out_blood_auth++;
+      else if (b.issue_type === 'خارجي') row.out_blood_ext++;
+      else row.out_blood_int++;
+      if (b.return_reason === 'مرتجع') row.disp_returned++;
+      if (b.status === 'reaction') row.disp_reaction++;
+      if (b.status === 'disposed' && b.return_reason === 'نظام مفتوح') row.disp_open++;
+      if (b.status === 'disposed' && b.return_reason === 'أخرى') row.disp_other++;
+    }
+    if (cons[b.hospital_id] && b.blood_type && inMonth(b.issued_at)) cons[b.hospital_id][b.blood_type]++;
+  }
+  reservations.forEach(r => {
+    if (inMonth(r.reserved_at)) {
+      if (big[r.hospital_id]) big[r.hospital_id].compatibility++;
+      if (small[r.hospital_id]) small[r.hospital_id].compatibility++;
+    }
+  });
+  return { big, small, cons };
+}
+app.get('/api/blood-bags/monthly-preview', requireAuth(), requirePerm('blood_bags', 'view'), async (req, res) => {
+  try {
+    const year = parseInt(req.query.year), month = parseInt(req.query.month);
+    if (!year || !month) return res.status(400).json({ error: 'حدد السنة والشهر' });
+    const { big, small, cons } = await bbComputeMonthly(year, month, req.session.user);
+    const hospitals = await bbAllHospitals();
+    const hospMap = {}; hospitals.forEach(h => { hospMap[h.id] = h; });
+    res.json({ big, small, cons, hospitals: hospMap });
+  } catch (e) { console.error('GET monthly-preview:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+app.post('/api/blood-bags/generate-monthly', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const year = parseInt(req.body.year), month = parseInt(req.body.month);
+    if (!year || !month) return res.status(400).json({ error: 'حدد السنة والشهر' });
+    const user = req.session.user;
+    const { big, small, cons } = await bbComputeMonthly(year, month, user);
+    let bigCount = 0, smallCount = 0, consCount = 0;
+    for (const hid of Object.keys(big)) {
+      const id = parseInt(hid);
+      const ex = await db.query('SELECT id FROM monthly_big_indicators WHERE hospital_id = $1 AND year = $2 AND month = $3', [id, year, month]);
+      if (ex.rows.length) {
+        await db.query('UPDATE monthly_big_indicators SET data = $1, user_id = $2 WHERE id = $3', [JSON.stringify(big[id]), user ? user.id : null, ex.rows[0].id]);
+      } else {
+        await db.query('INSERT INTO monthly_big_indicators (hospital_id, year, month, data, user_id) VALUES ($1,$2,$3,$4,$5)', [id, year, month, JSON.stringify(big[id]), user ? user.id : null]);
+      }
+      bigCount++;
+    }
+    for (const hid of Object.keys(small)) {
+      const id = parseInt(hid);
+      const ex = await db.query('SELECT id FROM monthly_small_indicators WHERE hospital_id = $1 AND year = $2 AND month = $3', [id, year, month]);
+      if (ex.rows.length) {
+        await db.query('UPDATE monthly_small_indicators SET data = $1, user_id = $2 WHERE id = $3', [JSON.stringify(small[id]), user ? user.id : null, ex.rows[0].id]);
+      } else {
+        await db.query('INSERT INTO monthly_small_indicators (hospital_id, year, month, data, user_id) VALUES ($1,$2,$3,$4,$5)', [id, year, month, JSON.stringify(small[id]), user ? user.id : null]);
+      }
+      smallCount++;
+    }
+    for (const hid of Object.keys(cons)) {
+      const id = parseInt(hid);
+      const ex = await db.query('SELECT id FROM monthly_consumption WHERE hospital_id = $1 AND year = $2 AND month = $3', [id, year, month]);
+      if (ex.rows.length) {
+        await db.query('UPDATE monthly_consumption SET blood_types = $1, user_id = $2 WHERE id = $3', [JSON.stringify(cons[id]), user ? user.id : null, ex.rows[0].id]);
+      } else {
+        await db.query('INSERT INTO monthly_consumption (hospital_id, year, month, blood_types, user_id) VALUES ($1,$2,$3,$4,$5)', [id, year, month, JSON.stringify(cons[id]), user ? user.id : null]);
+      }
+      consCount++;
+    }
+    res.json({ ok: true, big: bigCount, small: smallCount, consumption: consCount });
+  } catch (e) { console.error('POST generate-monthly:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
 // ============== Indicator Analysis (تحليل مؤشرات الأداء) ==============
-const FORMULA_KEYS = new Set(['total_blood','tested','ct','ratio_uncompleted','ratio_refused','ratio_c','ratio_b','ratio_i','ratio_dollar','virology_total','ratio_exp','ratio_returned','ratio_reaction','ratio_open','ratio_other','pct_exp','pct_returned','pct_reaction','pct_open','pct_other','child_ct','child_pct_exp','child_pct_returned','child_pct_reaction','child_pct_open','child_pct_other']);
 app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysis', 'view'), async (req, res) => {
   try {
     const { year1, months1, year2, months2, governorate, hospitalId } = req.query;
@@ -2843,7 +3923,8 @@ app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysi
       const results = [];
       for (const arch of archives) {
         if (arch.type !== archiveType) continue;
-        const items = Array.isArray(arch.data) ? arch.data : [];
+        const raw = typeof arch.data === 'string' ? JSON.parse(arch.data) : arch.data;
+        const items = Array.isArray(raw) ? raw : [];
         for (const item of items) {
           if (item.year !== year || !months.includes(item.month)) continue;
           if (governorate && item.governorate !== governorate) continue;
@@ -2910,7 +3991,8 @@ app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysi
         const archives = await db.getTable('archives');
         for (const arch of archives) {
           if (arch.type !== 'منصرف فصائل الدم') continue;
-          const items = Array.isArray(arch.data) ? arch.data : [];
+          const raw = typeof arch.data === 'string' ? JSON.parse(arch.data) : arch.data;
+          const items = Array.isArray(raw) ? raw : [];
           for (const item of items) {
             if (item.year !== year || !months.includes(item.month)) continue;
             if (governorate && item.governorate !== governorate) continue;

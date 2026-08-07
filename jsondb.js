@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','indicator_analysis','employees','archive','strategic_stock','users','hospitals','governorates','role_perms','readiness','equipment','time_config','emp_accounts'];
+const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','indicator_analysis','employees','archive','strategic_stock','users','hospitals','governorates','role_perms','readiness','equipment','time_config','emp_accounts','indicator_columns','blood_bags'];
 
 function makePerm(v,a,e,d,x) { return {v,a,e,d,x}; }
 
@@ -13,11 +13,11 @@ function pagePerms(v,a,e,d,x) {
 
 const DEF_PERMS = {
   admin: pagePerms(1,1,1,1,1),
-  org_supervisor: Object.assign(pagePerms(1,0,0,0,1), { users:makePerm(1,0,0,0,0), hospitals:makePerm(1,0,0,0,1), governorates:makePerm(1,0,0,0,1) }),
-  branch_supervisor: Object.assign(pagePerms(1,1,1,1,1), { archive:makePerm(1,0,0,0,1), users:makePerm(0,0,0,0,0), hospitals:makePerm(1,0,0,0,1), governorates:makePerm(1,0,0,0,1), daily_branch:makePerm(1,0,0,0,0) }),
-  hospital: Object.assign(pagePerms(1,1,1,1,1), { daily_total:makePerm(0,0,0,0,0), archive:makePerm(1,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0) }),
-  hospital_manager: Object.assign(pagePerms(1,1,1,1,1), { archive:makePerm(1,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0) }),
-  visitor: Object.assign(pagePerms(1,0,0,0,0), { archive:makePerm(0,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0) })
+  org_supervisor: Object.assign(pagePerms(1,0,0,0,1), { users:makePerm(1,0,0,0,0), hospitals:makePerm(1,0,0,0,1), governorates:makePerm(1,0,0,0,1), indicator_columns:makePerm(0,0,0,0,0), blood_bags:makePerm(0,0,0,0,0) }),
+  branch_supervisor: Object.assign(pagePerms(1,1,1,1,1), { archive:makePerm(1,0,0,0,1), users:makePerm(0,0,0,0,0), hospitals:makePerm(1,0,0,0,1), governorates:makePerm(1,0,0,0,1), daily_branch:makePerm(1,0,0,0,0), indicator_columns:makePerm(0,0,0,0,0), blood_bags:makePerm(0,0,0,0,0) }),
+  hospital: Object.assign(pagePerms(1,1,1,1,1), { daily_total:makePerm(0,0,0,0,0), archive:makePerm(1,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0), indicator_columns:makePerm(0,0,0,0,0), blood_bags:makePerm(0,0,0,0,0) }),
+  hospital_manager: Object.assign(pagePerms(1,1,1,1,1), { archive:makePerm(1,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0), indicator_columns:makePerm(0,0,0,0,0), blood_bags:makePerm(0,0,0,0,0) }),
+  visitor: Object.assign(pagePerms(1,0,0,0,0), { archive:makePerm(0,0,0,0,0), users:makePerm(0,0,0,0,0), hospitals:makePerm(0,0,0,0,0), governorates:makePerm(0,0,0,0,0), daily_branch:makePerm(0,0,0,0,0), indicator_columns:makePerm(0,0,0,0,0), blood_bags:makePerm(0,0,0,0,0) })
 };
 
 class JSONDB {
@@ -55,9 +55,15 @@ class JSONDB {
       readiness_reports: [],
       readiness_notifications: [],
       blood_bank_equipment: null,
+      indicator_columns: [],
+      blood_bags: [],
+      blood_bag_events: [],
+      patients: [],
+      bag_reservations: [],
+      hospital_departments: [],
       app_config: { time_offset: 2 },
       role_perms: Object.entries(DEF_PERMS).map(([role, perms]) => ({ role, permissions: JSON.parse(JSON.stringify(perms)) })),
-      _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1 }
+      _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1, indicator_columns: 1, blood_bags: 1, blood_bag_events: 1, patients: 1, bag_reservations: 1, hospital_departments: 1 }
     };
   }
 
@@ -261,6 +267,27 @@ class JSONDB {
         }
       });
     }
+    if (!this.data.indicator_columns || !Array.isArray(this.data.indicator_columns)) this.data.indicator_columns = [];
+    if (!this.data._counters.indicator_columns) this.data._counters.indicator_columns = 1;
+    // Blood bags module tables
+    if (!this.data.blood_bags || !Array.isArray(this.data.blood_bags)) this.data.blood_bags = [];
+    this.data.blood_bags.forEach(b => { if (!b.product_type) b.product_type = 'دم'; if (b.units == null) b.units = 1; if (b.donation_id == null) b.donation_id = null; });
+    if (!this.data.blood_bag_events || !Array.isArray(this.data.blood_bag_events)) this.data.blood_bag_events = [];
+    if (!this.data.patients || !Array.isArray(this.data.patients)) this.data.patients = [];
+    this.data.patients.forEach(p => {
+      if (p.bt_date == null) p.bt_date = null;
+      if (p.req_rbc == null) p.req_rbc = 0;
+      if (p.req_plasma == null) p.req_plasma = 0;
+      if (p.req_plt == null) p.req_plt = 0;
+      if (p.req_cryo == null) p.req_cryo = 0;
+    });
+    if (!this.data.bag_reservations || !Array.isArray(this.data.bag_reservations)) this.data.bag_reservations = [];
+    if (!this.data.hospital_departments || !Array.isArray(this.data.hospital_departments)) this.data.hospital_departments = [];
+    if (!this.data._counters.blood_bags) this.data._counters.blood_bags = 1;
+    if (!this.data._counters.blood_bag_events) this.data._counters.blood_bag_events = 1;
+    if (!this.data._counters.patients) this.data._counters.patients = 1;
+    if (!this.data._counters.bag_reservations) this.data._counters.bag_reservations = 1;
+    if (!this.data._counters.hospital_departments) this.data._counters.hospital_departments = 1;
     this._save();
   }
 
@@ -465,19 +492,24 @@ class JSONDB {
 
       const orderMatch = sql.match(/ORDER\s+BY\s+(.+?)(?:LIMIT|$)/is);
       if (orderMatch) {
-        const orders = orderMatch[1].split(',').map(o => o.trim());
-        orders.forEach(order => {
-          const parts = order.split(/\s+/);
+        const orders = orderMatch[1].split(',').map(o => {
+          const parts = o.trim().split(/\s+/);
           const col = parts[0].replace(/^ds\.|^h\.|^c\.|^ms\.|^ma\.|^mi\.|^mc\.|^d\.|^dn\./i, '');
           const dir = parts[1] && parts[1].toUpperCase() === 'DESC' ? -1 : 1;
-          rows.sort((a, b) => {
-            const av = a[col] ?? '', bv = b[col] ?? '';
+          return { col, dir };
+        });
+        rows.sort((a, b) => {
+          for (const o of orders) {
+            const av = a[o.col] ?? '', bv = b[o.col] ?? '';
             const an = Number(av), bn = Number(bv);
-            if (!isNaN(an) && !isNaN(bn)) return (an - bn) * dir;
-            if (String(av) < String(bv)) return -1 * dir;
-            if (String(av) > String(bv)) return 1 * dir;
-            return 0;
-          });
+            let c;
+            if (!isNaN(an) && !isNaN(bn)) c = an - bn;
+            else if (String(av) < String(bv)) c = -1;
+            else if (String(av) > String(bv)) c = 1;
+            else c = 0;
+            if (c !== 0) return c * o.dir;
+          }
+          return 0;
         });
       }
 
