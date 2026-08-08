@@ -249,123 +249,9 @@ const PG_TABLES = [
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL
   )`,
-  `CREATE TABLE IF NOT EXISTS indicator_columns (
-    id SERIAL PRIMARY KEY,
-    category VARCHAR(10) NOT NULL,
-    col_key VARCHAR(100) NOT NULL UNIQUE,
-    label VARCHAR(200) NOT NULL,
-    ord INTEGER NOT NULL DEFAULT 0,
-    enabled INTEGER DEFAULT 1,
-    static INTEGER DEFAULT 0,
-    formula INTEGER DEFAULT 0,
-    formula_expr TEXT DEFAULT '',
-    unit VARCHAR(20) DEFAULT '',
-    target VARCHAR(50) DEFAULT '',
-    grp VARCHAR(200) DEFAULT '',
-    sg VARCHAR(200) DEFAULT '',
-    ssg VARCHAR(200) DEFAULT '',
-    cls VARCHAR(50) DEFAULT '',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-  )`,
   `CREATE TABLE IF NOT EXISTS kv_store (
     key VARCHAR(100) PRIMARY KEY,
     value JSONB DEFAULT '{}'
-  )`,
-  `CREATE TABLE IF NOT EXISTS blood_bags (
-    id SERIAL PRIMARY KEY,
-    bag_no VARCHAR(100) NOT NULL,
-    barcode VARCHAR(200) DEFAULT '',
-    hospital_id INTEGER NOT NULL,
-    source_hospital_id INTEGER NOT NULL,
-    source_name VARCHAR(200) DEFAULT '',
-    collection_date DATE,
-    expiry_date DATE,
-    blood_type VARCHAR(10) DEFAULT '',
-    product_type VARCHAR(30) DEFAULT 'دم',
-    units INTEGER DEFAULT 1,
-    donation_id INTEGER,
-    donor_name VARCHAR(200) DEFAULT '',
-    donor_national_id VARCHAR(20) DEFAULT '',
-    donor_age INTEGER,
-    donor_gender VARCHAR(10) DEFAULT '',
-    status VARCHAR(50) DEFAULT 'collected',
-    test_hcv VARCHAR(20) DEFAULT '',
-    test_hbv VARCHAR(20) DEFAULT '',
-    test_hiv VARCHAR(20) DEFAULT '',
-    test_syphilis VARCHAR(20) DEFAULT '',
-    tested_at TIMESTAMP,
-    tested_by VARCHAR(200) DEFAULT '',
-    dispatch_from INTEGER,
-    dispatch_to INTEGER,
-    dispatched_at TIMESTAMP,
-    received_at TIMESTAMP,
-    received_by VARCHAR(200) DEFAULT '',
-    recipient_id INTEGER,
-    recipient_name VARCHAR(200) DEFAULT '',
-    issued_at TIMESTAMP,
-    issued_by VARCHAR(200) DEFAULT '',
-    issue_type VARCHAR(20) DEFAULT '',
-    return_reason VARCHAR(200) DEFAULT '',
-    notes TEXT DEFAULT '',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    user_id INTEGER
-  )`,
-  `CREATE TABLE IF NOT EXISTS blood_bag_events (
-    id SERIAL PRIMARY KEY,
-    bag_id INTEGER NOT NULL,
-    bag_no VARCHAR(100) DEFAULT '',
-    event VARCHAR(200) NOT NULL,
-    from_hospital_id INTEGER,
-    to_hospital_id INTEGER,
-    detail TEXT DEFAULT '',
-    user_id INTEGER,
-    user_name VARCHAR(200) DEFAULT '',
-    created_at TIMESTAMP DEFAULT NOW()
-  )`,
-  `CREATE TABLE IF NOT EXISTS patients (
-    id SERIAL PRIMARY KEY,
-    national_id VARCHAR(20) UNIQUE NOT NULL,
-    name VARCHAR(200) NOT NULL,
-    gender VARCHAR(10) DEFAULT '',
-    birth_date DATE,
-    age INTEGER,
-    blood_type VARCHAR(10) DEFAULT '',
-    phone VARCHAR(50) DEFAULT '',
-    governorate VARCHAR(100) DEFAULT '',
-    hospital_id INTEGER,
-    department VARCHAR(100) DEFAULT '',
-    notes TEXT DEFAULT '',
-    bt_cards INTEGER DEFAULT 0,
-    bt_date DATE,
-    req_rbc INTEGER DEFAULT 0,
-    req_plasma INTEGER DEFAULT 0,
-    req_plt INTEGER DEFAULT 0,
-    req_cryo INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-  )`,
-  `CREATE TABLE IF NOT EXISTS bag_reservations (
-    id SERIAL PRIMARY KEY,
-    bag_id INTEGER NOT NULL,
-    patient_id INTEGER NOT NULL,
-    patient_name VARCHAR(200) DEFAULT '',
-    hospital_id INTEGER NOT NULL,
-    reserved_at TIMESTAMP DEFAULT NOW(),
-    reserved_until TIMESTAMP,
-    status VARCHAR(20) DEFAULT 'active',
-    compat_cards INTEGER DEFAULT 0,
-    issued_at TIMESTAMP,
-    issued_by VARCHAR(200) DEFAULT '',
-    released_at TIMESTAMP,
-    user_id INTEGER
-  )`,
-  `CREATE TABLE IF NOT EXISTS hospital_departments (
-    id SERIAL PRIMARY KEY,
-    hospital_id INTEGER NOT NULL,
-    name VARCHAR(200) NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
   )`
 ];
 
@@ -421,12 +307,6 @@ class Database {
         }
         // Migration: add view_hospital_ids column
         try { await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS view_hospital_ids JSONB DEFAULT '[]'"); } catch(e) {}
-        // Migration: patients blood-type date + requested product quantities
-        try { await client.query("ALTER TABLE patients ADD COLUMN IF NOT EXISTS bt_date DATE"); } catch(e) {}
-        try { await client.query("ALTER TABLE patients ADD COLUMN IF NOT EXISTS req_rbc INTEGER DEFAULT 0"); } catch(e) {}
-        try { await client.query("ALTER TABLE patients ADD COLUMN IF NOT EXISTS req_plasma INTEGER DEFAULT 0"); } catch(e) {}
-        try { await client.query("ALTER TABLE patients ADD COLUMN IF NOT EXISTS req_plt INTEGER DEFAULT 0"); } catch(e) {}
-        try { await client.query("ALTER TABLE patients ADD COLUMN IF NOT EXISTS req_cryo INTEGER DEFAULT 0"); } catch(e) {}
         // Migration: rename hospital users h{id} → emp{seq}
         try {
           await client.query("UPDATE users SET username = 'emp' || seq.num FROM (SELECT id, ROW_NUMBER() OVER (ORDER BY id)::text as num FROM users WHERE role = 'hospital' AND username ~ '^h\\d+$') seq WHERE users.id = seq.id AND users.username LIKE 'h%'");
@@ -436,7 +316,7 @@ class Database {
           await this._seedPG(client);
         }
         // Migration: fix missing + zeroed-out pages in role_perms
-        const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','indicator_analysis','employees','archive','strategic_stock','users','hospitals','governorates','role_perms','readiness','equipment','time_config','emp_accounts','indicator_columns'];
+        const ALL_PAGES = ['daily_stock','daily_total','daily_statement','daily_branch','monthly_indicators','monthly_consumption','monthly_big','monthly_small','indicator_analysis','employees','archive','strategic_stock','users','hospitals','governorates','role_perms','readiness','equipment','time_config','emp_accounts'];
         const { DEF_PERMS: PG_DEF_PERMS } = require('./jsondb');
         const rpResult = await client.query('SELECT role, permissions FROM role_perms');
         for (const row of rpResult.rows) {

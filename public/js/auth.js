@@ -18,8 +18,6 @@ const PERM_PAGES = [
   { key: 'hospitals', label: 'المستشفيات', cat: 'admin', icon: 'fa-hospital' },
   { key: 'governorates', label: 'المحافظات', cat: 'admin', icon: 'fa-location-dot' },
   { key: 'emp_accounts', label: 'حسابات الموظفين', cat: 'admin', icon: 'fa-user-plus' },
-  { key: 'indicator_columns', label: 'العمليات الحسابية', cat: 'admin', icon: 'fa-calculator' },
-  { key: 'blood_bags', label: 'أكياس الدم', cat: 'daily', icon: 'fa-droplet' },
   { key: 'time_config', label: 'التوقيت', cat: 'admin', icon: 'fa-clock' },
 ];
 

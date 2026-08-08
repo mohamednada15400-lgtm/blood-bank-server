@@ -4,8 +4,6 @@ const ITEM_COLORS = {
   archive: '#5d4037', strategic_stock: '#1565c0', employees: '#5d4037', readiness: '#7b1fa2', equipment: '#e65100',
   users: '#00695c', role_perms: '#4a148c', hospitals: '#c62828', governorates: '#37474f',
   sync: '#1a73e8', emp_accounts: '#28a745', time_config: '#f39c12', indicator_analysis: '#ff6f00',
-  indicator_columns: '#00897b',
-  blood_bags: '#c2185b',
   about: '#6c757d'
 };
 
@@ -15,8 +13,7 @@ const MENU_CATS = [
       { key: 'daily_stock', label: 'STOCK Mang', icon: 'fa-vial', page: 'renderDailyStock' },
       { key: 'daily_total', label: 'TOTAL STOCK Mang', icon: 'fa-cubes', page: 'renderTotal' },
       { key: 'daily_statement', label: 'البيان اليومي', icon: 'fa-file-waveform', page: 'renderDailyStatement' },
-      { key: 'daily_branch', label: 'بيان الفرع', icon: 'fa-code-branch', page: 'renderBranchStatement' },
-      { key: 'blood_bags', label: 'أكياس الدم', icon: 'fa-droplet', page: 'renderBloodBags' }
+      { key: 'daily_branch', label: 'بيان الفرع', icon: 'fa-code-branch', page: 'renderBranchStatement' }
     ]
   },
   { key: 'monthly', label: 'شهري', icon: 'fa-calendar-alt', color: ['#0d7377','#17a2b8'],
@@ -53,7 +50,6 @@ const MENU_CATS = [
       { key: 'governorates', label: 'المحافظات', icon: 'fa-map', page: 'renderGovernorates' },
       { key: 'sync', label: 'المزامنة مع Drive', icon: 'fa-cloud-upload-alt', page: 'showSyncDialog' },
       { key: 'emp_accounts', label: 'حسابات الموظفين', icon: 'fa-user-plus', page: 'renderEmployeeAccounts' },
-      { key: 'indicator_columns', label: 'العمليات الحسابية', icon: 'fa-calculator', page: 'renderIndicatorColumnsPage' },
       { key: 'time_config', label: 'ضبط التوقيت', icon: 'fa-clock', page: 'renderTimeConfig' },
       { key: 'about', label: 'حول النظام', icon: 'fa-info-circle', page: 'showAbout' }
     ]
