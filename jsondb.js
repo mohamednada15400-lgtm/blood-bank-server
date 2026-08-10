@@ -271,7 +271,7 @@ class JSONDB {
     if (!this.data._counters.indicator_columns) this.data._counters.indicator_columns = 1;
     // Blood bags module tables
     if (!this.data.blood_bags || !Array.isArray(this.data.blood_bags)) this.data.blood_bags = [];
-    this.data.blood_bags.forEach(b => { if (!b.product_type) b.product_type = 'دم'; if (b.units == null) b.units = 1; if (b.donation_id == null) b.donation_id = null; });
+    this.data.blood_bags.forEach(b => { if (!b.product_type) b.product_type = 'دم'; if (b.units == null) b.units = 1; if (b.donation_id == null) b.donation_id = null; if (b.test_nat == null) b.test_nat = ''; });
     if (!this.data.blood_bag_events || !Array.isArray(this.data.blood_bag_events)) this.data.blood_bag_events = [];
     if (!this.data.patients || !Array.isArray(this.data.patients)) this.data.patients = [];
     this.data.patients.forEach(p => {
@@ -282,6 +282,7 @@ class JSONDB {
       if (p.req_cryo == null) p.req_cryo = 0;
     });
     if (!this.data.bag_reservations || !Array.isArray(this.data.bag_reservations)) this.data.bag_reservations = [];
+    this.data.bag_reservations.forEach(r => { if (r.issued_department == null) r.issued_department = ''; });
     if (!this.data.hospital_departments || !Array.isArray(this.data.hospital_departments)) this.data.hospital_departments = [];
     if (!this.data._counters.blood_bags) this.data._counters.blood_bags = 1;
     if (!this.data._counters.blood_bag_events) this.data._counters.blood_bag_events = 1;

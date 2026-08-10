@@ -294,6 +294,7 @@ const PG_TABLES = [
     test_hbv VARCHAR(20) DEFAULT '',
     test_hiv VARCHAR(20) DEFAULT '',
     test_syphilis VARCHAR(20) DEFAULT '',
+    test_nat VARCHAR(20) DEFAULT '',
     tested_at TIMESTAMP,
     tested_by VARCHAR(200) DEFAULT '',
     dispatch_from INTEGER,
@@ -358,6 +359,7 @@ const PG_TABLES = [
     compat_cards INTEGER DEFAULT 0,
     issued_at TIMESTAMP,
     issued_by VARCHAR(200) DEFAULT '',
+    issued_department VARCHAR(200) DEFAULT '',
     released_at TIMESTAMP,
     user_id INTEGER
   )`,
@@ -427,6 +429,10 @@ class Database {
         try { await client.query("ALTER TABLE patients ADD COLUMN IF NOT EXISTS req_plasma INTEGER DEFAULT 0"); } catch(e) {}
         try { await client.query("ALTER TABLE patients ADD COLUMN IF NOT EXISTS req_plt INTEGER DEFAULT 0"); } catch(e) {}
         try { await client.query("ALTER TABLE patients ADD COLUMN IF NOT EXISTS req_cryo INTEGER DEFAULT 0"); } catch(e) {}
+        // Migration: NAT test result on blood bags
+        try { await client.query("ALTER TABLE blood_bags ADD COLUMN IF NOT EXISTS test_nat VARCHAR(20) DEFAULT ''"); } catch(e) {}
+        // Migration: department the bag was issued to on reservations
+        try { await client.query("ALTER TABLE bag_reservations ADD COLUMN IF NOT EXISTS issued_department VARCHAR(200) DEFAULT ''"); } catch(e) {}
         // Migration: rename hospital users h{id} → emp{seq}
         try {
           await client.query("UPDATE users SET username = 'emp' || seq.num FROM (SELECT id, ROW_NUMBER() OVER (ORDER BY id)::text as num FROM users WHERE role = 'hospital' AND username ~ '^h\\d+$') seq WHERE users.id = seq.id AND users.username LIKE 'h%'");

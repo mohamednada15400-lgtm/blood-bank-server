@@ -232,15 +232,15 @@ async function renderDailyStock() {
         const todayStr = fmtCairoDate('date');
         const dateStyle = r.date && r.date !== todayStr ? ' style="color:red;font-weight:700"' : '';
         h += `<td>${r.hospital_name || ''}</td><td data-role="date"${dateStyle}>${r.date || ''}</td><td data-role="time">${r.time || ''}</td>`;
-        h += `<td class="${canEdit ? 'editable' : ''}" data-group="meta" data-sub="under_inspection" data-rid="${r.id}">${r.under_inspection || 0}</td>`;
+        h += `<td class="cell-under" title="تحت الفحص — تلقائياً من أكياس الدم (الدم غير المفحوص)">${r.under_inspection || 0}</td>`;
         BTYPES.forEach(t => {
           const d = bd[t] || {};
           bTot.previous += d.previous || 0; bTot.incoming += d.incoming || 0;
           bTot.outgoing += d.outgoing || 0; bTot.disposal += d.disposal || 0;
           const av = calcAvail(bd, t); bTot.available += av;
           h += `<td class="${canEdit ? 'editable' : ''}" data-group="blood" data-type="${t}" data-sub="previous" data-rid="${r.id}">${d.previous || 0}</td>`;
-          h += `<td class="${canEdit ? 'editable' : ''}" data-group="blood" data-type="${t}" data-sub="incoming" data-rid="${r.id}">${d.incoming || 0}</td>`;
-          h += `<td class="${canEdit ? 'editable' : ''}" data-group="blood" data-type="${t}" data-sub="outgoing" data-rid="${r.id}">${d.outgoing || 0}</td>`;
+          h += `<td class="cell-auto-inc" title="وارد — تلقائياً من أكياس الدم المفحوصة (المتاحة)" data-group="blood" data-type="${t}" data-sub="incoming" data-rid="${r.id}">${d.incoming || 0}</td>`;
+          h += `<td class="cell-auto-inc" title="المنصرف — تلقائياً من أكياس الدم (إرسال لمستشفى آخر / صرف لمريض أو هيئة)" data-group="blood" data-type="${t}" data-sub="outgoing" data-rid="${r.id}">${d.outgoing || 0}</td>`;
           h += `<td class="${canEdit ? 'editable' : ''}" data-group="blood" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
           h += `<td class="avail-cell" data-group="blood" data-type="${t}" data-sub="available" data-rid="${r.id}">${av}</td>`;
         });
@@ -251,8 +251,8 @@ async function renderDailyStock() {
           pTot.outgoing += d.outgoing || 0; pTot.disposal += d.disposal || 0;
           const av = calcAvail(pd, t); pTot.available += av;
           h += `<td class="${canEdit ? 'editable' : ''}" data-group="plasma" data-type="${t}" data-sub="previous" data-rid="${r.id}">${d.previous || 0}</td>`;
-          h += `<td class="${canEdit ? 'editable' : ''}" data-group="plasma" data-type="${t}" data-sub="incoming" data-rid="${r.id}">${d.incoming || 0}</td>`;
-          h += `<td class="${canEdit ? 'editable' : ''}" data-group="plasma" data-type="${t}" data-sub="outgoing" data-rid="${r.id}">${d.outgoing || 0}</td>`;
+          h += `<td class="cell-auto-inc" title="وارد — تلقائياً من أكياس البلازما المفحوصة (المتاحة)" data-group="plasma" data-type="${t}" data-sub="incoming" data-rid="${r.id}">${d.incoming || 0}</td>`;
+          h += `<td class="cell-auto-inc" title="المنصرف — تلقائياً من أكياس البلازما (إرسال لمستشفى آخر / صرف لمريض أو هيئة)" data-group="plasma" data-type="${t}" data-sub="outgoing" data-rid="${r.id}">${d.outgoing || 0}</td>`;
           h += `<td class="${canEdit ? 'editable' : ''}" data-group="plasma" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
           h += `<td class="avail-cell" data-group="plasma" data-type="${t}" data-sub="available" data-rid="${r.id}">${av}</td>`;
         });
@@ -323,7 +323,7 @@ async function collectGroupData(table, rid) {
   const bd = {}; const pd = {};
   BTYPES.forEach(t => { bd[t] = { previous: 0, incoming: 0, outgoing: 0, disposal: 0, available: 0 }; });
   PTYPES.forEach(t => { pd[t] = { previous: 0, incoming: 0, outgoing: 0, disposal: 0, available: 0 }; });
-  let under_inspection = 0; let platelets = null; let cryo = null; let license_type = null; let license_status = null;
+  let platelets = null; let cryo = null; let license_type = null; let license_status = null;
   const cells = table.querySelectorAll(`[data-rid="${rid}"]`);
   cells.forEach(cell => {
     const g = cell.dataset.group;
@@ -333,7 +333,6 @@ async function collectGroupData(table, rid) {
     const tv = cell.textContent.trim();
     if (g === 'blood' && bd[t]) bd[t][s] = v;
     if (g === 'plasma' && pd[t]) pd[t][s] = v;
-    if (g === 'meta' && s === 'under_inspection') under_inspection = v;
     if (g === 'plat_cryo' && s === 'platelets') platelets = v;
     if (g === 'plat_cryo' && s === 'cryo') cryo = v;
     if (g === 'license' && s === 'license_type') license_type = tv;
@@ -349,24 +348,23 @@ async function collectGroupData(table, rid) {
   const now = getCairoDate();
   const time = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
   try {
-    const body = { blood: bd, plasma: pd, underInspection: under_inspection, date, time };
+    const body = { blood: bd, plasma: pd, date, time };
     if (platelets !== null) body.platelets = platelets;
     if (cryo !== null) body.cryo = cryo;
     if (license_type !== null) body.licenseType = license_type;
     if (license_status !== null) body.licenseStatus = license_status;
     await api('PUT', '/daily-reports/' + rid, body);
     const row = table.querySelector(`tr[data-rid="${rid}"]`);
-    if (row) updateRow(row, bd, pd, bTot, pTot, under_inspection, date, time);
+    if (row) updateRow(row, bd, pd, bTot, pTot, date, time);
   } catch(e) { console.error(e); }
 }
-function updateRow(row, bd, pd, bTot, pTot, under_inspection, date, time) {
+function updateRow(row, bd, pd, bTot, pTot, date, time) {
   const todayStr = fmtCairoDate('date');
   const dateCell = row.querySelector('[data-role="date"]');
   dateCell.textContent = date;
   dateCell.style.color = date && date.slice(0,10) !== todayStr ? 'red' : '';
   dateCell.style.fontWeight = date && date.slice(0,10) !== todayStr ? '700' : '';
   row.querySelector('[data-role="time"]').textContent = time;
-  row.querySelector('[data-group="meta"][data-sub="under_inspection"]').textContent = under_inspection;
   BTYPES.forEach(t => {
     const cell = row.querySelector(`[data-group="blood"][data-type="${t}"][data-sub="available"]`);
     if (cell) cell.textContent = calcAvail(bd, t);
@@ -9631,12 +9629,12 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
 }
 
 /* ================= أكياس الدم — التتبع الكامل ================= */
-const _bb = { hospitals: [], bags: [], patients: [], reservations: [], departments: [], user: null, tab: 'dash', rowN: 0, selPatient: null, selBagIds: [], lastFilteredBags: [], lastFilteredInLog: [], lastMonthly: null, selResPatient: null, selResv: null, lastResLog: [] };
+const _bb = { hospitals: [], bags: [], patients: [], reservations: [], departments: [], user: null, tab: 'dash', tTab: null, cTab: null, rowN: 0, selPatient: null, selBagIds: [], lastFilteredBags: [], lastFilteredInLog: [], lastMonthly: null, selResPatient: null, selResv: null, lastResLog: [], barPat: {}, barTyped: {}, histHidden: false };
 const BB_BTYPES_CLI = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
 const BB_BTYPES_SIMPLE = ['A','B','O','AB'];
-const BB_PRODUCT_TYPES = ['دم','بلازما','صفائح SDP','صفائح RDP','كرايو'];
-const BB_PROD_STYLE = { 'دم': { c: '#c0392b', i: 'fa-droplet' }, 'بلازما': { c: '#16a085', i: 'fa-fill-drip' }, 'صفائح SDP': { c: '#8e44ad', i: 'fa-layer-group' }, 'صفائح RDP': { c: '#8e44ad', i: 'fa-layer-group' }, 'كرايو': { c: '#d35400', i: 'fa-snowflake' } };
-const BB_UNIT_PRODUCTS = ['صفائح SDP', 'صفائح RDP', 'كرايو'];
+const BB_PRODUCT_TYPES = ['دم','دم كلي','بلازما','صفائح SDP','صفائح RDP','كرايو'];
+const BB_PROD_STYLE = { 'دم': { c: '#c0392b', i: 'fa-droplet' }, 'دم كلي': { c: '#c0392b', i: 'fa-droplet' }, 'بلازما': { c: '#16a085', i: 'fa-fill-drip' }, 'صفائح SDP': { c: '#8e44ad', i: 'fa-layer-group' }, 'صفائح RDP': { c: '#8e44ad', i: 'fa-layer-group' }, 'كرايو': { c: '#d35400', i: 'fa-snowflake' } };
+const BB_UNIT_PRODUCTS = ['صفائح SDP', 'صفائح RDP'];
 const BB_ST_LABELS = {
   collected: 'تم التجميع', incomplete: 'لم يكتمل', therapeutic: 'تبرع علاجي', fatty: 'دهون', icteric: 'صفراء',
   lipemic: 'Lipemic plasma', hemolyzed: 'Hemolyzed plasma',
@@ -9651,6 +9649,18 @@ const BB_ST_COLORS = {
 };
 const BB_ISSUE_TYPES_CLI = ['داخلي','فرع','هيئة','خارجي'];
 const BB_MONTHS_AR = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
+const BB_COMPAT_CLI = {
+  'O-': ['O-'], 'O+': ['O+', 'O-'], 'A-': ['A-', 'O-'], 'A+': ['A+', 'A-', 'O+', 'O-'],
+  'B-': ['B-', 'O-'], 'B+': ['B+', 'B-', 'O+', 'O-'], 'AB-': ['AB-', 'A-', 'B-', 'O-'],
+  'AB+': ['AB+', 'AB-', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-']
+};
+function bbCanDonateTo(donorBt, recipientBt) {
+  if (!donorBt || !recipientBt) return null;
+  const list = BB_COMPAT_CLI[recipientBt];
+  if (!list) return donorBt === recipientBt;
+  return list.indexOf(donorBt) !== -1;
+}
+function bbDonorsFor(recipientBt) { return BB_BTYPES_CLI.filter(bt => bbCanDonateTo(bt, recipientBt)); }
 
 async function bbHospitals() {
   try { _bb.hospitals = await api('GET', '/hospitals'); } catch (e) {}
@@ -9674,11 +9684,47 @@ function bbOptHosp(sel, filterType) {
   if (filterType) list = list.filter(h => !filterType || h.type === filterType);
   return `<option value="">— اختر بنك الدم —</option>` + list.map(h => `<option value="${h.id}" ${sel === h.id ? 'selected' : ''}>${esc(h.name)}</option>`).join('');
 }
-function bbOptTargetHosp(sel) {
+function bbOptTargetHosp(sel, gov) {
   let list = _bb.hospitals;
   const my = _bb.user && _bb.user.hospitalId;
   if (my) list = list.filter(h => h.id !== my);
+  if (gov) list = list.filter(h => h.governorate === gov);
   return `<option value="">— اختر بنك الدم —</option>` + list.map(h => `<option value="${h.id}" ${sel === h.id ? 'selected' : ''}>${esc(h.name)}</option>`).join('');
+}
+function bbOptGov(sel, fromBank) {
+  const allGovs = [...new Set((_bb.hospitals || []).map(h => h.governorate).filter(Boolean))];
+  let govs;
+  if (fromBank && fromBank.type === 'تخزيني' && fromBank.governorate) {
+    govs = [fromBank.governorate];
+  } else {
+    govs = allGovs;
+  }
+  const def = fromBank && fromBank.governorate ? fromBank.governorate : '';
+  const preselect = sel || def;
+  govs.sort((a, b) => {
+    let ia = GOV_ORDER.indexOf(a), ib = GOV_ORDER.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b, 'ar');
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+  return `<option value="">— اختر الفرع —</option>` + govs.map(g => `<option value="${g}" ${preselect === g ? 'selected' : ''}>${esc(g)}</option>`).join('');
+}
+function bbDispFromChanged() {
+  const from = document.getElementById('bbDispFrom');
+  const gov = document.getElementById('bbDispGov');
+  if (!from || !gov) return;
+  const bank = (from.value && (_bb.hospitals || []).find(h => h.id == from.value)) || null;
+  gov.innerHTML = bbOptGov('', bank);
+  bbDispGovChanged();
+  bbRenderDisp();
+}
+function bbDispGovChanged() {
+  const gov = document.getElementById('bbDispGov');
+  const to = document.getElementById('bbDispTo');
+  if (!gov || !to) return;
+  if (!gov.value) { to.innerHTML = `<option value="">— اختر الفرع أولاً —</option>`; return; }
+  to.innerHTML = bbOptTargetHosp(null, gov.value);
 }
 function bbAutoHosp(id) {
   const sel = document.getElementById(id);
@@ -9696,16 +9742,22 @@ function bbOptBt(sel, simple) {
 function bbOptProduct(sel) {
   return BB_PRODUCT_TYPES.map(t => `<option value="${t}" ${sel === t ? 'selected' : ''}>${t}</option>`).join('');
 }
-function bbProdHasUnits(p) { return BB_UNIT_PRODUCTS.indexOf(p) !== -1; }
-// أسباب إعدام التجميع حسب المنتج: دم/صفائح = إعدام التبرع كاملاً بأسباب عامة، بلازما/كرايو (لوحدها) = إعدام فردي بأسباب خاصة بالبلازما
-function bbDiscardOpts(prod, sel) {
-  const list = (prod === 'بلازما' || prod === 'كرايو')
-    ? [['lipemic', 'Lipemic plasma'], ['hemolyzed', 'Hemolyzed plasma']]
-    : [['therapeutic', 'تبرع علاجي'], ['incomplete', 'تبرع لم يكتمل'], ['icteric', 'Icteric'], ['fatty', 'دهون']];
-  return `<option value="">تبرع كامل</option>` + list.map(([v, l]) => `<option value="${v}" ${sel === v ? 'selected' : ''}>${l}</option>`).join('');
+// منتجات التجميع: دم أو دم كلي أو صفائح فقط — البلازما والكرايو تابعتان للدم وتُفصلان تلقائياً من كيس الدم، فلا تُجمعان منفردتين
+function bbOptCollectProduct(sel) {
+  return ['دم', 'دم كلي', 'صفائح SDP', 'صفائح RDP'].map(t => `<option value="${t}" ${sel === t ? 'selected' : ''}>${t}</option>`).join('');
 }
-// صلاحية الكيس المتوقعة حسب المنتج (أيام): دم 35 / بلازما وكرايو سنة / صفائح 5
-const BB_SHELF_DAYS = { 'دم': 35, 'بلازما': 365, 'كرايو': 365, 'صفائح SDP': 5, 'صفائح RDP': 5 };
+// الفحص لدم فقط: كيس دم (فردي أو قائد التبرع المفصول) أو كيس مستقل (صفائح) — بلازما/كرايو تتبعان نتيجة فحص الدم
+function bbCanTest(b) { return !!(b && b.status === 'collected' && ((b.product_type || 'دم') === 'دم' || !b.donation_id)); }
+// تغيير الحالة: أي كيس مجمّع (دم / بلازما / كرايو / صفائح) — دم يُعدِم التبرع كاملاً، بلازما وكرايو بسببيّن خاصين، صفائح بأسباب عامة
+function bbCanStatus(b) { return !!(b && b.status === 'collected'); }
+function bbStOpts(prod) {
+  const p = prod || 'دم';
+  if (p === 'بلازما' || p === 'كرايو') return ['lipemic', 'hemolyzed'];
+  return ['incomplete', 'therapeutic', 'fatty', 'icteric'];
+}
+function bbProdHasUnits(p) { return BB_UNIT_PRODUCTS.indexOf(p) !== -1; }
+// صلاحية الكيس المتوقعة حسب المنتج (أيام): دم ودم كلي 35 / بلازما وكرايو سنة / صفائح 5
+const BB_SHELF_DAYS = { 'دم': 35, 'دم كلي': 35, 'بلازما': 365, 'كرايو': 365, 'صفائح SDP': 5, 'صفائح RDP': 5 };
 function bbShelfDays(p) { return BB_SHELF_DAYS[p] != null ? BB_SHELF_DAYS[p] : 35; }
 function bbAddDays(dateStr, days) {
   let d;
@@ -9720,6 +9772,81 @@ function bbAddDays(dateStr, days) {
 function bbDefaultExpiry(dateStr, productType) {
   return bbAddDays(dateStr, bbShelfDays(productType));
 }
+/* ==== تعلم نمط الباركود (أرقام فقط): بعد 5 إدخالات بنفس الشكل يتعلم النمط ويكمل تصاعدياً لكل بنك ==== */
+function bbBarList(hospId) {
+  const out = [];
+  const seen = {};
+  (_bb.bags || []).forEach(b => {
+    if (Number(b.hospital_id) === Number(hospId) && b.barcode) {
+      const v = String(b.barcode).trim();
+      if (v && !seen[v]) { seen[v] = 1; out.push(v); }
+    }
+  });
+  (_bb.barTyped[hospId] || []).forEach(v => { if (v && !seen[v]) { seen[v] = 1; out.push(v); } });
+  return out;
+}
+function bbBarPattern(hospId) {
+  const list = bbBarList(hospId).filter(v => /^\d+$/.test(v));
+  if (list.length < 5) return null;
+  const byLen = {};
+  list.forEach(v => { (byLen[v.length] = byLen[v.length] || []).push(v); });
+  for (const len of Object.keys(byLen)) {
+    const arr = byLen[len];
+    if (arr.length < 5) continue;
+    let pre = arr[0];
+    for (const v of arr) {
+      while (v.indexOf(pre) !== 0 && pre.length) pre = pre.slice(0, -1);
+      if (!pre) break;
+    }
+    if (!pre) continue;
+    const w = len - pre.length;
+    if (w < 1 || w > 2) continue;
+    const tails = arr.map(v => parseInt(v.slice(pre.length), 10));
+    if (tails.some(isNaN)) continue;
+    const next = Math.max.apply(null, tails) + 1;
+    return { pre, w, next };
+  }
+  return null;
+}
+function bbBarLearn(hospId) {
+  const p = bbBarPattern(hospId);
+  if (p) _bb.barPat[hospId] = p;
+}
+function bbBarNext(hospId) {
+  const p = _bb.barPat[hospId];
+  if (!p) return '';
+  let tail = String(p.next);
+  if (p.next < Math.pow(10, p.w)) tail = String(p.next).padStart(p.w, '0');
+  return p.pre + tail;
+}
+function bbBarAdvance(hospId) { if (_bb.barPat[hospId]) _bb.barPat[hospId].next++; }
+function bbBarFill(i) {
+  const el = document.getElementById(`bbR${i}_barcode`);
+  const hospEl = document.getElementById('bbCollHosp');
+  if (!el || !hospEl) return;
+  const hospId = parseInt(hospEl.value, 10);
+  if (!hospId) return;
+  bbBarLearn(hospId);
+  const v = bbBarNext(hospId);
+  if (v) { el.value = v; bbBarAdvance(hospId); }
+}
+function bbRBarChanged(i) {
+  const el = document.getElementById(`bbR${i}_barcode`);
+  const hospEl = document.getElementById('bbCollHosp');
+  if (!el || !hospEl) return;
+  const hospId = hospEl.value;
+  if (!hospId) return;
+  const v = el.value.trim();
+  _bb.barTyped[hospId] = _bb.barTyped[hospId] || [];
+  if (v && _bb.barTyped[hospId].indexOf(v) === -1) _bb.barTyped[hospId].push(v);
+  bbBarLearn(parseInt(hospId, 10));
+}
+function bbCollHospChanged() {
+  for (let i = 0; i < _bb.rowN; i++) {
+    const el = document.getElementById(`bbR${i}_barcode`);
+    if (el) { el.value = ''; bbBarFill(i); }
+  }
+}
 function bbProdCell(b) {
   const p = b.product_type || 'دم';
   const st = BB_PROD_STYLE[p] || { c: '#7f8c8d', i: 'fa-droplet' };
@@ -9727,32 +9854,8 @@ function bbProdCell(b) {
   return `<span style="font-weight:700;color:${st.c};white-space:nowrap"><i class="fas ${st.i}" style="font-size:10px;margin-left:3px"></i>${esc(p)}</span>${units}`;
 }
 function bbOptStatus(sel, opts) {
-  const keys = opts || ['collected','incomplete','therapeutic','fatty','icteric','lipemic','hemolyzed','disposed'];
+  const keys = opts || ['collected','incomplete','therapeutic','fatty','icteric','lipemic','hemolyzed'];
   return keys.map(s => `<option value="${s}" ${sel === s ? 'selected' : ''}>${BB_ST_LABELS[s]}</option>`).join('');
-}
-function bbDoDispose(id) {
-  const bag = _bb.bags.find(b => b.id === id);
-  if (!bag) return;
-  const note = bag.donation_id
-    ? `<div style="font-size:12px;color:#666;margin-top:6px">الإعدام من الرصيد المتاح <b>فردي</b> — هذا الكيس فقط، بقية مكونات التبرع تبقى كما هي.</div>`
-    : `<div style="font-size:12px;color:#666;margin-top:6px">الإعدام من الرصيد المتاح — السبب <b>نظام مفتوح</b> أو <b>أخرى</b> (البحث عن الكيس في الرصيد وإعدامه).</div>`;
-  openModal('إعدام الكيس ' + esc(bag.bag_no) + ' — ' + bbProdCell(bag),
-    `<div class="form-group"><label>سبب الإعدام (من الرصيد المتاح)</label><select class="form-control" id="bbDispReason">
-      <option value="نظام مفتوح" selected>نظام مفتوح</option>
-      <option value="أخرى">أخرى</option>
-    </select></div>
-    ${note}`,
-    `<button class="btn btn-secondary" data-click="closeModal"><i class="fas fa-times"></i> إلغاء</button>
-     <button class="btn btn-danger" data-click="bbDoDisposeConfirm" data-args="${id}"><i class="fas fa-skull-crossbones"></i> تأكيد الإعدام</button>`);
-}
-async function bbDoDisposeConfirm(id) {
-  const reason = document.getElementById('bbDispReason').value;
-  try {
-    const r = await api('POST', `/blood-bags/${id}/status`, { status: 'disposed', reason });
-    showToast('🩸 تم إعدام الكيس (' + reason + ')', 'success');
-    closeModal();
-    await bbLoadBags(); bbRenderBags();
-  } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
 
 async function renderBloodBags(tab) {
@@ -9773,7 +9876,8 @@ async function renderBloodBags(tab) {
       ['trans', 'fa-right-left', 'الوارد والإرسال والاستلام', '#1976d2'],
       ['compat', 'fa-arrows-to-circle', 'الفصائل والتوافق', '#8e44ad'],
       ['reserve', 'fa-hand-holding-droplet', 'الحجز والصرف', '#f39c12'],
-      ['monthly', 'fa-calendar-check', 'الشهري التلقائي', '#16a085']
+      ['monthly', 'fa-calendar-check', 'الشهري التلقائي', '#16a085'],
+      ['stats', 'fa-chart-line', 'الإحصائيات', '#e67e22']
     ];
     const showContent = !!_bb.tab;
     el.innerHTML = `<div class="page-actions">
@@ -9800,6 +9904,7 @@ function bbRenderTab(t) {
   else if (t === 'compat') bbCompat();
   else if (t === 'reserve') bbReserve();
   else if (t === 'monthly') bbMonthly();
+  else if (t === 'stats') bbStats();
   else bbTrans();
 }
 function bbGoTab(t) {
@@ -9820,19 +9925,43 @@ async function bbCollect() {
   const el = document.getElementById('bbBody');
   showPageLoading(el, 'جاري التحميل...');
   try {
-    const canAdd = hasPerm('blood_bags', 'add'), canEdit = hasPerm('blood_bags', 'edit'), canDelete = hasPerm('blood_bags', 'delete');
-    const now = getCairoDate();
-    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-    let html = '';
-    if (canAdd) {
-      html += `<div class="card" style="margin-bottom:16px;border-right:4px solid #0d7377">
-        <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-vial-circle-check" style="margin-left:6px"></i> التجميع والفحص</strong></div>
+    const canAdd = hasPerm('blood_bags', 'add');
+    const showContent = !!_bb.cTab;
+    const tabs = [
+      ...(canAdd ? [['collect', 'fa-vial-circle-check', 'التجميع', '#0d7377']] : []),
+      ['test', 'fa-flask-vial', 'فحص الأكياس', '#c2185b']
+    ];
+    el.innerHTML = `<div class="page-actions">
+      <button class="btn-back" data-click="bbCollectBack"><i class="fas fa-arrow-right"></i> رجوع</button>
+    </div>
+    <div class="sub-icons-grid" id="bbCollectTabs" style="margin:10px auto 18px${showContent ? ';display:none' : ''}">
+      ${tabs.map(t => `<div class="sub-icon-card bb-tab-card ${_bb.cTab === t[0] ? 'active' : ''}" data-tab="${t[0]}" data-click="bbCollectGo" data-args="'${t[0]}'" title="${t[2]}">
+        <div class="sub-icon-circle" style="background:${t[3]}"><i class="fas ${t[1]}"></i></div>
+        <div class="sub-icon-label">${t[2]}</div>
+      </div>`).join('')}
+    </div>
+    <div id="bbCollectBody"></div>`;
+    if (showContent) bbRenderCollectTab(_bb.cTab);
+  } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+async function bbRenderCollectTab(t) {
+  const el = document.getElementById('bbCollectBody');
+  if (!el) return;
+  const canAdd = hasPerm('blood_bags', 'add'), canEdit = hasPerm('blood_bags', 'edit'), canDelete = hasPerm('blood_bags', 'delete');
+  try {
+    await bbLoadBags();
+    if (t === 'collect') {
+      if (!canAdd) { _bb.cTab = null; bbCollect(); return; }
+      const now = getCairoDate();
+      const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      el.innerHTML = `<div class="card" style="margin-bottom:16px;border-right:4px solid #0d7377">
+        <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-vial-circle-check" style="margin-left:6px"></i> التجميع</strong></div>
         <div class="card-body" style="padding:10px 16px">
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
-            <div class="form-group"><label>بنك الدم</label><select class="form-control" id="bbCollHosp" style="min-width:220px">${bbOptHosp(null, 'تجميعي')}</select></div>
+            <div class="form-group"><label>بنك الدم</label><select class="form-control" id="bbCollHosp" data-change="bbCollHospChanged" style="min-width:220px">${bbOptHosp(null, 'تجميعي')}</select></div>
             <div class="form-group"><label>تاريخ التجميع</label><input class="form-control" type="date" id="bbCollDate" data-change="bbCollDateChanged" value="${today}"></div>
           </div>
-          <div style="background:#eaf7f0;border:1px solid #a9dfbf;color:#1e8449;padding:6px 10px;border-radius:8px;font-size:11px;margin-bottom:8px"><i class="fas fa-fill-drip" style="margin-left:4px"></i> كيس <strong>الدم</strong> يُفصل تلقائياً إلى <strong>دم + بلازما</strong> بنفس رقم اللي والباركود — فعّل <strong style="color:#d35400">كرايو</strong> لإضافة مكون ثالث. <strong style="color:#8e44ad">الصفائح (SDP / RDP)</strong> تُسجَّل كيساً واحداً مستقلاً بعدد وحداتها.</div>
+          <div style="background:#eaf7f0;border:1px solid #a9dfbf;color:#1e8449;padding:6px 10px;border-radius:8px;font-size:11px;margin-bottom:8px"><i class="fas fa-fill-drip" style="margin-left:4px"></i> كيس الدم يُفصل تلقائياً إلى دم + بلازما بنفس رقم اللي والباركود (كرايو مكوّن ثالث اختياري بدون وحدات) — البلازما والكرايو تابعتان للدم ولا تُجمعان منفردتين، والدم يُفحص يدوياً لاحقاً. ولادة : تُعدَم البلازما والكرايو فوراً بدون فحص والدم يُفحص ويُحفظ. الصفائح والدم الكلي: كيس واحد مستقل — فحص الصفائح تلقائي، والدم الكلي يدوي لاحقاً.</div>
           <div id="bbCollRows"></div>
           <div style="display:flex;gap:10px;margin-top:6px">
             <button class="btn btn-outline" data-click="bbAddRow" style="border-color:#0d7377;color:#0d7377"><i class="fas fa-plus"></i> إضافة كيس</button>
@@ -9842,32 +9971,42 @@ async function bbCollect() {
       </div>`;
       _bb.rowN = 0;
       bbAddRow();
-    }
-    html += `<div class="card" style="margin-bottom:16px;border-right:4px solid #c2185b">
-      <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-search" style="margin-left:6px"></i> سجل الأكياس</strong></div>
-      <div class="card-body" style="padding:10px 16px">
-        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
-          <div class="form-group"><label>بنك الدم</label><select class="form-control" id="bbListHosp" data-change="bbRenderBags" style="min-width:200px"><option value="">الكل</option>${_bb.hospitals.filter(h => h.type === 'تجميعي').map(h => `<option value="${h.id}">${esc(h.name)}</option>`).join('')}</select></div>
-          <div class="form-group"><label>الحالة</label><select class="form-control" id="bbListStatus" data-change="bbRenderBags" style="min-width:130px"><option value="">الكل</option>${Object.keys(BB_ST_LABELS).map(s => `<option value="${s}">${BB_ST_LABELS[s]}</option>`).join('')}</select></div>
-          <div class="form-group"><label>المنتج</label><select class="form-control" id="bbListProd" data-change="bbRenderBags" style="min-width:130px"><option value="">الكل</option>${BB_PRODUCT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}</select></div>
-          <div class="form-group"><label>بحث (رقم/باركود)</label><input class="form-control" id="bbListQ" data-input="bbRenderBags" style="min-width:180px"></div>
-          <div class="form-group"><label>تاريخ التجميع من</label><input class="form-control" type="date" id="bbListFrom" data-change="bbRenderBags" style="min-width:130px"></div>
-          <div class="form-group"><label>إلى</label><input class="form-control" type="date" id="bbListTo" data-change="bbRenderBags" style="min-width:130px"></div>
-          <div class="form-group"><label>قرب الانتهاء</label><select class="form-control" id="bbListExp" data-change="bbRenderBags" style="min-width:130px"><option value="">الكل</option><option value="10">خلال 10 أيام</option><option value="30">خلال 30 يوم</option></select></div>
-          <button class="btn btn-outline" data-click="bbExportBags" style="border-color:#c2185b;color:#c2185b;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+      bbAutoHosp('bbCollHosp');
+    } else if (t === 'test') {
+      el.innerHTML = `<div class="card" style="margin-bottom:16px;border-right:4px solid #c2185b">
+        <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-flask-vial" style="margin-left:6px"></i> سجل الأكياس</strong> <span style="font-size:11px;color:#c2185b;font-weight:400"><i class="fas fa-eye" style="margin-left:3px"></i> يُعرض تحت الفحص فقط — الأكياس المفحوصة تختفي من السجل بعد فحصها</span></div>
+        <div class="card-body" style="padding:10px 16px">
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
+            <div class="form-group"><label>بنك الدم</label><select class="form-control" id="bbListHosp" data-change="bbRenderBags" style="min-width:200px"><option value="">الكل</option>${_bb.hospitals.filter(h => h.type === 'تجميعي').map(h => `<option value="${h.id}">${esc(h.name)}</option>`).join('')}</select></div>
+            <div class="form-group"><label>المنتج</label><select class="form-control" id="bbListProd" data-change="bbRenderBags" style="min-width:130px"><option value="">الكل</option>${BB_PRODUCT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}</select></div>
+            <div class="form-group"><label>بحث (رقم/باركود)</label><input class="form-control" id="bbListQ" data-input="bbRenderBags" style="min-width:180px"></div>
+            <div class="form-group"><label>تاريخ التجميع من</label><input class="form-control" type="date" id="bbListFrom" data-change="bbRenderBags" style="min-width:130px"></div>
+            <div class="form-group"><label>إلى</label><input class="form-control" type="date" id="bbListTo" data-change="bbRenderBags" style="min-width:130px"></div>
+            <button class="btn btn-outline" data-click="bbExportBags" style="border-color:#c2185b;color:#c2185b;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+          </div>
+          <div class="bb-count-bar" id="bbListCount"></div>
+          <div class="table-scroll"><table class="data-table" style="font-size:12px"><thead>
+            <tr><th>رقم اللي</th><th>الباركود</th><th>بنك الدم</th><th>التجميع</th><th>الصلاحية</th><th>المتبقي</th><th>الفصيلة</th><th>المنتج</th>${canEdit || canDelete ? '<th>إجراءات</th>' : ''}</tr>
+          </thead><tbody id="bbBagsBody"></tbody></table></div>
         </div>
-        <div id="bbExpWarn" style="margin-bottom:8px"></div>
-        <div class="bb-count-bar" id="bbListCount"></div>
-        <div class="table-scroll"><table class="data-table" style="font-size:12px"><thead>
-          <tr><th>رقم اللي</th><th>الباركود</th><th>بنك الدم</th><th>المصدر</th><th>التجميع</th><th>الصلاحية</th><th>المتبقي</th><th>الفصيلة</th><th>المنتج</th><th>الحالة</th>${canEdit || canDelete ? '<th>إجراءات</th>' : ''}</tr>
-        </thead><tbody id="bbBagsBody"></tbody></table></div>
-      </div>
-    </div>`;
-    el.innerHTML = html;
-    bbAutoHosp('bbCollHosp');
-    await bbLoadBags();
-    bbRenderBags();
+      </div>`;
+      bbRenderBags();
+    } else {
+      _bb.cTab = null;
+      bbCollect();
+    }
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+function bbCollectGo(t) {
+  if (_bb.cTab === t) return;
+  _bb.cTab = t;
+  const tb = document.getElementById('bbCollectTabs');
+  if (tb) tb.style.display = 'none';
+  bbRenderCollectTab(t);
+}
+function bbCollectBack() {
+  if (_bb.cTab) { _bb.cTab = null; bbCollect(); }
+  else bbBack();
 }
 function bbAddRow() {
   const wrap = document.getElementById('bbCollRows');
@@ -9875,15 +10014,16 @@ function bbAddRow() {
   const i = _bb.rowN++;
   wrap.insertAdjacentHTML('beforeend', `<div class="bb-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:6px;align-items:end;margin-bottom:6px;padding:8px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
     <div><label style="font-size:10px">رقم اللي</label><input class="form-control" id="bbR${i}_no" placeholder="تلقائي" dir="ltr" style="height:30px;font-size:11px"></div>
-    <div><label style="font-size:10px">الباركود</label><input class="form-control" id="bbR${i}_barcode" dir="ltr" style="height:30px;font-size:11px"></div>
-    <div><label style="font-size:10px">المنتج</label><select class="form-control" id="bbR${i}_prod" data-change="bbRProdChanged" data-args="${i}" style="height:30px;font-size:11px">${bbOptProduct('دم')}</select></div>
+    <div><label style="font-size:10px">الباركود</label><input class="form-control" id="bbR${i}_barcode" dir="ltr" data-change="bbRBarChanged" data-args="${i}" style="height:30px;font-size:11px"></div>
+    <div><label style="font-size:10px">المنتج</label><select class="form-control" id="bbR${i}_prod" data-change="bbRProdChanged" data-args="${i}" style="height:auto;min-height:30px;font-size:11px;padding:2px 6px;line-height:1.4">${bbOptCollectProduct('دم')}</select></div>
     <div id="bbR${i}_unitWrap" style="display:none"><label style="font-size:10px">عدد الوحدات</label><input class="form-control" id="bbR${i}_units" type="number" min="1" value="1" style="height:30px;font-size:11px"></div>
     <div><label style="font-size:10px">تاريخ انتهاء الصلاحية</label><input class="form-control" id="bbR${i}_exp" type="date" style="height:30px;font-size:11px"></div>
-    <div><label style="font-size:10px">سبب الإعدام (اختياري)</label><select class="form-control" id="bbR${i}_status" style="height:30px;font-size:11px;color:#c0392b">${bbDiscardOpts('دم', '')}</select></div>
     <div id="bbR${i}_cryoWrap" style="display:flex;align-items:center;padding-top:14px"><label style="font-size:11px;color:#d35400;cursor:pointer;font-weight:700;background:#fff3e0;border:1px solid #ffcc80;border-radius:16px;padding:5px 12px;display:inline-flex;align-items:center;gap:5px"><input type="checkbox" id="bbR${i}_cryo" style="width:15px;height:15px;margin:0"> كرايو</label></div>
+    <div id="bbR${i}_pregWrap" style="display:flex;align-items:center;padding-top:14px"><label title="المتبرعة حامل أو ولدت — تُعدم البلازما والكرايو مباشرة بدون فحص" style="font-size:11px;color:#e74c3c;cursor:pointer;font-weight:700;background:#fdecea;border:1px solid #f5b7b1;border-radius:16px;padding:5px 12px;display:inline-flex;align-items:center;gap:5px"><input type="checkbox" id="bbR${i}_preg" style="width:15px;height:15px;margin:0"> ولادة</label></div>
     <div style="display:flex;align-items:end"><button class="btn btn-sm btn-outline" data-click="bbDelRow" data-args="${i}" style="height:30px;color:#dc3545"><i class="fas fa-trash"></i></button></div>
   </div>`);
   bbRSetExpiry(i);
+  bbBarFill(i);
 }
 function bbRSetExpiry(i) {
   const collDate = document.getElementById('bbCollDate');
@@ -9903,15 +10043,18 @@ function bbRProdChanged(i) {
   const prod = document.getElementById(`bbR${i}_prod`);
   if (!prod) return;
   const isPlatelets = bbProdHasUnits(prod.value);
+  const isWholeBlood = prod.value === 'دم كلي';
   const unitWrap = document.getElementById(`bbR${i}_unitWrap`);
   if (unitWrap) unitWrap.style.display = isPlatelets ? 'block' : 'none';
   const cryoWrap = document.getElementById(`bbR${i}_cryoWrap`);
-  if (cryoWrap) cryoWrap.style.display = isPlatelets ? 'none' : 'flex';
-  const stSel = document.getElementById(`bbR${i}_status`);
-  if (stSel) {
-    const keep = stSel.value;
-    stSel.innerHTML = bbDiscardOpts(prod.value, '');
-    if (keep && bbDiscardOpts(prod.value, '').indexOf(`value="${keep}"`) !== -1) stSel.value = keep;
+  if (cryoWrap) cryoWrap.style.display = (isPlatelets || isWholeBlood) ? 'none' : 'flex';
+  const pregWrap = document.getElementById(`bbR${i}_pregWrap`);
+  if (pregWrap) pregWrap.style.display = (isPlatelets || isWholeBlood) ? 'none' : 'flex';
+  if (isWholeBlood) {
+    const cryo = document.getElementById(`bbR${i}_cryo`);
+    if (cryo) cryo.checked = false;
+    const preg = document.getElementById(`bbR${i}_preg`);
+    if (preg) preg.checked = false;
   }
   bbRSetExpiry(i);
 }
@@ -9920,32 +10063,44 @@ async function bbDoCollect() {
   const hospitalId = parseInt(document.getElementById('bbCollHosp').value);
   const collectionDate = document.getElementById('bbCollDate').value;
   if (!hospitalId) { showToast('❌ اختر بنك الدم', 'error'); return; }
+  if (!collectionDate) { showToast('❌ أدخل تاريخ التجميع', 'error'); return; }
   const bags = [];
+  const missing = [];
   for (let i = 0; i < _bb.rowN; i++) {
     const no = document.getElementById(`bbR${i}_no`);
     if (!no) continue;
     const prodEl = document.getElementById(`bbR${i}_prod`);
+    const prod = prodEl ? prodEl.value : 'دم';
+    const bar = document.getElementById(`bbR${i}_barcode`).value.trim();
+    const exp = document.getElementById(`bbR${i}_exp`).value;
+    const unitsEl = document.getElementById(`bbR${i}_units`);
+    const units = prodEl ? parseInt(unitsEl ? unitsEl.value : '') : 1;
+    const labels = [];
+    if (!no.value.trim()) labels.push('رقم اللي');
+    if (!bar) labels.push('الباركود');
+    if (!exp) labels.push('الصلاحية');
+    if (bbProdHasUnits(prod) && (!units || units < 1)) labels.push('عدد الوحدات');
+    if (labels.length) { missing.push('صف ' + (i + 1) + ' («' + prod + '»: ' + labels.join('، ') + ')'); continue; }
     bags.push({
-      bag_no: no.value,
-      barcode: document.getElementById(`bbR${i}_barcode`).value,
-      product_type: prodEl ? prodEl.value : 'دم',
-      units: prodEl ? parseInt(document.getElementById(`bbR${i}_units`).value) || 1 : 1,
+      bag_no: no.value.trim(),
+      barcode: bar,
+      product_type: prod,
+      units: prodEl ? units : 1,
       cryo: document.getElementById(`bbR${i}_cryo`) ? document.getElementById(`bbR${i}_cryo`).checked : false,
-      status: document.getElementById(`bbR${i}_status`) ? document.getElementById(`bbR${i}_status`).value : '',
-      expiry_date: document.getElementById(`bbR${i}_exp`).value || null
+      preg: document.getElementById(`bbR${i}_preg`) ? document.getElementById(`bbR${i}_preg`).checked : false,
+      expiry_date: exp || null
     });
   }
   if (!bags.length) { showToast('❌ أضف كيس واحد على الأقل', 'error'); return; }
+  if (missing.length) { showToast('❌ أكمل البيانات الناقصة: ' + missing.join('، '), 'error'); return; }
   try {
     const r = await api('POST', '/blood-bags', { hospitalId, collectionDate, bags });
     const comps = r.bags || [];
     const groups = new Set();
     comps.forEach(b => groups.add(b.donation_id || ('s:' + b.id)));
-    const discarded = comps.filter(b => ['therapeutic', 'incomplete', 'fatty', 'icteric', 'lipemic', 'hemolyzed'].indexOf(b.status) !== -1).length;
-    showToast(discarded
-      ? `✅ تم تسجيل ${comps.length} كيس من ${groups.size} تبرع — ${discarded} مكون مُعدَم`
-      : `✅ تم تسجيل ${comps.length} كيس من ${groups.size} تبرع — ابدأ الفحص`);
-    _bb.pendingTest = comps.filter(b => b.status === 'collected' && (b.product_type === 'دم' || !b.donation_id)).map(b => b.id);
+    const autoTest = comps.filter(b => b.status === 'collected' && !b.donation_id && (b.product_type || '') !== 'دم كلي');
+    showToast(`✅ تم تسجيل ${comps.length} كيس من ${groups.size} تبرع${autoTest.length ? ' — فحص الصفائح تلقائياً' : ''}`);
+    _bb.pendingTest = autoTest.map(b => b.id);
     await bbCollect();
     bbTestNext();
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
@@ -9955,61 +10110,41 @@ function bbRenderBags() {
   const body = document.getElementById('bbBagsBody');
   if (!body) return;
   const hid = document.getElementById('bbListHosp') ? parseInt(document.getElementById('bbListHosp').value) : 0;
-  const st = document.getElementById('bbListStatus') ? document.getElementById('bbListStatus').value : '';
   const prod = document.getElementById('bbListProd') ? document.getElementById('bbListProd').value : '';
   const q = document.getElementById('bbListQ') ? document.getElementById('bbListQ').value.trim().toLowerCase() : '';
-  const exp = document.getElementById('bbListExp') ? document.getElementById('bbListExp').value : '';
   const dateFrom = document.getElementById('bbListFrom') ? document.getElementById('bbListFrom').value : '';
   const dateTo = document.getElementById('bbListTo') ? document.getElementById('bbListTo').value : '';
   let list = _bb.bags;
   const collTypes = _bb.hospitals.filter(h => h.type === 'تجميعي').map(h => h.id);
   list = list.filter(b => collTypes.indexOf(b.hospital_id) !== -1);
+  list = list.filter(b => b.status === 'collected');
   if (hid) list = list.filter(b => b.hospital_id === hid);
-  if (st) list = list.filter(b => b.status === st);
   if (prod) list = list.filter(b => (b.product_type || 'دم') === prod);
-  if (exp) {
-    const days = parseInt(exp);
-    list = list.filter(b => b.expiring_soon === true && b.days_left !== null && b.days_left <= days);
-  }
   if (q) list = list.filter(b => (b.bag_no || '').toLowerCase().indexOf(q) !== -1 || (b.barcode || '').toLowerCase().indexOf(q) !== -1);
   if (dateFrom) list = list.filter(b => b.collection_date && String(b.collection_date).slice(0, 10) >= dateFrom);
   if (dateTo) list = list.filter(b => b.collection_date && String(b.collection_date).slice(0, 10) <= dateTo);
   _bb.lastFilteredBags = list;
   const canEdit = hasPerm('blood_bags', 'edit'), canDelete = hasPerm('blood_bags', 'delete');
   const cnt = document.getElementById('bbListCount');
-  if (cnt) cnt.innerHTML = `<i class="fas fa-boxes-stacked" style="font-size:10px"></i> عرض <b>${list.length}</b> من أصل <b>${_bb.bags.filter(x => collTypes.indexOf(x.hospital_id) !== -1).length}</b> كيس`;
-  const warn = document.getElementById('bbExpWarn');
-  if (warn) {
-    const stockStatuses = ['available', 'returned', 'reserved', 'collected'];
-    const expiring = _bb.bags.filter(x => collTypes.indexOf(x.hospital_id) !== -1 && stockStatuses.indexOf(x.status) !== -1 && x.days_left !== null && x.days_left >= 0 && x.days_left <= 10);
-    if (expiring.length) {
-      const head = expiring.filter(x => x.days_left <= 3).map(x => `${esc(x.bag_no)} (${x.days_left} يوم)`).slice(0, 6).join('، ');
-      warn.innerHTML = `<div style="background:#fff3e0;border:1px solid #ffb74d;color:#e65100;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700"><i class="fas fa-triangle-exclamation" style="margin-left:6px"></i> تنبيه: يوجد <b>${expiring.length}</b> كيس قرب انتهاء صلاحيته خلال <b>10 أيام</b>${head ? ' — أسرعها: ' + head : ''}</div>`;
-    } else {
-      warn.innerHTML = '';
-    }
-  }
-  const span = 10 + ((canEdit || canDelete) ? 1 : 0);
+  if (cnt) cnt.innerHTML = `<i class="fas fa-boxes-stacked" style="font-size:10px"></i> عرض <b>${list.length}</b> من أصل <b>${_bb.bags.filter(x => collTypes.indexOf(x.hospital_id) !== -1 && x.status === 'collected').length}</b> كيس تحت الفحص`;
+  const span = 8 + ((canEdit || canDelete) ? 1 : 0);
   body.innerHTML = list.map(b => `<tr>
     <td style="text-align:center;direction:ltr;font-weight:700;color:#0d7377">${esc(b.bag_no)}</td>
     <td style="text-align:center;direction:ltr;font-size:11px;color:#888">${esc(b.barcode || '—')}</td>
     <td style="text-align:right;font-weight:600">${esc(b.hospital_name)}</td>
-    <td style="text-align:center;font-size:11px;color:#888">${b.source_hospital_name && b.source_hospital_name !== b.hospital_name ? esc(b.source_hospital_name) : '—'}</td>
     <td style="text-align:center">${b.collection_date ? esc(String(b.collection_date).slice(0, 10)) : '—'}</td>
     <td style="text-align:center">${b.expiry_date ? esc(String(b.expiry_date).slice(0, 10)) : '—'}</td>
     <td style="text-align:center">${bbDaysBadge(b.days_left)}</td>
     <td style="text-align:center;font-weight:700;color:${b.blood_type && b.blood_type.endsWith('+') ? '#c0392b' : '#27ae60'}">${esc(b.blood_type || '—')}</td>
     <td style="text-align:center">${bbProdCell(b)}${b.donation_id ? ` <span title="مفصول من تبرع" style="font-size:10px;color:#fff;background:#7d3c98;border-radius:10px;padding:1px 6px"><i class="fas fa-fill-drip" style="margin-left:2px"></i>مفصول</span>` : ''}</td>
-    <td style="text-align:center">${bbStBadge(b.status)}</td>
     ${(canEdit || canDelete) ? `<td style="text-align:center;white-space:nowrap">
-      ${b.status === 'collected' ? `<button class="btn btn-sm" data-click="bbTest" data-args="${b.id}" style="background:#27ae60;color:#fff" title="فحص"><i class="fas fa-flask"></i></button> ` : ''}
-      ${b.status === 'collected' ? `<button class="btn btn-sm btn-outline" data-click="bbStatus" data-args="${b.id}" title="تغيير الحالة" style="margin-right:4px"><i class="fas fa-arrows-rotate"></i></button> ` : ''}
-      ${(b.status === 'available' || b.status === 'returned') && canEdit ? `<button class="btn btn-sm btn-outline" data-click="bbDoDispose" data-args="${b.id}" title="إعدام من الرصيد (نظام مفتوح / أخرى)" style="margin-right:4px;color:#b03a2e"><i class="fas fa-skull-crossbones"></i></button> ` : ''}
+      ${bbCanTest(b) ? `<button class="btn btn-sm" data-click="bbTest" data-args="${b.id}" style="background:#27ae60;color:#fff" title="فحص"><i class="fas fa-flask"></i></button> ` : ''}
+      ${bbCanStatus(b) ? `<button class="btn btn-sm btn-outline" data-click="bbStatus" data-args="${b.id}" title="تغيير الحالة" style="margin-right:4px"><i class="fas fa-arrows-rotate"></i></button> ` : ''}
       ${canEdit ? `<button class="btn btn-sm btn-outline" data-click="bbEdit" data-args="${b.id}" style="margin-right:4px" title="تعديل"><i class="fas fa-pen"></i></button> ` : ''}
       <button class="btn btn-sm btn-outline" data-click="bbEvents" data-args="${b.id}" style="margin-right:4px" title="الأحداث"><i class="fas fa-history"></i></button>
-      ${canDelete ? `<button class="btn btn-sm btn-outline" data-click="bbDelete" data-args="${b.id}" style="margin-right:4px;color:#dc3545" title="حذف"><i class="fas fa-trash"></i></button>` : ''}
+      ${canDelete && window._user && window._user.role === 'admin' ? `<button class="btn btn-sm btn-outline" data-click="bbDelete" data-args="${b.id}" style="margin-right:4px;color:#dc3545" title="حذف"><i class="fas fa-trash"></i></button>` : ''}
     </td>` : ''}
-  </tr>`).join('') || `<tr><td colspan="${span}" class="empty-msg">لا توجد أكياس مطابقة</td></tr>`;
+  </tr>`).join('') || `<tr><td colspan="${span}" class="empty-msg">لا توجد أكياس تحت الفحص — الأكياس المفحوصة لا تظهر في سجل التجميع</td></tr>`;
 }
 /* تصدير Excel عام لوحدة الأكياس — يستخدم ExcelJS + العناوين المدمجة مثل بقية الوحدة */
 function _bbNum(v) {
@@ -10063,10 +10198,10 @@ function bbExportBags() {
   const list = _bb.lastFilteredBags || [];
   if (!list.length) { showToast('❌ لا توجد أكياس مطابقة للتصدير', 'error'); return; }
   bbXlsx(
-    ['رقم اللي', 'الباركود', 'بنك الدم', 'المصدر', 'تاريخ التجميع', 'تاريخ الصلاحية', 'المتبقي (يوم)', 'الفصيلة', 'المنتج', 'عدد الوحدات', 'الحالة'],
-    list.map(b => [b.bag_no, b.barcode || '—', b.hospital_name || '', (b.source_hospital_name && b.source_hospital_name !== b.hospital_name) ? b.source_hospital_name : '—',
+    ['رقم اللي', 'الباركود', 'بنك الدم', 'تاريخ التجميع', 'تاريخ الصلاحية', 'المتبقي (يوم)', 'الفصيلة', 'المنتج', 'عدد الوحدات'],
+    list.map(b => [b.bag_no, b.barcode || '—', b.hospital_name || '',
       b.collection_date ? String(b.collection_date).slice(0, 10) : '—', b.expiry_date ? String(b.expiry_date).slice(0, 10) : '—',
-      b.days_left !== null && b.days_left !== undefined ? b.days_left : '—', b.blood_type || '—', b.product_type || 'دم', b.units || 1, BB_ST_LABELS[b.status] || b.status]),
+      b.days_left !== null && b.days_left !== undefined ? b.days_left : '—', b.blood_type || '—', b.product_type || 'دم', b.units || 1]),
     'سجل الأكياس', 'سجل_أكياس_الدم.xlsx', 'نظام بنك الدم — سجل الأكياس (القائمة المفلترة حالياً)');
 }
 function bbTestNext() {
@@ -10090,13 +10225,14 @@ function bbTest(id) {
   const groupLine = group.length > 1 ? `<div style="background:#eaf2f8;border:1px solid #aed6f1;color:#1a5276;padding:8px 12px;border-radius:8px;font-size:12px;margin-top:10px;line-height:1.8"><i class="fas fa-layer-group" style="margin-left:4px"></i> <strong>مكونات هذا التبرع (${group.length}):</strong><br>${group.map(g => `<span style="display:inline-block;margin:2px 4px 2px 0;padding:2px 8px;border:1px solid #d5dbdb;border-radius:14px;background:#fff">${bbProdCell(g)} &nbsp;${bbStBadge(g.status)}</span>`).join('')}<br><span style="font-size:11px;color:#1a5276">الفحص يسري على التبرع كاملاً — أي نتيجة إيجابية تُعدِم كل المكونات.</span></div>` : '';
   openModal('فحص الكيس ' + esc(bag.bag_no),
     `<div style="font-size:13px;margin-bottom:12px">المنتج: ${bbProdCell(bag)} &nbsp;|&nbsp; المتبرع: <strong>${esc(bag.donor_name || '—')}</strong> | تاريخ التجميع: <strong>${bag.collection_date ? esc(String(bag.collection_date).slice(0, 10)) : '—'}</strong></div>
-    <div class="form-group"><label>الفصيلة</label><select class="form-control" id="bbT_bt" style="width:140px">${bbOptBt(bag.blood_type, (bag.product_type || 'دم') !== 'دم')}</select></div>
+    <div class="form-group"><label>الفصيلة</label><select class="form-control" id="bbT_bt" style="width:140px">${bbOptBt(bag.blood_type, (bag.product_type || 'دم') !== 'دم' && (bag.product_type || '') !== 'دم كلي')}</select></div>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
       <div class="form-group"><label>فيروس سي (HCV)</label>${v('hcv', bag.test_hcv)}</div>
       <div class="form-group"><label>فيروس بي (HBV)</label>${v('hbv', bag.test_hbv)}</div>
       <div class="form-group"><label>الايدز (HIV)</label>${v('hiv', bag.test_hiv)}</div>
       <div class="form-group"><label>الزهري (Syphilis)</label>${v('syphilis', bag.test_syphilis)}</div>
     </div>
+    <div class="form-group" style="margin-top:10px"><label>النات (NAT)</label>${v('nat', bag.test_nat)}</div>
     ${groupLine}
     <div style="background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:8px 12px;border-radius:8px;font-size:12px;margin-top:10px"><i class="fas fa-info-circle" style="margin-left:4px"></i> عند وجود أي نتيجة إيجابية يُعدَم التبرع كاملاً (كل المكونات) تلقائياً</div>`,
     `<button class="btn btn-secondary" data-click="closeModal"><i class="fas fa-times"></i> إلغاء</button>
@@ -10105,7 +10241,15 @@ function bbTest(id) {
 async function bbDoTest(id) {
   const bt = document.getElementById('bbT_bt').value;
   if (!bt) { showToast('❌ أدخل الفصيلة أولاً', 'error'); return; }
-  const body = { blood_type: bt, hcv: document.getElementById('bbT_hcv').value, hbv: document.getElementById('bbT_hbv').value, hiv: document.getElementById('bbT_hiv').value, syphilis: document.getElementById('bbT_syphilis').value };
+  const hcv = document.getElementById('bbT_hcv').value, hbv = document.getElementById('bbT_hbv').value, hiv = document.getElementById('bbT_hiv').value, syph = document.getElementById('bbT_syphilis').value, nat = document.getElementById('bbT_nat') ? document.getElementById('bbT_nat').value : '';
+  const missing = [];
+  if (!hcv) missing.push('HCV');
+  if (!hbv) missing.push('HBV');
+  if (!hiv) missing.push('HIV');
+  if (!syph) missing.push('Syphilis');
+  if (!nat) missing.push('NAT');
+  if (missing.length) { showToast('❌ أكمل نتائج الفحص: ' + missing.join('، '), 'error'); return; }
+  const body = { blood_type: bt, hcv, hbv, hiv, syphilis: syph, test_nat: nat };
   try {
     const r = await api('POST', '/blood-bags/' + id + '/test', body);
     const affected = r.affected > 1 ? ` (${r.affected} مكونات)` : '';
@@ -10118,8 +10262,16 @@ async function bbDoTest(id) {
 function bbStatus(id) {
   const bag = _bb.bags.find(b => b.id === id);
   if (!bag) return;
-  openModal('تغيير حالة الكيس ' + esc(bag.bag_no),
-    `<div class="form-group"><label>الحالة</label><select class="form-control" id="bbStSel">${bbOptStatus('', ['incomplete','therapeutic','fatty','icteric','disposed'])}</select></div>
+  const prod = bag.product_type || 'دم';
+  const opts = bbStOpts(prod);
+  const note = prod === 'دم'
+    ? `<div style="font-size:12px;color:#8e44ad;background:#f4ecf7;border:1px solid #d7bde2;padding:8px 12px;border-radius:8px;margin-top:8px"><i class="fas fa-skull-crossbones" style="margin-left:4px"></i> اختيار أي سبب يُعدِم <b>التبرع كاملاً</b> — كل المكونات (دم + بلازما + كرايو) ستُسجَّل بنفس الحالة.</div>`
+    : (prod === 'بلازما' || prod === 'كرايو')
+      ? `<div style="font-size:12px;color:#b7950b;background:#fef9e7;border:1px solid #f9e79f;padding:8px 12px;border-radius:8px;margin-top:8px"><i class="fas fa-skull-crossbones" style="margin-left:4px"></i> سبب خاص بالمنتج — إعدام <b>فردي</b> لهذا الكيس فقط (بقية مكونات التبرع تبقى كما هي).</div>`
+      : `<div style="font-size:12px;color:#666;margin-top:6px">إعدام فردي لهذا الكيس.</div>`;
+  openModal('تغيير حالة الكيس ' + esc(bag.bag_no) + ' — ' + bbProdCell(bag),
+    `<div class="form-group"><label>الحالة</label><select class="form-control" id="bbStSel">${bbOptStatus('', opts)}</select></div>
+    ${note}
     <div class="form-group" style="margin-top:10px"><label>ملاحظة / سبب</label><input class="form-control" id="bbStReason" placeholder="اختياري"></div>`,
     `<button class="btn btn-secondary" data-click="closeModal"><i class="fas fa-times"></i> إلغاء</button>
      <button class="btn btn-primary" data-click="bbDoStatus" data-args="${id}"><i class="fas fa-save"></i> حفظ</button>`);
@@ -10145,7 +10297,7 @@ function bbEdit(id) {
     <div class="form-group"><label>الرقم القومي</label><input class="form-control" id="bbE_nid" value="${esc(b.donor_national_id || '')}" dir="ltr"></div>
     <div class="form-group"><label>السن</label><input class="form-control" type="number" id="bbE_age" value="${b.donor_age || ''}"></div>
     <div class="form-group"><label>النوع</label><select class="form-control" id="bbE_gender"><option ${b.donor_gender === 'ذكر' ? 'selected' : ''}>ذكر</option><option ${b.donor_gender === 'أنثى' ? 'selected' : ''}>أنثى</option></select></div>
-    <div class="form-group"><label>الفصيلة</label><select class="form-control" id="bbE_bt">${bbOptBt(b.blood_type, (b.product_type || 'دم') !== 'دم')}</select></div>
+    <div class="form-group"><label>الفصيلة</label><select class="form-control" id="bbE_bt">${bbOptBt(b.blood_type, (b.product_type || 'دم') !== 'دم' && (b.product_type || '') !== 'دم كلي')}</select></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="form-group"><label>المنتج</label><select class="form-control" id="bbE_prod" data-change="bbEProdChanged">${bbOptProduct(b.product_type || 'دم')}</select></div>
       <div class="form-group" id="bbE_unitWrap" style="${bbProdHasUnits(b.product_type || 'دم') ? '' : 'display:none'}"><label>عدد الوحدات</label><input class="form-control" type="number" min="1" id="bbE_units" value="${b.units || 1}"></div>
@@ -10168,7 +10320,7 @@ function bbEProdChanged() {
   const unitWrap = document.getElementById('bbE_unitWrap');
   const bt = document.getElementById('bbE_bt');
   if (prod) {
-    const simple = prod.value !== 'دم';
+    const simple = prod.value !== 'دم' && prod.value !== 'دم كلي';
     if (unitWrap) unitWrap.style.display = bbProdHasUnits(prod.value) ? '' : 'none';
     if (bt) {
       const cur = bt.value;
@@ -10219,73 +10371,124 @@ async function bbTrans() {
   const el = document.getElementById('bbBody');
   showPageLoading(el, 'جاري التحميل...');
   try {
-    const canEdit = hasPerm('blood_bags', 'edit'), canAdd = hasPerm('blood_bags', 'add');
-    const now = getCairoDate();
-    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-    let html = `<div class="card" style="margin-bottom:16px;border-right:4px solid #6c3483">
-      <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-truck-ramp-box" style="margin-left:6px"></i> إرسال أكياس إلى بنك دم آخر</strong></div>
-      <div class="card-body" style="padding:10px 16px">
-        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
-          <div class="form-group"><label>من بنك الدم</label><select class="form-control" id="bbDispFrom" data-change="bbRenderDisp" style="min-width:220px">${bbOptHosp(null)}</select></div>
-          <div class="form-group"><label>إلى بنك الدم</label><select class="form-control" id="bbDispTo" style="min-width:220px">${bbOptTargetHosp(null)}</select></div>
-          <div class="form-group"><label>ملاحظة</label><input class="form-control" id="bbDispNote" style="min-width:180px" placeholder="اختياري"></div>
-          ${canEdit ? `<button class="btn btn-primary" data-click="bbDoDispatch"><i class="fas fa-paper-plane"></i> إرسال المحدد</button>` : ''}
-        </div>
-        <div class="table-scroll"><table class="data-table" style="font-size:12px"><thead>
-          <tr><th style="width:40px"></th><th>رقم اللي</th><th>الباركود</th><th>المنتج</th><th>الفصيلة</th><th>الصلاحية</th><th>الحالة</th></tr>
-        </thead><tbody id="bbDispBody"></tbody></table></div>
-      </div>
+    const canAdd = hasPerm('blood_bags', 'add');
+    const showContent = !!_bb.tTab;
+    const tabs = [
+      ['disp', 'fa-truck-ramp-box', 'إرسال أكياس إلى بنك دم آخر', '#6c3483'],
+      ['recv', 'fa-box-open', 'استلام أكياس واردة', '#16a085'],
+      ...(canAdd ? [['in', 'fa-warehouse', 'تسجيل وحدات دم واردة (وارد إقليمي)', '#2e86c1']] : []),
+      ['log', 'fa-clock-rotate-left', 'سجل الوارد', '#8e44ad']
+    ];
+    el.innerHTML = `<div class="page-actions">
+      <button class="btn-back" data-click="bbTransBack"><i class="fas fa-arrow-right"></i> رجوع</button>
     </div>
-    <div class="card" style="margin-bottom:16px;border-right:4px solid #16a085">
-      <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-box-open" style="margin-left:6px"></i> استلام أكياس واردة</strong></div>
-      <div class="card-body" style="padding:10px 16px">
-        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
-          <div class="form-group"><label>بنك الدم المستقبِل</label><select class="form-control" id="bbRecvHosp" data-change="bbRenderRecv" style="min-width:220px">${bbOptHosp(null)}</select></div>
-        </div>
-        <div class="table-scroll"><table class="data-table" style="font-size:12px"><thead>
-          <tr><th>رقم اللي</th><th>الباركود</th><th>من</th><th>المنتج</th><th>الفصيلة</th><th>الصلاحية</th><th>أُرسل في</th>${canEdit ? '<th>إجراءات</th>' : ''}</tr>
-        </thead><tbody id="bbRecvBody"></tbody></table></div>
-      </div>
+    <div class="sub-icons-grid" id="bbTransTabs" style="margin:10px auto 18px${showContent ? ';display:none' : ''}">
+      ${tabs.map(t => `<div class="sub-icon-card bb-tab-card ${_bb.tTab === t[0] ? 'active' : ''}" data-tab="${t[0]}" data-click="bbTransGo" data-args="'${t[0]}'" title="${t[2]}">
+        <div class="sub-icon-circle" style="background:${t[3]}"><i class="fas ${t[1]}"></i></div>
+        <div class="sub-icon-label">${t[2]}</div>
+      </div>`).join('')}
     </div>
-    ${canAdd ? `<div class="card" style="margin-bottom:16px;border-right:4px solid #2e86c1">
-      <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-warehouse" style="margin-left:6px"></i> تسجيل وحدات دم واردة (وارد إقليمي)</strong></div>
-      <div class="card-body" style="padding:10px 16px">
-        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
-          <div class="form-group"><label>بنك الدم المستلَم</label><select class="form-control" id="bbInHosp" style="min-width:220px">${bbOptHosp(null)}</select></div>
-          <div class="form-group"><label>الجهة الواردة منها</label><input class="form-control" id="bbInSrcName" style="min-width:220px" placeholder="اكتب الجهة الواردة منها (مثال: جهاز المدينة الطبية)" dir="rtl"></div>
-          <div class="form-group"><label>تاريخ الوارد</label><input class="form-control" type="date" id="bbInDate" data-change="bbInDateChanged" value="${today}"></div>
-        </div>
-        <div id="bbInRows"></div>
-        <div style="display:flex;gap:10px;margin-top:6px">
-          <button class="btn btn-outline" data-click="bbAddInRow" style="border-color:#2e86c1;color:#2e86c1"><i class="fas fa-plus"></i> إضافة كيس</button>
-          <button class="btn btn-primary" data-click="bbDoInSave"><i class="fas fa-save"></i> حفظ الوارد</button>
-        </div>
-      </div>
-    </div>` : ''}
-    <div class="card"><div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-clock-rotate-left" style="margin-left:6px"></i> سجل الوارد</strong></div>
-      <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
-        <div class="form-group"><label>بحث (رقم / باركود / الجهة / المستلم)</label><input class="form-control" id="bbInLogQ" data-input="bbRenderInLog" style="min-width:180px"></div>
-        <div class="form-group"><label>من تاريخ</label><input class="form-control" type="date" id="bbInLogFrom" data-change="bbRenderInLog"></div>
-        <div class="form-group"><label>إلى تاريخ</label><input class="form-control" type="date" id="bbInLogTo" data-change="bbRenderInLog"></div>
-        <button class="btn btn-outline" data-click="bbExportInLog" style="border-color:#16a085;color:#16a085;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
-      </div>
-      <table class="data-table" style="font-size:12px"><thead>
-        <tr><th>رقم اللي</th><th>رقم الكود</th><th>من (الجهة)</th><th>إلى</th><th>المنتج</th><th>الفصيلة</th><th>الصلاحية</th><th>تاريخ الوصول</th><th>بواسطة</th><th>الحالة</th></tr>
-      </thead><tbody id="bbInLogBody"></tbody></table></div></div>`;
-    el.innerHTML = html;
-    _bb.inRowN = 0;
-    if (canAdd) bbAddInRow();
-    bbAutoHosp('bbDispFrom'); bbAutoHosp('bbRecvHosp'); bbAutoHosp('bbInHosp');
-    await bbLoadBags();
-    bbRenderDisp(); bbRenderRecv(); bbRenderInLog();
+    <div id="bbTransBody"></div>`;
+    if (showContent) bbRenderTransTab(_bb.tTab);
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+async function bbRenderTransTab(t) {
+  const el = document.getElementById('bbTransBody');
+  if (!el) return;
+  const canEdit = hasPerm('blood_bags', 'edit'), canAdd = hasPerm('blood_bags', 'add');
+  try {
+    await bbLoadBags();
+    if (t === 'disp') {
+      el.innerHTML = `<div class="card" style="margin-bottom:16px;border-right:4px solid #6c3483">
+        <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-truck-ramp-box" style="margin-left:6px"></i> إرسال أكياس إلى بنك دم آخر</strong></div>
+        <div class="card-body" style="padding:10px 16px">
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
+            <div class="form-group"><label>من بنك الدم</label><select class="form-control" id="bbDispFrom" data-change="bbDispFromChanged" style="min-width:220px">${bbOptHosp(null)}</select></div>
+            <div class="form-group"><label>الفرع</label><select class="form-control" id="bbDispGov" data-change="bbDispGovChanged" style="min-width:170px">${bbOptGov('')}</select></div>
+            <div class="form-group"><label>إلى بنك الدم</label><select class="form-control" id="bbDispTo" style="min-width:220px"></select></div>
+            <div class="form-group"><label>نوع الوحدات المرسلة</label><select class="form-control" id="bbDispProd" data-change="bbRenderDisp" style="min-width:170px"><option value="">كل الأنواع</option>${bbOptProduct('')}</select></div>
+            <div class="form-group"><label>ملاحظة</label><input class="form-control" id="bbDispNote" style="min-width:180px" placeholder="اختياري"></div>
+            ${canEdit ? `<button class="btn btn-primary" data-click="bbDoDispatch"><i class="fas fa-paper-plane"></i> إرسال المحدد</button>` : ''}
+          </div>
+          <div class="table-scroll"><table class="data-table" style="font-size:12px"><thead>
+            <tr><th style="width:40px"></th><th>رقم اللي</th><th>الباركود</th><th>المنتج</th><th>الفصيلة</th><th>الصلاحية</th><th>الحالة</th></tr>
+          </thead><tbody id="bbDispBody"></tbody></table></div>
+        </div>
+      </div>`;
+      bbAutoHosp('bbDispFrom');
+      bbDispFromChanged();
+      bbRenderDisp();
+    } else if (t === 'recv') {
+      el.innerHTML = `<div class="card" style="margin-bottom:16px;border-right:4px solid #16a085">
+        <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-box-open" style="margin-left:6px"></i> استلام أكياس واردة</strong></div>
+        <div class="card-body" style="padding:10px 16px">
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
+            <div class="form-group"><label>بنك الدم المستقبِل</label><select class="form-control" id="bbRecvHosp" data-change="bbRenderRecv" style="min-width:220px">${bbOptHosp(null)}</select></div>
+          </div>
+          <div class="table-scroll"><table class="data-table" style="font-size:12px"><thead>
+            <tr><th>رقم اللي</th><th>الباركود</th><th>من</th><th>المنتج</th><th>الفصيلة</th><th>الصلاحية</th><th>أُرسل في</th>${canEdit ? '<th>إجراءات</th>' : ''}</tr>
+          </thead><tbody id="bbRecvBody"></tbody></table></div>
+        </div>
+      </div>`;
+      bbAutoHosp('bbRecvHosp');
+      bbRenderRecv();
+    } else if (t === 'in' && canAdd) {
+      const now = getCairoDate();
+      const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      el.innerHTML = `<div class="card" style="margin-bottom:16px;border-right:4px solid #2e86c1">
+        <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-warehouse" style="margin-left:6px"></i> تسجيل وحدات دم واردة (وارد إقليمي)</strong></div>
+        <div class="card-body" style="padding:10px 16px">
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
+            <div class="form-group"><label>بنك الدم المستلَم</label><select class="form-control" id="bbInHosp" data-change="bbInHospChanged" style="min-width:220px">${bbOptHosp(null)}</select></div>
+            <div class="form-group" style="position:relative"><label>الجهة الواردة منها</label><input class="form-control" id="bbInSrcName" data-input="bbInSrcChanged" data-focus="bbInSrcChanged" style="min-width:220px" placeholder="اكتب الجهة الواردة منها (مثال: جهاز المدينة الطبية)" dir="rtl"><div id="bbInSrcSuggest" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:99;background:var(--card-bg,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.12);max-height:220px;overflow:auto"></div></div>
+            <div class="form-group"><label>تاريخ الوارد</label><input class="form-control" type="date" id="bbInDate" value="${today}"></div>
+          </div>
+          <div id="bbInRows"></div>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <button class="btn btn-outline" data-click="bbAddInRow" style="border-color:#2e86c1;color:#2e86c1"><i class="fas fa-plus"></i> إضافة كيس</button>
+            <button class="btn btn-primary" data-click="bbDoInSave"><i class="fas fa-save"></i> حفظ الوارد</button>
+          </div>
+        </div>
+      </div>`;
+      _bb.inRowN = 0;
+      bbAutoHosp('bbInHosp');
+      bbAddInRow();
+    } else if (t === 'log') {
+      el.innerHTML = `<div class="card"><div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-clock-rotate-left" style="margin-left:6px"></i> سجل الوارد</strong></div>
+        <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
+          <div class="form-group"><label>بحث (رقم / باركود / الجهة / المستلم)</label><input class="form-control" id="bbInLogQ" data-input="bbRenderInLog" style="min-width:180px"></div>
+          <div class="form-group"><label>من تاريخ</label><input class="form-control" type="date" id="bbInLogFrom" data-change="bbRenderInLog"></div>
+          <div class="form-group"><label>إلى تاريخ</label><input class="form-control" type="date" id="bbInLogTo" data-change="bbRenderInLog"></div>
+          <button class="btn btn-outline" data-click="bbExportInLog" style="border-color:#16a085;color:#16a085;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+        </div>
+        <table class="data-table" style="font-size:12px"><thead>
+          <tr><th>رقم اللي</th><th>رقم الكود</th><th>من (الجهة)</th><th>إلى</th><th>المنتج</th><th>الفصيلة</th><th>الصلاحية</th><th>تاريخ الوصول</th><th>بواسطة</th><th>الحالة</th></tr>
+        </thead><tbody id="bbInLogBody"></tbody></table></div></div>`;
+      bbRenderInLog();
+    } else {
+      _bb.tTab = null;
+      bbTrans();
+    }
+  } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+function bbTransGo(t) {
+  if (_bb.tTab === t) return;
+  _bb.tTab = t;
+  const tb = document.getElementById('bbTransTabs');
+  if (tb) tb.style.display = 'none';
+  bbRenderTransTab(t);
+}
+function bbTransBack() {
+  if (_bb.tTab) { _bb.tTab = null; bbTrans(); }
+  else bbBack();
 }
 function bbRenderDisp() {
   const body = document.getElementById('bbDispBody');
   if (!body) return;
   const hid = document.getElementById('bbDispFrom') ? parseInt(document.getElementById('bbDispFrom').value) : 0;
+  const prod = document.getElementById('bbDispProd') ? document.getElementById('bbDispProd').value : '';
   _bb.selBagIds = [];
-  const list = _bb.bags.filter(b => hid && b.hospital_id === hid && (b.status === 'available' || b.status === 'returned'));
+  const list = _bb.bags.filter(b => hid && b.hospital_id === hid && (b.status === 'available' || b.status === 'returned') && (!prod || (b.product_type || 'دم') === prod));
   body.innerHTML = list.map(b => `<tr>
     <td><input type="checkbox" class="bb-disp-chk" data-bagid="${b.id}" ${_bb.selBagIds.indexOf(b.id) !== -1 ? 'checked' : ''}></td>
     <td style="text-align:center;direction:ltr;font-weight:700;color:#6c3483">${esc(b.bag_no)}</td>
@@ -10358,44 +10561,76 @@ function bbAddInRow() {
   wrap.insertAdjacentHTML('beforeend', `<div class="bb-row" style="display:grid;grid-template-columns:repeat(8,minmax(80px,1fr));gap:6px;align-items:end;margin-bottom:6px;padding:8px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
     <div><label style="font-size:10px">رقم اللي</label><input class="form-control" id="bbIN${i}_no" placeholder="تلقائي" dir="ltr" style="height:30px;font-size:11px"></div>
     <div><label style="font-size:10px">رقم الكود</label><input class="form-control" id="bbIN${i}_barcode" dir="ltr" style="height:30px;font-size:11px"></div>
-    <div><label style="font-size:10px">المنتج</label><select class="form-control" id="bbIN${i}_prod" data-change="bbInProdChanged" data-args="${i}" style="height:30px;font-size:11px">${bbOptProduct('دم')}</select></div>
-    <div><label style="font-size:10px">الفصيلة</label><select class="form-control" id="bbIN${i}_bt" style="height:30px;font-size:11px">${bbOptBt('')}</select></div>
+    <div><label style="font-size:10px">المنتج</label><select class="form-control" id="bbIN${i}_prod" data-change="bbInProdChanged" data-args="${i}" style="height:auto;min-height:30px;font-size:11px;padding:2px 6px;line-height:1.4">${bbOptProduct('دم')}</select></div>
+    <div><label style="font-size:10px">الفصيلة</label><select class="form-control" id="bbIN${i}_bt" style="height:auto;min-height:30px;font-size:11px;padding:2px 6px;line-height:1.4">${bbOptBt('')}</select></div>
     <div id="bbIN${i}_unitWrap" style="display:none"><label style="font-size:10px">عدد الوحدات</label><input class="form-control" id="bbIN${i}_units" type="number" min="1" value="1" style="height:30px;font-size:11px"></div>
     <div><label style="font-size:10px">تاريخ انتهاء الصلاحية</label><input class="form-control" id="bbIN${i}_exp" type="date" style="height:30px;font-size:11px"></div>
     <div><label style="font-size:10px">ملاحظات</label><input class="form-control" id="bbIN${i}_notes" style="height:30px;font-size:11px"></div>
     <div style="display:flex;align-items:end"><button class="btn btn-sm btn-outline" data-click="bbDelInRow" data-args="${i}" style="height:30px;color:#dc3545"><i class="fas fa-trash"></i></button></div>
   </div>`);
-  bbInSetExpiry(i);
-}
-function bbInSetExpiry(i) {
-  const inDate = document.getElementById('bbInDate');
-  const prod = document.getElementById(`bbIN${i}_prod`);
-  const exp = document.getElementById(`bbIN${i}_exp`);
-  if (!prod || !exp) return;
-  const base = inDate && inDate.value ? inDate.value : '';
-  if (base) exp.value = bbDefaultExpiry(base, prod.value);
-}
-function bbInDateChanged() {
-  for (let i = 0; i < _bb.inRowN; i++) {
-    const no = document.getElementById(`bbIN${i}_no`);
-    if (no) bbInSetExpiry(i);
-  }
 }
 function bbInProdChanged(i) {
   const prod = document.getElementById(`bbIN${i}_prod`);
   const unitWrap = document.getElementById(`bbIN${i}_unitWrap`);
   const bt = document.getElementById(`bbIN${i}_bt`);
   if (prod) {
-    const simple = prod.value !== 'دم';
+    const simple = prod.value !== 'دم' && prod.value !== 'دم كلي';
     if (unitWrap) unitWrap.style.display = bbProdHasUnits(prod.value) ? 'block' : 'none';
     if (bt) {
       const cur = bt.value;
       bt.innerHTML = bbOptBt(simple && cur && cur.length === 1 ? cur : '', simple);
     }
-    bbInSetExpiry(i);
   }
 }
 function bbDelInRow(i) { const row = document.querySelector(`[id="bbIN${i}_no"]`)?.closest('.bb-row'); if (row) row.remove(); }
+function bbInSrcKnown(hid) {
+  const set = [];
+  (_bb.bags || []).forEach(b => {
+    if (b.hospital_id === hid && b.source_name && b.source_name.trim()) {
+      const n = b.source_name.trim();
+      if (set.indexOf(n) === -1) set.push(n);
+    }
+  });
+  return set;
+}
+function bbInSrcChanged() {
+  const input = document.getElementById('bbInSrcName');
+  const sug = document.getElementById('bbInSrcSuggest');
+  if (!input || !sug) return;
+  const hospEl = document.getElementById('bbInHosp');
+  const hid = hospEl && hospEl.value ? parseInt(hospEl.value) : 0;
+  const q = input.value.trim().toLowerCase();
+  let list = hid ? bbInSrcKnown(hid) : [];
+  if (q) list = list.filter(n => n.toLowerCase().indexOf(q) !== -1);
+  const typed = input.value.trim();
+  if (typed && list.indexOf(typed) === -1) list = [typed, ...list];
+  if (!list.length) { sug.style.display = 'none'; sug.innerHTML = ''; return; }
+  sug.innerHTML = list.slice(0, 8).map(n => `<div data-click="bbInSrcPick" data-val="${esc(n)}" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--border,#f0f0f0);font-size:12px;color:#333" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="var(--hover-bg,#eef6ff)" data-hover-off="">${esc(n)}</div>`).join('');
+  sug.style.display = '';
+  if (!window._bbInSugBound) {
+    window._bbInSugBound = true;
+    document.addEventListener('mousedown', function (ev) {
+      const box = document.getElementById('bbInSrcSuggest');
+      if (!box || box.style.display === 'none') return;
+      if (box.contains(ev.target)) return;
+      const inp = document.getElementById('bbInSrcName');
+      if (inp && (ev.target === inp || inp.contains(ev.target))) return;
+      box.style.display = 'none'; box.innerHTML = '';
+    }, true);
+  }
+}
+function bbInSrcPick() {
+  const v = this.getAttribute('data-val') || '';
+  const input = document.getElementById('bbInSrcName');
+  const sug = document.getElementById('bbInSrcSuggest');
+  if (input) input.value = v;
+  if (sug) { sug.style.display = 'none'; sug.innerHTML = ''; }
+}
+function bbInHospChanged() {
+  const sug = document.getElementById('bbInSrcSuggest');
+  if (sug) { sug.style.display = 'none'; sug.innerHTML = ''; }
+  bbInSrcChanged();
+}
 async function bbDoInSave() {
   const hospitalId = parseInt(document.getElementById('bbInHosp').value);
   const sourceName = document.getElementById('bbInSrcName').value.trim();
@@ -10478,15 +10713,15 @@ async function bbCompat() {
       <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-user-plus" style="margin-left:6px"></i> بيانات المريض</strong></div>
       <div class="card-body" style="padding:10px 16px">
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+          ${showHosp ? `<div class="form-group"><label>بنك الدم</label><select class="form-control" id="bbC_hosp" data-change="bbCompatDeptChanged" style="min-width:200px">${bbOptHosp('')}</select></div>` : ''}
           <div class="form-group"><label>الرقم الطبي *</label><input class="form-control" id="bbC_nid" dir="ltr" style="min-width:150px" data-input="bbCompatLookupPatient"></div>
           <div class="form-group"><label>الاسم *</label><input class="form-control" id="bbC_name" style="min-width:180px"></div>
           <div class="form-group"><label>السن</label><input class="form-control" type="number" id="bbC_age" style="width:70px"></div>
           <div class="form-group"><label>النوع</label><select class="form-control" id="bbC_gender" style="width:90px"><option value="">—</option><option>ذكر</option><option>أنثى</option></select></div>
-          ${showHosp ? `<div class="form-group"><label>بنك الدم</label><select class="form-control" id="bbC_hosp" data-change="bbCompatDeptChanged" style="min-width:200px">${bbOptHosp('')}</select></div>` : ''}
           <div class="form-group"><label>القسم</label><select class="form-control" id="bbC_dept" style="min-width:150px"><option value="">—</option></select></div>
           <div class="form-group"><label>الفصيلة</label><select class="form-control" id="bbC_bt" data-change="bbCompatBtChanged" style="min-width:90px">${bbOptBt('')}</select></div>
           <div class="form-group"><label>تاريخ آخر عمل فصيلة</label><input class="form-control" type="date" id="bbC_btDate" style="width:150px"></div>
-          <div class="form-group"><label>عدد كروت الفصيلة</label><input class="form-control" type="number" id="bbC_cards" value="0" min="0" style="width:80px"></div>
+          <div class="form-group"><label>عدد كروت الفصيلة</label><input class="form-control" type="number" id="bbC_cards" value="0" min="0" style="width:80px" data-change="bbCompatCardsChanged"></div>
           ${canAdd ? `<button class="btn btn-primary" data-click="bbCompatSavePatient" style="height:32px"><i class="fas fa-save"></i> حفظ المريض</button>` : ''}
         </div>
         <div id="bbCompatInfo"></div>
@@ -10562,6 +10797,25 @@ function bbCompatBtChanged() {
   if (!bt || !dt) return;
   if (bt.value) { dt.value = fmtCairoDate('date'); }
 }
+function bbCompatCardsChanged() {
+  const c = document.getElementById('bbC_cards');
+  const dt = document.getElementById('bbC_btDate');
+  if (!c || !dt) return;
+  const v = parseInt(c.value) || 0;
+  if (v > 0) { dt.value = fmtCairoDate('date'); }
+}
+function bbCompatClearPatient(showPrompt) {
+  _bb.selPatient = null;
+  _bb.histHidden = false;
+  const clr = { bbC_name: '', bbC_age: '', bbC_cards: '0', bbC_reqRbc: '0', bbC_reqPlasma: '0', bbC_reqPlt: '0', bbC_reqCryo: '0' };
+  for (const k in clr) { const el = document.getElementById(k); if (el) el.value = clr[k]; }
+  const genEl = document.getElementById('bbC_gender'); if (genEl) genEl.value = '';
+  const btEl = document.getElementById('bbC_bt'); if (btEl) { btEl.value = ''; btEl.disabled = false; btEl.removeAttribute('title'); }
+  const btDEl = document.getElementById('bbC_btDate'); if (btDEl) btDEl.value = '';
+  const deptEl = document.getElementById('bbC_dept'); if (deptEl) deptEl.innerHTML = '<option value="">—</option>';
+  const div = document.getElementById('bbCompatInfo');
+  if (div) div.innerHTML = showPrompt ? '<div style="background:#fff8e1;border:1px solid #ffe082;color:#f57f17;padding:8px 12px;border-radius:8px;font-size:12px;margin-top:8px"><i class="fas fa-plus" style="margin-left:4px"></i> رقم طبي جديد — أكمل البيانات ثم اضغط حفظ المريض</div>' : '';
+}
 function bbCompatLookupPatient() {
   const div = document.getElementById('bbCompatInfo');
   const nid = document.getElementById('bbC_nid').value.trim();
@@ -10572,7 +10826,7 @@ function bbCompatLookupPatient() {
     const nameEl = document.getElementById('bbC_name'); if (nameEl) { nameEl.value = p.name || ''; }
     const ageEl = document.getElementById('bbC_age'); if (ageEl && p.age != null) { ageEl.value = p.age; }
     const genEl = document.getElementById('bbC_gender'); if (genEl && p.gender) { genEl.value = p.gender; }
-    const btEl = document.getElementById('bbC_bt'); if (btEl && p.blood_type) { btEl.value = p.blood_type; }
+    const btEl = document.getElementById('bbC_bt'); if (btEl) { if (p.blood_type) { btEl.value = p.blood_type; btEl.disabled = true; btEl.title = 'فصيلة المريض ثابتة ولا تتغير نهائياً'; } else { btEl.disabled = false; btEl.removeAttribute('title'); } }
     const btDEl = document.getElementById('bbC_btDate'); if (btDEl && p.bt_date) { btDEl.value = String(p.bt_date).slice(0, 10); }
     const cardsEl = document.getElementById('bbC_cards'); if (cardsEl && p.bt_cards != null) { cardsEl.value = p.bt_cards; }
     const rbcEl = document.getElementById('bbC_reqRbc'); if (rbcEl && p.req_rbc != null) { rbcEl.value = p.req_rbc; }
@@ -10581,18 +10835,60 @@ function bbCompatLookupPatient() {
     const cryEl = document.getElementById('bbC_reqCryo'); if (cryEl && p.req_cryo != null) { cryEl.value = p.req_cryo; }
     const hospEl = document.getElementById('bbC_hosp'); if (hospEl && p.hospital_id) { hospEl.value = p.hospital_id; bbCompatDeptChanged(); }
     const deptEl = document.getElementById('bbC_dept'); if (deptEl && p.department) { deptEl.value = p.department; }
-    const known = !!(p.blood_type && p.blood_type !== '');
-    div.innerHTML = `<div style="background:${known ? '#e8f5e9' : '#fff8e1'};border:1px solid ${known ? '#a5d6a7' : '#ffe082'};color:${known ? '#2e7d32' : '#f57f17'};padding:8px 12px;border-radius:8px;font-size:12px;margin-top:8px;line-height:1.9"><i class="fas fa-${known ? 'check-circle' : 'exclamation-triangle'}" style="margin-left:4px"></i> مريض موجود: <strong>${esc(p.name)}</strong> — السن: <strong>${p.age || '—'}</strong> — النوع: <strong>${esc(p.gender || '—')}</strong>${known ? ` — الفصيلة: <strong>${esc(p.blood_type)}</strong>` : ' — الفصيلة غير محددة — حددها الآن'}${p.bt_date ? ` — آخر عمل فصيلة: <strong>${esc(String(p.bt_date).slice(0, 10))}</strong>` : ''}${p.department ? ` — القسم: <strong>${esc(p.department)}</strong>` : ''}${p.hospital_id ? ` — بنك الدم: <strong>${esc(bbHospName(p.hospital_id))}</strong>` : ''}${(p.req_rbc || 0) + (p.req_plasma || 0) + (p.req_plt || 0) + (p.req_cryo || 0) ? ` — المطلوب: كرات دم <strong>${p.req_rbc || 0}</strong> / بلازما <strong>${p.req_plasma || 0}</strong> / صفائح <strong>${p.req_plt || 0}</strong> / كرايو <strong>${p.req_cryo || 0}</strong>` : ''}</div>`;
+    div.innerHTML = bbCompatPatientChips(p) + bbCompatPatientHistory(p);
   } else {
-    _bb.selPatient = null;
-    const clr = { bbC_name: '', bbC_age: '', bbC_cards: '0', bbC_reqRbc: '0', bbC_reqPlasma: '0', bbC_reqPlt: '0', bbC_reqCryo: '0' };
-    for (const k in clr) { const el = document.getElementById(k); if (el) el.value = clr[k]; }
-    const genEl = document.getElementById('bbC_gender'); if (genEl) genEl.value = '';
-    const btEl = document.getElementById('bbC_bt'); if (btEl) btEl.value = '';
-    const btDEl = document.getElementById('bbC_btDate'); if (btDEl) btDEl.value = '';
-    const deptEl = document.getElementById('bbC_dept'); if (deptEl) deptEl.innerHTML = '<option value="">—</option>';
-    if (div) div.innerHTML = '<div style="background:#fff8e1;border:1px solid #ffe082;color:#f57f17;padding:8px 12px;border-radius:8px;font-size:12px;margin-top:8px"><i class="fas fa-plus" style="margin-left:4px"></i> رقم طبي جديد — أكمل البيانات ثم اضغط حفظ المريض</div>';
+    bbCompatClearPatient(true);
   }
+}
+function bbCompatPatientChips(p) {
+  if (!p || !p.blood_type) return '';
+  const own = p.blood_type;
+  const donors = bbDonorsFor(own);
+  if (!donors.length) return '';
+  const chip = bt => {
+    const isOwn = bt === own;
+    const col = bt.endsWith('+') ? '#c0392b' : '#27ae60';
+    return `<span style="display:inline-block;padding:4px 12px;border-radius:20px;background:${isOwn ? col : col + '1a'};color:${isOwn ? '#fff' : col};border:1px solid ${col};font-size:12px;font-weight:700;margin:3px 3px 0 0;cursor:default" title="${isOwn ? 'فصيلة المريض — الأكثر تفضيلاً' : 'متوافق مع المريض'}">${esc(bt)}${isOwn ? ' <i class="fas fa-user" style="font-size:10px"></i>' : ''}</span>`;
+  };
+  return `<div style="margin-top:10px;border:1px solid var(--border,#d5dbdb);border-radius:8px;overflow:hidden">
+    <div style="background:#eaf7ec;color:#1e8449;padding:7px 12px;font-size:12px;font-weight:700"><i class="fas fa-hand-holding-medical" style="margin-left:6px"></i> الفصائل المتوافقة للمريض <strong>${esc(own)}</strong></div>
+    <div style="padding:8px 12px">${donors.map(chip).join('')}</div>
+  </div>`;
+}
+function bbCompatPatientHistory(p) {
+  if (!p || !p.id) return '';
+  const rows = (_bb.reservations || [])
+    .filter(r => r.patient_id === p.id && r.status === 'issued')
+    .sort((a, b) => String(b.issued_at || '').localeCompare(String(a.issued_at || '')));
+  if (!rows.length) return '';
+  const dateFmt = d => { if (!d) return '—'; const s = String(d).slice(0, 10); return s; };
+  const trs = rows.map(r => {
+    const prod = r.product_type || 'دم';
+    const prodStyle = { 'دم': 'color:#c0392b', 'بلازما': 'color:#16a085', 'كرايو': 'color:#d35400', 'صفائح SDP': 'color:#8e44ad', 'صفائح RDP': 'color:#8e44ad' };
+    const pBt = p.blood_type || r.patient_blood_type || '—';
+    return `<tr>
+      <td style="text-align:center">${dateFmt(r.issued_at)}</td>
+      <td>${esc(r.hospital_name || '—')}</td>
+      <td style="text-align:center">${esc(pBt)}</td>
+      <td><span style="${prodStyle[prod] || ''};font-weight:600">${esc(prod)}</span></td>
+      <td style="text-align:center">${esc(r.blood_type || '—')}</td>
+      <td dir="ltr" style="text-align:center">${esc(r.bag_no || '—')}</td>
+      <td dir="ltr" style="text-align:center">${esc(r.barcode || '—')}</td>
+    </tr>`;
+  }).join('');
+  const hidden = !!_bb.histHidden;
+  return `<div style="margin-top:12px;border:1px solid var(--border,#d5dbdb);border-radius:8px;overflow:hidden">
+    <div data-click="bbCompatHistToggle" style="cursor:pointer;background:#e8f4f8;color:#0d7377;padding:8px 12px;font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center;user-select:none"><span><i class="fas fa-history" style="margin-left:6px"></i> المنتجات التي حصل عليها المريض</span><i id="bbCompatHistIco" class="fas fa-chevron-${hidden ? 'down' : 'up'}" style="font-size:11px;opacity:.8"></i></div>
+    <table id="bbCompatHistTbl" class="data-table" style="font-size:12px;width:100%;${hidden ? 'display:none' : ''}"><thead><tr><th>التاريخ</th><th>بنك الدم</th><th>فصيلة المريض</th><th>المنتج</th><th>فصيلة الوحدة</th><th>رقم اللي</th><th>رقم الباركود</th></tr></thead><tbody>${trs}</tbody></table>
+  </div>`;
+}
+function bbCompatHistToggle() {
+  const tbl = document.getElementById('bbCompatHistTbl');
+  if (!tbl) return;
+  _bb.histHidden = !_bb.histHidden;
+  tbl.style.display = _bb.histHidden ? 'none' : '';
+  const ic = document.getElementById('bbCompatHistIco');
+  if (ic) ic.className = 'fas fa-chevron-' + (_bb.histHidden ? 'down' : 'up');
 }
 async function bbCompatSavePatient() {
   const g = x => { const el = document.getElementById(x); return el ? el.value : ''; };
@@ -10615,8 +10911,9 @@ function bbCompatBagLookupInput() {
     if (!q || q.length < 2) { sug.style.display = 'none'; sug.innerHTML = ''; }
     else {
       const matches = _bb.bags.filter(x => (
-        (x.bag_no && x.bag_no.toLowerCase().indexOf(q) !== -1) ||
-        (x.barcode && x.barcode.toLowerCase().indexOf(q) !== -1)
+        (x.product_type || 'دم') === 'دم' &&
+        ((x.bag_no && x.bag_no.toLowerCase().indexOf(q) !== -1) ||
+        (x.barcode && x.barcode.toLowerCase().indexOf(q) !== -1))
       )).slice(0, 8);
       if (!matches.length) { sug.style.display = 'none'; sug.innerHTML = ''; }
       else {
@@ -10624,7 +10921,7 @@ function bbCompatBagLookupInput() {
           const rr = _bb.reservations.find(r => r.bag_id === b.id && r.status === 'active');
           return `<div data-click="bbCompatBagPick" data-args="${b.id}" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--border,#f0f0f0);display:flex;justify-content:space-between;align-items:center;gap:8px" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="var(--hover-bg,#eef6ff)" data-hover-off="">
             <span dir="ltr" style="font-weight:700;font-size:12px">${esc(b.bag_no)}</span>
-            <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:#666">${esc(b.blood_type || 'غير محدد')}${b.barcode ? ' — ' + esc(b.barcode) : ''}<span style="color:#8e44ad">${esc(b.hospital_name || bbHospName(b.hospital_id))}</span>${rr ? '<span style="color:#c0392b;font-weight:600">محجوز</span>' : bbStBadge(b.status)}</span>
+            <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:#666"><span style="color:#8e44ad">${esc(b.hospital_name || bbHospName(b.hospital_id))}</span>${esc(b.blood_type || 'غير محدد')}${b.barcode ? ' — ' + esc(b.barcode) : ''}${rr ? '<span style="color:#c0392b;font-weight:600">محجوز</span>' : bbStBadge(b.status)}</span>
           </div>`;
         }).join('');
         sug.style.display = '';
@@ -10674,23 +10971,30 @@ function bbCompatLookupBag() {
   const group = b.donation_id ? _bb.bags.filter(x => x.donation_id === b.donation_id) : [b];
   const availGroup = group.filter(x => ['available', 'returned', 'reserved'].indexOf(x.status) !== -1);
   const canEdit = hasPerm('blood_bags', 'edit');
+  const selP = _bb.selPatient ? _bb.patients.find(p => p.id === _bb.selPatient) : null;
+  const pBt = selP && selP.blood_type ? selP.blood_type : '';
+  const bBt = b.blood_type || '';
+  const isBlood = (b.product_type || 'دم') === 'دم';
+  const compat = isBlood && bBt && pBt ? (bbCanDonateTo(bBt, pBt) === true) : null;
+  const compatBanner = isBlood && bBt && pBt ? `<div style="background:${compat ? '#e8f5e9' : '#fdecea'};border:1px solid ${compat ? '#a5d6a7' : '#f5b7b1'};color:${compat ? '#2e7d32' : '#c0392b'};padding:7px 12px;border-radius:8px;font-size:12px;margin-top:6px;line-height:1.6"><i class="fas fa-${compat ? 'check-circle' : 'times-circle'}" style="margin-left:4px"></i> توافق الفصائل: كيس <strong>${esc(bBt)}</strong> ${compat ? 'متوافق مع' : 'غير متوافق مع'} المريض <strong>${esc(pBt)}</strong>${compat ? '' : ' — لا يمكن حجز هذا الكيس لهذا المريض'}</div>` : '';
   if (!availGroup.length) {
     const sb = group[0] || b;
     if (info) info.innerHTML = `<div style="background:#fff8e1;border:1px solid #ffe082;color:#f57f17;padding:8px 12px;border-radius:8px;font-size:12px;margin-top:4px;line-height:1.8"><i class="fas fa-exclamation-triangle" style="margin-left:4px"></i> هذا الكيس موجود في <strong>${esc(sb.hospital_name || bbHospName(sb.hospital_id))}</strong> لكنه <strong>ليس من الرصيد المتاح</strong> — الحالة: ${bbStBadge(sb.status)}</div>`;
     if (acts) acts.innerHTML = '';
     return;
   }
-  const resvOf = rid => _bb.reservations.find(r => r.bag_id === rid && r.status === 'active');
+  const resvsOf = rid => _bb.reservations.filter(r => r.bag_id === rid && r.status === 'active');
   const resvLine = rid => {
-    const rr = resvOf(rid);
-    if (!rr) return '';
-    return ` — <strong style="color:#c0392b"><i class="fas fa-user-lock" style="margin-left:2px"></i> تم الحجز:</strong> <strong>${esc(rr.patient_name || '')}</strong> — كروت التوافق: <strong>${rr.compat_cards || 0}</strong>${rr.remaining_hours != null ? ' — المتبقي: <strong>' + rr.remaining_hours + ' ساعة</strong>' : ''}`;
+    const rrs = resvsOf(rid);
+    if (!rrs.length) return '';
+    return ' — ' + rrs.map(rr => `<strong style="color:#c0392b"><i class="fas fa-user-lock" style="margin-left:2px"></i> تم الحجز:</strong> <strong>${esc(rr.patient_name || '')}</strong> — كروت التوافق: <strong>${rr.compat_cards || 0}</strong>${rr.remaining_hours != null ? ' — المتبقي: <strong>' + rr.remaining_hours + ' ساعة</strong>' : ''}`).join(' <span style="color:#999">|</span> ') + (rrs.length > 1 ? ` <strong style="color:#c0392b">(محجوز لـ ${rrs.length} مرضى)</strong>` : '');
   };
   const memberRows = group.map(m => {
-    const rr = resvOf(m.id);
+    const rrs = resvsOf(m.id);
+    const badge = rrs.length ? `<strong style="color:#c0392b;font-size:11px"><i class="fas fa-user-lock" style="margin-left:2px"></i> ${esc(rrs[0].patient_name || '')}${rrs.length > 1 ? ' +' + (rrs.length - 1) + ' آخر' : ''} — ${rrs[0].compat_cards || 0} كارت</strong>` : '';
     return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 8px;border:1px solid #d5dbdb;border-radius:8px;background:#fff;margin-top:5px">
-      <span style="display:flex;align-items:center;gap:6px;font-size:12px">${bbProdCell(m)} ${bbStBadge(m.status)}${rr ? `<strong style="color:#c0392b;font-size:11px"><i class="fas fa-user-lock" style="margin-left:2px"></i> ${esc(rr.patient_name || '')} — ${rr.compat_cards || 0} كارت</strong>` : ''}</span>
-      <span style="white-space:nowrap">${bbReserveBtn(m, rr, canEdit)}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:12px">${bbProdCell(m)} ${bbStBadge(m.status)}${badge}</span>
+      <span style="white-space:nowrap">${bbReserveBtn(m, rrs, canEdit, pBt)}</span>
     </div>`;
   }).join('');
   if (info) info.innerHTML = `<div style="background:#eaf2f8;border:1px solid #aed6f1;color:#1a5276;padding:10px 12px;border-radius:8px;font-size:12px;margin-top:4px;line-height:1.9">
@@ -10700,24 +11004,44 @@ function bbCompatLookupBag() {
     <strong>تاريخ انتهاء الصلاحية:</strong> ${b.expiry_date ? esc(String(b.expiry_date).slice(0, 10)) : 'غير مسجل'}${b.expiry_date ? ' ' + bbDaysBadge(b.days_left) : ''}<br>
     <strong>بنك الدم (مكان الكيس):</strong> ${esc(b.hospital_name || bbHospName(b.hospital_id))}${resvLine(b.id)}
     ${group.length > 1 ? `<br><i class="fas fa-layer-group" style="margin-left:2px"></i> <strong>مكونات التبرع (${group.length})</strong>${memberRows}` : ''}
-  </div>`;
+  </div>${compatBanner}`;
   if (!acts) return;
   if (group.length > 1) { acts.innerHTML = ''; return; }
-  const rr = resvOf(b.id);
+  const rrs = resvsOf(b.id);
   if (!canEdit) { acts.innerHTML = ''; return; }
-  if (rr) {
-    acts.innerHTML = `<button class="btn btn-primary" data-click="bbCompatRenew" data-args="${rr.id}" style="background:#f39c12;color:#fff"><i class="fas fa-clock"></i> تجديد الحجز (48 ساعة)</button>
-      <button class="btn btn-outline" data-click="bbCompatRelease" data-args="${rr.id}" style="color:#e74c3c"><i class="fas fa-unlock"></i> فك الحجز</button>`;
-  } else if (b.status === 'available' || b.status === 'returned') {
-    acts.innerHTML = `<button class="btn btn-primary" data-click="bbCompatReserve" data-args="${b.id}"><i class="fas fa-lock"></i> حجز الكيس (48 ساعة)</button>`;
+  if (!isBlood) {
+    if (b.status === 'available' || b.status === 'returned') {
+      acts.innerHTML = `<div style="background:#f4f6f7;border:1px solid #d5dbdb;color:#2c3e50;padding:8px 12px;border-radius:8px;font-size:12px;margin-top:6px;line-height:1.7"><i class="fas fa-arrow-right" style="margin-left:4px"></i> ${bbProdCell(b)} <strong>لا يُحجز</strong> — يُصرف مباشرةً (بدون حجز) للمريض من تبويب <strong>الحجز والصرف</strong></div>`;
+    }
+    return;
+  }
+  const myRr = _bb.selPatient ? rrs.find(r => r.patient_id === _bb.selPatient) : null;
+  const others = myRr ? rrs.filter(r => r.id !== myRr.id) : rrs;
+  const othersBox = others.length ? `<div style="background:#fef9e7;border:1px solid #f9e79f;color:#9a7d0a;padding:6px 10px;border-radius:8px;font-size:11px;margin-top:6px;line-height:1.7"><i class="fas fa-users" style="margin-left:4px"></i> <strong>محجوز أيضاً لـ:</strong> ${others.map(o => '<strong>' + esc(o.patient_name || '') + '</strong>').join('، ')} — تُفكّك تلقائياً عند صرف الكيس لأي مريض</div>` : '';
+  if (myRr) {
+    acts.innerHTML = `<button class="btn btn-primary" data-click="bbCompatRenew" data-args="${myRr.id}" style="background:#f39c12;color:#fff"><i class="fas fa-clock"></i> تجديد الحجز (48 ساعة)</button>
+      <button class="btn btn-outline" data-click="bbCompatRelease" data-args="${myRr.id}" style="color:#e74c3c"><i class="fas fa-unlock"></i> فك الحجز</button>${othersBox}`;
+  } else if (b.status === 'available' || b.status === 'returned' || b.status === 'reserved') {
+    if (compat === false) {
+      acts.innerHTML = `<button class="btn" disabled style="background:#e0e0e0;color:#999;cursor:not-allowed"><i class="fas fa-ban"></i> غير متوافق مع المريض — لا يمكن الحجز</button>${othersBox}`;
+    } else {
+      acts.innerHTML = `<button class="btn btn-primary" data-click="bbCompatReserve" data-args="${b.id}"><i class="fas fa-lock"></i> حجز الكيس (48 ساعة)</button>${othersBox}`;
+    }
   } else {
-    acts.innerHTML = '';
+    acts.innerHTML = othersBox;
   }
 }
-function bbReserveBtn(m, rr, canEdit) {
+function bbReserveBtn(m, rrs, canEdit, pBt) {
   if (!canEdit) return '';
-  if (rr) return `<button class="btn btn-sm" data-click="bbCompatRenew" data-args="${rr.id}" style="background:#f39c12;color:#fff" title="تجديد"><i class="fas fa-clock"></i></button> <button class="btn btn-sm btn-outline" data-click="bbCompatRelease" data-args="${rr.id}" style="color:#e74c3c" title="فك الحجز"><i class="fas fa-unlock"></i></button>`;
-  if (m.status === 'available' || m.status === 'returned') return `<button class="btn btn-sm btn-primary" data-click="bbCompatReserve" data-args="${m.id}"><i class="fas fa-lock"></i> حجز</button>`;
+  if ((m.product_type || 'دم') !== 'دم') return ''; // غير الدم يُصرف مباشرة من الحجز والصرف
+  const myRr = _bb.selPatient ? rrs.find(r => r.patient_id === _bb.selPatient) : null;
+  const others = myRr ? rrs.filter(r => r.id !== myRr.id) : rrs;
+  if (myRr) return `<button class="btn btn-sm" data-click="bbCompatRenew" data-args="${myRr.id}" style="background:#f39c12;color:#fff" title="تجديد"><i class="fas fa-clock"></i></button> <button class="btn btn-sm btn-outline" data-click="bbCompatRelease" data-args="${myRr.id}" style="color:#e74c3c" title="فك الحجز"><i class="fas fa-unlock"></i></button>${others.length ? ` <span style="color:#c0392b;font-size:10px" title="${others.map(o => esc(o.patient_name || '')).join('، ')}">+${others.length} حجز آخر</span>` : ''}`;
+  if (m.status === 'available' || m.status === 'returned' || m.status === 'reserved') {
+    const mComat = m.blood_type && pBt ? (bbCanDonateTo(m.blood_type, pBt) === true) : null;
+    if (mComat === false) return `<button class="btn btn-sm" disabled style="background:#e0e0e0;color:#999;cursor:not-allowed" title="غير متوافق مع المريض"><i class="fas fa-ban"></i></button>${others.length ? ` <span style="color:#c0392b;font-size:10px" title="${others.map(o => esc(o.patient_name || '')).join('، ')}">+${others.length} حجز آخر</span>` : ''}`;
+    return `<button class="btn btn-sm btn-primary" data-click="bbCompatReserve" data-args="${m.id}"><i class="fas fa-lock"></i> حجز</button>${others.length ? ` <span style="color:#c0392b;font-size:10px" title="${others.map(o => esc(o.patient_name || '')).join('، ')}">+${others.length} حجز آخر</span>` : ''}`;
+  }
   return '';
 }
 async function bbCompatReserve(bid) {
@@ -10729,6 +11053,8 @@ async function bbCompatReserve(bid) {
     await api('POST', '/blood-bags/reserve', { bagId: bid, patientId: _bb.selPatient, hospitalId: bag.hospital_id, issueType: 'داخلي', compatCards });
     showToast('✅ تم حجز الكيس لمدة 48 ساعة');
     await Promise.all([bbLoadBags(), bbLoadReservations()]);
+    bbCompatClearPatient(false);
+    const nidEl = document.getElementById('bbC_nid'); if (nidEl) nidEl.value = '';
     bbCompatLookupBag();
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
@@ -10809,20 +11135,40 @@ async function bbReserve() {
         <div id="bbResBagDetail"></div>
       </div>
     </div>
+    <div class="card" style="margin-bottom:16px;border-right:4px solid #8e44ad">
+      <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-fill-drip" style="margin-left:6px"></i> الصرف المباشر — بلازما / صفائح / كرايو (بدون حجز)</strong></div>
+      <div class="card-body" style="padding:10px 16px">
+        <div style="background:#f9ebea;border:1px solid #f5b7b1;color:#922b21;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:10px;line-height:1.7"><i class="fas fa-info-circle" style="margin-left:4px"></i> كيس <strong>الدم</strong> يُحجز أولاً (48 ساعة) من تبويب <strong>الفصائل والتوافق</strong> — أما <strong>البلازما / الصفائح / الكرايو</strong> فتُصرف مباشرةً بدون حجز: ابحث بالرقم الطبي أعلاه ثم اضغط «صرف مباشر» على الكيس المطلوب.</div>
+        <div id="bbResDirect"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px;border-right:4px solid #e74c3c">
+      <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-trash-can" style="margin-left:6px"></i> الرصيد المتاح — إعدام (نظام مفتوح / أخرى)</strong></div>
+      <div class="card-body" style="padding:10px 16px">
+        <div style="background:#fdf2e9;border:1px solid #f5b7b1;color:#922b21;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:10px;line-height:1.7"><i class="fas fa-info-circle" style="margin-left:4px"></i> إعدام <strong>فردي</strong> لكيس من الرصيد المتاح (متاح / مرتجع) بسبب <strong>نظام مفتوح</strong> أو <strong>أخرى</strong> — يؤثر على هذا الكيس فقط.</div>
+        <div id="bbResStock"></div>
+      </div>
+    </div>
     <div class="card" style="margin-bottom:16px;border-right:4px solid #16a085">
       <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-table-list" style="margin-left:6px"></i> سجل الحجوزات والصرف (كل الحالات)</strong>
         <div style="float:left;display:flex;gap:8px;align-items:center;margin-top:-2px">
+          <select class="form-control" id="bbResLogSt" data-change="bbRenderResLog" style="min-width:120px">
+            <option value="">كل الحالات</option>
+            <option value="active">محجوز (نشط)</option>
+            <option value="issued">مُصرف</option>
+          </select>
           <input class="form-control" id="bbResLogQ" placeholder="بحث برقم اللي / الباركود / المريض / البنك / الفصيلة..." data-input="bbRenderResLog" style="min-width:220px">
           <button class="btn btn-sm btn-outline" data-click="bbExportResLog" style="border-color:#16a085;color:#16a085" title="تحميل السجل كاملاً Excel"><i class="fas fa-file-excel"></i> تحميل</button>
         </div>
       </div>
       <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead>
-        <tr><th>رقم اللي</th><th>المنتج</th><th>الفصيلة</th><th>المريض</th><th>بنك الدم</th><th>الحالة</th><th>المتبقي / الصرف</th><th>حُجز في</th>${canEdit ? '<th>إجراءات</th>' : ''}</tr>
+        <tr><th>تاريخ الحجز</th><th>الرقم الطبي</th><th>الاسم رباعي</th><th>السن</th><th>النوع</th><th>القسم</th><th>القسم المصرف له</th><th>فصيلة المريض</th><th>المنتج</th><th>فصيلة الوحدة</th><th>رقم اللي</th><th>الباركود</th><th>تاريخ الانتهاء</th><th>الحالة</th><th>المتبقي / الصرف</th>${canEdit ? '<th>إجراءات</th>' : ''}</tr>
       </thead><tbody id="bbResLogBody"></tbody></table></div>
     </div>`;
     el.innerHTML = html;
     await bbLoadBags(); await bbLoadPatients(); await bbLoadReservations();
     bbRenderResLog();
+    bbResShowStock();
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
 }
 async function bbLoadReservations() { try { const r = await api('GET', '/blood-bags/reservations'); _bb.reservations = r.reservations || []; } catch (e) { _bb.reservations = []; } }
@@ -10838,10 +11184,12 @@ function bbResLookupPatient() {
   const info = document.getElementById('bbResPatInfo');
   const resBox = document.getElementById('bbResReserved');
   const det = document.getElementById('bbResBagDetail');
+  const dirBox = document.getElementById('bbResDirect');
   if (!input) return;
   _bb.selResPatient = null;
   _bb.selResv = null;
   if (det) det.innerHTML = '';
+  if (dirBox) dirBox.innerHTML = '';
   const q = input.value.trim();
   if (!q) { if (info) info.innerHTML = ''; if (resBox) resBox.innerHTML = ''; return; }
   const p = bbFindPatient(q);
@@ -10853,6 +11201,7 @@ function bbResLookupPatient() {
   _bb.selResPatient = p.id;
   if (info) info.innerHTML = bbResPatientInfoHtml(p);
   bbResShowReserved(p);
+  bbResShowDirect(p);
 }
 function bbResPatientInfoHtml(p) {
   const req = (p.req_rbc || 0) + (p.req_plasma || 0) + (p.req_plt || 0) + (p.req_cryo || 0);
@@ -10884,6 +11233,84 @@ function bbResShowReserved(p) {
   resBox.innerHTML = `<div style="font-size:12px;font-weight:700;color:#16a085;margin-bottom:6px"><i class="fas fa-clock" style="margin-left:4px"></i> الكيس المحجوز (الدم يُحجز أولاً) — اختر الكيس ثم اضغط «صرف»:</div>` +
     mine.map(r => bbResRow(r)).join('');
 }
+function bbResShowDirect(p) {
+  const box = document.getElementById('bbResDirect');
+  if (!box) return;
+  const list = _bb.bags.filter(b => (b.product_type || 'دم') !== 'دم' && (b.status === 'available' || b.status === 'returned'));
+  if (!list.length) {
+    box.innerHTML = '<div class="empty-msg" style="margin:2px 0;text-align:right">لا توجد منتجات أخرى (بلازما / صفائح / كرايو) متاحة للصرف المباشر</div>';
+    return;
+  }
+  box.innerHTML = `<div style="font-size:12px;font-weight:700;color:#8e44ad;margin-bottom:6px"><i class="fas fa-box-open" style="margin-left:4px"></i> المنتجات المتاحة للصرف المباشر (بدون حجز) — اختر الكيس ثم اضغط «صرف مباشر»:</div>` +
+    list.map(b => {
+      const exp = b.expiry_date ? String(b.expiry_date).slice(0, 10) : '';
+      return `<div style="border:1px solid var(--border,#d5dbdb);border-radius:10px;padding:7px 12px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:12px;background:var(--card-bg,#fff)">
+        <span style="font-weight:700;color:#8e44ad;direction:ltr">${esc(b.bag_no)}</span>
+        <span>${bbProdCell(b)}</span>
+        <span style="font-weight:700;color:${b.blood_type && b.blood_type.endsWith('+') ? '#c0392b' : '#27ae60'}">${esc(b.blood_type || '—')}</span>
+        <span style="color:#777;font-size:11px">${esc(b.hospital_name || bbHospName(b.hospital_id))}</span>
+        <span style="font-size:11px">الصلاحية: ${exp ? exp + ' ' + bbDaysBadge(b.days_left) : '—'}</span>
+        <span style="margin-right:auto"></span>
+        <button class="btn btn-sm btn-primary" data-click="bbDoIssueDirect" data-args="${b.id}" style="background:#8e44ad;border-color:#8e44ad" title="صرف مباشر بدون حجز"><i class="fas fa-hand-holding-heart"></i> صرف مباشر</button>
+      </div>`;
+    }).join('');
+}
+function bbDoIssueDirect(bid) {
+  if (!_bb.selResPatient) { showToast('❌ ابحث عن المريض أولاً بالرقم الطبي', 'error'); return; }
+  const b = _bb.bags.find(x => x.id === bid);
+  showConfirmModal('صرف «' + (b ? esc(b.bag_no) : '') + '» (' + (b ? esc(b.product_type || 'دم') : '') + ') مباشرةً للمريض — بدون حجز؟', async () => {
+    try {
+      await api('POST', '/blood-bags/issue-direct', { bagId: bid, patientId: _bb.selResPatient, issueType: 'داخلي' });
+      showToast('✅ تم الصرف المباشر وخصم الكيس من الرصيد');
+      await bbLoadBags(); await bbLoadReservations();
+      bbResRefresh();
+    } catch (e) { showToast('❌ ' + e.message, 'error'); }
+  });
+}
+function bbResShowStock() {
+  const box = document.getElementById('bbResStock');
+  if (!box) return;
+  const list = _bb.bags.filter(b => b.status === 'available' || b.status === 'returned');
+  if (!list.length) {
+    box.innerHTML = '<div class="empty-msg" style="margin:2px 0;text-align:right">لا يوجد رصيد متاح (متاح / مرتجع) لإعدامه حالياً</div>';
+    return;
+  }
+  box.innerHTML = `<div style="font-size:12px;font-weight:700;color:#e74c3c;margin-bottom:6px"><i class="fas fa-skull-crossbones" style="margin-left:4px"></i> أكياس الرصيد المتاح — اضغط «إعدام» على الكيس المطلوب (سبب: نظام مفتوح / أخرى):</div>` +
+    list.map(b => {
+      const exp = b.expiry_date ? String(b.expiry_date).slice(0, 10) : '';
+      return `<div style="border:1px solid var(--border,#d5dbdb);border-radius:10px;padding:7px 12px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:12px;background:var(--card-bg,#fff)">
+        <span style="font-weight:700;color:#e74c3c;direction:ltr">${esc(b.bag_no)}</span>
+        <span>${bbProdCell(b)}</span>
+        <span style="font-weight:700;color:${b.blood_type && b.blood_type.endsWith('+') ? '#c0392b' : '#27ae60'}">${esc(b.blood_type || '—')}</span>
+        <span style="color:#777;font-size:11px">${esc(b.hospital_name || bbHospName(b.hospital_id))}</span>
+        <span style="font-size:11px">الصلاحية: ${exp ? exp + ' ' + bbDaysBadge(b.days_left) : '—'}</span>
+        <span style="margin-right:auto"></span>
+        <button class="btn btn-sm btn-outline" data-click="bbResStockDispose" data-args="${b.id}" style="color:#e74c3c;border-color:#e74c3c" title="إعدام الكيس من الرصيد (نظام مفتوح / أخرى)"><i class="fas fa-trash-can"></i> إعدام</button>
+      </div>`;
+    }).join('');
+}
+function bbResStockDispose(id) {
+  const b = _bb.bags.find(x => x.id === id);
+  openModal('إعدام الكيس ' + (b ? esc(b.bag_no) : '') + ' من الرصيد',
+    `<div class="form-group"><label>سبب الإعدام</label>
+      <select class="form-control" id="bbStkReason">
+        <option value="نظام مفتوح" selected>نظام مفتوح</option>
+        <option value="أخرى">أخرى</option>
+      </select></div>
+      <div style="background:#fdecea;border:1px solid #f5b7b1;color:#922b21;padding:8px 12px;border-radius:8px;font-size:12px"><i class="fas fa-info-circle" style="margin-left:4px"></i> إعدام <strong>فردي</strong> لهذا الكيس فقط من الرصيد المتاح — لا يؤثر على بقية مكونات التبرع.</div>`,
+    `<button class="btn btn-secondary" data-click="closeModal"><i class="fas fa-times"></i> إلغاء</button>
+     <button class="btn btn-primary" data-click="bbDoStockDispose" data-args="${id}" style="background:#e74c3c;border-color:#e74c3c"><i class="fas fa-trash-can"></i> إعدام</button>`);
+}
+async function bbDoStockDispose(id) {
+  const reason = document.getElementById('bbStkReason').value;
+  try {
+    await api('POST', '/blood-bags/' + id + '/status', { status: 'disposed', reason });
+    showToast('✅ تم إعدام الكيس من الرصيد (' + reason + ')');
+    closeModal();
+    await bbLoadBags(); await bbLoadReservations();
+    bbResRefresh();
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
 function bbResPickBag(rid) {
   _bb.selResv = rid;
   const r = _bb.reservations.find(x => x.id === rid);
@@ -10895,6 +11322,9 @@ function bbResPickBag(rid) {
   const rh = r.remaining_hours;
   const color = rh === null ? '#999' : rh <= 6 ? '#e74c3c' : rh <= 12 ? '#f39c12' : '#27ae60';
   const badge = rh === null ? '—' : rh <= 0 ? 'منتهي' : Math.floor(rh) + ' ساعة';
+  const depts = (_bb.departments || []).filter(d => d.hospital_id === r.hospital_id);
+  const defDept = r.patient_department || '';
+  const opts = '<option value="">— اختر القسم —</option>' + depts.map(d => `<option value="${esc(d.name)}" ${d.name === defDept ? 'selected' : ''}>${esc(d.name)}</option>`).join('');
   det.innerHTML = `<div style="border:1px solid var(--border,#d5dbdb);border-radius:10px;padding:10px 14px;background:var(--card-bg,#fff);margin-top:4px">
     <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:12px;margin-bottom:10px">
       <span>رقم اللي: <strong style="color:#f39c12;direction:ltr">${esc(r.bag_no)}</strong></span>
@@ -10905,17 +11335,23 @@ function bbResPickBag(rid) {
       <span>المتبقي: <strong style="color:${color}">${badge}</strong></span>
       <span>كروت التوافق: <strong>${r.compat_cards || 0}</strong></span>
     </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="font-size:12px;color:#555;white-space:nowrap"><i class="fas fa-users" style="margin-left:4px"></i> القسم المصرف له:</span>
+      <select class="form-control" id="bbResDept" style="flex:1;max-width:280px;height:auto;min-height:30px;padding:4px 8px">${opts}</select>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-primary" data-click="bbDoIssue" data-args="${r.id}" style="background:#16a085;border-color:#16a085"><i class="fas fa-hand-holding-heart"></i> صرف الكيس</button>
+      <button class="btn btn-primary" data-click="bbDoIssueInline" data-args="${r.id}" style="background:#16a085;border-color:#16a085"><i class="fas fa-hand-holding-heart"></i> صرف الكيس</button>
       <button class="btn btn-sm btn-outline" data-click="bbRelease" data-args="${r.id}" style="color:#e74c3c"><i class="fas fa-undo"></i> تفكيك الحجز</button>
     </div>
   </div>`;
 }
 function bbResRefresh() {
   bbRenderResLog();
+  bbResShowStock();
   const p = _bb.patients.find(x => x.id === _bb.selResPatient);
   if (p) {
     bbResShowReserved(p);
+    bbResShowDirect(p);
     const r = _bb.selResv ? _bb.reservations.find(x => x.id === _bb.selResv && x.status === 'active') : null;
     if (r) bbResPickBag(r.id);
     else {
@@ -10923,17 +11359,44 @@ function bbResRefresh() {
       const det = document.getElementById('bbResBagDetail');
       if (det) det.innerHTML = '';
     }
+  } else {
+    const dirBox = document.getElementById('bbResDirect');
+    if (dirBox) dirBox.innerHTML = '';
   }
 }
 async function bbDoIssue(rid) {
-  showConfirmModal('هل تم صرف الكيس فعلياً للمريض؟', async () => {
-    try {
-      await api('POST', '/blood-bags/issue', { reservationId: rid });
-      showToast('✅ تم الصرف وخصم الكيس من الرصيد');
-      await bbLoadBags(); await bbLoadReservations();
-      bbResRefresh();
-    } catch (e) { showToast('❌ ' + e.message, 'error'); }
-  });
+  const r = _bb.reservations.find(x => x.id === rid);
+  const depts = (_bb.departments || []).filter(d => d.hospital_id === r.hospital_id);
+  const def = r.patient_department || '';
+  const opts = '<option value="">—</option>' + depts.map(d => `<option value="${esc(d.name)}" ${d.name === def ? 'selected' : ''}>${esc(d.name)}</option>`).join('');
+  openModal('صرف الكيس ' + (r ? esc(r.bag_no) : ''),
+    `<div class="form-group"><label>القسم المصرف له</label><select class="form-control" id="bbIssueDept">${opts}</select></div>
+    <div style="background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:8px 12px;border-radius:8px;font-size:12px"><i class="fas fa-info-circle" style="margin-left:4px"></i> سيُخصم الكيس من الرصيد ويُسجَّل صرفه للمريض مع القسم المحدد</div>`,
+    `<button class="btn btn-secondary" data-click="closeModal"><i class="fas fa-times"></i> إلغاء</button>
+     <button class="btn btn-primary" data-click="bbDoIssue2" data-args="${rid}"><i class="fas fa-check"></i> صرف</button>`);
+}
+async function bbDoIssue2(rid) {
+  const dept = document.getElementById('bbIssueDept').value;
+  try {
+    await api('POST', '/blood-bags/issue', { reservationId: rid, issuedDepartment: dept });
+    showToast('✅ تم الصرف وخصم الكيس من الرصيد');
+    closeModal();
+    await bbLoadBags(); await bbLoadReservations();
+    bbResRefresh();
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+async function bbDoIssueInline(rid) {
+  const deptEl = document.getElementById('bbResDept');
+  const dept = deptEl ? deptEl.value : '';
+  try {
+    await api('POST', '/blood-bags/issue', { reservationId: rid, issuedDepartment: dept });
+    showToast('✅ تم الصرف وخصم الكيس من الرصيد (' + (dept || 'بدون قسم') + ')');
+    const det = document.getElementById('bbResBagDetail');
+    if (det) det.innerHTML = '';
+    _bb.selResv = null;
+    await bbLoadBags(); await bbLoadReservations();
+    bbResRefresh();
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
 function bbRelease(rid) {
   const r = _bb.reservations.find(x => x.id === rid);
@@ -10965,46 +11428,68 @@ function bbRenderResLog() {
   if (!body) return;
   const canEdit = hasPerm('blood_bags', 'edit');
   const q = (document.getElementById('bbResLogQ') || {}).value || '';
+  const st = (document.getElementById('bbResLogSt') || {}).value || '';
   const t = q.trim().toLowerCase();
   let list = _bb.reservations.slice();
+  if (st) list = list.filter(r => r.status === st);
   if (t) list = list.filter(r =>
     (r.bag_no || '').toLowerCase().indexOf(t) !== -1 ||
     (r.barcode || '').toLowerCase().indexOf(t) !== -1 ||
     (r.patient_name || '').toLowerCase().indexOf(t) !== -1 ||
+    (r.patient_national_id || '').toLowerCase().indexOf(t) !== -1 ||
+    (r.patient_blood_type || '').toLowerCase().indexOf(t) !== -1 ||
     (r.blood_type || '').toLowerCase().indexOf(t) !== -1 ||
     (r.hospital_name || '').toLowerCase().indexOf(t) !== -1 ||
     (r.product_type || 'دم').toLowerCase().indexOf(t) !== -1
   );
   _bb.lastResLog = list;
+  const btCell = bt => `<span style="font-weight:700;color:${bt && bt.endsWith('+') ? '#c0392b' : '#27ae60'}">${esc(bt || '—')}</span>`;
   body.innerHTML = list.map(r => {
     const active = r.status === 'active';
+    const bag = _bb.bags.find(x => x.id === r.bag_id);
+    const canReturn = !!bag && bag.status === 'issued';
     const rh = r.remaining_hours;
     const color = active && rh !== null ? (rh <= 6 ? '#e74c3c' : rh <= 12 ? '#f39c12' : '#27ae60') : '#999';
     const badge = active ? (rh === null ? '—' : rh <= 0 ? 'منتهي' : Math.floor(rh) + ' ساعة') : (r.issued_at ? esc(new Date(r.issued_at).toLocaleDateString('ar-EG')) : '—');
     return `<tr>
-      <td style="text-align:center;direction:ltr;font-weight:700;color:#f39c12">${esc(r.bag_no)}</td>
-      <td style="text-align:center">${bbProdCell(r)}</td>
-      <td style="text-align:center;font-weight:700;color:${r.blood_type && r.blood_type.endsWith('+') ? '#c0392b' : '#27ae60'}">${esc(r.blood_type || '—')}</td>
+      <td style="text-align:center;font-size:11px">${r.reserved_at ? esc(new Date(r.reserved_at).toLocaleString('ar-EG')) : ''}</td>
+      <td style="text-align:center;direction:ltr;font-weight:700;color:#8e44ad">${esc(r.patient_national_id || '—')}</td>
       <td style="text-align:right;font-weight:600">${esc(r.patient_name || '—')}</td>
-      <td style="text-align:center;font-size:11px">${esc(r.hospital_name || '—')}</td>
+      <td style="text-align:center">${r.patient_age != null ? esc(r.patient_age) : '—'}</td>
+      <td style="text-align:center">${esc(r.patient_gender || '—')}</td>
+      <td style="text-align:right;font-size:11px">${esc(r.patient_department || '—')}</td>
+      <td style="text-align:right;font-size:11px">${esc(r.issued_department || '—')}</td>
+      <td style="text-align:center">${btCell(r.patient_blood_type)}</td>
+      <td style="text-align:center">${bbProdCell(r)}</td>
+      <td style="text-align:center">${btCell(r.blood_type)}</td>
+      <td style="text-align:center;direction:ltr;font-weight:700;color:#f39c12">${esc(r.bag_no)}</td>
+      <td style="text-align:center;direction:ltr;font-size:11px">${esc(r.barcode || '—')}</td>
+      <td style="text-align:center;direction:ltr;font-size:11px">${esc(String(r.expiry_date || '').slice(0, 10) || '—')}</td>
       <td style="text-align:center">${bbResStBadge(r)}</td>
       <td style="text-align:center"><span style="color:#fff;background:${color};padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700">${badge}</span></td>
-      <td style="text-align:center;font-size:11px">${r.reserved_at ? esc(new Date(r.reserved_at).toLocaleString('ar-EG')) : ''}</td>
       ${canEdit ? `<td style="text-align:center;white-space:nowrap">${active
         ? `<button class="btn btn-sm" data-click="bbDoIssue" data-args="${r.id}" style="background:#16a085;color:#fff" title="صرف"><i class="fas fa-hand-holding-heart"></i> صرف</button>
            <button class="btn btn-sm btn-outline" data-click="bbRelease" data-args="${r.id}" style="margin-right:4px" title="تفكيك"><i class="fas fa-undo"></i></button>`
-        : `<button class="btn btn-sm btn-outline" data-click="bbReturn" data-args="${r.bag_id}" title="مرتجع / تفاعل / نظام مفتوح / أخرى" style="color:#e74c3c"><i class="fas fa-rotate-left"></i></button>`}</td>` : ''}
+        : canReturn
+          ? `<button class="btn btn-sm btn-outline" data-click="bbReturn" data-args="${r.bag_id}" title="مرتجع / تفاعل / نظام مفتوح / أخرى" style="color:#e74c3c"><i class="fas fa-trash-can"></i> إعدام</button>`
+          : `<span style="color:#7f8c8d;font-size:11px;font-weight:700">${bag ? esc(BB_ST_LABELS[bag.status] || bag.status) : ''}</span>`}</td>` : ''}
     </tr>`;
-  }).join('') || '<tr><td colspan="9" class="empty-msg">لا توجد بيانات</td></tr>';
+  }).join('') || `<tr><td colspan="${canEdit ? 16 : 15}" class="empty-msg">لا توجد بيانات</td></tr>`;
 }
 function bbExportResLog() {
   const list = _bb.lastResLog || [];
   if (!list.length) { showToast('❌ لا توجد بيانات للتصدير', 'error'); return; }
   bbXlsx(
-    ['رقم اللي', 'الباركود', 'المنتج', 'الفصيلة', 'المريض', 'بنك الدم', 'الحالة', 'المتبقي (ساعة)', 'كروت التوافق', 'حُجز في', 'صُرف في'],
-    list.map(r => [r.bag_no, r.barcode || '—', r.product_type || 'دم', r.blood_type || '—', r.patient_name || '—', r.hospital_name || '—',
-      r.status_label || r.status, r.remaining_hours === null ? '—' : Math.floor(r.remaining_hours), r.compat_cards || 0,
-      r.reserved_at ? String(r.reserved_at).slice(0, 10) : '—', r.issued_at ? String(r.issued_at).slice(0, 10) : '—']),
+    ['تاريخ الحجز', 'الرقم الطبي', 'الاسم رباعي', 'السن', 'النوع', 'القسم', 'القسم المصرف له', 'فصيلة المريض', 'المنتج', 'فصيلة الوحدة', 'رقم اللي', 'الباركود', 'تاريخ الانتهاء', 'الحالة', 'المتبقي (ساعة)', 'تاريخ الصرف'],
+    list.map(r => [
+      r.reserved_at ? String(r.reserved_at).slice(0, 10) : '—',
+      r.patient_national_id || '—', r.patient_name || '—',
+      r.patient_age != null ? r.patient_age : '—', r.patient_gender || '—', r.patient_department || '—', r.issued_department || '—',
+      r.patient_blood_type || '—', r.product_type || 'دم', r.blood_type || '—',
+      r.bag_no, r.barcode || '—',
+      r.expiry_date ? String(r.expiry_date).slice(0, 10) : '—',
+      r.status_label || r.status, r.remaining_hours === null ? '—' : Math.floor(r.remaining_hours),
+      r.issued_at ? String(r.issued_at).slice(0, 10) : '—']),
     'سجل الحجوزات والصرف', 'سجل_الحجوزات_والصرف.xlsx', 'نظام بنك الدم — سجل الحجوزات والصرف (كل الحالات)');
 }
 function bbReturn(id) {
@@ -11150,6 +11635,118 @@ function _bbFillSheet(ws, headers, rows, title) {
   });
   headers.forEach((h, i) => ws.getColumn(i + 1).width = Math.min(34, Math.max(12, (String(h).length || 6) * 2 + 4)));
   _xlsxFooter(ws, sr + 1 + rows.length, mc);
+}
+
+/* ----- الإحصائيات (بين فترتين — نطاق تاريخ من/إلى) ----- */
+function bbStats() {
+  const el = document.getElementById('bbBody');
+  const now = getCairoDate();
+  const dfltTo = fmtCairoDate('date');
+  const dfltFrom = fmtCairoDate('date');
+  el.innerHTML = `<div class="card" style="margin-bottom:16px;border-right:4px solid #e67e22">
+    <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-chart-line" style="margin-left:6px"></i> إحصائيات بين فترتين — حساب تلقائي من الأكياس</strong></div>
+    <div class="card-body" style="padding:10px 16px">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+        <div class="form-group"><label>من تاريخ</label><input type="date" class="form-control" id="bbStFrom" value="${dfltFrom}" style="min-width:150px"></div>
+        <div class="form-group"><label>إلى تاريخ</label><input type="date" class="form-control" id="bbStTo" value="${dfltTo}" style="min-width:150px"></div>
+        <button class="btn btn-outline" data-click="bbPreviewStats" style="border-color:#e67e22;color:#e67e22"><i class="fas fa-eye"></i> معاينة الحساب</button>
+        <button class="btn btn-outline" data-click="bbExportStats" style="border-color:#16a085;color:#16a085" title="تحميل نتائج المعاينة Excel"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+      </div>
+      <div style="background:#fde9e0;border:1px solid #f5c6aa;color:#a04000;padding:8px 12px;border-radius:8px;font-size:12px;margin-top:10px"><i class="fas fa-info-circle" style="margin-left:4px"></i> تُحسب مؤشرات التجميع والوارد والمنصرف والإعدامات تلقائياً من سجلات الأكياس خلال الفترة المحددة (من/إلى) — بدون حفظ في الشهري.</div>
+    </div>
+  </div>
+  <div id="bbStatsOut"></div>`;
+}
+async function bbPreviewStats() {
+  const out = document.getElementById('bbStatsOut');
+  const from = document.getElementById('bbStFrom').value;
+  const to = document.getElementById('bbStTo').value;
+  if (!from || !to) { showToast('❌ حدد تاريخ البداية والنهاية', 'error'); return; }
+  showPageLoading(out, 'جاري حساب الإحصائيات...');
+  try {
+    const r = await api('GET', '/blood-bags/stats-range?from=' + from + '&to=' + to);
+    const big = Object.keys(r.big || {}), small = Object.keys(r.small || {}), cons = Object.keys(r.cons || {});
+    const hosp = r.hospitals || {};
+    const sum = (m, k) => Object.keys(m || {}).reduce((a, h) => a + (m[h][k] || 0), 0);
+    let html = '';
+    const kp = [];
+    if (big.length) {
+      kp.push(['إجمالي التجميع', '#c0392b', sum(r.big, 'collect_total')]);
+      kp.push(['وارد إقليمي', '#2e86c1', sum(r.big, 'inc_regional')]);
+      kp.push(['إعدامات أخرى', '#c0392b', sum(r.big, 'disp_other')]);
+    }
+    if (small.length) {
+      kp.push(['وارد من التجميعي', '#16a085', sum(r.small, 'inc_collected')]);
+      kp.push(['إجمالي الصرف', '#e67e22', sum(r.small, 'out_blood')]);
+      kp.push(['مرتجع', '#f39c12', sum(r.small, 'disp_returned')]);
+      kp.push(['تفاعل', '#8e44ad', sum(r.small, 'disp_reaction')]);
+      kp.push(['نظام مفتوح', '#e74c3c', sum(r.small, 'disp_open')]);
+      kp.push(['إعدامات أخرى', '#7f8c8d', sum(r.small, 'disp_other')]);
+    }
+    if (kp.length) {
+      html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px">` +
+        kp.map(k => `<div class="bb-stat-card" style="text-align:center;padding:12px;border-radius:10px;background:var(--card-bg);border:1px solid var(--border)">
+          <div style="font-size:22px;font-weight:700;color:${k[1]}">${_bbNum(k[2]) ?? k[2]}</div>
+          <div style="font-size:12px;color:var(--text-soft);margin-top:2px">${k[0]}</div></div>`).join('') + `</div>`;
+    }
+    if (big.length) {
+      html += `<div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#c0392b22;color:#c0392b"><strong><i class="fas fa-chart-simple" style="margin-left:6px"></i> مؤشرات تجميعيه — ${from} إلى ${to}</strong></div>
+      <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th><th>إجمالي التجميع</th><th>وارد</th><th>تبرع علاجي</th><th>لم يكتمل</th><th>دهون</th><th>صفراء</th><th>سي</th><th>بي</th><th>ايدز</th><th>زهري</th><th>فحوصات الدم</th><th>مرتجع</th><th>تفاعل</th><th>نظام مفتوح</th><th>إعدامات أخرى</th></tr></thead><tbody>
+      ${big.map(hid => { const d = r.big[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>
+      <td style="text-align:center;font-weight:700">${d.collect_total || 0}</td><td style="text-align:center;font-weight:700;color:#2e86c1">${d.inc_regional || 0}</td><td style="text-align:center">${d.donation_therapeutic || 0}</td><td style="text-align:center">${d.uncompleted || 0}</td>
+      <td style="text-align:center">${d.refused_fatty || 0}</td><td style="text-align:center">${d.refused_icteric || 0}</td><td style="text-align:center">${d.virology_c || 0}</td>
+      <td style="text-align:center">${d.virology_b || 0}</td><td style="text-align:center">${d.virology_i || 0}</td><td style="text-align:center">${d.virology_dollar || 0}</td>
+      <td style="text-align:center">${d.blood_groups || 0}</td><td style="text-align:center">${d.disp_returned || 0}</td><td style="text-align:center">${d.disp_reaction || 0}</td><td style="text-align:center">${d.disp_open || 0}</td><td style="text-align:center;font-weight:700;color:#c0392b">${d.disp_other || 0}</td></tr>`; }).join('')}
+      </tbody></table></div></div>`;
+    }
+    if (small.length) {
+      html += `<div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#16a08522;color:#16a085"><strong><i class="fas fa-boxes-stacked" style="margin-left:6px"></i> مؤشرات تخزينيه — ${from} إلى ${to}</strong></div>
+      <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th><th>وارد من التجميعي</th><th>وارد إقليمي</th><th>إجمالي الصرف</th><th>داخلي</th><th>فرع</th><th>هيئة</th><th>خارجي</th><th>مرتجع</th><th>تفاعل</th><th>نظام مفتوح</th><th>إعدامات أخرى</th></tr></thead><tbody>
+      ${small.map(hid => { const d = r.small[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>
+      <td style="text-align:center;font-weight:700">${d.inc_collected || 0}</td><td style="text-align:center">${d.inc_regional || 0}</td><td style="text-align:center;font-weight:700">${d.out_blood || 0}</td>
+      <td style="text-align:center">${d.out_blood_int || 0}</td><td style="text-align:center">${d.out_blood_branch || 0}</td><td style="text-align:center">${d.out_blood_auth || 0}</td>
+      <td style="text-align:center">${d.out_blood_ext || 0}</td><td style="text-align:center">${d.disp_returned || 0}</td><td style="text-align:center">${d.disp_reaction || 0}</td><td style="text-align:center">${d.disp_open || 0}</td><td style="text-align:center;font-weight:700;color:#c0392b">${d.disp_other || 0}</td></tr>`; }).join('')}
+      </tbody></table></div></div>`;
+    }
+    if (cons.length) {
+      html += `<div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#e91e6322;color:#e91e63"><strong><i class="fas fa-droplet" style="margin-left:6px"></i> منصرف فصائل الدم — ${from} إلى ${to}</strong></div>
+      <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th>${BB_BTYPES_CLI.map(t => `<th>${t}</th>`).join('')}</tr></thead><tbody>
+      ${cons.map(hid => { const d = r.cons[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>${BB_BTYPES_CLI.map(t => `<td style="text-align:center">${d[t] || 0}</td>`).join('')}</tr>`; }).join('')}
+      </tbody></table></div></div>`;
+    }
+    if (!html) html = '<div class="empty-msg">لا توجد أكياس مسجلة في هذه الفترة</div>';
+    _bb.lastStats = { r, from, to };
+    out.innerHTML = html;
+  } catch (e) { out.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+function bbExportStats() {
+  const d = _bb.lastStats;
+  if (!d || !d.r || !(d.r.big || d.r.small || d.r.cons)) { showToast('❌ اعمل معاينة الحساب أولاً', 'error'); return; }
+  const { r, from, to } = d;
+  const hosp = r.hospitals || {};
+  const label = from + ' إلى ' + to;
+  const big = Object.keys(r.big || {}), small = Object.keys(r.small || {}), cons = Object.keys(r.cons || {});
+  if (typeof ExcelJS === 'undefined') { showToast('❌ مكتبة ExcelJS غير محمّلة', 'error'); return; }
+  try {
+    const wb = new ExcelJS.Workbook();
+    if (big.length) {
+      const ws = wb.addWorksheet('مؤشرات تجميعيه');
+      const rows = big.map(hid => { const d = r.big[hid]; return [hosp[hid]?.name || '', hosp[hid]?.governorate || '', d.collect_total || 0, d.inc_regional || 0, d.donation_therapeutic || 0, d.uncompleted || 0, d.refused_fatty || 0, d.refused_icteric || 0, d.virology_c || 0, d.virology_b || 0, d.virology_i || 0, d.virology_dollar || 0, d.blood_groups || 0, d.disp_returned || 0, d.disp_reaction || 0, d.disp_open || 0, d.disp_other || 0]; });
+      _bbFillSheet(ws, ['بنك الدم', 'المحافظة', 'إجمالي التجميع', 'وارد', 'تبرع علاجي', 'لم يكتمل', 'دهون', 'صفراء', 'سي', 'بي', 'ايدز', 'زهري', 'فحوصات الدم', 'مرتجع', 'تفاعل', 'نظام مفتوح', 'إعدامات أخرى'], rows, 'مؤشرات تجميعيه — ' + label);
+    }
+    if (small.length) {
+      const ws = wb.addWorksheet('مؤشرات تخزينيه');
+      const rows = small.map(hid => { const d = r.small[hid]; return [hosp[hid]?.name || '', hosp[hid]?.governorate || '', d.inc_collected || 0, d.inc_regional || 0, d.out_blood || 0, d.out_blood_int || 0, d.out_blood_branch || 0, d.out_blood_auth || 0, d.out_blood_ext || 0, d.disp_returned || 0, d.disp_reaction || 0, d.disp_open || 0, d.disp_other || 0]; });
+      _bbFillSheet(ws, ['بنك الدم', 'المحافظة', 'وارد من التجميعي', 'وارد إقليمي', 'إجمالي الصرف', 'داخلي', 'فرع', 'هيئة', 'خارجي', 'مرتجع', 'تفاعل', 'نظام مفتوح', 'إعدامات أخرى'], rows, 'مؤشرات تخزينيه — ' + label);
+    }
+    if (cons.length) {
+      const ws = wb.addWorksheet('منصرف فصائل الدم');
+      const rows = cons.map(hid => { const d = r.cons[hid]; return [hosp[hid]?.name || '', hosp[hid]?.governorate || '', ...BB_BTYPES_CLI.map(t => d[t] || 0)]; });
+      _bbFillSheet(ws, ['بنك الدم', 'المحافظة', ...BB_BTYPES_CLI], rows, 'منصرف فصائل الدم — ' + label);
+    }
+    if (!wb.worksheets.length) { showToast('❌ لا توجد بيانات للتصدير', 'error'); return; }
+    _xlsxDl(wb, 'احصائيات_' + from + '_' + to + '.xlsx');
+  } catch (e) { showToast('❌ خطأ في التصدير: ' + e.message, 'error'); }
 }
 async function bbDoGenerate() {
   const year = parseInt(document.getElementById('bbMy').value);

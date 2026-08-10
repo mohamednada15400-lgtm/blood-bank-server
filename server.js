@@ -896,6 +896,71 @@ app.get('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'view'),
     if (hi !== 0) return hi;
     return (b.date || '').localeCompare(a.date || '');
   });
+  // تحت الفحص + الوارد + المنصرف: تلقائي من أكياس الدم —
+  // تحت الفحص = الدم غير المفحوص (collected) يُحسب كيساً واحداً فقط، بدون صفائح
+  // الوارد = الأكياس المتاحة المفحوصة (available) لكل فصيلة — دم بالفصائل الثماني، بلازما بالأربع
+  // المنصرف = إرسال كيس لمستشفى آخر (أحداث «إرسال كيس» ناقص «رفض استلام») + صرف كيس لمريض/هيئة (status='issued') — بالفصيلة والمنتج
+  try {
+    const bagRows = await query('SELECT hospital_id, status, product_type, blood_type FROM blood_bags');
+    const uiCounts = {};
+    const incBlood = {};   // hospital_id -> { 'A+': n, ... }
+    const incPlasma = {};  // hospital_id -> { 'A': n, ... }
+    const outBlood = {};   // hospital_id -> { 'A+': n, ... }
+    const outPlasma = {};  // hospital_id -> { 'A': n, ... }
+    const outAdd = (map, hid, prod, bt) => {
+      const key = bbNormBt(bt, prod);
+      if (!key) return;
+      if (prod === 'دم') { (map.blood[hid] = map.blood[hid] || {})[key] = (map.blood[hid][key] || 0) + 1; }
+      else if (prod === 'بلازما') { (map.plasma[hid] = map.plasma[hid] || {})[key] = (map.plasma[hid][key] || 0) + 1; }
+    };
+    bagRows.rows.forEach(b => {
+      const prod = b.product_type || 'دم';
+      if (b.status === 'collected' && prod === 'دم') {
+        uiCounts[b.hospital_id] = (uiCounts[b.hospital_id] || 0) + 1;
+      } else if (b.status === 'available' && b.blood_type) {
+        outAdd({ blood: incBlood, plasma: incPlasma }, b.hospital_id, prod, b.blood_type);
+      } else if (b.status === 'issued' && b.blood_type) {
+        // صرف لمريض أو لهيئة/جهة — الكيس يبقى في المستشفى بحالة issued
+        outAdd({ blood: outBlood, plasma: outPlasma }, b.hospital_id, prod, b.blood_type);
+      }
+    });
+    // الإرسال لمستشفى آخر من سجل الأحداث (دائم — حتى بعد قبول الاستلام في الوجهة)
+    // إرسال كيس = +1 للمصدر؛ رفض استلام (عاد للمصدر) = -1 للمصدر
+    const outDelta = (map, hid, prod, bt, delta) => {
+      const key = bbNormBt(bt, prod);
+      if (!key) return;
+      if (prod === 'دم') { (map.blood[hid] = map.blood[hid] || {})[key] = (map.blood[hid][key] || 0) + delta; }
+      else if (prod === 'بلازما') { (map.plasma[hid] = map.plasma[hid] || {})[key] = (map.plasma[hid][key] || 0) + delta; }
+    };
+    try {
+      const evRows = await query("SELECT e.event, e.from_hospital_id, e.to_hospital_id, b.product_type, b.blood_type FROM blood_bag_events e JOIN blood_bags b ON b.id = e.bag_id WHERE e.event IN ('إرسال كيس','رفض استلام')");
+      evRows.rows.forEach(e => {
+        if (!e.from_hospital_id) return;
+        const d = e.event === 'إرسال كيس' ? 1 : -1;
+        outDelta({ blood: outBlood, plasma: outPlasma }, e.from_hospital_id, e.product_type || 'دم', e.blood_type, d);
+      });
+    } catch (ee) { /* blood_bag_events may not exist in legacy DBs */ }
+    const BT8 = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+    const PT4 = ['A','B','O','AB'];
+    deduped.forEach(r => {
+      r.under_inspection = uiCounts[r.hospital_id] || 0;
+      let bd = null, pd = null;
+      try { bd = typeof r.blood_data === 'string' ? JSON.parse(r.blood_data) : (r.blood_data || null); } catch(e) { bd = null; }
+      try { pd = typeof r.plasma_data === 'string' ? JSON.parse(r.plasma_data) : (r.plasma_data || null); } catch(e) { pd = null; }
+      if (bd) {
+        const ib = incBlood[r.hospital_id] || {};
+        const ob = outBlood[r.hospital_id] || {};
+        BT8.forEach(t => { if (bd[t]) { bd[t].incoming = ib[t] || 0; bd[t].outgoing = ob[t] || 0; } });
+        r.blood_data = bd;
+      }
+      if (pd) {
+        const ip = incPlasma[r.hospital_id] || {};
+        const op = outPlasma[r.hospital_id] || {};
+        PT4.forEach(t => { if (pd[t]) { pd[t].incoming = ip[t] || 0; pd[t].outgoing = op[t] || 0; } });
+        r.plasma_data = pd;
+      }
+    });
+  } catch (e) { /* blood_bags table may not exist in legacy DBs */ }
   res.json(deduped);
 });
 
@@ -2955,9 +3020,9 @@ const BB_COMPAT = {
 };
 function bbCanDonateTo(donorBt, recipientBt) {
   if (!donorBt || !recipientBt) return true;
-  const list = BB_COMPAT[donorBt];
+  const list = BB_COMPAT[recipientBt];
   if (!list) return donorBt === recipientBt;
-  return list.indexOf(recipientBt) !== -1;
+  return list.indexOf(donorBt) !== -1;
 }
 function bbTs() { return new Date().toISOString(); }
 const bbPad2 = n => String(n).padStart(2, '0');
@@ -3033,15 +3098,16 @@ async function bbCheckUniqueNumbers(bagNo, barcode, excludeIds) {
   }
   return null;
 }
-// فصيلة المنتجات غير الدم (بلازما / صفائح / كرايو) تكون A/B/O/AB بدون موجب أو سالب
+// فصيلة المنتجات غير الدم (بلازما / صفائح / كرايو) تكون A/B/O/AB بدون موجب أو سالب — الدم الكلي يحتفظ بالموجب والسالب مثل الدم
 function bbNormBt(bt, productType) {
   const s = String(bt || '').trim().toUpperCase();
   if (!s) return '';
-  if ((productType || 'دم') !== 'دم') return s.replace(/[+-]/g, '');
+  const p = productType || 'دم';
+  if (p !== 'دم' && p !== 'دم كلي') return s.replace(/[+-]/g, '');
   return s;
 }
-// صلاحية الكيس المتوقعة حسب المنتج (بالأيام): دم 35 يوماً، بلازما وكرايو سنة (365)، صفائح 5 أيام
-const BB_SHELF_DAYS = { 'دم': 35, 'بلازما': 365, 'كرايو': 365, 'صفائح SDP': 5, 'صفائح RDP': 5 };
+// صلاحية الكيس المتوقعة حسب المنتج (بالأيام): دم ودم كلي 35 يوماً، بلازما وكرايو سنة (365)، صفائح 5 أيام
+const BB_SHELF_DAYS = { 'دم': 35, 'دم كلي': 35, 'بلازما': 365, 'كرايو': 365, 'صفائح SDP': 5, 'صفائح RDP': 5 };
 function bbShelfDays(productType) {
   const p = (productType || '').trim();
   return BB_SHELF_DAYS[p] != null ? BB_SHELF_DAYS[p] : 35;
@@ -3069,9 +3135,15 @@ async function bbReleaseExpiredReservations() {
       const until = new Date(r.reserved_until).getTime();
       if (!isNaN(until) && until < now) {
         await db.query("UPDATE bag_reservations SET status = 'expired', released_at = NOW() WHERE id = $1", [r.id]);
-        await db.query("UPDATE blood_bags SET status = 'available', recipient_id = NULL, recipient_name = '' WHERE id = $1", [r.bag_id]);
+        const remaining = (await db.query("SELECT * FROM bag_reservations WHERE bag_id = $1 AND status = 'active' ORDER BY id DESC", [r.bag_id])).rows;
+        if (remaining.length) {
+          const last = remaining[0];
+          await db.query("UPDATE blood_bags SET status = 'reserved', recipient_id = $1, recipient_name = $2 WHERE id = $3", [last.patient_id, last.patient_name || '', r.bag_id]);
+        } else {
+          await db.query("UPDATE blood_bags SET status = 'available', recipient_id = NULL, recipient_name = '' WHERE id = $1", [r.bag_id]);
+        }
         const b = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [r.bag_id])).rows[0];
-        if (b) await bbAddEvent(b, 'انتهاء مدة الحجز', 'انتهت مدة الحجز (48 ساعة) وتم تفكيكه تلقائياً', null, null, null);
+        if (b) await bbAddEvent(b, 'انتهاء مدة الحجز', 'انتهت مدة الحجز (48 ساعة) وتم تفكيكه تلقائياً' + (remaining.length ? ' — الكيس ما زال محجوزاً لمرضى آخرين (' + remaining.length + ')' : ''), null, null, null);
       }
     }
   } catch (e) { console.error('bbReleaseExpiredReservations:', e.message); }
@@ -3219,6 +3291,9 @@ app.post('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'add'), asy
     // تمريرة تحقق مسبقة — لا يُكتب أي شيء قبل التأكد من خلو الأرقام من التكرار (لا تكرار في نفس الدفعة ولا في القاعدة)
     const seen = {};
     for (const item of bags) {
+      const productType = (item.product_type || '').trim() || 'دم';
+      if (productType !== 'دم' && productType !== 'دم كلي' && productType !== 'صفائح SDP' && productType !== 'صفائح RDP')
+        return res.status(400).json({ error: 'في التجميع: البلازما والكرايو تابعتان للدم وتُفصلان تلقائياً من كيس الدم — اختر دم أو دم كلي أو صفائح SDP أو صفائح RDP فقط' });
       const bagNo = (item.bag_no || '').trim();
       const barcode = (item.barcode || '').trim();
       if (bagNo && seen['n:' + bagNo]) return res.status(409).json({ error: 'رقم اللي «' + bagNo + '» مكرر في نفس الدفعة — الأرقام لا تتكرر أبداً' });
@@ -3235,13 +3310,14 @@ app.post('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'add'), asy
       const makeCryo = !!item.cryo;
       const productType = (item.product_type || '').trim() || 'دم';
       const units = parseInt(item.units) || 1;
-      // أسباب الإعدام حسب المنتج: دم = إعدام التبرع كاملاً (أسباب عامة فقط)، بلازما/كرايو/صفائح = قد تُعدم بأسباب عامة أو أسباب خاصة بالبلازما
+      // أسباب الإعدام حسب المنتج: دم ودم كلي = أسباب عامة فقط، بلازما/كرايو/صفائح = قد تُعدم بأسباب عامة أو أسباب خاصة بالبلازما
       const generalDiscard = ['incomplete', 'therapeutic', 'fatty', 'icteric'];
       const plasmaDiscard = ['lipemic', 'hemolyzed'];
-      const status = productType !== 'دم'
+      const usePlasmaDiscard = productType !== 'دم' && productType !== 'دم كلي';
+      const status = usePlasmaDiscard
         ? generalDiscard.concat(plasmaDiscard).indexOf(item.status) !== -1 ? item.status : 'collected'
         : generalDiscard.indexOf(item.status) !== -1 ? item.status : 'collected';
-      // الصفائح (SDP/RDP) تُجمع كيساً واحداً مستقلاً — لا فصل
+      // الصفائح (SDP/RDP) والدم الكلي تُجمع كيساً واحداً مستقلاً — لا فصل
       if (productType !== 'دم') {
         const cExp = exp || bbDefaultExpiry(collectionDate, productType);
         const r = await db.query(
@@ -3260,10 +3336,14 @@ app.post('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'add'), asy
       const insertComp = async (productType, donationId) => {
         // حقل الصلاحية في صف التجميع خاص بدم فقط — بلازما/كرايو المفصولة تأخذ دائماً مدة صلاحية منتجها (سنة)
         const cExp = productType === 'دم' ? (exp || bbDefaultExpiry(collectionDate, 'دم')) : bbDefaultExpiry(collectionDate, productType);
+        // متبرعة حامل أو ولدت → البلازما والكرايو تُعدمان مباشرة (بدون فحص) بسبب «ولادة» — الدم لا يتأثر
+        const birthDiscard = !!item.preg && productType !== 'دم';
+        const compStatus = birthDiscard ? 'disposed' : status;
+        const compReason = birthDiscard ? 'ولادة' : '';
         const r = await db.query(
-          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, notes, created_at, updated_at, user_id, donation_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW(),NOW(),$20,$21)`,
-          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, 1, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', status, '', '', '', '', item.notes || '', user ? user.id : null, donationId]
+          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, test_nat, notes, created_at, updated_at, user_id, donation_id, return_reason)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,NOW(),NOW(),$21,$22,$23)`,
+          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, 1, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', compStatus, '', '', '', '', '', item.notes || '', user ? user.id : null, donationId, compReason]
         );
         return r.rows[0];
       };
@@ -3275,7 +3355,10 @@ app.post('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'add'), asy
       for (const c of comps) {
         c.donation_id = donId;
         const stLabel = BB_STATUS_LABELS[status] || '';
-        const det = 'تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: ' + c.product_type + ' | رقم اللي: ' + bagNo + (makeCryo ? ' | المكونات: دم + بلازما + كرايو' : ' | المكونات: دم + بلازما') + (stLabel ? ' | إعدام: ' + stLabel : '');
+        const isBirthComp = !!item.preg && c.product_type !== 'دم';
+        const det = isBirthComp
+          ? 'تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: ' + c.product_type + ' | رقم اللي: ' + bagNo + ' | إعدام مباشر: متبرعة حامل أو ولدت (بدون فحص)'
+          : 'تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: ' + c.product_type + ' | رقم اللي: ' + bagNo + (makeCryo ? ' | المكونات: دم + بلازما + كرايو' : ' | المكونات: دم + بلازما') + (stLabel ? ' | إعدام: ' + stLabel : '');
         await bbAddEvent(c, 'تسجيل كيس جديد', det, user, null, null);
         created.push(c);
       }
@@ -3375,7 +3458,7 @@ app.put('/api/blood-bags/:id', requireAuth(), requirePerm('blood_bags', 'edit'),
         donor_age: donor_age != null ? parseInt(donor_age) : old.donor_age,
         donor_gender: donor_gender != null ? donor_gender : old.donor_gender
       };
-      const sibs = (await db.query("SELECT * FROM blood_bags WHERE donation_id = $1 AND id <> $2 AND status NOT IN ('dispatched','reserved','issued')", [old.donation_id, id])).rows;
+      const sibs = (await db.query("SELECT * FROM blood_bags WHERE donation_id = $1 AND id != $2 AND status NOT IN ('dispatched','reserved','issued')", [old.donation_id, id])).rows;
       for (const sib of sibs) {
         const sibBt = blood_type != null ? bbNormBt(blood_type, sib.product_type) : (sib.blood_type || '');
         // لا تُنسخ الصلاحية بين المكونات — كل منتج يحتفظ بمدة صلاحيته الخاصة (دم 35 / بلازما وكرايو سنة / صفائح 5)
@@ -3407,7 +3490,7 @@ app.delete('/api/blood-bags/:id', requireAuth(), requirePerm('blood_bags', 'dele
 app.post('/api/blood-bags/:id/test', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { blood_type, hcv, hbv, hiv, syphilis } = req.body || {};
+    const { blood_type, hcv, hbv, hiv, syphilis, test_nat } = req.body || {};
     if (!id) return res.status(400).json({ error: 'معرف غير صالح' });
     if (!blood_type) return res.status(400).json({ error: 'أدخل الفصيلة أولاً' });
     const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [id])).rows[0];
@@ -3415,7 +3498,7 @@ app.post('/api/blood-bags/:id/test', requireAuth(), requirePerm('blood_bags', 'e
     if (bag.status !== 'collected') return res.status(400).json({ error: 'الفحص متاح فقط للأكياس غير المفحوصة' });
     const bagHosp = (await db.query('SELECT type FROM hospitals WHERE id = $1', [bag.hospital_id])).rows[0];
     if (bagHosp && bagHosp.type !== 'تجميعي') return res.status(403).json({ error: 'الفحص متاح لبنوك الدم التجميعية فقط' });
-    const results = [hcv, hbv, hiv, syphilis].filter(x => x === 'إيجابي');
+    const results = [hcv, hbv, hiv, syphilis, test_nat].filter(x => x === 'إيجابي');
     const status = results.length > 0 ? 'positive' : 'available';
     const user = req.session.user;
     // الفحص يسري على التبرع كاملاً: كل مكونات نفس التبرع (نفس donation_id) تتأثر بالنتيجة
@@ -3427,8 +3510,8 @@ app.post('/api/blood-bags/:id/test', requireAuth(), requirePerm('blood_bags', 'e
     for (const t of targets) {
       const tBt = bbNormBt(blood_type, t.product_type);
       await db.query(
-        `UPDATE blood_bags SET blood_type = $1, test_hcv = $2, test_hbv = $3, test_hiv = $4, test_syphilis = $5, status = $6, tested_at = NOW(), tested_by = $7, updated_at = NOW() WHERE id = $8`,
-        [tBt, hcv || '', hbv || '', hiv || '', syphilis || '', status, user ? user.name : '', t.id]
+        `UPDATE blood_bags SET blood_type = $1, test_hcv = $2, test_hbv = $3, test_hiv = $4, test_syphilis = $5, test_nat = $6, status = $7, tested_at = NOW(), tested_by = $8, updated_at = NOW() WHERE id = $9`,
+        [tBt, hcv || '', hbv || '', hiv || '', syphilis || '', test_nat || '', status, user ? user.name : '', t.id]
       );
       await bbAddEvent(t, status === 'positive' ? 'نتيجة إيجابية' : 'اكتمال الفحص',
         (status === 'positive' ? 'إيجابي — تم إعدام التبرع كاملاً (كل المكونات)' : 'الفحص سليم — المكون متاح') + ' | المنتج: ' + (t.product_type || 'دم') + ' | الفصيلة: ' + (tBt || 'غير محدد') + (results.length ? ' | إيجابي: ' + results.join(',') : ''), user, null, null);
@@ -3443,16 +3526,18 @@ app.post('/api/blood-bags/:id/status', requireAuth(), requirePerm('blood_bags', 
     const id = parseInt(req.params.id);
     const { status, reason } = req.body || {};
     if (!id || !status) return res.status(400).json({ error: 'بيانات ناقصة' });
-    const allowed = ['incomplete', 'therapeutic', 'fatty', 'icteric', 'disposed'];
+    const allowed = ['incomplete', 'therapeutic', 'fatty', 'icteric', 'lipemic', 'hemolyzed', 'disposed'];
     if (allowed.indexOf(status) === -1) return res.status(400).json({ error: 'حالة غير مسموحة' });
     const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [id])).rows[0];
     if (!bag) return res.status(404).json({ error: 'الكيس غير موجود' });
     const isStock = ['available', 'returned'].indexOf(bag.status) !== -1;
     if (bag.status !== 'collected' && !isStock) return res.status(400).json({ error: 'تغيير الحالة متاح لأكياس التجميع فقط' });
     if (isStock && status !== 'disposed') return res.status(400).json({ error: 'الإعدام من الرصيد المتاح فقط (نظام مفتوح / أخرى) — فردي على الكيس' });
+    // أسباب إعدام التبرع كاملاً (تُطبق على كل مكونات التبرع) — دم فقط
+    const wholeDonationReasons = ['incomplete', 'therapeutic', 'fatty', 'icteric', 'disposed'];
     let affected = 1;
     let targets = [bag];
-    if (bag.status === 'collected' && status === 'disposed' && (bag.product_type || 'دم') === 'دم' && bag.donation_id) {
+    if (bag.status === 'collected' && wholeDonationReasons.indexOf(status) !== -1 && (bag.product_type || 'دم') === 'دم' && bag.donation_id) {
       const grp = (await db.query('SELECT * FROM blood_bags WHERE donation_id = $1', [bag.donation_id])).rows;
       if (grp.length > 1) targets = grp;
     }
@@ -3556,11 +3641,12 @@ app.post('/api/patients', requireAuth(), requirePerm('blood_bags', 'add'), async
     const nReq = v => (v != null && v !== '') ? parseInt(v) || 0 : 0;
     const exist = (await db.query('SELECT * FROM patients WHERE national_id = $1', [national_id])).rows[0];
     if (exist) {
+      const finalBt = exist.blood_type || blood_type || '';
       await db.query(
         'UPDATE patients SET name = $1, gender = $2, birth_date = $3, age = $4, blood_type = $5, phone = $6, governorate = $7, hospital_id = $8, department = $9, notes = $10, bt_cards = $11, bt_date = $12, req_rbc = $13, req_plasma = $14, req_plt = $15, req_cryo = $16, updated_at = NOW() WHERE id = $17',
-        [name, gender || exist.gender, birth_date || exist.birth_date, age != null ? parseInt(age) : exist.age, blood_type || exist.blood_type, phone || exist.phone, governorate || exist.governorate, hospital_id || exist.hospital_id, department || exist.department, notes != null ? notes : exist.notes, bt_cards != null ? parseInt(bt_cards) : exist.bt_cards, btD, nReq(req_rbc), nReq(req_plasma), nReq(req_plt), nReq(req_cryo), exist.id]
+        [name, gender || exist.gender, birth_date || exist.birth_date, age != null ? parseInt(age) : exist.age, finalBt, phone || exist.phone, governorate || exist.governorate, hospital_id || exist.hospital_id, department || exist.department, notes != null ? notes : exist.notes, bt_cards != null ? parseInt(bt_cards) : exist.bt_cards, btD, nReq(req_rbc), nReq(req_plasma), nReq(req_plt), nReq(req_cryo), exist.id]
       );
-      res.json({ patient: Object.assign({}, exist, { name, gender: gender || exist.gender, birth_date: birth_date || exist.birth_date, age: age != null ? parseInt(age) : exist.age, blood_type: blood_type || exist.blood_type, phone: phone || exist.phone, governorate: governorate || exist.governorate, hospital_id: hospital_id || exist.hospital_id, department: department || exist.department, notes: notes != null ? notes : exist.notes, bt_cards: bt_cards != null ? parseInt(bt_cards) : exist.bt_cards, bt_date: btD, req_rbc: nReq(req_rbc), req_plasma: nReq(req_plasma), req_plt: nReq(req_plt), req_cryo: nReq(req_cryo) }) });
+      res.json({ patient: Object.assign({}, exist, { name, gender: gender || exist.gender, birth_date: birth_date || exist.birth_date, age: age != null ? parseInt(age) : exist.age, blood_type: finalBt, phone: phone || exist.phone, governorate: governorate || exist.governorate, hospital_id: hospital_id || exist.hospital_id, department: department || exist.department, notes: notes != null ? notes : exist.notes, bt_cards: bt_cards != null ? parseInt(bt_cards) : exist.bt_cards, bt_date: btD, req_rbc: nReq(req_rbc), req_plasma: nReq(req_plasma), req_plt: nReq(req_plt), req_cryo: nReq(req_cryo) }) });
     } else {
       const r = await db.query(
         'INSERT INTO patients (national_id, name, gender, birth_date, age, blood_type, phone, governorate, hospital_id, department, notes, bt_cards, bt_date, req_rbc, req_plasma, req_plt, req_cryo, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW())',
@@ -3624,6 +3710,8 @@ app.get('/api/blood-bags/reservations', requireAuth(), requirePerm('blood_bags',
         product_type: b.product_type || 'دم', units: b.units != null ? b.units : 1,
         expiry_date: b.expiry_date || '', hospital_name: hospMap[r.hospital_id] ? hospMap[r.hospital_id].name : '',
         patient_name: r.patient_name || p.name || '', patient_blood_type: p.blood_type || '',
+        patient_national_id: p.national_id || '', patient_age: p.age != null ? p.age : null,
+        patient_gender: p.gender || '', patient_department: p.department || '',
         remaining_hours: remainingH, status_label: r.status === 'active' ? 'محجوز' : r.status === 'issued' ? 'مُصرف' : r.status === 'expired' ? 'منتهي' : 'مُحرر'
       });
     });
@@ -3640,7 +3728,7 @@ app.post('/api/blood-bags/reserve', requireAuth(), requirePerm('blood_bags', 'ed
     if (!bid || !pid || !hid) return res.status(400).json({ error: 'بيانات ناقصة' });
     const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [bid])).rows[0];
     if (!bag) return res.status(404).json({ error: 'الكيس غير موجود' });
-    if (BB_STOCK_STATUSES.indexOf(bag.status) === -1) return res.status(400).json({ error: 'الكيس غير متاح للحجز' });
+    if (BB_STOCK_STATUSES.indexOf(bag.status) === -1 && bag.status !== 'reserved') return res.status(400).json({ error: 'الكيس غير متاح للحجز' });
     if (bag.hospital_id !== hid) return res.status(400).json({ error: 'هذا الكيس ليس من رصيد بنك الدم المحدد — لا يمكن حجزه' });
     const user = req.session.user;
     if (user && user.hospitalId && parseInt(user.hospitalId) !== bag.hospital_id) {
@@ -3651,6 +3739,8 @@ app.post('/api/blood-bags/reserve', requireAuth(), requirePerm('blood_bags', 'ed
     if (patient.blood_type && bag.blood_type && !bbCanDonateTo(bag.blood_type, patient.blood_type)) {
       return res.status(400).json({ error: 'عدم توافق الفصائل — كيس ' + bag.blood_type + ' لا يصلح لمريض ' + patient.blood_type });
     }
+    const dup = (await db.query("SELECT * FROM bag_reservations WHERE bag_id = $1 AND patient_id = $2 AND status = 'active'", [bid, pid])).rows[0];
+    if (dup) return res.status(400).json({ error: 'هذا المريض لديه حجز نشط على هذا الكيس بالفعل' });
     const until = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
     const cards = compatCards != null ? parseInt(compatCards) : 0;
     const r = await db.query(
@@ -3666,7 +3756,7 @@ app.post('/api/blood-bags/reserve', requireAuth(), requirePerm('blood_bags', 'ed
 // ----- الصرف للمريض -----
 app.post('/api/blood-bags/issue', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
   try {
-    const { reservationId } = req.body || {};
+    const { reservationId, issuedDepartment } = req.body || {};
     const rid = parseInt(reservationId);
     if (!rid) return res.status(400).json({ error: 'معرف غير صالح' });
     const resv = (await db.query('SELECT * FROM bag_reservations WHERE id = $1', [rid])).rows[0];
@@ -3675,11 +3765,45 @@ app.post('/api/blood-bags/issue', requireAuth(), requirePerm('blood_bags', 'edit
     const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [resv.bag_id])).rows[0];
     if (!bag || bag.status !== 'reserved') return res.status(400).json({ error: 'الكيس غير محجوز' });
     const user = req.session.user;
-    await db.query("UPDATE blood_bags SET status = 'issued', issued_at = NOW(), issued_by = $1, updated_at = NOW() WHERE id = $2", [user ? user.name : '', bag.id]);
-    await db.query("UPDATE bag_reservations SET status = 'issued', issued_at = NOW(), issued_by = $1 WHERE id = $2", [user ? user.name : '', rid]);
-    await bbAddEvent(bag, 'صرف كيس', 'صُرف للمريض: ' + (resv.patient_name || '') + ' (' + (bag.issue_type || 'داخلي') + ')', user, null, null);
+    await db.query("UPDATE blood_bags SET status = 'issued', issued_at = NOW(), issued_by = $1, recipient_id = $2, recipient_name = $3, updated_at = NOW() WHERE id = $4",
+      [user ? user.name : '', resv.patient_id, resv.patient_name || '', bag.id]);
+    await db.query("UPDATE bag_reservations SET status = 'issued', issued_at = NOW(), issued_by = $1, issued_department = $3 WHERE id = $2", [user ? user.name : '', rid, issuedDepartment || '']);
+    const others = (await db.query("SELECT * FROM bag_reservations WHERE bag_id = $1 AND status = 'active' AND id != $2", [bag.id, rid])).rows;
+    if (others.length) {
+      await db.query("UPDATE bag_reservations SET status = 'released', released_at = NOW() WHERE bag_id = $1 AND status = 'active' AND id != $2", [bag.id, rid]);
+      for (const o of others) {
+        await bbAddEvent(bag, 'تفكيك حجز', 'تفكك الحجز تلقائياً بعد صرف الكيس لمريض آخر: ' + (o.patient_name || ''), user, null, null);
+      }
+    }
+    await bbAddEvent(bag, 'صرف كيس', 'صُرف للمريض: ' + (resv.patient_name || '') + ' (' + (bag.issue_type || 'داخلي') + ')' + (issuedDepartment ? ' — القسم المصرف له: ' + issuedDepartment : '') + (others.length ? ' — تفككت تلقائياً ' + others.length + ' حجز أخرى' : ''), user, null, null);
     res.json({ ok: true });
   } catch (e) { console.error('POST issue:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- الصرف المباشر (بلازما / صفائح / كرايو — بدون حجز) -----
+app.post('/api/blood-bags/issue-direct', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const { bagId, patientId, issueType } = req.body || {};
+    const bid = parseInt(bagId), pid = parseInt(patientId);
+    if (!bid || !pid) return res.status(400).json({ error: 'بيانات ناقصة — الكيس والمريض مطلوبان' });
+    const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [bid])).rows[0];
+    if (!bag) return res.status(404).json({ error: 'الكيس غير موجود' });
+    if (BB_STOCK_STATUSES.indexOf(bag.status) === -1) return res.status(400).json({ error: 'الكيس غير متاح للصرف المباشر' });
+    if ((bag.product_type || 'دم') === 'دم') return res.status(400).json({ error: 'أكياس الدم تُحجز أولاً (48 ساعة) من تبويب الفصائل والتوافق — الصرف المباشر للبلازما / الصفائح / الكرايو فقط' });
+    const user = req.session.user;
+    if (user && user.hospitalId && parseInt(user.hospitalId) !== bag.hospital_id) {
+      return res.status(403).json({ error: 'يمكنك صرف كيس من رصيد مستشفاك فقط' });
+    }
+    const patient = (await db.query('SELECT * FROM patients WHERE id = $1', [pid])).rows[0];
+    if (!patient) return res.status(404).json({ error: 'المريض غير موجود' });
+    const it = BB_ISSUE_TYPES.indexOf(issueType) !== -1 ? issueType : 'داخلي';
+    await db.query("UPDATE blood_bags SET status = 'issued', issued_at = NOW(), issued_by = $1, recipient_id = $2, recipient_name = $3, issue_type = $4, updated_at = NOW() WHERE id = $5",
+      [user ? user.name : '', pid, patient.name, it, bid]);
+    const r = await db.query('INSERT INTO bag_reservations (bag_id, patient_id, patient_name, hospital_id, reserved_at, reserved_until, status, compat_cards, user_id, issued_at) VALUES ($1,$2,$3,$4,NOW(),NOW(),$5,0,$6,NOW()) RETURNING *',
+      [bid, pid, patient.name, bag.hospital_id, 'issued', user ? user.id : null]);
+    await bbAddEvent(bag, 'صرف كيس', 'صرف مباشر (بدون حجز) — المنتج: ' + (bag.product_type || 'دم') + ' لمريض: ' + patient.name + ' (' + it + ')', user, null, null);
+    res.json({ ok: true, reservation: r.rows[0] });
+  } catch (e) { console.error('POST issue-direct:', e.message); res.status(500).json({ error: errMsg(e) }); }
 });
 
 // ----- تفكيك الحجز يدوياً -----
@@ -3692,10 +3816,16 @@ app.post('/api/blood-bags/release-reservation', requireAuth(), requirePerm('bloo
     if (!resv) return res.status(404).json({ error: 'الحجز غير موجود' });
     if (resv.status !== 'active') return res.status(400).json({ error: 'الحجز غير نشط' });
     await db.query("UPDATE bag_reservations SET status = 'released', released_at = NOW() WHERE id = $1", [rid]);
-    await db.query("UPDATE blood_bags SET status = 'available', recipient_id = NULL, recipient_name = '' WHERE id = $1", [resv.bag_id]);
+    const remaining = (await db.query("SELECT * FROM bag_reservations WHERE bag_id = $1 AND status = 'active' ORDER BY id DESC", [resv.bag_id])).rows;
+    if (remaining.length) {
+      const last = remaining[0];
+      await db.query("UPDATE blood_bags SET status = 'reserved', recipient_id = $1, recipient_name = $2 WHERE id = $3", [last.patient_id, last.patient_name || '', resv.bag_id]);
+    } else {
+      await db.query("UPDATE blood_bags SET status = 'available', recipient_id = NULL, recipient_name = '' WHERE id = $1", [resv.bag_id]);
+    }
     const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [resv.bag_id])).rows[0];
-    if (bag) await bbAddEvent(bag, 'تفكيك حجز', 'تم تفكيك الحجز وإعادة الكيس للرصيد' + (reason ? ' — ' + reason : ''), req.session.user, null, null);
-    res.json({ ok: true });
+    if (bag) await bbAddEvent(bag, 'تفكيك حجز', 'تم تفكيك الحجز' + (remaining.length ? ' — الكيس ما زال محجوزاً لمرضى آخرين (' + remaining.length + ')' : ' وإعادة الكيس للرصيد') + (reason ? ' — ' + reason : ''), req.session.user, null, null);
+    res.json({ ok: true, remaining: remaining.length });
   } catch (e) { console.error('POST release-reservation:', e.message); res.status(500).json({ error: errMsg(e) }); }
 });
 
@@ -3745,7 +3875,7 @@ function bbZeroBig() {
 function bbZeroSmall() {
   return { inc_collected: 0, inc_regional: 0, out_blood: 0, out_blood_int: 0, out_blood_branch: 0, out_blood_auth: 0, out_blood_ext: 0, compatibility: 0, disp_returned: 0, disp_reaction: 0, disp_open: 0, disp_other: 0, disp_exp_blood: 0 };
 }
-async function bbComputeMonthly(year, month, user) {
+async function bbComputeRange(from, to, user) {
   await bbReleaseExpiredReservations();
   await bbMarkExpiredBags();
   let bags = await bbAllBags();
@@ -3754,8 +3884,7 @@ async function bbComputeMonthly(year, month, user) {
   const allowedH = await bbAllowedHospitalIds(user);
   const hospList = allowedH ? hospitals.filter(h => allowedH.indexOf(h.id) !== -1) : hospitals;
   const reservations = (await db.query('SELECT * FROM bag_reservations')).rows;
-  const ym = year + '-' + bbPad2(month);
-  const inMonth = d => { if (!d) return false; return String(d).slice(0, 7) === ym; };
+  const inRange = d => { if (!d) return false; const s = String(d).slice(0, 10); return s >= from && s <= to; };
   const big = {}, small = {}, cons = {};
   hospList.forEach(h => {
     if (h.type === 'تجميعي') big[h.id] = bbZeroBig();
@@ -3764,7 +3893,7 @@ async function bbComputeMonthly(year, month, user) {
   });
   for (const b of bags) {
     // مؤشرات التجميع تُحسب مرة واحدة لكل تبرع (مكوّن الدم فقط) — التبرع الواحد = عملية تجميع واحدة
-    if (big[b.source_hospital_id] && inMonth(b.collection_date) && (b.product_type || 'دم') === 'دم') {
+    if (big[b.source_hospital_id] && inRange(b.collection_date) && (b.product_type || 'دم') === 'دم') {
       const row = big[b.source_hospital_id];
       row.collect_total++;
       if (b.status === 'therapeutic') row.donation_therapeutic++;
@@ -3780,7 +3909,7 @@ async function bbComputeMonthly(year, month, user) {
     // الإعدامات والمرتجعات والتفاعل: لكل وحدة فعلية (المكونات المنفصلة تُحسب كل منها)
     // مرتجع (صرف) → disp_returned، تفاعل (صرف) → disp_reaction، نظام مفتوح (صرف) → disp_open، Lipemic/Hemolyzed (تجميع) أو أخرى (صرف) → disp_other
     // إعدام «انتهاء الصلاحية» يُحسب لاحقاً (يُعدَم تلقائياً كسبب مستقل وليس سبب تجميع/صرف)
-    if (big[b.source_hospital_id] && inMonth(b.collection_date)) {
+    if (big[b.source_hospital_id] && inRange(b.collection_date)) {
       const row = big[b.source_hospital_id];
       if (b.return_reason === 'مرتجع') row.disp_returned++;
       if (b.status === 'reaction') row.disp_reaction++;
@@ -3788,10 +3917,10 @@ async function bbComputeMonthly(year, month, user) {
       if (b.status === 'lipemic' || b.status === 'hemolyzed') row.disp_other++;
       else if (b.status === 'disposed' && b.return_reason === 'أخرى') row.disp_other++;
     }
-    if (b.source_hospital_id !== 0 && small[b.hospital_id] && inMonth(b.received_at)) small[b.hospital_id].inc_collected++;
-    if (b.source_hospital_id === 0 && small[b.hospital_id] && inMonth(b.received_at)) small[b.hospital_id].inc_regional++;
-    if (b.source_hospital_id === 0 && big[b.hospital_id] && inMonth(b.received_at)) big[b.hospital_id].inc_regional++;
-    if (small[b.hospital_id] && inMonth(b.issued_at)) {
+    if (b.source_hospital_id !== 0 && small[b.hospital_id] && inRange(b.received_at)) small[b.hospital_id].inc_collected++;
+    if (b.source_hospital_id === 0 && small[b.hospital_id] && inRange(b.received_at)) small[b.hospital_id].inc_regional++;
+    if (b.source_hospital_id === 0 && big[b.hospital_id] && inRange(b.received_at)) big[b.hospital_id].inc_regional++;
+    if (small[b.hospital_id] && inRange(b.issued_at)) {
       const row = small[b.hospital_id];
       row.out_blood++;
       if (b.issue_type === 'فرع') row.out_blood_branch++;
@@ -3803,15 +3932,20 @@ async function bbComputeMonthly(year, month, user) {
       if (b.status === 'disposed' && b.return_reason === 'نظام مفتوح') row.disp_open++;
       if (b.status === 'disposed' && b.return_reason === 'أخرى') row.disp_other++;
     }
-    if (cons[b.hospital_id] && b.blood_type && inMonth(b.issued_at)) cons[b.hospital_id][b.blood_type]++;
+    if (cons[b.hospital_id] && b.blood_type && inRange(b.issued_at)) cons[b.hospital_id][b.blood_type]++;
   }
   reservations.forEach(r => {
-    if (inMonth(r.reserved_at)) {
+    if (inRange(r.reserved_at)) {
       if (big[r.hospital_id]) big[r.hospital_id].compatibility++;
       if (small[r.hospital_id]) small[r.hospital_id].compatibility++;
     }
   });
   return { big, small, cons };
+}
+async function bbComputeMonthly(year, month, user) {
+  const from = year + '-' + bbPad2(month) + '-01';
+  const to = year + '-' + bbPad2(month) + '-31';
+  return bbComputeRange(from, to, user);
 }
 app.get('/api/blood-bags/monthly-preview', requireAuth(), requirePerm('blood_bags', 'view'), async (req, res) => {
   try {
@@ -3862,6 +3996,18 @@ app.post('/api/blood-bags/generate-monthly', requireAuth(), requirePerm('blood_b
     }
     res.json({ ok: true, big: bigCount, small: smallCount, consumption: consCount });
   } catch (e) { console.error('POST generate-monthly:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- إحصائيات بين فترتين (نطاق تاريخ من/إلى) — الحساب التلقائي من الأكياس -----
+app.get('/api/blood-bags/stats-range', requireAuth(), requirePerm('blood_bags', 'view'), async (req, res) => {
+  try {
+    const from = (req.query.from || '').trim(), to = (req.query.to || '').trim();
+    if (!from || !to) return res.status(400).json({ error: 'حدد تاريخ البداية والنهاية' });
+    const { big, small, cons } = await bbComputeRange(from, to, req.session.user);
+    const hospitals = await bbAllHospitals();
+    const hospMap = {}; hospitals.forEach(h => { hospMap[h.id] = h; });
+    res.json({ big, small, cons, hospitals: hospMap, from, to });
+  } catch (e) { console.error('GET stats-range:', e.message); res.status(500).json({ error: errMsg(e) }); }
 });
 
 // ============== Indicator Analysis (تحليل مؤشرات الأداء) ==============
