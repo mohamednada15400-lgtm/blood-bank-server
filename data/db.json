@@ -73077,7 +73077,7 @@
     "blood_bag_events": 125,
     "patients": 14,
     "bag_reservations": 28,
-    "hospital_departments": 2
+    "hospital_departments": 4
   },
   "blood_bank_equipment": {
     "types": [
@@ -77789,6 +77789,11 @@
       "id": 1,
       "hospital_id": 8,
       "name": "الطوارئ"
+    },
+    {
+      "id": 3,
+      "hospital_id": 8,
+      "name": "عمليات"
     }
   ]
 }

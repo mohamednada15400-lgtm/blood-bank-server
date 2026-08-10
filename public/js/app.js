@@ -9877,7 +9877,7 @@ async function renderBloodBags(tab) {
       ['compat', 'fa-arrows-to-circle', 'الفصائل والتوافق', '#8e44ad'],
       ['reserve', 'fa-hand-holding-droplet', 'الحجز والصرف', '#f39c12'],
       ['monthly', 'fa-calendar-check', 'الشهري التلقائي', '#16a085'],
-      ['stats', 'fa-chart-line', 'الإحصائيات', '#e67e22']
+      ['stats', 'fa-chart-line', 'اداره و الاحصائيات', '#e67e22']
     ];
     const showContent = !!_bb.tab;
     el.innerHTML = `<div class="page-actions">
@@ -10376,8 +10376,7 @@ async function bbTrans() {
     const tabs = [
       ['disp', 'fa-truck-ramp-box', 'إرسال أكياس إلى بنك دم آخر', '#6c3483'],
       ['recv', 'fa-box-open', 'استلام أكياس واردة', '#16a085'],
-      ...(canAdd ? [['in', 'fa-warehouse', 'تسجيل وحدات دم واردة (وارد إقليمي)', '#2e86c1']] : []),
-      ['log', 'fa-clock-rotate-left', 'سجل الوارد', '#8e44ad']
+      ...(canAdd ? [['in', 'fa-warehouse', 'تسجيل وحدات دم واردة (وارد إقليمي)', '#2e86c1']] : [])
     ];
     el.innerHTML = `<div class="page-actions">
       <button class="btn-back" data-click="bbTransBack"><i class="fas fa-arrow-right"></i> رجوع</button>
@@ -10453,18 +10452,6 @@ async function bbRenderTransTab(t) {
       _bb.inRowN = 0;
       bbAutoHosp('bbInHosp');
       bbAddInRow();
-    } else if (t === 'log') {
-      el.innerHTML = `<div class="card"><div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-clock-rotate-left" style="margin-left:6px"></i> سجل الوارد</strong></div>
-        <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
-          <div class="form-group"><label>بحث (رقم / باركود / الجهة / المستلم)</label><input class="form-control" id="bbInLogQ" data-input="bbRenderInLog" style="min-width:180px"></div>
-          <div class="form-group"><label>من تاريخ</label><input class="form-control" type="date" id="bbInLogFrom" data-change="bbRenderInLog"></div>
-          <div class="form-group"><label>إلى تاريخ</label><input class="form-control" type="date" id="bbInLogTo" data-change="bbRenderInLog"></div>
-          <button class="btn btn-outline" data-click="bbExportInLog" style="border-color:#16a085;color:#16a085;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
-        </div>
-        <table class="data-table" style="font-size:12px"><thead>
-          <tr><th>رقم اللي</th><th>رقم الكود</th><th>من (الجهة)</th><th>إلى</th><th>المنتج</th><th>الفصيلة</th><th>الصلاحية</th><th>تاريخ الوصول</th><th>بواسطة</th><th>الحالة</th></tr>
-        </thead><tbody id="bbInLogBody"></tbody></table></div></div>`;
-      bbRenderInLog();
     } else {
       _bb.tTab = null;
       bbTrans();
@@ -10757,19 +10744,6 @@ async function bbCompat() {
         <div id="bbCbagActions" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px"></div>
       </div>
     </div>`;
-    if (canEdit || canDelete) {
-      html += `<div class="card" style="margin-bottom:16px;border-right:4px solid #6a1b9a">
-      <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-building-columns" style="margin-left:6px"></i> إدارة أقسام المستشفيات</strong></div>
-      <div class="card-body" style="padding:10px 16px">
-        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
-          <div class="form-group"><label>بنك الدم</label><select class="form-control" id="bbDepHosp" data-change="bbRenderDepts" style="min-width:220px">${bbOptHosp('')}</select></div>
-          ${canEdit ? `<div class="form-group"><label>اسم القسم</label><input class="form-control" id="bbDepName" style="min-width:160px" placeholder="مثال: قسم الطوارئ"></div>
-          <button class="btn btn-primary" data-click="bbAddDept" style="height:32px"><i class="fas fa-plus"></i> إضافة قسم</button>` : ''}
-        </div>
-        <div id="bbDeptList"></div>
-      </div>
-    </div>`;
-    }
     el.innerHTML = html;
     await Promise.all([bbLoadPatients(), bbLoadDepartments(), bbLoadBags(), bbLoadReservations()]);
     if (myHosp) {
@@ -10777,7 +10751,7 @@ async function bbCompat() {
       hs.type = 'hidden'; hs.id = 'bbC_hosp'; hs.value = myHosp;
       el.appendChild(hs);
     }
-    bbCompatDeptChanged(); bbRenderDepts();
+    bbCompatDeptChanged();
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
 }
 async function bbLoadPatients() { try { const r = await api('GET', '/patients'); _bb.patients = r.patients || []; } catch (e) { _bb.patients = []; } }
@@ -10828,7 +10802,6 @@ function bbCompatLookupPatient() {
     const genEl = document.getElementById('bbC_gender'); if (genEl && p.gender) { genEl.value = p.gender; }
     const btEl = document.getElementById('bbC_bt'); if (btEl) { if (p.blood_type) { btEl.value = p.blood_type; btEl.disabled = true; btEl.title = 'فصيلة المريض ثابتة ولا تتغير نهائياً'; } else { btEl.disabled = false; btEl.removeAttribute('title'); } }
     const btDEl = document.getElementById('bbC_btDate'); if (btDEl && p.bt_date) { btDEl.value = String(p.bt_date).slice(0, 10); }
-    const cardsEl = document.getElementById('bbC_cards'); if (cardsEl && p.bt_cards != null) { cardsEl.value = p.bt_cards; }
     const rbcEl = document.getElementById('bbC_reqRbc'); if (rbcEl && p.req_rbc != null) { rbcEl.value = p.req_rbc; }
     const plaEl = document.getElementById('bbC_reqPlasma'); if (plaEl && p.req_plasma != null) { plaEl.value = p.req_plasma; }
     const pltEl = document.getElementById('bbC_reqPlt'); if (pltEl && p.req_plt != null) { pltEl.value = p.req_plt; }
@@ -11142,13 +11115,6 @@ async function bbReserve() {
         <div id="bbResDirect"></div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:16px;border-right:4px solid #e74c3c">
-      <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-trash-can" style="margin-left:6px"></i> الرصيد المتاح — إعدام (نظام مفتوح / أخرى)</strong></div>
-      <div class="card-body" style="padding:10px 16px">
-        <div style="background:#fdf2e9;border:1px solid #f5b7b1;color:#922b21;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:10px;line-height:1.7"><i class="fas fa-info-circle" style="margin-left:4px"></i> إعدام <strong>فردي</strong> لكيس من الرصيد المتاح (متاح / مرتجع) بسبب <strong>نظام مفتوح</strong> أو <strong>أخرى</strong> — يؤثر على هذا الكيس فقط.</div>
-        <div id="bbResStock"></div>
-      </div>
-    </div>
     <div class="card" style="margin-bottom:16px;border-right:4px solid #16a085">
       <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-table-list" style="margin-left:6px"></i> سجل الحجوزات والصرف (كل الحالات)</strong>
         <div style="float:left;display:flex;gap:8px;align-items:center;margin-top:-2px">
@@ -11168,7 +11134,6 @@ async function bbReserve() {
     el.innerHTML = html;
     await bbLoadBags(); await bbLoadPatients(); await bbLoadReservations();
     bbRenderResLog();
-    bbResShowStock();
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
 }
 async function bbLoadReservations() { try { const r = await api('GET', '/blood-bags/reservations'); _bb.reservations = r.reservations || []; } catch (e) { _bb.reservations = []; } }
@@ -11347,7 +11312,6 @@ function bbResPickBag(rid) {
 }
 function bbResRefresh() {
   bbRenderResLog();
-  bbResShowStock();
   const p = _bb.patients.find(x => x.id === _bb.selResPatient);
   if (p) {
     bbResShowReserved(p);
@@ -11637,13 +11601,14 @@ function _bbFillSheet(ws, headers, rows, title) {
   _xlsxFooter(ws, sr + 1 + rows.length, mc);
 }
 
-/* ----- الإحصائيات (بين فترتين — نطاق تاريخ من/إلى) ----- */
-function bbStats() {
+/* ----- الإحصائيات (بين فترتين — نطاق تاريخ من/إلى) + إدارة الأقسام + سجل الوارد ----- */
+async function bbStats() {
   const el = document.getElementById('bbBody');
-  const now = getCairoDate();
+  const canEdit = hasPerm('blood_bags', 'edit');
+  const canDelete = hasPerm('blood_bags', 'delete');
   const dfltTo = fmtCairoDate('date');
   const dfltFrom = fmtCairoDate('date');
-  el.innerHTML = `<div class="card" style="margin-bottom:16px;border-right:4px solid #e67e22">
+  let html = `<div class="card" style="margin-bottom:16px;border-right:4px solid #e67e22">
     <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-chart-line" style="margin-left:6px"></i> إحصائيات بين فترتين — حساب تلقائي من الأكياس</strong></div>
     <div class="card-body" style="padding:10px 16px">
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
@@ -11654,8 +11619,36 @@ function bbStats() {
       </div>
       <div style="background:#fde9e0;border:1px solid #f5c6aa;color:#a04000;padding:8px 12px;border-radius:8px;font-size:12px;margin-top:10px"><i class="fas fa-info-circle" style="margin-left:4px"></i> تُحسب مؤشرات التجميع والوارد والمنصرف والإعدامات تلقائياً من سجلات الأكياس خلال الفترة المحددة (من/إلى) — بدون حفظ في الشهري.</div>
     </div>
-  </div>
-  <div id="bbStatsOut"></div>`;
+  </div>`;
+  if (canEdit || canDelete) {
+    html += `<div class="card" style="margin-bottom:16px;border-right:4px solid #6a1b9a">
+    <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-building-columns" style="margin-left:6px"></i> إدارة أقسام المستشفيات</strong></div>
+    <div class="card-body" style="padding:10px 16px">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px">
+        <div class="form-group"><label>بنك الدم</label><select class="form-control" id="bbDepHosp" data-change="bbRenderDepts" style="min-width:220px">${bbOptHosp('')}</select></div>
+        ${canEdit ? `<div class="form-group"><label>اسم القسم</label><input class="form-control" id="bbDepName" style="min-width:160px" placeholder="مثال: قسم الطوارئ"></div>
+        <button class="btn btn-primary" data-click="bbAddDept" style="height:32px"><i class="fas fa-plus"></i> إضافة قسم</button>` : ''}
+      </div>
+      <div id="bbDeptList"></div>
+    </div>
+  </div>`;
+  }
+  html += `<div class="card"><div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-clock-rotate-left" style="margin-left:6px"></i> سجل الوارد</strong></div>
+    <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
+      <div class="form-group"><label>بحث (رقم / باركود / الجهة / المستلم)</label><input class="form-control" id="bbInLogQ" data-input="bbRenderInLog" style="min-width:180px"></div>
+      <div class="form-group"><label>من تاريخ</label><input class="form-control" type="date" id="bbInLogFrom" data-change="bbRenderInLog"></div>
+      <div class="form-group"><label>إلى تاريخ</label><input class="form-control" type="date" id="bbInLogTo" data-change="bbRenderInLog"></div>
+      <button class="btn btn-outline" data-click="bbExportInLog" style="border-color:#16a085;color:#16a085;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+    </div>
+    <table class="data-table" style="font-size:12px"><thead>
+      <tr><th>رقم اللي</th><th>رقم الكود</th><th>من (الجهة)</th><th>إلى</th><th>المنتج</th><th>الفصيلة</th><th>الصلاحية</th><th>تاريخ الوصول</th><th>بواسطة</th><th>الحالة</th></tr>
+    </thead><tbody id="bbInLogBody"></tbody></table></div></div>`;
+  html += `<div id="bbStatsOut"></div>`;
+  el.innerHTML = html;
+  await bbLoadDepartments();
+  await bbLoadBags();
+  bbRenderDepts();
+  bbRenderInLog();
 }
 async function bbPreviewStats() {
   const out = document.getElementById('bbStatsOut');
