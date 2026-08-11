@@ -1,4 +1,4 @@
-/* event delegation for CSP compliance */
+﻿/* event delegation for CSP compliance */
 (function(){var H={},E={click:1,change:1,input:1,focusin:1,paste:1,focusout:1,keydown:1,mouseover:1,mouseout:1};window._dh=function(n,f){H[n]=f;};for(var K in E){if(E.hasOwnProperty(K)){(function(et){document.addEventListener(et,function(e){try{var attr='data-'+et;if(et==='focusin')attr='data-focus';if(et==='focusout')attr='data-blur';if(et==='keydown')attr='data-keydown';var el=e.target.closest('['+attr+']');if(!el)return;var n=el.getAttribute(attr);if(!n)return;var fn=H[n];if(typeof fn!=='function')fn=window[n];if(typeof fn!=='function')return;var args=el.getAttribute('data-args');var parsed=[];if(args){var parts=args.split(',');for(var i=0;i<parts.length;i++){var a=parts[i].trim();if(a==='null'){parsed.push(null);continue;}if(a==='undefined'){parsed.push(undefined);continue;}if(a==='true'){parsed.push(true);continue;}if(a==='false'){parsed.push(false);continue;}var num=Number(a);if(!isNaN(num)&&a.length>0){parsed.push(num);continue;}var s=a;if((s[0]==='"'&&s[s.length-1]==='"')||(s[0]==="'"&&s[s.length-1]==="'"))s=s.slice(1,-1);parsed.push(s);}}fn.apply(el,parsed);}catch(ex){console.error('[delegation]',et,n,ex.message);}});})(K);}}})();
 /* ─── ExcelJS Shared Helpers ─── */
 const _XB={style:'thin',color:{argb:'FFB0BEC5'}};
@@ -238,10 +238,10 @@ async function renderDailyStock() {
           bTot.previous += d.previous || 0; bTot.incoming += d.incoming || 0;
           bTot.outgoing += d.outgoing || 0; bTot.disposal += d.disposal || 0;
           const av = calcAvail(bd, t); bTot.available += av;
-          h += `<td class="${canEdit ? 'editable' : ''}" data-group="blood" data-type="${t}" data-sub="previous" data-rid="${r.id}">${d.previous || 0}</td>`;
+          h += `<td class="cell-auto-inc" title="رصيد سابق — تلقائياً (آخر متاح × نقل تلقائي كل 08:30 و20:30)" data-group="blood" data-type="${t}" data-sub="previous" data-rid="${r.id}">${d.previous || 0}</td>`;
           h += `<td class="cell-auto-inc" title="وارد — تلقائياً من أكياس الدم المفحوصة (المتاحة)" data-group="blood" data-type="${t}" data-sub="incoming" data-rid="${r.id}">${d.incoming || 0}</td>`;
           h += `<td class="cell-auto-inc" title="المنصرف — تلقائياً من أكياس الدم (إرسال لمستشفى آخر / صرف لمريض أو هيئة)" data-group="blood" data-type="${t}" data-sub="outgoing" data-rid="${r.id}">${d.outgoing || 0}</td>`;
-          h += `<td class="${canEdit ? 'editable' : ''}" data-group="blood" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
+          h += `<td class="cell-auto-inc" title="الإعدام — تلقائياً من أكياس الدم المعدومة (نظام مفتوح / أخرى / انتهاء صلاحية)" data-group="blood" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
           h += `<td class="avail-cell" data-group="blood" data-type="${t}" data-sub="available" data-rid="${r.id}">${av}</td>`;
         });
         h += `<td class="total-cell" data-role="btotal" data-sub="previous">${bTot.previous}</td><td class="total-cell" data-role="btotal" data-sub="incoming">${bTot.incoming}</td><td class="total-cell" data-role="btotal" data-sub="outgoing">${bTot.outgoing}</td><td class="total-cell" data-role="btotal" data-sub="disposal">${bTot.disposal}</td><td class="total-cell" data-role="btotal" data-sub="available">${bTot.available}</td>`;
@@ -250,10 +250,10 @@ async function renderDailyStock() {
           pTot.previous += d.previous || 0; pTot.incoming += d.incoming || 0;
           pTot.outgoing += d.outgoing || 0; pTot.disposal += d.disposal || 0;
           const av = calcAvail(pd, t); pTot.available += av;
-          h += `<td class="${canEdit ? 'editable' : ''}" data-group="plasma" data-type="${t}" data-sub="previous" data-rid="${r.id}">${d.previous || 0}</td>`;
+          h += `<td class="cell-auto-inc" title="رصيد سابق — تلقائياً (آخر متاح × نقل تلقائي كل 08:30 و20:30)" data-group="plasma" data-type="${t}" data-sub="previous" data-rid="${r.id}">${d.previous || 0}</td>`;
           h += `<td class="cell-auto-inc" title="وارد — تلقائياً من أكياس البلازما المفحوصة (المتاحة)" data-group="plasma" data-type="${t}" data-sub="incoming" data-rid="${r.id}">${d.incoming || 0}</td>`;
           h += `<td class="cell-auto-inc" title="المنصرف — تلقائياً من أكياس البلازما (إرسال لمستشفى آخر / صرف لمريض أو هيئة)" data-group="plasma" data-type="${t}" data-sub="outgoing" data-rid="${r.id}">${d.outgoing || 0}</td>`;
-          h += `<td class="${canEdit ? 'editable' : ''}" data-group="plasma" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
+          h += `<td class="cell-auto-inc" title="الإعدام — تلقائياً من أكياس البلازما المعدومة (نظام مفتوح / أخرى / انتهاء صلاحية)" data-group="plasma" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
           h += `<td class="avail-cell" data-group="plasma" data-type="${t}" data-sub="available" data-rid="${r.id}">${av}</td>`;
         });
         h += `<td class="total-cell" data-role="ptotal" data-sub="previous">${pTot.previous}</td><td class="total-cell" data-role="ptotal" data-sub="incoming">${pTot.incoming}</td><td class="total-cell" data-role="ptotal" data-sub="outgoing">${pTot.outgoing}</td><td class="total-cell" data-role="ptotal" data-sub="disposal">${pTot.disposal}</td><td class="total-cell" data-role="ptotal" data-sub="available">${pTot.available}</td>`;
@@ -9629,7 +9629,7 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
 }
 
 /* ================= أكياس الدم — التتبع الكامل ================= */
-const _bb = { hospitals: [], bags: [], patients: [], reservations: [], departments: [], user: null, tab: 'dash', tTab: null, cTab: null, rowN: 0, selPatient: null, selBagIds: [], lastFilteredBags: [], lastFilteredInLog: [], lastMonthly: null, selResPatient: null, selResv: null, lastResLog: [], barPat: {}, barTyped: {}, histHidden: false };
+const _bb = { hospitals: [], bags: [], patients: [], reservations: [], departments: [], user: null, tab: 'dash', tTab: null, cTab: null, rowN: 0, selPatient: null, selBagIds: [], lastFilteredBags: [], lastFilteredInLog: [], lastFilteredBagReport: [], lastExpLog: [], lastDispLog: [], lastMonthly: null, selResPatient: null, selResv: null, lastResLog: [], barPat: {}, barTyped: {}, histHidden: false };
 const BB_BTYPES_CLI = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
 const BB_BTYPES_SIMPLE = ['A','B','O','AB'];
 const BB_PRODUCT_TYPES = ['دم','دم كلي','بلازما','صفائح SDP','صفائح RDP','كرايو'];
@@ -10686,6 +10686,158 @@ function bbExportInLog() {
     'سجل الوارد', 'سجل_الوارد.xlsx', 'نظام بنك الدم — سجل الوارد (القائمة المفلترة حالياً)');
 }
 
+function bbRenderBagReport() {
+  const body = document.getElementById('bbBagReportBody');
+  if (!body) return;
+  const q = document.getElementById('bbBagRptQ') ? document.getElementById('bbBagRptQ').value.trim().toLowerCase() : '';
+  const prod = document.getElementById('bbBagRptProd') ? document.getElementById('bbBagRptProd').value : '';
+  const st = document.getElementById('bbBagRptSt') ? document.getElementById('bbBagRptSt').value : '';
+  let list = (_bb.bags || []).slice().sort((a, b) => (b.created_at || b.updated_at || '').localeCompare(a.created_at || a.updated_at || ''));
+  if (q) list = list.filter(b =>
+    (b.bag_no || '').toLowerCase().indexOf(q) !== -1 ||
+    (b.barcode || '').toLowerCase().indexOf(q) !== -1 ||
+    (b.hospital_name || bbHospName(b.hospital_id) || '').toLowerCase().indexOf(q) !== -1 ||
+    (b.blood_type || '').toLowerCase().indexOf(q) !== -1);
+  if (prod) list = list.filter(b => (b.product_type || 'دم') === prod);
+  if (st) list = list.filter(b => b.status === st);
+  _bb.lastFilteredBagReport = list;
+  const raiseColor = (b) => {
+    const r = String(b.return_reason || '');
+    if (bbStBadge && r) return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;background:#fdecea;color:#e74c3c;font-size:11px;font-weight:700">${esc(r)}</span>`;
+    return '—';
+  };
+  body.innerHTML = list.map(b => `<tr>
+    <td style="text-align:center;font-size:11px">${esc(b.hospital_governorate || (_bb.hospitals.find(h => h.id === parseInt(b.hospital_id))?.governorate || '—'))}</td>
+    <td style="text-align:right;font-weight:600">${esc(b.hospital_name || bbHospName(b.hospital_id) || '—')}</td>
+    <td style="text-align:center">${bbProdCell(b)}</td>
+    <td style="text-align:center;font-weight:700;color:${b.blood_type && b.blood_type.endsWith('+') ? '#c0392b' : '#27ae60'}">${esc(b.blood_type || '—')}</td>
+    <td style="text-align:center;direction:ltr;font-weight:700;color:#f39c12">${esc(b.bag_no)}</td>
+    <td style="text-align:center;direction:ltr;font-size:11px;color:#8e44ad">${esc(b.barcode || '—')}</td>
+    <td style="text-align:center;font-size:11px">${b.expiry_date ? esc(String(b.expiry_date).slice(0, 10)) : '—'}</td>
+    <td style="text-align:center">${bbStBadge(b.status)}</td>
+    <td style="text-align:center">${bbDaysBadge(b.days_left)}</td>
+    <td style="text-align:center">${raiseColor(b)}</td>
+    <td style="text-align:center"><button class="btn btn-sm" data-click="bbEvents" data-args="${b.id}" title="سجل أحداث الكيس" style="background:#2e86c122;color:#2e86c1;border:none;padding:3px 10px;border-radius:6px;font-size:11px"><i class="fas fa-clock-rotate-left"></i></button></td>
+  </tr>`).join('') || `<tr><td colspan="11" class="empty-msg">لا توجد أكياس مطابقة</td></tr>`;
+}
+
+function bbExportBagReport() {
+  const list = _bb.lastFilteredBagReport || [];
+  if (!list.length) { showToast('❌ لا توجد أكياس مطابقة للتصدير', 'error'); return; }
+  bbXlsx(
+    ['الفرع', 'اسم المستشفي', 'المنتج', 'فصيلة الوحدة', 'رقم اللي', 'الباركود', 'تاريخ الانتهاء', 'الحالة', 'المتبقي (يوم)', 'سبب الإعدام'],
+    list.map(b => [(b.hospital_governorate || (_bb.hospitals.find(h => h.id === parseInt(b.hospital_id))?.governorate || '—')), (b.hospital_name || bbHospName(b.hospital_id) || '—'),
+      b.product_type || 'دم', b.blood_type || '—', b.bag_no, b.barcode || '—',
+      b.expiry_date ? String(b.expiry_date).slice(0, 10) : '—', BB_ST_LABELS[b.status] || b.status,
+      b.days_left !== null && b.days_left !== undefined ? b.days_left : '—', (b.return_reason || '—')]),
+    'تقرير الأكياس التفصيلي', 'تقرير_الأكياس.xlsx', 'نظام بنك الدم — تقرير الأكياس التفصيلي (القائمة المفلترة حالياً)');
+}
+
+function bbRenderExpLog() {
+  const body = document.getElementById('bbExpLogBody');
+  if (!body) return;
+  const qEl = document.getElementById('bbExpLogQ');
+  const stEl = document.getElementById('bbExpLogSt');
+  const q = qEl ? qEl.value.trim().toLowerCase() : '';
+  const st = stEl ? stEl.value : '';
+  let list = (_bb.bags || []).slice();
+  if (st) {
+    if (st === 'expired') list = list.filter(b => (b.return_reason || '') === 'انتهاء الصلاحية');
+    else if (st === 'issued') list = list.filter(b => b.status === 'issued');
+    else if (st === 'disposed') list = list.filter(b => ['disposed','therapeutic','incomplete','fatty','icteric','lipemic','hemolyzed'].indexOf(b.status) !== -1);
+    else if (st === 'returned') list = list.filter(b => b.status === 'returned');
+    else if (st === 'reaction') list = list.filter(b => b.status === 'reaction');
+  }
+  if (q) list = list.filter(b => [b.bag_no, b.barcode, b.hospital_name || bbHospName(b.hospital_id), b.blood_type, b.recipient_name].join(' ').toLowerCase().indexOf(q) !== -1);
+  list.sort((a, b) => (b.received_at || b.collection_date || b.created_at || '').localeCompare(a.received_at || a.collection_date || a.created_at || ''));
+  _bb.lastExpLog = list;
+  const rc = (b) => { const r = b.return_reason || ''; if (!r) return '—'; return `<span style="background:#fdecea;color:#e74c3c;padding:2px 8px;border-radius:10px;font-size:11px">${esc(r)}</span>`; };
+  const expiryRow = (b) => String(b.return_reason || '') === 'انتهاء الصلاحية';
+  body.innerHTML = list.map(b => `<tr style="${expiryRow(b) ? 'background:#fdf2f2;' : ''}">
+    <td style="text-align:center;font-size:11px">${esc(b.hospital_governorate || (_bb.hospitals.find(h => h.id === parseInt(b.hospital_id))?.governorate || '—'))}</td>
+    <td style="text-align:right;font-weight:600">${esc(b.hospital_name || bbHospName(b.hospital_id) || '—')}</td>
+    <td style="text-align:center;direction:ltr;font-weight:700;color:#f39c12">${esc(b.bag_no || '—')}</td>
+    <td style="text-align:center;direction:ltr;color:#8e44ad">${esc(b.barcode || '—')}</td>
+    <td style="text-align:center">${bbProdCell(b)}</td>
+    <td style="text-align:center;font-weight:700;color:${(b.blood_type || '').indexOf('-') !== -1 ? '#27ae60' : '#c0392b'}">${esc(b.blood_type || '—')}</td>
+    <td style="text-align:center;font-size:11px">${b.received_at ? esc(String(b.received_at).slice(0, 10)) : (b.collection_date ? esc(String(b.collection_date).slice(0, 10)) : '—')}</td>
+    <td style="text-align:center;font-size:11px">${b.collection_date ? esc(String(b.collection_date).slice(0, 10)) : '—'}</td>
+    <td style="text-align:center;font-size:11px">${b.expiry_date ? esc(String(b.expiry_date).slice(0, 10)) : '—'}</td>
+    <td style="text-align:center">${bbDaysBadge(b.days_left)}</td>
+    <td style="text-align:center">${bbStBadge(b.status)}</td>
+    <td style="text-align:center">${rc(b)}</td>
+    <td style="text-align:center;font-size:11px">${b.issued_at ? esc(String(b.issued_at).slice(0, 10)) : '—'}</td>
+    <td style="text-align:center;font-size:11px">${esc(b.recipient_name || '—')}</td>
+    <td style="text-align:center"><button class="btn btn-sm" data-click="bbEvents" data-args="${b.id}" title="سجل أحداث الكيس" style="background:#2e86c122;color:#2e86c1;border:none;padding:3px 10px;border-radius:6px;font-size:11px"><i class="fas fa-clock-rotate-left"></i></button></td>
+  </tr>`).join('') || `<tr><td colspan="15" class="empty-msg">لا توجد أكياس مطابقة</td></tr>`;
+}
+function bbExportExpLog() {
+  const list = _bb.lastExpLog || [];
+  if (!list.length) { showToast('❌ لا توجد أكياس مطابقة للتصدير', 'error'); return; }
+  bbXlsx(
+    ['الفرع', 'اسم المستشفي', 'رقم اللي', 'الباركود', 'المنتج', 'فصيلة الوحدة', 'تاريخ الوارد', 'تاريخ الجمع', 'تاريخ الانتهاء', 'المتبقي (يوم)', 'الحالة', 'سبب الإعدام', 'تاريخ الصرف', 'المصروف إليه'],
+    list.map(b => [(b.hospital_governorate || (_bb.hospitals.find(h => h.id === parseInt(b.hospital_id))?.governorate || '—')), (b.hospital_name || bbHospName(b.hospital_id) || '—'),
+      b.bag_no, b.barcode || '—', b.product_type || 'دم', b.blood_type || '—',
+      b.received_at ? String(b.received_at).slice(0, 10) : (b.collection_date ? String(b.collection_date).slice(0, 10) : '—'),
+      b.collection_date ? String(b.collection_date).slice(0, 10) : '—',
+      b.expiry_date ? String(b.expiry_date).slice(0, 10) : '—',
+      b.days_left !== null && b.days_left !== undefined ? b.days_left : '—', BB_ST_LABELS[b.status] || b.status,
+      (b.return_reason || '—'),
+      b.issued_at ? String(b.issued_at).slice(0, 10) : '—', (b.recipient_name || '—')]),
+    'سجل انتهاء صلاحيه', 'سجل_انتهاء_الصلاحية.xlsx', 'نظام بنك الدم — كل الأكياس الواردة كاملة + بيانات الصرف + الإعدام بانتهاء الصلاحية (القائمة المفلترة حالياً)');
+}
+
+function bbRenderDispLog() {
+  const body = document.getElementById('bbDispLogBody');
+  if (!body) return;
+  const qEl = document.getElementById('bbDispLogQ');
+  const stEl = document.getElementById('bbDispLogSt');
+  const q = qEl ? qEl.value.trim().toLowerCase() : '';
+  const st = stEl ? stEl.value : '';
+  let list = (_bb.bags || []).slice().filter(b => {
+    if (b.status === 'issued') return true;
+    if (b.status === 'reaction' || b.status === 'returned') return true;
+    if (b.status === 'disposed' && b.return_reason && String(b.return_reason) !== 'انتهاء الصلاحية') return true;
+    return false;
+  });
+  if (st) {
+    if (st === 'issued') list = list.filter(b => b.status === 'issued');
+    else if (st === 'reaction') list = list.filter(b => b.status === 'reaction');
+    else if (st === 'returned') list = list.filter(b => b.status === 'returned');
+    else if (st === 'disposed') list = list.filter(b => b.status === 'disposed');
+  }
+  if (q) list = list.filter(b => [b.bag_no, b.barcode, b.hospital_name || bbHospName(b.hospital_id), b.blood_type, b.recipient_name, b.issued_by, b.issue_type].join(' ').toLowerCase().indexOf(q) !== -1);
+  list.sort((a, b) => (b.issued_at || b.updated_at || '').localeCompare(a.issued_at || a.updated_at || ''));
+  _bb.lastDispLog = list;
+  const rc = (b) => { const r = b.return_reason || ''; if (!r) return '—'; return `<span style="background:#fdecea;color:#e74c3c;padding:2px 8px;border-radius:10px;font-size:11px">${esc(r)}</span>`; };
+  body.innerHTML = list.map(b => `<tr>
+    <td style="text-align:center;font-size:11px">${esc(b.hospital_governorate || (_bb.hospitals.find(h => h.id === parseInt(b.hospital_id))?.governorate || '—'))}</td>
+    <td style="text-align:right;font-weight:600">${esc(b.hospital_name || bbHospName(b.hospital_id) || '—')}</td>
+    <td style="text-align:center;direction:ltr;font-weight:700;color:#f39c12">${esc(b.bag_no || '—')}</td>
+    <td style="text-align:center;direction:ltr;color:#8e44ad">${esc(b.barcode || '—')}</td>
+    <td style="text-align:center">${bbProdCell(b)}</td>
+    <td style="text-align:center;font-weight:700;color:${(b.blood_type || '').indexOf('-') !== -1 ? '#27ae60' : '#c0392b'}">${esc(b.blood_type || '—')}</td>
+    <td style="text-align:center;font-size:11px">${b.issued_at ? esc(String(b.issued_at).slice(0, 10)) : '—'}</td>
+    <td style="text-align:center;font-size:11px">${esc(b.recipient_name || '—')}</td>
+    <td style="text-align:center;font-size:11px">${esc(b.issued_by || '—')}</td>
+    <td style="text-align:center;font-size:11px">${esc(b.issue_type || '—')}</td>
+    <td style="text-align:center">${bbStBadge(b.status)}</td>
+    <td style="text-align:center">${rc(b)}</td>
+    <td style="text-align:center"><button class="btn btn-sm" data-click="bbEvents" data-args="${b.id}" title="سجل أحداث الكيس" style="background:#2e86c122;color:#2e86c1;border:none;padding:3px 10px;border-radius:6px;font-size:11px"><i class="fas fa-clock-rotate-left"></i></button></td>
+  </tr>`).join('') || `<tr><td colspan="13" class="empty-msg">لا توجد أكياس مطابقة</td></tr>`;
+}
+function bbExportDispLog() {
+  const list = _bb.lastDispLog || [];
+  if (!list.length) { showToast('❌ لا توجد أكياس مطابقة للتصدير', 'error'); return; }
+  bbXlsx(
+    ['الفرع', 'اسم المستشفي', 'رقم اللي', 'الباركود', 'المنتج', 'فصيلة الوحدة', 'تاريخ الصرف', 'المصروف إليه', 'بواسطة', 'نوع الصرف', 'الحالة', 'سبب الإعدام'],
+    list.map(b => [(b.hospital_governorate || (_bb.hospitals.find(h => h.id === parseInt(b.hospital_id))?.governorate || '—')), (b.hospital_name || bbHospName(b.hospital_id) || '—'),
+      b.bag_no, b.barcode || '—', b.product_type || 'دم', b.blood_type || '—',
+      b.issued_at ? String(b.issued_at).slice(0, 10) : '—', (b.recipient_name || '—'),
+      (b.issued_by || '—'), (b.issue_type || '—'), BB_ST_LABELS[b.status] || b.status, (b.return_reason || '—')]),
+    'سجل الصرف والتفاعل والمرتجع', 'سجل_الصرف_والتفاعل.xlsx', 'نظام بنك الدم — سجل الصرف كاملاً + ما تم إعدامه (تفاعل / مرتجع / نظام مفتوح / أخرى)');
+}
+
 /* ----- الفصائل والتوافق ----- */
 async function bbCompat() {
   const el = document.getElementById('bbBody');
@@ -11128,7 +11280,7 @@ async function bbReserve() {
         </div>
       </div>
       <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead>
-        <tr><th>تاريخ الحجز</th><th>الرقم الطبي</th><th>الاسم رباعي</th><th>السن</th><th>النوع</th><th>القسم</th><th>القسم المصرف له</th><th>فصيلة المريض</th><th>المنتج</th><th>فصيلة الوحدة</th><th>رقم اللي</th><th>الباركود</th><th>تاريخ الانتهاء</th><th>الحالة</th><th>المتبقي / الصرف</th>${canEdit ? '<th>إجراءات</th>' : ''}</tr>
+        <tr><th>الفرع</th><th>اسم المستشفي</th><th>تاريخ الحجز</th><th>الرقم الطبي</th><th>الاسم رباعي</th><th>السن</th><th>النوع</th><th>القسم المصرف له</th><th>فصيلة المريض</th><th>المنتج</th><th>فصيلة الوحدة</th><th>رقم اللي</th><th>الباركود</th><th>تاريخ الانتهاء</th><th>الحالة</th><th>المتبقي / الصرف</th><th>سبب الإعدام</th>${canEdit ? '<th>إجراءات</th>' : ''}</tr>
       </thead><tbody id="bbResLogBody"></tbody></table></div>
     </div>`;
     el.innerHTML = html;
@@ -11223,54 +11375,21 @@ function bbResShowDirect(p) {
 function bbDoIssueDirect(bid) {
   if (!_bb.selResPatient) { showToast('❌ ابحث عن المريض أولاً بالرقم الطبي', 'error'); return; }
   const b = _bb.bags.find(x => x.id === bid);
-  showConfirmModal('صرف «' + (b ? esc(b.bag_no) : '') + '» (' + (b ? esc(b.product_type || 'دم') : '') + ') مباشرةً للمريض — بدون حجز؟', async () => {
-    try {
-      await api('POST', '/blood-bags/issue-direct', { bagId: bid, patientId: _bb.selResPatient, issueType: 'داخلي' });
-      showToast('✅ تم الصرف المباشر وخصم الكيس من الرصيد');
-      await bbLoadBags(); await bbLoadReservations();
-      bbResRefresh();
-    } catch (e) { showToast('❌ ' + e.message, 'error'); }
-  });
-}
-function bbResShowStock() {
-  const box = document.getElementById('bbResStock');
-  if (!box) return;
-  const list = _bb.bags.filter(b => b.status === 'available' || b.status === 'returned');
-  if (!list.length) {
-    box.innerHTML = '<div class="empty-msg" style="margin:2px 0;text-align:right">لا يوجد رصيد متاح (متاح / مرتجع) لإعدامه حالياً</div>';
-    return;
-  }
-  box.innerHTML = `<div style="font-size:12px;font-weight:700;color:#e74c3c;margin-bottom:6px"><i class="fas fa-skull-crossbones" style="margin-left:4px"></i> أكياس الرصيد المتاح — اضغط «إعدام» على الكيس المطلوب (سبب: نظام مفتوح / أخرى):</div>` +
-    list.map(b => {
-      const exp = b.expiry_date ? String(b.expiry_date).slice(0, 10) : '';
-      return `<div style="border:1px solid var(--border,#d5dbdb);border-radius:10px;padding:7px 12px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:12px;background:var(--card-bg,#fff)">
-        <span style="font-weight:700;color:#e74c3c;direction:ltr">${esc(b.bag_no)}</span>
-        <span>${bbProdCell(b)}</span>
-        <span style="font-weight:700;color:${b.blood_type && b.blood_type.endsWith('+') ? '#c0392b' : '#27ae60'}">${esc(b.blood_type || '—')}</span>
-        <span style="color:#777;font-size:11px">${esc(b.hospital_name || bbHospName(b.hospital_id))}</span>
-        <span style="font-size:11px">الصلاحية: ${exp ? exp + ' ' + bbDaysBadge(b.days_left) : '—'}</span>
-        <span style="margin-right:auto"></span>
-        <button class="btn btn-sm btn-outline" data-click="bbResStockDispose" data-args="${b.id}" style="color:#e74c3c;border-color:#e74c3c" title="إعدام الكيس من الرصيد (نظام مفتوح / أخرى)"><i class="fas fa-trash-can"></i> إعدام</button>
-      </div>`;
-    }).join('');
-}
-function bbResStockDispose(id) {
-  const b = _bb.bags.find(x => x.id === id);
-  openModal('إعدام الكيس ' + (b ? esc(b.bag_no) : '') + ' من الرصيد',
-    `<div class="form-group"><label>سبب الإعدام</label>
-      <select class="form-control" id="bbStkReason">
-        <option value="نظام مفتوح" selected>نظام مفتوح</option>
-        <option value="أخرى">أخرى</option>
-      </select></div>
-      <div style="background:#fdecea;border:1px solid #f5b7b1;color:#922b21;padding:8px 12px;border-radius:8px;font-size:12px"><i class="fas fa-info-circle" style="margin-left:4px"></i> إعدام <strong>فردي</strong> لهذا الكيس فقط من الرصيد المتاح — لا يؤثر على بقية مكونات التبرع.</div>`,
+  const p = _bb.patients.find(x => x.id === _bb.selResPatient);
+  const depts = (_bb.departments || []).filter(d => d.hospital_id === b.hospital_id);
+  const def = (p && p.department) || '';
+  const opts = '<option value="">—</option>' + depts.map(d => `<option value="${esc(d.name)}" ${d.name === def ? 'selected' : ''}>${esc(d.name)}</option>`).join('');
+  openModal('صرف مباشر — الكيس ' + (b ? esc(b.bag_no) : ''),
+    `<div class="form-group"><label>القسم المصرف له</label><select class="form-control" id="bbIssueDirectDept">${opts}</select></div>
+    <div style="background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:8px 12px;border-radius:8px;font-size:12px"><i class="fas fa-info-circle" style="margin-left:4px"></i> سيُصرف الكيس مباشرةً للمريض <b>${p ? esc(p.name) : ''}</b> (${b ? esc(b.product_type || 'دم') : ''}) بدون حجز — يُخصم من الرصيد مع القسم المحدد</div>`,
     `<button class="btn btn-secondary" data-click="closeModal"><i class="fas fa-times"></i> إلغاء</button>
-     <button class="btn btn-primary" data-click="bbDoStockDispose" data-args="${id}" style="background:#e74c3c;border-color:#e74c3c"><i class="fas fa-trash-can"></i> إعدام</button>`);
+     <button class="btn btn-primary" data-click="bbDoIssueDirect2" data-args="${bid}"><i class="fas fa-hand-holding-heart"></i> صرف مباشر</button>`);
 }
-async function bbDoStockDispose(id) {
-  const reason = document.getElementById('bbStkReason').value;
+async function bbDoIssueDirect2(bid) {
+  const dept = document.getElementById('bbIssueDirectDept').value;
   try {
-    await api('POST', '/blood-bags/' + id + '/status', { status: 'disposed', reason });
-    showToast('✅ تم إعدام الكيس من الرصيد (' + reason + ')');
+    await api('POST', '/blood-bags/issue-direct', { bagId: bid, patientId: _bb.selResPatient, issueType: 'داخلي', issuedDepartment: dept });
+    showToast('✅ تم الصرف المباشر وخصم الكيس من الرصيد (' + (dept || 'بدون قسم') + ')');
     closeModal();
     await bbLoadBags(); await bbLoadReservations();
     bbResRefresh();
@@ -11404,6 +11523,7 @@ function bbRenderResLog() {
     (r.patient_blood_type || '').toLowerCase().indexOf(t) !== -1 ||
     (r.blood_type || '').toLowerCase().indexOf(t) !== -1 ||
     (r.hospital_name || '').toLowerCase().indexOf(t) !== -1 ||
+    (r.governorate || '').toLowerCase().indexOf(t) !== -1 ||
     (r.product_type || 'دم').toLowerCase().indexOf(t) !== -1
   );
   _bb.lastResLog = list;
@@ -11416,12 +11536,13 @@ function bbRenderResLog() {
     const color = active && rh !== null ? (rh <= 6 ? '#e74c3c' : rh <= 12 ? '#f39c12' : '#27ae60') : '#999';
     const badge = active ? (rh === null ? '—' : rh <= 0 ? 'منتهي' : Math.floor(rh) + ' ساعة') : (r.issued_at ? esc(new Date(r.issued_at).toLocaleDateString('ar-EG')) : '—');
     return `<tr>
+      <td style="text-align:center;font-size:11px">${esc((function(){var hh=_bb.hospitals.find(function(x){return String(x.id)===String(r.hospital_id)});return hh?hh.governorate:'—'})())}</td>
+      <td style="text-align:right;font-size:11px">${esc((function(){var hh=_bb.hospitals.find(function(x){return String(x.id)===String(r.hospital_id)});return hh?hh.name:'—'})())}</td>
       <td style="text-align:center;font-size:11px">${r.reserved_at ? esc(new Date(r.reserved_at).toLocaleString('ar-EG')) : ''}</td>
       <td style="text-align:center;direction:ltr;font-weight:700;color:#8e44ad">${esc(r.patient_national_id || '—')}</td>
       <td style="text-align:right;font-weight:600">${esc(r.patient_name || '—')}</td>
       <td style="text-align:center">${r.patient_age != null ? esc(r.patient_age) : '—'}</td>
       <td style="text-align:center">${esc(r.patient_gender || '—')}</td>
-      <td style="text-align:right;font-size:11px">${esc(r.patient_department || '—')}</td>
       <td style="text-align:right;font-size:11px">${esc(r.issued_department || '—')}</td>
       <td style="text-align:center">${btCell(r.patient_blood_type)}</td>
       <td style="text-align:center">${bbProdCell(r)}</td>
@@ -11431,6 +11552,7 @@ function bbRenderResLog() {
       <td style="text-align:center;direction:ltr;font-size:11px">${esc(String(r.expiry_date || '').slice(0, 10) || '—')}</td>
       <td style="text-align:center">${bbResStBadge(r)}</td>
       <td style="text-align:center"><span style="color:#fff;background:${color};padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700">${badge}</span></td>
+      <td style="text-align:center">${bag && bag.return_reason ? `<span style="display:inline-block;padding:2px 10px;border-radius:20px;background:#e74c3c22;color:#e74c3c;font-size:11px;font-weight:700">${esc(bag.return_reason)}</span>` : '—'}</td>
       ${canEdit ? `<td style="text-align:center;white-space:nowrap">${active
         ? `<button class="btn btn-sm" data-click="bbDoIssue" data-args="${r.id}" style="background:#16a085;color:#fff" title="صرف"><i class="fas fa-hand-holding-heart"></i> صرف</button>
            <button class="btn btn-sm btn-outline" data-click="bbRelease" data-args="${r.id}" style="margin-right:4px" title="تفكيك"><i class="fas fa-undo"></i></button>`
@@ -11438,22 +11560,31 @@ function bbRenderResLog() {
           ? `<button class="btn btn-sm btn-outline" data-click="bbReturn" data-args="${r.bag_id}" title="مرتجع / تفاعل / نظام مفتوح / أخرى" style="color:#e74c3c"><i class="fas fa-trash-can"></i> إعدام</button>`
           : `<span style="color:#7f8c8d;font-size:11px;font-weight:700">${bag ? esc(BB_ST_LABELS[bag.status] || bag.status) : ''}</span>`}</td>` : ''}
     </tr>`;
-  }).join('') || `<tr><td colspan="${canEdit ? 16 : 15}" class="empty-msg">لا توجد بيانات</td></tr>`;
+  }).join('') || `<tr><td colspan="${canEdit ? 18 : 17}" class="empty-msg">لا توجد بيانات</td></tr>`;
 }
 function bbExportResLog() {
   const list = _bb.lastResLog || [];
   if (!list.length) { showToast('❌ لا توجد بيانات للتصدير', 'error'); return; }
   bbXlsx(
-    ['تاريخ الحجز', 'الرقم الطبي', 'الاسم رباعي', 'السن', 'النوع', 'القسم', 'القسم المصرف له', 'فصيلة المريض', 'المنتج', 'فصيلة الوحدة', 'رقم اللي', 'الباركود', 'تاريخ الانتهاء', 'الحالة', 'المتبقي (ساعة)', 'تاريخ الصرف'],
-    list.map(r => [
-      r.reserved_at ? String(r.reserved_at).slice(0, 10) : '—',
-      r.patient_national_id || '—', r.patient_name || '—',
-      r.patient_age != null ? r.patient_age : '—', r.patient_gender || '—', r.patient_department || '—', r.issued_department || '—',
-      r.patient_blood_type || '—', r.product_type || 'دم', r.blood_type || '—',
-      r.bag_no, r.barcode || '—',
-      r.expiry_date ? String(r.expiry_date).slice(0, 10) : '—',
-      r.status_label || r.status, r.remaining_hours === null ? '—' : Math.floor(r.remaining_hours),
-      r.issued_at ? String(r.issued_at).slice(0, 10) : '—']),
+    ['الفرع', 'اسم المستشفي', 'تاريخ الحجز', 'الرقم الطبي', 'الاسم رباعي', 'السن', 'النوع', 'القسم المصرف له', 'فصيلة المريض', 'المنتج', 'فصيلة الوحدة', 'رقم اللي', 'الباركود', 'تاريخ الانتهاء', 'الحالة', 'المتبقي / الصرف', 'سبب الإعدام'],
+    list.map(r => {
+      const bag = _bb.bags.find(x => x.id === r.bag_id);
+      const hh = _bb.hospitals.find(function(x){return String(x.id)===String(r.hospital_id)});
+      return [
+        hh ? hh.governorate : '—', hh ? hh.name : '—',
+        r.reserved_at ? String(r.reserved_at).slice(0, 10) : '—',
+        r.patient_national_id || '—', r.patient_name || '—',
+        r.patient_age != null ? r.patient_age : '—', r.patient_gender || '—',
+        r.issued_department || '—',
+        r.patient_blood_type || '—', r.product_type || 'دم', r.blood_type || '—',
+        r.bag_no, r.barcode || '—',
+        r.expiry_date ? String(r.expiry_date).slice(0, 10) : '—',
+        r.status_label || r.status,
+        r.status === 'active'
+          ? (r.remaining_hours === null ? '—' : r.remaining_hours <= 0 ? 'منتهي' : Math.floor(r.remaining_hours) + ' ساعة')
+          : (r.issued_at ? String(r.issued_at).slice(0, 10) : '—'),
+        (bag && bag.return_reason) || '—'];
+    }),
     'سجل الحجوزات والصرف', 'سجل_الحجوزات_والصرف.xlsx', 'نظام بنك الدم — سجل الحجوزات والصرف (كل الحالات)');
 }
 function bbReturn(id) {
@@ -11643,12 +11774,45 @@ async function bbStats() {
     <table class="data-table" style="font-size:12px"><thead>
       <tr><th>رقم اللي</th><th>رقم الكود</th><th>من (الجهة)</th><th>إلى</th><th>المنتج</th><th>الفصيلة</th><th>الصلاحية</th><th>تاريخ الوصول</th><th>بواسطة</th><th>الحالة</th></tr>
     </thead><tbody id="bbInLogBody"></tbody></table></div></div>`;
+  if (canEdit || canDelete) {
+    html += `<div class="card" style="margin-top:16px;border-right:4px solid #27ae60"><div class="card-header" style="padding:10px 16px;background:#27ae6022;color:#27ae60"><strong><i class="fas fa-table" style="margin-left:6px"></i> تقرير الأكياس التفصيلي</strong></div>
+      <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
+        <div class="form-group"><label>بحث (رقم لي / باركود / مستشفى / فصيلة)</label><input class="form-control" id="bbBagRptQ" data-input="bbRenderBagReport" style="min-width:180px"></div>
+        <div class="form-group"><label>المنتج</label><select class="form-control" id="bbBagRptProd" data-change="bbRenderBagReport" style="min-width:140px">${bbOptProduct('')}</select></div>
+        <div class="form-group"><label>الحالة</label><select class="form-control" id="bbBagRptSt" data-change="bbRenderBagReport" style="min-width:140px"><option value="">كل الحالات</option><option value="collected">تحت الفحص</option><option value="available">مُفحوص / متاح</option><option value="returned">مرتجع</option><option value="reserved">محجوز</option><option value="issued">مُصرف</option><option value="disposed">مُعدَم</option><option value="reaction">تفاعل</option></select></div>
+        <button class="btn btn-outline" data-click="bbExportBagReport" style="border-color:#27ae60;color:#27ae60;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+      </div>
+      <table class="data-table" style="font-size:12px"><thead>
+        <tr><th>الفرع</th><th>اسم المستشفي</th><th>المنتج</th><th>فصيلة الوحدة</th><th>رقم اللي</th><th>الباركود</th><th>تاريخ الانتهاء</th><th>الحالة</th><th>المتبقي</th><th>سبب الإعدام</th><th>إجراءات</th></tr>
+      </thead><tbody id="bbBagReportBody"></tbody></table></div></div>`;
+    html += `<div class="card" style="margin-top:16px;border-right:4px solid #b7950b"><div class="card-header" style="padding:10px 16px;background:#b7950b22;color:#b7950b"><strong><i class="fas fa-hourglass-half" style="margin-left:6px"></i> سجل انتهاء صلاحيه — كل الأكياس الواردة + بيان الصرف + ما تم إعدامه</strong></div>
+      <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
+        <div class="form-group"><label>بحث (رقم لي / باركود / مستشفى / فصيلة / مصروف إليه)</label><input class="form-control" id="bbExpLogQ" data-input="bbRenderExpLog" style="min-width:190px"></div>
+        <div class="form-group"><label>النوع</label><select class="form-control" id="bbExpLogSt" data-change="bbRenderExpLog" style="min-width:150px"><option value="">كل الحالات</option><option value="expired">انتهاء الصلاحية (المنتهية صلاحيتها)</option><option value="issued">مُصرف</option><option value="disposed">مُعدَم (الرصيد + التجميع)</option><option value="returned">مرتجع</option><option value="reaction">تفاعل</option></select></div>
+        <button class="btn btn-outline" data-click="bbExportExpLog" style="border-color:#b7950b;color:#b7950b;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+      </div>
+      <table class="data-table" style="font-size:12px"><thead>
+        <tr><th>الفرع</th><th>اسم المستشفي</th><th>رقم اللي</th><th>الباركود</th><th>المنتج</th><th>فصيلة الوحدة</th><th>تاريخ الوارد</th><th>تاريخ الجمع</th><th>تاريخ الانتهاء</th><th>المتبقي</th><th>الحالة</th><th>سبب الإعدام</th><th>تاريخ الصرف</th><th>المصروف إليه</th><th>إجراءات</th></tr>
+      </thead><tbody id="bbExpLogBody"></tbody></table></div></div>`;
+    html += `<div class="card" style="margin-top:16px;border-right:4px solid #8e44ad"><div class="card-header" style="padding:10px 16px;background:#8e44ad22;color:#8e44ad"><strong><i class="fas fa-rotate-right" style="margin-left:6px"></i> سجل التفاعل والمرتجع ونظام مفتوح — سجل الصرف كاملاً + ما تم إعدامه (تفاعل / غيره)</strong></div>
+      <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
+        <div class="form-group"><label>بحث (رقم لي / باركود / مستشفى / فصيلة / مصروف إليه)</label><input class="form-control" id="bbDispLogQ" data-input="bbRenderDispLog" style="min-width:190px"></div>
+        <div class="form-group"><label>النوع</label><select class="form-control" id="bbDispLogSt" data-change="bbRenderDispLog" style="min-width:150px"><option value="">كل الحالات</option><option value="issued">مُصرف</option><option value="reaction">تفاعل</option><option value="returned">مرتجع</option><option value="disposed">إعدام آخر (نظام مفتوح / أخرى)</option></select></div>
+        <button class="btn btn-outline" data-click="bbExportDispLog" style="border-color:#8e44ad;color:#8e44ad;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
+      </div>
+      <table class="data-table" style="font-size:12px"><thead>
+        <tr><th>الفرع</th><th>اسم المستشفي</th><th>رقم اللي</th><th>الباركود</th><th>المنتج</th><th>فصيلة الوحدة</th><th>تاريخ الصرف</th><th>المصروف إليه</th><th>بواسطة</th><th>نوع الصرف</th><th>الحالة</th><th>سبب الإعدام</th><th>إجراءات</th></tr>
+      </thead><tbody id="bbDispLogBody"></tbody></table></div></div>`;
+  }
   html += `<div id="bbStatsOut"></div>`;
   el.innerHTML = html;
   await bbLoadDepartments();
   await bbLoadBags();
   bbRenderDepts();
   bbRenderInLog();
+  bbRenderBagReport();
+  bbRenderExpLog();
+  bbRenderDispLog();
 }
 async function bbPreviewStats() {
   const out = document.getElementById('bbStatsOut');

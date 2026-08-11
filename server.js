@@ -896,10 +896,11 @@ app.get('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'view'),
     if (hi !== 0) return hi;
     return (b.date || '').localeCompare(a.date || '');
   });
-  // تحت الفحص + الوارد + المنصرف: تلقائي من أكياس الدم —
+  // تحت الفحص + الوارد + المنصرف + الإعدام: تلقائي من أكياس الدم —
   // تحت الفحص = الدم غير المفحوص (collected) يُحسب كيساً واحداً فقط، بدون صفائح
   // الوارد = الأكياس المتاحة المفحوصة (available) لكل فصيلة — دم بالفصائل الثماني، بلازما بالأربع
   // المنصرف = إرسال كيس لمستشفى آخر (أحداث «إرسال كيس» ناقص «رفض استلام») + صرف كيس لمريض/هيئة (status='issued') — بالفصيلة والمنتج
+  // الإعدام = الأكياس المُعدَمة (status='disposed': نظام مفتوح / أخرى / انتهاء صلاحية) — بالفصيلة والمنتج
   try {
     const bagRows = await query('SELECT hospital_id, status, product_type, blood_type FROM blood_bags');
     const uiCounts = {};
@@ -907,6 +908,8 @@ app.get('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'view'),
     const incPlasma = {};  // hospital_id -> { 'A': n, ... }
     const outBlood = {};   // hospital_id -> { 'A+': n, ... }
     const outPlasma = {};  // hospital_id -> { 'A': n, ... }
+    const disBlood = {};   // hospital_id -> { 'A+': n, ... }
+    const disPlasma = {};  // hospital_id -> { 'A': n, ... }
     const outAdd = (map, hid, prod, bt) => {
       const key = bbNormBt(bt, prod);
       if (!key) return;
@@ -922,6 +925,9 @@ app.get('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'view'),
       } else if (b.status === 'issued' && b.blood_type) {
         // صرف لمريض أو لهيئة/جهة — الكيس يبقى في المستشفى بحالة issued
         outAdd({ blood: outBlood, plasma: outPlasma }, b.hospital_id, prod, b.blood_type);
+      } else if (b.status === 'disposed' && b.blood_type) {
+        // إعدام (نظام مفتوح / أخرى / انتهاء صلاحية) — يُحسب لكل كيس مُعدَم
+        outAdd({ blood: disBlood, plasma: disPlasma }, b.hospital_id, prod, b.blood_type);
       }
     });
     // الإرسال لمستشفى آخر من سجل الأحداث (دائم — حتى بعد قبول الاستلام في الوجهة)
@@ -950,13 +956,15 @@ app.get('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'view'),
       if (bd) {
         const ib = incBlood[r.hospital_id] || {};
         const ob = outBlood[r.hospital_id] || {};
-        BT8.forEach(t => { if (bd[t]) { bd[t].incoming = ib[t] || 0; bd[t].outgoing = ob[t] || 0; } });
+        const db = disBlood[r.hospital_id] || {};
+        BT8.forEach(t => { if (bd[t]) { bd[t].incoming = ib[t] || 0; bd[t].outgoing = ob[t] || 0; bd[t].disposal = db[t] || 0; } });
         r.blood_data = bd;
       }
       if (pd) {
         const ip = incPlasma[r.hospital_id] || {};
         const op = outPlasma[r.hospital_id] || {};
-        PT4.forEach(t => { if (pd[t]) { pd[t].incoming = ip[t] || 0; pd[t].outgoing = op[t] || 0; } });
+        const dp = disPlasma[r.hospital_id] || {};
+        PT4.forEach(t => { if (pd[t]) { pd[t].incoming = ip[t] || 0; pd[t].outgoing = op[t] || 0; pd[t].disposal = dp[t] || 0; } });
         r.plasma_data = pd;
       }
     });
@@ -2869,6 +2877,99 @@ function startAutoBackup() {
   }, 60000);
 }
 
+// ---- Daily stock rollover (نقل رصيد اليوم السابق) 08:30 & 20:30 Cairo time ----
+function cairoNowParts() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Cairo',
+    hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  }).format(new Date());
+  const m = parts.match(/(\d{4})-(\d{2})-(\d{2}), (\d{2}):(\d{2}):(\d{2})/);
+  if (!m) return null;
+  return { year: +m[1], month: +m[2], day: +m[3], hour: +m[4], minute: +m[5], second: +m[6] };
+}
+function cairoMinutesNow() {
+  const p = cairoNowParts();
+  if (!p) return -1;
+  return p.hour * 60 + p.minute;
+}
+function cairoDateKey() {
+  const p = cairoNowParts();
+  if (!p) return '';
+  return p.year + '-' + String(p.month).padStart(2, '0') + '-' + String(p.day).padStart(2, '0');
+}
+const STOCK_ROLLOVER_SLOTS = [510, 1230]; // 08:30 & 20:30 minutes-of-day (Cairo)
+let __stockRolloverKey = '';
+
+// Rebuilds the daily rollover object for one blood-type/product key:
+// previous = old available, available kept, incoming/outgoing/disposal = 0.
+function rolloverField(v) {
+  let o = v;
+  if (o == null) o = {};
+  if (typeof o === 'string') { try { o = JSON.parse(o); } catch (e) { return null; } }
+  if (typeof o !== 'object' || Array.isArray(o)) return null;
+  const avail = Number(o.available) || 0;
+  return { previous: avail, incoming: 0, outgoing: 0, disposal: 0, available: avail };
+}
+
+async function performStockRollover() {
+  const results = await query('SELECT * FROM daily_reports');
+  if (!results.rows || !results.rows.length) return;
+  // Apply the rollover to the LATEST report per hospital only —
+  // older reports are historical snapshots and must not be rewritten.
+  const latestByHosp = {};
+  results.rows.forEach(r => {
+    const k = String(r.hospital_id);
+    const key = (r.date ? String(r.date).slice(0, 10) : '') + ' ' + (r.time || '');
+    if (!latestByHosp[k] || key > (latestByHosp[k]._key || '')) { latestByHosp[k] = r; latestByHosp[k]._key = key; }
+  });
+  const latestRows = Object.values(latestByHosp);
+  for (const row of latestRows) {
+    const bd = (row.blood_data && typeof row.blood_data === 'object') ? row.blood_data : (row.blood_data ? JSON.parse(row.blood_data) : {});
+    const pd = (row.plasma_data && typeof row.plasma_data === 'object') ? row.plasma_data : (row.plasma_data ? JSON.parse(row.plasma_data) : {});
+    let bdChanged = false; let pdChanged = false;
+    if (typeof bd === 'object' && !Array.isArray(bd)) {
+      for (const t of Object.keys(bd)) {
+        const nv = rolloverField(bd[t]);
+        if (nv) { bd[t] = nv; bdChanged = true; }
+      }
+    }
+    if (typeof pd === 'object' && !Array.isArray(pd)) {
+      for (const t of Object.keys(pd)) {
+        const nv = rolloverField(pd[t]);
+        if (nv) { pd[t] = nv; pdChanged = true; }
+      }
+    }
+    if (bdChanged || pdChanged) {
+      await query('UPDATE daily_reports SET blood_data = $1, plasma_data = $2 WHERE id = $3', [
+        bdChanged ? JSON.stringify(bd) : row.blood_data,
+        pdChanged ? JSON.stringify(pd) : row.plasma_data,
+        row.id
+      ]);
+    }
+  }
+  console.log('✅ Daily stock rollover completed: ' + new Date().toISOString());
+}
+
+function startStockRollover() {
+  setInterval(async () => {
+    const nowMin = cairoMinutesNow();
+    const dayKey = cairoDateKey();
+    if (nowMin < 0 || !dayKey) return;
+    for (const slot of STOCK_ROLLOVER_SLOTS) {
+      if (Math.abs(nowMin - slot) <= 2) {
+        const key = 'stock-rollover-' + slot + '-' + dayKey;
+        if (key === __stockRolloverKey) return;
+        __stockRolloverKey = key;
+        try { await performStockRollover(); }
+        catch (e) { console.error('❌ Stock rollover failed: ' + e.message); }
+        return;
+      }
+    }
+  }, 30000);
+}
+
 // GET /api/sync/auto-backup-status
 app.get('/api/sync/auto-backup-status', requireAuth(), requireMaster(), async (req, res) => {
   const backupDir = path.join(DATA_DIR, 'auto-backups');
@@ -3531,8 +3632,13 @@ app.post('/api/blood-bags/:id/status', requireAuth(), requirePerm('blood_bags', 
     const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [id])).rows[0];
     if (!bag) return res.status(404).json({ error: 'الكيس غير موجود' });
     const isStock = ['available', 'returned'].indexOf(bag.status) !== -1;
-    if (bag.status !== 'collected' && !isStock) return res.status(400).json({ error: 'تغيير الحالة متاح لأكياس التجميع فقط' });
+    const isReserved = bag.status === 'reserved';
+    if (bag.status !== 'collected' && !isStock && !(isReserved && status === 'disposed')) return res.status(400).json({ error: 'تغيير الحالة متاح لأكياس التجميع فقط' });
     if (isStock && status !== 'disposed') return res.status(400).json({ error: 'الإعدام من الرصيد المتاح فقط (نظام مفتوح / أخرى) — فردي على الكيس' });
+    if (isReserved && status === 'disposed') {
+      await db.query("UPDATE bag_reservations SET status = 'released', released_at = NOW() WHERE bag_id = $1 AND status = 'active'", [bag.id]);
+      await db.query("UPDATE blood_bags SET recipient_id = NULL, recipient_name = '', issue_type = '' WHERE id = $1", [bag.id]);
+    }
     // أسباب إعدام التبرع كاملاً (تُطبق على كل مكونات التبرع) — دم فقط
     const wholeDonationReasons = ['incomplete', 'therapeutic', 'fatty', 'icteric', 'disposed'];
     let affected = 1;
@@ -3709,6 +3815,7 @@ app.get('/api/blood-bags/reservations', requireAuth(), requirePerm('blood_bags',
         bag_no: b.bag_no || '', barcode: b.barcode || '', blood_type: b.blood_type || '',
         product_type: b.product_type || 'دم', units: b.units != null ? b.units : 1,
         expiry_date: b.expiry_date || '', hospital_name: hospMap[r.hospital_id] ? hospMap[r.hospital_id].name : '',
+        governorate: hospMap[r.hospital_id] ? hospMap[r.hospital_id].governorate : '',
         patient_name: r.patient_name || p.name || '', patient_blood_type: p.blood_type || '',
         patient_national_id: p.national_id || '', patient_age: p.age != null ? p.age : null,
         patient_gender: p.gender || '', patient_department: p.department || '',
@@ -3783,7 +3890,7 @@ app.post('/api/blood-bags/issue', requireAuth(), requirePerm('blood_bags', 'edit
 // ----- الصرف المباشر (بلازما / صفائح / كرايو — بدون حجز) -----
 app.post('/api/blood-bags/issue-direct', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
   try {
-    const { bagId, patientId, issueType } = req.body || {};
+    const { bagId, patientId, issueType, issuedDepartment } = req.body || {};
     const bid = parseInt(bagId), pid = parseInt(patientId);
     if (!bid || !pid) return res.status(400).json({ error: 'بيانات ناقصة — الكيس والمريض مطلوبان' });
     const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [bid])).rows[0];
@@ -3799,9 +3906,9 @@ app.post('/api/blood-bags/issue-direct', requireAuth(), requirePerm('blood_bags'
     const it = BB_ISSUE_TYPES.indexOf(issueType) !== -1 ? issueType : 'داخلي';
     await db.query("UPDATE blood_bags SET status = 'issued', issued_at = NOW(), issued_by = $1, recipient_id = $2, recipient_name = $3, issue_type = $4, updated_at = NOW() WHERE id = $5",
       [user ? user.name : '', pid, patient.name, it, bid]);
-    const r = await db.query('INSERT INTO bag_reservations (bag_id, patient_id, patient_name, hospital_id, reserved_at, reserved_until, status, compat_cards, user_id, issued_at) VALUES ($1,$2,$3,$4,NOW(),NOW(),$5,0,$6,NOW()) RETURNING *',
-      [bid, pid, patient.name, bag.hospital_id, 'issued', user ? user.id : null]);
-    await bbAddEvent(bag, 'صرف كيس', 'صرف مباشر (بدون حجز) — المنتج: ' + (bag.product_type || 'دم') + ' لمريض: ' + patient.name + ' (' + it + ')', user, null, null);
+    const r = await db.query('INSERT INTO bag_reservations (bag_id, patient_id, patient_name, hospital_id, reserved_at, reserved_until, status, compat_cards, user_id, issued_at, issued_department) VALUES ($1,$2,$3,$4,NOW(),NOW(),$5,0,$6,NOW(),$7) RETURNING *',
+      [bid, pid, patient.name, bag.hospital_id, 'issued', user ? user.id : null, issuedDepartment || '']);
+    await bbAddEvent(bag, 'صرف كيس', 'صرف مباشر (بدون حجز) — المنتج: ' + (bag.product_type || 'دم') + ' لمريض: ' + patient.name + ' (' + it + ')' + (issuedDepartment ? ' — القسم المصرف له: ' + issuedDepartment : ''), user, null, null);
     res.json({ ok: true, reservation: r.rows[0] });
   } catch (e) { console.error('POST issue-direct:', e.message); res.status(500).json({ error: errMsg(e) }); }
 });
@@ -4205,6 +4312,8 @@ app.listen(PORT, '0.0.0.0', () => {
   }
   // Start auto-backup scheduler
   startAutoBackup();
+  // Start daily stock rollover scheduler
+  startStockRollover();
 });
 
 } // end startServer()
