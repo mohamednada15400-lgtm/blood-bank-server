@@ -1479,6 +1479,24 @@
       "role": "branch_supervisor",
       "governorate": "المنيا",
       "view_permission": "governorate"
+    },
+    {
+      "id": 168,
+      "username": "sup_",
+      "password": "$2b$10$IBQOw9zrw4Rl8SWI0pC.9O6d8epuTZrY5tHKmWBB8tKs5b1rXRfNq",
+      "name": "مشرف ???????",
+      "role": "branch_supervisor",
+      "governorate": "???????",
+      "view_permission": "governorate"
+    },
+    {
+      "id": 170,
+      "username": "sup_السويس",
+      "password": "$2b$10$hfr33EZNQBjHYXDZNwUI7eQ14o1gOW2fDukLULdyTECmSmpNMBiCe",
+      "name": "مشرف السويس",
+      "role": "branch_supervisor",
+      "governorate": "السويس",
+      "view_permission": "governorate"
     }
   ],
   "hospitals": [
@@ -1785,7 +1803,8 @@
       "cryo": 0,
       "license_type": "تخزيني",
       "license_status": "",
-      "user_id": 59
+      "user_id": 59,
+      "_key": "2026-08-11 02:34"
     },
     {
       "id": 1,
@@ -1794,13 +1813,14 @@
       "time": "16:52",
       "under_inspection": 2,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":8,\"incoming\":6,\"outgoing\":5,\"disposal\":0,\"available\":9},\"B\":{\"previous\":38,\"incoming\":1,\"outgoing\":5,\"disposal\":0,\"available\":34},\"AB\":{\"previous\":7,\"incoming\":0,\"outgoing\":3,\"disposal\":0,\"available\":4},\"O\":{\"previous\":40,\"incoming\":4,\"outgoing\":8,\"disposal\":0,\"available\":36}}",
+      "plasma_data": "{\"A\":{\"previous\":9,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":9},\"B\":{\"previous\":34,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":34},\"AB\":{\"previous\":4,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":4},\"O\":{\"previous\":36,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":36}}",
       "platelets": 144,
       "cryo": 11,
       "license_type": "تجميعي",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 2,
@@ -1809,13 +1829,14 @@
       "time": "16:52",
       "under_inspection": 0,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":8,\"incoming\":9,\"outgoing\":5,\"disposal\":0,\"available\":12},\"B\":{\"previous\":15,\"incoming\":6,\"outgoing\":4,\"disposal\":0,\"available\":17},\"AB\":{\"previous\":4,\"incoming\":4,\"outgoing\":2,\"disposal\":0,\"available\":6},\"O\":{\"previous\":13,\"incoming\":0,\"outgoing\":7,\"disposal\":0,\"available\":6}}",
+      "plasma_data": "{\"A\":{\"previous\":12,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":12},\"B\":{\"previous\":17,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":17},\"AB\":{\"previous\":6,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":6},\"O\":{\"previous\":6,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":6}}",
       "platelets": 0,
       "cryo": 0,
       "license_type": "تخزيني",
       "license_status": "غير مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 3,
@@ -1824,13 +1845,14 @@
       "time": "16:52",
       "under_inspection": 9,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":42,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":42},\"B\":{\"previous\":32,\"incoming\":6,\"outgoing\":2,\"disposal\":0,\"available\":36},\"AB\":{\"previous\":14,\"incoming\":1,\"outgoing\":4,\"disposal\":0,\"available\":11},\"O\":{\"previous\":21,\"incoming\":12,\"outgoing\":1,\"disposal\":0,\"available\":32}}",
+      "plasma_data": "{\"A\":{\"previous\":42,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":42},\"B\":{\"previous\":36,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":36},\"AB\":{\"previous\":11,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":11},\"O\":{\"previous\":32,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":32}}",
       "platelets": 127,
       "cryo": 14,
       "license_type": "تجميعي",
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 4,
@@ -1838,14 +1860,15 @@
       "date": "2026-08-11",
       "time": "02:27",
       "under_inspection": 0,
-      "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":1,\"disposal\":0,\"available\":-1},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":-1,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":-1},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
       "plasma_data": "{\"A\":{\"previous\":500,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":500},\"B\":{\"previous\":11,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":11},\"AB\":{\"previous\":18,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":18},\"O\":{\"previous\":37,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":37}}",
       "platelets": 22,
       "cryo": 12,
       "license_type": "تخزيني",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-11 02:27"
     },
     {
       "id": 5,
@@ -1860,7 +1883,8 @@
       "license_type": "تخزيني",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-09 13:29"
     },
     {
       "id": 6,
@@ -1875,22 +1899,24 @@
       "license_type": "تخزيني",
       "license_status": "تم تقديم الملف",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-11 02:21"
     },
     {
       "id": 7,
       "hospital_id": 4,
-      "date": "2026-08-11",
-      "time": "02:27",
+      "date": "2026-08-14",
+      "time": "01:53",
       "under_inspection": 0,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
       "plasma_data": "{\"A\":{\"previous\":29,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":29},\"B\":{\"previous\":36,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":36},\"AB\":{\"previous\":26,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":26},\"O\":{\"previous\":56,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":56}}",
       "platelets": 0,
       "cryo": 0,
       "license_type": "تخزيني",
-      "license_status": "جارى تجديد الترخيص",
+      "license_status": "تخزيني",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-11 02:27"
     },
     {
       "id": 8,
@@ -1899,13 +1925,14 @@
       "time": "16:52",
       "under_inspection": 0,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":8,\"incoming\":4,\"outgoing\":4,\"disposal\":0,\"available\":8},\"B\":{\"previous\":38,\"incoming\":0,\"outgoing\":5,\"disposal\":0,\"available\":33},\"AB\":{\"previous\":1,\"incoming\":1,\"outgoing\":1,\"disposal\":0,\"available\":1},\"O\":{\"previous\":8,\"incoming\":8,\"outgoing\":3,\"disposal\":0,\"available\":13}}",
+      "plasma_data": "{\"A\":{\"previous\":8,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":8},\"B\":{\"previous\":33,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":33},\"AB\":{\"previous\":1,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":1},\"O\":{\"previous\":13,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":13}}",
       "platelets": 0,
       "cryo": 0,
       "license_type": "تخزيني",
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 9,
@@ -1960,7 +1987,8 @@
           "AB": 10
         }
       },
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-09 13:29"
     },
     {
       "id": 11,
@@ -1975,7 +2003,8 @@
       "license_type": "تجميعي",
       "license_status": "تم تقديم الملف",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-09 13:29"
     },
     {
       "id": 12,
@@ -1990,7 +2019,8 @@
       "license_type": "تخزيني",
       "license_status": "تم تقديم الملف",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-09 13:29"
     },
     {
       "id": 13,
@@ -1999,13 +2029,14 @@
       "time": "16:52",
       "under_inspection": 8,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":17,\"incoming\":0,\"outgoing\":6,\"disposal\":0,\"available\":11},\"B\":{\"previous\":29,\"incoming\":2,\"outgoing\":2,\"disposal\":0,\"available\":29},\"AB\":{\"previous\":6,\"incoming\":1,\"outgoing\":1,\"disposal\":0,\"available\":6},\"O\":{\"previous\":58,\"incoming\":12,\"outgoing\":7,\"disposal\":0,\"available\":63}}",
+      "plasma_data": "{\"A\":{\"previous\":11,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":11},\"B\":{\"previous\":29,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":29},\"AB\":{\"previous\":6,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":6},\"O\":{\"previous\":63,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":63}}",
       "platelets": 169,
       "cryo": 7,
       "license_type": "تخزيني",
       "license_status": "تم تقديم الملف",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 14,
@@ -2020,7 +2051,8 @@
       "license_type": "تخزيني",
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:17"
     },
     {
       "id": 15,
@@ -2029,13 +2061,14 @@
       "time": "16:52",
       "under_inspection": 5,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":43,\"incoming\":10,\"outgoing\":8,\"disposal\":0,\"available\":45},\"B\":{\"previous\":27,\"incoming\":5,\"outgoing\":0,\"disposal\":0,\"available\":32},\"AB\":{\"previous\":1,\"incoming\":2,\"outgoing\":3,\"disposal\":0,\"available\":0},\"O\":{\"previous\":38,\"incoming\":9,\"outgoing\":0,\"disposal\":0,\"available\":47}}",
+      "plasma_data": "{\"A\":{\"previous\":45,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":45},\"B\":{\"previous\":32,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":32},\"AB\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O\":{\"previous\":47,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":47}}",
       "platelets": 81,
       "cryo": 9,
       "license_type": "تخزيني",
       "license_status": "غير مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 16,
@@ -2044,13 +2077,14 @@
       "time": "16:52",
       "under_inspection": 0,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":47,\"incoming\":6,\"outgoing\":6,\"disposal\":0,\"available\":47},\"B\":{\"previous\":34,\"incoming\":2,\"outgoing\":0,\"disposal\":0,\"available\":36},\"AB\":{\"previous\":18,\"incoming\":3,\"outgoing\":4,\"disposal\":0,\"available\":17},\"O\":{\"previous\":60,\"incoming\":9,\"outgoing\":2,\"disposal\":0,\"available\":67}}",
+      "plasma_data": "{\"A\":{\"previous\":47,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":47},\"B\":{\"previous\":36,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":36},\"AB\":{\"previous\":17,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":17},\"O\":{\"previous\":67,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":67}}",
       "platelets": 0,
       "cryo": 0,
       "license_type": "تخزيني",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 17,
@@ -2059,13 +2093,14 @@
       "time": "16:52",
       "under_inspection": 0,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":29,\"incoming\":6,\"outgoing\":8,\"disposal\":0,\"available\":27},\"B\":{\"previous\":12,\"incoming\":2,\"outgoing\":5,\"disposal\":0,\"available\":9},\"AB\":{\"previous\":24,\"incoming\":2,\"outgoing\":2,\"disposal\":0,\"available\":24},\"O\":{\"previous\":11,\"incoming\":10,\"outgoing\":7,\"disposal\":0,\"available\":14}}",
+      "plasma_data": "{\"A\":{\"previous\":27,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":27},\"B\":{\"previous\":9,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":9},\"AB\":{\"previous\":24,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":24},\"O\":{\"previous\":14,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":14}}",
       "platelets": 0,
       "cryo": 0,
       "license_type": "تخزيني",
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 18,
@@ -2074,13 +2109,14 @@
       "time": "16:52",
       "under_inspection": 5,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":16,\"incoming\":0,\"outgoing\":4,\"disposal\":0,\"available\":12},\"B\":{\"previous\":34,\"incoming\":6,\"outgoing\":2,\"disposal\":0,\"available\":38},\"AB\":{\"previous\":24,\"incoming\":3,\"outgoing\":1,\"disposal\":0,\"available\":26},\"O\":{\"previous\":11,\"incoming\":2,\"outgoing\":4,\"disposal\":0,\"available\":9}}",
+      "plasma_data": "{\"A\":{\"previous\":12,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":12},\"B\":{\"previous\":38,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":38},\"AB\":{\"previous\":26,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":26},\"O\":{\"previous\":9,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":9}}",
       "platelets": 103,
       "cryo": 0,
       "license_type": "تجميعي",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 19,
@@ -2088,14 +2124,15 @@
       "date": "2026-08-11",
       "time": "02:34",
       "under_inspection": 0,
-      "blood_data": "{\"A+\":{\"previous\":200,\"incoming\":0,\"outgoing\":0,\"disposal\":100,\"available\":100},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "blood_data": "{\"A+\":{\"previous\":100,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":100},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
       "plasma_data": "{\"A\":{\"previous\":6,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":6},\"B\":{\"previous\":31,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":31},\"AB\":{\"previous\":26,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":26},\"O\":{\"previous\":58,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":58}}",
       "platelets": 21,
       "cryo": 10,
       "license_type": "تجميعي",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-11 02:34"
     },
     {
       "id": 20,
@@ -2104,13 +2141,14 @@
       "time": "16:52",
       "under_inspection": 0,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":31,\"incoming\":1,\"outgoing\":8,\"disposal\":0,\"available\":24},\"B\":{\"previous\":6,\"incoming\":7,\"outgoing\":3,\"disposal\":0,\"available\":10},\"AB\":{\"previous\":0,\"incoming\":3,\"outgoing\":4,\"disposal\":0,\"available\":-1},\"O\":{\"previous\":46,\"incoming\":3,\"outgoing\":2,\"disposal\":0,\"available\":47}}",
+      "plasma_data": "{\"A\":{\"previous\":24,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":24},\"B\":{\"previous\":10,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":10},\"AB\":{\"previous\":-1,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":-1},\"O\":{\"previous\":47,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":47}}",
       "platelets": 42,
       "cryo": 3,
       "license_type": "تجميعي",
       "license_status": "تم تقديم الملف",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 21,
@@ -2119,13 +2157,14 @@
       "time": "16:52",
       "under_inspection": 0,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":13,\"incoming\":1,\"outgoing\":0,\"disposal\":0,\"available\":14},\"B\":{\"previous\":19,\"incoming\":0,\"outgoing\":2,\"disposal\":0,\"available\":17},\"AB\":{\"previous\":21,\"incoming\":5,\"outgoing\":0,\"disposal\":0,\"available\":26},\"O\":{\"previous\":16,\"incoming\":8,\"outgoing\":3,\"disposal\":0,\"available\":21}}",
+      "plasma_data": "{\"A\":{\"previous\":14,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":14},\"B\":{\"previous\":17,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":17},\"AB\":{\"previous\":26,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":26},\"O\":{\"previous\":21,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":21}}",
       "platelets": 0,
       "cryo": 0,
       "license_type": "تخزيني",
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 22,
@@ -2134,13 +2173,14 @@
       "time": "16:52",
       "under_inspection": 2,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":10,\"incoming\":2,\"outgoing\":0,\"disposal\":0,\"available\":12},\"B\":{\"previous\":11,\"incoming\":8,\"outgoing\":0,\"disposal\":0,\"available\":19},\"AB\":{\"previous\":12,\"incoming\":5,\"outgoing\":1,\"disposal\":0,\"available\":16},\"O\":{\"previous\":26,\"incoming\":11,\"outgoing\":4,\"disposal\":0,\"available\":33}}",
+      "plasma_data": "{\"A\":{\"previous\":12,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":12},\"B\":{\"previous\":19,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":19},\"AB\":{\"previous\":16,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":16},\"O\":{\"previous\":33,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":33}}",
       "platelets": 192,
       "cryo": 11,
       "license_type": "تخزيني",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 23,
@@ -2155,7 +2195,8 @@
       "license_type": "تخزيني",
       "license_status": "تم تقديم الملف",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 25,
@@ -2164,13 +2205,14 @@
       "time": "16:52",
       "under_inspection": 3,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":35,\"incoming\":5,\"outgoing\":3,\"disposal\":0,\"available\":37},\"B\":{\"previous\":39,\"incoming\":7,\"outgoing\":5,\"disposal\":0,\"available\":41},\"AB\":{\"previous\":19,\"incoming\":4,\"outgoing\":0,\"disposal\":0,\"available\":23},\"O\":{\"previous\":11,\"incoming\":8,\"outgoing\":6,\"disposal\":0,\"available\":13}}",
+      "plasma_data": "{\"A\":{\"previous\":37,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":37},\"B\":{\"previous\":41,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":41},\"AB\":{\"previous\":23,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":23},\"O\":{\"previous\":13,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":13}}",
       "platelets": 121,
       "cryo": 11,
       "license_type": "تجميعي",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 26,
@@ -2179,13 +2221,14 @@
       "time": "16:52",
       "under_inspection": 31,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":50,\"incoming\":7,\"outgoing\":8,\"disposal\":0,\"available\":49},\"B\":{\"previous\":27,\"incoming\":1,\"outgoing\":5,\"disposal\":0,\"available\":23},\"AB\":{\"previous\":28,\"incoming\":1,\"outgoing\":0,\"disposal\":0,\"available\":29},\"O\":{\"previous\":49,\"incoming\":12,\"outgoing\":10,\"disposal\":0,\"available\":51}}",
+      "plasma_data": "{\"A\":{\"previous\":49,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":49},\"B\":{\"previous\":23,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":23},\"AB\":{\"previous\":29,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":29},\"O\":{\"previous\":51,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":51}}",
       "platelets": 0,
       "cryo": 0,
       "license_type": "تخزيني",
       "license_status": "غير مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 27,
@@ -2194,13 +2237,14 @@
       "time": "16:52",
       "under_inspection": 2,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":14,\"incoming\":7,\"outgoing\":8,\"disposal\":0,\"available\":13},\"B\":{\"previous\":27,\"incoming\":5,\"outgoing\":0,\"disposal\":0,\"available\":32},\"AB\":{\"previous\":16,\"incoming\":5,\"outgoing\":2,\"disposal\":0,\"available\":19},\"O\":{\"previous\":50,\"incoming\":9,\"outgoing\":10,\"disposal\":0,\"available\":49}}",
+      "plasma_data": "{\"A\":{\"previous\":13,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":13},\"B\":{\"previous\":32,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":32},\"AB\":{\"previous\":19,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":19},\"O\":{\"previous\":49,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":49}}",
       "platelets": 74,
       "cryo": 0,
       "license_type": "تخزيني",
       "license_status": "غير مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 28,
@@ -2209,13 +2253,14 @@
       "time": "16:52",
       "under_inspection": 32,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":20,\"incoming\":0,\"outgoing\":5,\"disposal\":0,\"available\":15},\"B\":{\"previous\":20,\"incoming\":0,\"outgoing\":3,\"disposal\":0,\"available\":17},\"AB\":{\"previous\":7,\"incoming\":1,\"outgoing\":3,\"disposal\":0,\"available\":5},\"O\":{\"previous\":10,\"incoming\":5,\"outgoing\":6,\"disposal\":0,\"available\":9}}",
+      "plasma_data": "{\"A\":{\"previous\":15,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":15},\"B\":{\"previous\":17,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":17},\"AB\":{\"previous\":5,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":5},\"O\":{\"previous\":9,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":9}}",
       "platelets": 76,
       "cryo": 1,
       "license_type": "تخزيني",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 29,
@@ -2223,14 +2268,15 @@
       "date": "2026-08-10",
       "time": "15:40",
       "under_inspection": 0,
-      "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":1,\"outgoing\":0,\"disposal\":0,\"available\":1},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":1,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":1},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
       "plasma_data": "{\"A\":{\"previous\":24,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":24},\"B\":{\"previous\":27,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":27},\"AB\":{\"previous\":15,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":15},\"O\":{\"previous\":32,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":32}}",
       "platelets": 192,
       "cryo": 3,
       "license_type": "تجميعي",
       "license_status": "تم تقديم الملف",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-10 15:40"
     },
     {
       "id": 30,
@@ -2239,13 +2285,14 @@
       "time": "16:52",
       "under_inspection": 9,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":42,\"incoming\":7,\"outgoing\":8,\"disposal\":0,\"available\":41},\"B\":{\"previous\":28,\"incoming\":6,\"outgoing\":3,\"disposal\":0,\"available\":31},\"AB\":{\"previous\":11,\"incoming\":2,\"outgoing\":0,\"disposal\":0,\"available\":13},\"O\":{\"previous\":28,\"incoming\":4,\"outgoing\":3,\"disposal\":0,\"available\":29}}",
+      "plasma_data": "{\"A\":{\"previous\":41,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":41},\"B\":{\"previous\":31,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":31},\"AB\":{\"previous\":13,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":13},\"O\":{\"previous\":29,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":29}}",
       "platelets": 143,
       "cryo": 2,
       "license_type": "تخزيني",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 31,
@@ -2260,7 +2307,8 @@
       "license_type": "تخزيني",
       "license_status": "غير مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-10 15:40"
     },
     {
       "id": 32,
@@ -2269,7 +2317,7 @@
       "time": "16:52",
       "under_inspection": 10,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":24,\"incoming\":7,\"outgoing\":0,\"disposal\":0,\"available\":31},\"B\":{\"previous\":23,\"incoming\":5,\"outgoing\":0,\"disposal\":0,\"available\":28},\"AB\":{\"previous\":7,\"incoming\":3,\"outgoing\":4,\"disposal\":0,\"available\":6},\"O\":{\"previous\":31,\"incoming\":0,\"outgoing\":9,\"disposal\":0,\"available\":22}}",
+      "plasma_data": "{\"A\":{\"previous\":31,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":31},\"B\":{\"previous\":28,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":28},\"AB\":{\"previous\":6,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":6},\"O\":{\"previous\":22,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":22}}",
       "platelets": 151,
       "cryo": 15,
       "license_type": "تجميعي",
@@ -2300,7 +2348,8 @@
           "AB": 0
         }
       },
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 33,
@@ -2315,7 +2364,8 @@
       "license_type": "تجميعي",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-09 13:29"
     },
     {
       "id": 34,
@@ -2323,14 +2373,15 @@
       "date": "2026-07-27",
       "time": "16:52",
       "under_inspection": 0,
-      "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":7,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":22,\"incoming\":2,\"outgoing\":2,\"disposal\":0,\"available\":22},\"B\":{\"previous\":12,\"incoming\":7,\"outgoing\":3,\"disposal\":0,\"available\":16},\"AB\":{\"previous\":15,\"incoming\":4,\"outgoing\":1,\"disposal\":0,\"available\":18},\"O\":{\"previous\":14,\"incoming\":10,\"outgoing\":9,\"disposal\":0,\"available\":15}}",
+      "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "plasma_data": "{\"A\":{\"previous\":22,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":22},\"B\":{\"previous\":16,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":16},\"AB\":{\"previous\":18,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":18},\"O\":{\"previous\":15,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":15}}",
       "platelets": 80,
       "cryo": 4,
       "license_type": "تجميعي",
       "license_status": "تم تقديم الملف",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 35,
@@ -2345,7 +2396,8 @@
       "license_type": "تجميعي",
       "license_status": "مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-10 15:40"
     },
     {
       "id": 36,
@@ -2354,13 +2406,14 @@
       "time": "16:52",
       "under_inspection": 1,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
-      "plasma_data": "{\"A\":{\"previous\":21,\"incoming\":1,\"outgoing\":6,\"disposal\":0,\"available\":16},\"B\":{\"previous\":6,\"incoming\":0,\"outgoing\":3,\"disposal\":0,\"available\":3},\"AB\":{\"previous\":21,\"incoming\":5,\"outgoing\":3,\"disposal\":0,\"available\":23},\"O\":{\"previous\":33,\"incoming\":3,\"outgoing\":4,\"disposal\":0,\"available\":32}}",
+      "plasma_data": "{\"A\":{\"previous\":16,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":16},\"B\":{\"previous\":3,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":3},\"AB\":{\"previous\":23,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":23},\"O\":{\"previous\":32,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":32}}",
       "platelets": 21,
       "cryo": 15,
       "license_type": "تخزيني",
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-07-27 16:52"
     },
     {
       "id": 37,
@@ -2375,7 +2428,8 @@
       "license_type": "تخزيني",
       "license_status": "تخزيني",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "_key": "2026-08-11 02:27"
     }
   ],
   "daily_statements": [],
@@ -65497,15 +65551,6 @@
       "created_at": "2026-07-16T23:37:01.568Z"
     },
     {
-      "id": 111,
-      "type": "مؤشرات تجميعيه",
-      "title": "مؤشرات تجميعيه - أرشيف 2026/6",
-      "data": "[{\"data\":{\"ct\":1.0852713178294573,\"tested\":277,\"inc_rdp\":8,\"inc_sdp\":6,\"out_rdp\":8,\"out_sdp\":6,\"ratio_b\":0.007220216606498195,\"ratio_c\":0.0036101083032490976,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":30,\"ratio_exp\":0,\"disp_other\":0,\"inc_plasma\":0,\"ratio_open\":0,\"virology_b\":2,\"virology_c\":1,\"virology_i\":0,\"ratio_other\":0,\"uncompleted\":3,\"blood_groups\":530,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0,\"collect_total\":283,\"compatibility\":280,\"disp_reaction\":1,\"disp_returned\":0,\"out_blood_ext\":18,\"out_blood_int\":240,\"ratio_refused\":0.007168458781362007,\"refused_fatty\":2,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":3,\"out_plasma_int\":111,\"ratio_reaction\":0.004166666666666667,\"ratio_returned\":0,\"disp_exp_plasma\":19,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":20,\"ratio_uncompleted\":0.010638297872340425,\"donation_therapeutic\":1},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"أسوان\",\"hospital_id\":32,\"hospital_name\":\"كوم امبو *\",\"user_id\":1},{\"data\":{\"ct\":1.0664893617021276,\"tested\":466,\"inc_rdp\":0,\"inc_sdp\":18,\"out_rdp\":0,\"out_sdp\":18,\"ratio_b\":0.008583690987124463,\"ratio_c\":0.012875536480686695,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":6,\"ratio_exp\":0,\"disp_other\":4,\"inc_plasma\":0,\"ratio_open\":0,\"virology_b\":4,\"virology_c\":6,\"virology_i\":0,\"ratio_other\":0.013114754098360656,\"uncompleted\":14,\"blood_groups\":290,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0,\"collect_total\":487,\"compatibility\":401,\"disp_reaction\":0,\"disp_returned\":0,\"out_blood_ext\":71,\"out_blood_int\":305,\"ratio_refused\":0.012711864406779662,\"refused_fatty\":6,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":29,\"out_plasma_int\":60,\"ratio_reaction\":0,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":86,\"ratio_uncompleted\":0.02880658436213992,\"donation_therapeutic\":1},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"أسوان\",\"hospital_id\":30,\"hospital_name\":\"النيل التخصصي*(حورس ادفو)\",\"user_id\":1},{\"data\":{\"ct\":2,\"tested\":108,\"inc_rdp\":0,\"inc_sdp\":6,\"out_rdp\":0,\"out_sdp\":6,\"ratio_b\":0,\"ratio_c\":0.009259259259259259,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":33,\"ratio_exp\":0,\"disp_other\":0,\"inc_plasma\":110,\"ratio_open\":0,\"virology_b\":0,\"virology_c\":1,\"virology_i\":0,\"ratio_other\":0,\"uncompleted\":1,\"blood_groups\":141,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0,\"collect_total\":114,\"compatibility\":190,\"disp_reaction\":1,\"disp_returned\":0,\"out_blood_ext\":0,\"out_blood_int\":95,\"ratio_refused\":0.02702702702702703,\"refused_fatty\":3,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":0,\"out_plasma_int\":40,\"ratio_reaction\":0.010526315789473684,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":39,\"ratio_uncompleted\":0.008928571428571428,\"donation_therapeutic\":2},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"جنوب سيناء\",\"hospital_id\":28,\"hospital_name\":\"مجمع الفيروز *\",\"user_id\":1},{\"data\":{\"ct\":1.206896551724138,\"tested\":72,\"inc_rdp\":0,\"inc_sdp\":12,\"out_rdp\":0,\"out_sdp\":12,\"ratio_b\":0,\"ratio_c\":0,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":59,\"ratio_exp\":0.007633587786259542,\"disp_other\":0,\"inc_plasma\":0,\"ratio_open\":0,\"virology_b\":0,\"virology_c\":0,\"virology_i\":0,\"ratio_other\":0,\"uncompleted\":0,\"blood_groups\":160,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0,\"collect_total\":73,\"compatibility\":70,\"disp_reaction\":0,\"disp_returned\":0,\"out_blood_ext\":0,\"out_blood_int\":58,\"ratio_refused\":0.0136986301369863,\"refused_fatty\":1,\"disp_exp_blood\":1,\"out_blood_auth\":14,\"out_plasma_ext\":28,\"out_plasma_int\":13,\"ratio_reaction\":0,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":16,\"ratio_uncompleted\":0,\"donation_therapeutic\":0},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"جنوب سيناء\",\"hospital_id\":24,\"hospital_name\":\"راس سدر *\",\"user_id\":1},{\"data\":{\"ct\":1.274131274131274,\"tested\":248,\"inc_rdp\":18,\"inc_sdp\":168,\"out_rdp\":0,\"out_sdp\":168,\"ratio_b\":0.004032258064516129,\"ratio_c\":0.004032258064516129,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":29,\"ratio_exp\":0,\"disp_other\":1,\"inc_plasma\":0,\"ratio_open\":0,\"virology_b\":1,\"virology_c\":1,\"virology_i\":0,\"ratio_other\":0.0038910505836575876,\"uncompleted\":4,\"blood_groups\":315,\"disp_exp_rdp\":18,\"disp_exp_sdp\":0,\"ratio_dollar\":0.004032258064516129,\"collect_total\":265,\"compatibility\":330,\"disp_reaction\":0,\"disp_returned\":0,\"out_blood_ext\":2,\"out_blood_int\":257,\"ratio_refused\":0.004016064257028112,\"refused_fatty\":1,\"disp_exp_blood\":0,\"out_blood_auth\":15,\"out_plasma_ext\":56,\"out_plasma_int\":70,\"ratio_reaction\":0,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":1,\"out_blood_branch\":0,\"ratio_uncompleted\":0.015810276679841896,\"donation_therapeutic\":12},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"الأقصر\",\"hospital_id\":22,\"hospital_name\":\"الكرنك الدولي *\",\"user_id\":1},{\"data\":{\"ct\":1.2876712328767124,\"tested\":614,\"inc_rdp\":0,\"inc_sdp\":0,\"out_rdp\":51,\"out_sdp\":167,\"ratio_b\":0.004885993485342019,\"ratio_c\":0.004885993485342019,\"ratio_i\":0.004885993485342019,\"disp_open\":0,\"inc_blood\":13,\"ratio_exp\":0.017828200972447326,\"disp_other\":18,\"inc_plasma\":0,\"ratio_open\":0,\"virology_b\":3,\"virology_c\":3,\"virology_i\":3,\"ratio_other\":0.03119584055459272,\"uncompleted\":4,\"blood_groups\":561,\"disp_exp_rdp\":35,\"disp_exp_sdp\":0,\"ratio_dollar\":0.0016286644951140066,\"collect_total\":621,\"compatibility\":752,\"disp_reaction\":0,\"disp_returned\":1,\"out_blood_ext\":7,\"out_blood_int\":577,\"ratio_refused\":0,\"refused_fatty\":0,\"disp_exp_blood\":11,\"out_blood_auth\":1,\"out_plasma_ext\":19,\"out_plasma_int\":350,\"ratio_reaction\":0,\"ratio_returned\":0.0017331022530329288,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":1,\"out_blood_branch\":3,\"ratio_uncompleted\":0.006472491909385114,\"donation_therapeutic\":3},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"الأقصر\",\"hospital_id\":18,\"hospital_name\":\"طيبة التخصصي *\",\"user_id\":1},{\"data\":{\"ct\":1.8981481481481481,\"tested\":543,\"inc_rdp\":6,\"inc_sdp\":204,\"out_rdp\":6,\"out_sdp\":204,\"ratio_b\":0.0055248618784530384,\"ratio_c\":0.009208103130755065,\"ratio_i\":0.001841620626151013,\"disp_open\":0,\"inc_blood\":83,\"ratio_exp\":0,\"disp_other\":0,\"inc_plasma\":8,\"ratio_open\":0,\"virology_b\":3,\"virology_c\":5,\"virology_i\":1,\"ratio_other\":0,\"uncompleted\":13,\"blood_groups\":434,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0.0055248618784530384,\"collect_total\":557,\"compatibility\":820,\"disp_reaction\":0,\"disp_returned\":0,\"out_blood_ext\":16,\"out_blood_int\":416,\"ratio_refused\":0.001838235294117647,\"refused_fatty\":1,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":0,\"out_plasma_int\":185,\"ratio_reaction\":0,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":3,\"out_blood_branch\":136,\"ratio_uncompleted\":0.02333931777378815,\"donation_therapeutic\":0},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"بورسعيد\",\"hospital_id\":6,\"hospital_name\":\"السلام\",\"user_id\":1},{\"data\":{\"ct\":1.8064516129032258,\"tested\":205,\"inc_rdp\":0,\"inc_sdp\":54,\"out_rdp\":0,\"out_sdp\":54,\"ratio_b\":0,\"ratio_c\":0,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":13,\"ratio_exp\":0,\"disp_other\":0,\"inc_plasma\":25,\"ratio_open\":0,\"virology_b\":0,\"virology_c\":0,\"virology_i\":0,\"ratio_other\":0,\"uncompleted\":0,\"blood_groups\":300,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0,\"collect_total\":206,\"compatibility\":280,\"disp_reaction\":0,\"disp_returned\":0,\"out_blood_ext\":31,\"out_blood_int\":124,\"ratio_refused\":0.0048543689320388345,\"refused_fatty\":1,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":4,\"out_plasma_int\":63,\"ratio_reaction\":0,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":87,\"ratio_uncompleted\":0,\"donation_therapeutic\":0},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"بورسعيد\",\"hospital_id\":2,\"hospital_name\":\"النصر *\",\"user_id\":1},{\"data\":{\"ct\":1.5519568151147098,\"tested\":955,\"inc_rdp\":2,\"inc_sdp\":618,\"out_rdp\":0,\"out_sdp\":42,\"ratio_b\":0.0010471204188481676,\"ratio_c\":0.0062827225130890054,\"ratio_i\":0,\"disp_open\":1,\"inc_blood\":107,\"ratio_exp\":0,\"disp_other\":6,\"inc_plasma\":0,\"ratio_open\":0.0014792899408284023,\"virology_b\":1,\"virology_c\":6,\"virology_i\":0,\"ratio_other\":0.008875739644970414,\"uncompleted\":20,\"blood_groups\":1025,\"disp_exp_rdp\":0,\"disp_exp_sdp\":42,\"ratio_dollar\":0,\"collect_total\":984,\"compatibility\":1150,\"disp_reaction\":0,\"disp_returned\":8,\"out_blood_ext\":65,\"out_blood_int\":676,\"ratio_refused\":0,\"refused_fatty\":0,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":49,\"out_plasma_int\":152,\"ratio_reaction\":0,\"ratio_returned\":0.011834319526627219,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":146,\"ratio_uncompleted\":0.020512820512820513,\"donation_therapeutic\":9},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"بورسعيد\",\"hospital_id\":1,\"hospital_name\":\"التضامن (مجمع الشفاء)*\",\"user_id\":1},{\"data\":{\"collect_total\":50,\"inc_blood\":188,\"inc_plasma\":0,\"inc_sdp\":0,\"inc_rdp\":0,\"out_blood_int\":220,\"out_blood_branch\":0,\"out_blood_auth\":0,\"out_blood_ext\":2,\"out_plasma_int\":43,\"out_plasma_ext\":0,\"out_sdp\":6,\"out_rdp\":0,\"blood_groups\":201,\"compatibility\":239,\"ct\":1.0765765765765767,\"disp_exp_blood\":0,\"disp_exp_plasma\":2,\"disp_exp_sdp\":1,\"disp_exp_rdp\":0,\"refused_fatty\":0,\"refused_icteric\":0,\"refused_all\":0,\"virology_c\":0,\"virology_b\":0,\"virology_i\":1,\"virology_dollar\":39,\"disp_exp_blood2\":0,\"disp_exp_plasma2\":0,\"disp_exp_sdp2\":0,\"disp_exp_rdp2\":2,\"disp_returned\":1,\"disp_reaction\":0,\"tested\":47,\"ratio_uncompleted\":0.04,\"ratio_refused\":0.020833333333333332,\"ratio_virus\":0,\"ratio_b\":0,\"ratio_c\":0,\"ratio_i\":0,\"ratio_dollar\":0.00425531914893617,\"ratio_exp\":0,\"ratio_returned\":0.00909090909090909,\"ratio_reaction\":0.004545454545454545,\"ratio_open\":0,\"ratio_other\":0,\"disp_open\":0,\"disp_other\":0,\"uncompleted\":0,\"donation_therapeutic\":0},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"بورسعيد\",\"hospital_id\":3,\"hospital_name\":\"الحياة بورفؤاد *\",\"user_id\":1},{\"data\":{\"collect_total\":1867,\"inc_blood\":8,\"inc_plasma\":0,\"inc_sdp\":0,\"inc_rdp\":196,\"out_blood_int\":826,\"out_blood_branch\":701,\"out_blood_auth\":0,\"out_blood_ext\":13,\"out_plasma_int\":323,\"out_plasma_ext\":291,\"out_sdp\":93,\"out_rdp\":192,\"blood_groups\":1295,\"compatibility\":1197,\"ct\":1.4266984505363527,\"disp_exp_blood\":6,\"disp_exp_plasma\":15,\"disp_exp_sdp\":2,\"disp_exp_rdp\":0,\"refused_fatty\":20,\"refused_icteric\":10,\"refused_all\":5,\"virology_c\":2,\"virology_b\":3,\"virology_i\":0,\"virology_dollar\":0,\"disp_exp_blood2\":0,\"disp_exp_plasma2\":15,\"disp_exp_sdp2\":0,\"disp_exp_rdp2\":0,\"disp_returned\":0,\"disp_reaction\":\"1dat\",\"tested\":1844,\"ratio_uncompleted\":0.008060182697474477,\"ratio_refused\":0.0010834236186348862,\"ratio_virus\":0.005422993492407809,\"ratio_b\":0.0027114967462039045,\"ratio_c\":0.0010845986984815619,\"ratio_i\":0.0016268980477223427,\"ratio_dollar\":0,\"ratio_exp\":0,\"ratio_returned\":0,\"ratio_reaction\":0,\"ratio_open\":0,\"ratio_other\":0,\"disp_open\":0,\"disp_other\":0,\"uncompleted\":0,\"donation_therapeutic\":0},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"الإسماعيلية\",\"hospital_id\":7,\"hospital_name\":\"المجمع الطبي *\",\"user_id\":1},{\"data\":\"{\\\"collect_total\\\":897,\\\"inc_regional\\\":0,\\\"inc_blood\\\":12,\\\"inc_plasma\\\":20,\\\"inc_sdp\\\":0,\\\"inc_rdp\\\":0,\\\"out_blood_int\\\":731,\\\"out_blood_branch\\\":68,\\\"out_blood_auth\\\":23,\\\"out_blood_ext\\\":1,\\\"out_plasma_int\\\":439,\\\"out_plasma_ext\\\":0,\\\"out_sdp\\\":0,\\\"out_rdp\\\":20,\\\"blood_groups\\\":835,\\\"compatibility\\\":1427,\\\"ct\\\":1,\\\"donation_therapeutic\\\":0,\\\"uncompleted\\\":0,\\\"refused_fatty\\\":15,\\\"refused_icteric\\\":6,\\\"virology_c\\\":1,\\\"virology_b\\\":1,\\\"virology_i\\\":0,\\\"virology_dollar\\\":0,\\\"disp_exp_blood\\\":2,\\\"disp_exp_plasma\\\":21,\\\"disp_exp_sdp\\\":0,\\\"disp_exp_rdp\\\":1,\\\"disp_returned\\\":1,\\\"disp_reaction\\\":0,\\\"disp_open\\\":0,\\\"disp_other\\\":0,\\\"child_inc_collected\\\":0,\\\"child_inc_storage\\\":0,\\\"child_out_blood\\\":0,\\\"child_blood_groups\\\":0,\\\"child_compatibility\\\":0,\\\"child_ct\\\":0,\\\"child_disp_exp\\\":0,\\\"child_disp_returned\\\":0,\\\"child_disp_reaction\\\":0,\\\"child_disp_open\\\":0,\\\"child_disp_other\\\":0}\",\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"السويس\",\"hospital_id\":15,\"hospital_name\":\"مجمع السويس الطبي *\",\"user_id\":1,\"day\":\"\",\"time\":\"\"}]",
-      "date": "2026-07-17T00:06:48.846Z",
-      "user_id": 1,
-      "user_name": "admin"
-    },
-    {
       "id": 112,
       "type": "مؤشرات تخزينيه",
       "title": "مؤشرات تخزينيه - أرشيف 2026/6",
@@ -65528,6 +65573,15 @@
       "data": "[{\"id\":76,\"hospital_id\":1,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":1,\"hospital_name\":\"التضامن (مجمع الشفاء)*\",\"h_governorate\":\"بورسعيد\",\"h_type\":\"تجميعي\",\"h_code\":null,\"governorate\":\"بورسعيد\"},{\"id\":77,\"hospital_id\":2,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":2,\"hospital_name\":\"النصر *\",\"h_governorate\":\"بورسعيد\",\"h_type\":\"تجميعي\",\"h_code\":null,\"governorate\":\"بورسعيد\"},{\"id\":78,\"hospital_id\":3,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":3,\"hospital_name\":\"الحياة بورفؤاد *\",\"h_governorate\":\"بورسعيد\",\"h_type\":\"تجميعي\",\"h_code\":null,\"governorate\":\"بورسعيد\"},{\"id\":79,\"hospital_id\":4,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":4,\"hospital_name\":\"الزهور\",\"h_governorate\":\"بورسعيد\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"بورسعيد\"},{\"id\":80,\"hospital_id\":5,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":5,\"hospital_name\":\"٣٠ يونيو\",\"h_governorate\":\"بورسعيد\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"بورسعيد\"},{\"id\":81,\"hospital_id\":6,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":6,\"hospital_name\":\"السلام\",\"h_governorate\":\"بورسعيد\",\"h_type\":\"تجميعي\",\"h_code\":\"\",\"governorate\":\"بورسعيد\"},{\"id\":82,\"hospital_id\":7,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":7,\"hospital_name\":\"المجمع الطبي *\",\"h_governorate\":\"الإسماعيلية\",\"h_type\":\"تجميعي\",\"h_code\":null,\"governorate\":\"الإسماعيلية\"},{\"id\":83,\"hospital_id\":8,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":8,\"hospital_name\":\"طوارئ ابو خليفه\",\"h_governorate\":\"الإسماعيلية\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"الإسماعيلية\"},{\"id\":84,\"hospital_id\":9,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":9,\"hospital_name\":\"مركز 30 يونيو\",\"h_governorate\":\"الإسماعيلية\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"الإسماعيلية\"},{\"id\":85,\"hospital_id\":10,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":10,\"hospital_name\":\"فايد التخصصي\",\"h_governorate\":\"الإسماعيلية\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"الإسماعيلية\"},{\"id\":86,\"hospital_id\":11,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":11,\"hospital_name\":\"القصاصين التخصصي\",\"h_governorate\":\"الإسماعيلية\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"الإسماعيلية\"},{\"id\":87,\"hospital_id\":12,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":12,\"hospital_name\":\"القنطرة غرب التخصصي\",\"h_governorate\":\"الإسماعيلية\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"الإسماعيلية\"},{\"id\":88,\"hospital_id\":13,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":13,\"hospital_name\":\"القنطرة شرق التخصصي\",\"h_governorate\":\"الإسماعيلية\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"الإسماعيلية\"},{\"id\":89,\"hospital_id\":14,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":14,\"hospital_name\":\"التل الكبيرالتخصصي\",\"h_governorate\":\"الإسماعيلية\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"الإسماعيلية\"},{\"id\":90,\"hospital_id\":15,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":15,\"hospital_name\":\"مجمع السويس الطبي *\",\"h_governorate\":\"السويس\",\"h_type\":\"تجميعي\",\"h_code\":\"\",\"governorate\":\"السويس\"},{\"id\":91,\"hospital_id\":16,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":16,\"hospital_name\":\"المرأه والطفل ( حوض الدرس )\",\"h_governorate\":\"السويس\",\"h_type\":\"تخزيني\",\"h_code\":\"\",\"governorate\":\"السويس\"},{\"id\":92,\"hospital_id\":17,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":17,\"hospital_name\":\"المناظير و الجهاز الهضمي\",\"h_governorate\":\"السويس\",\"h_type\":\"تخزيني\",\"h_code\":\"\",\"governorate\":\"السويس\"},{\"id\":93,\"hospital_id\":18,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":18,\"hospital_name\":\"طيبة التخصصي *\",\"h_governorate\":\"الأقصر\",\"h_type\":\"تجميعي\",\"h_code\":null,\"governorate\":\"الأقصر\"},{\"id\":94,\"hospital_id\":19,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":19,\"hospital_name\":\"المجمع الطبي الاقصر\",\"h_governorate\":\"الأقصر\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"الأقصر\"},{\"id\":95,\"hospital_id\":20,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":20,\"hospital_name\":\"ايزيس التخصصي\",\"h_governorate\":\"الأقصر\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"الأقصر\"},{\"id\":96,\"hospital_id\":21,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":21,\"hospital_name\":\"الاطفال التخصصي\",\"h_governorate\":\"الأقصر\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"الأقصر\"},{\"id\":97,\"hospital_id\":22,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":22,\"hospital_name\":\"الكرنك الدولي *\",\"h_governorate\":\"الأقصر\",\"h_type\":\"تجميعي\",\"h_code\":null,\"governorate\":\"الأقصر\"},{\"id\":98,\"hospital_id\":23,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":23,\"hospital_name\":\"حورس\",\"h_governorate\":\"الأقصر\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"الأقصر\"},{\"id\":99,\"hospital_id\":24,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":24,\"hospital_name\":\"راس سدر *\",\"h_governorate\":\"جنوب سيناء\",\"h_type\":\"تجميعي\",\"h_code\":null,\"governorate\":\"جنوب سيناء\"},{\"id\":100,\"hospital_id\":25,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":25,\"hospital_name\":\"شرم الشيخ الدولي\",\"h_governorate\":\"جنوب سيناء\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"جنوب سيناء\"},{\"id\":101,\"hospital_id\":26,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":26,\"hospital_name\":\"طابا\",\"h_governorate\":\"جنوب سيناء\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"جنوب سيناء\"},{\"id\":102,\"hospital_id\":27,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":27,\"hospital_name\":\"سانت كاترين\",\"h_governorate\":\"جنوب سيناء\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"جنوب سيناء\"},{\"id\":103,\"hospital_id\":28,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":28,\"hospital_name\":\"مجمع الفيروز *\",\"h_governorate\":\"جنوب سيناء\",\"h_type\":\"تجميعي\",\"h_code\":null,\"governorate\":\"جنوب سيناء\"},{\"id\":104,\"hospital_id\":30,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":30,\"hospital_name\":\"النيل التخصصي*(حورس ادفو)\",\"h_governorate\":\"أسوان\",\"h_type\":\"تجميعي\",\"h_code\":null,\"governorate\":\"أسوان\"},{\"id\":105,\"hospital_id\":31,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":31,\"hospital_name\":\"اسوان التخصصي (الصداقه)\",\"h_governorate\":\"أسوان\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"أسوان\"},{\"id\":106,\"hospital_id\":32,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":32,\"hospital_name\":\"كوم امبو *\",\"h_governorate\":\"أسوان\",\"h_type\":\"تجميعي\",\"h_code\":null,\"governorate\":\"أسوان\"},{\"id\":107,\"hospital_id\":33,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":33,\"hospital_name\":\"دراو\",\"h_governorate\":\"أسوان\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"أسوان\"},{\"id\":108,\"hospital_id\":34,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":34,\"hospital_name\":\"معهد الاورام\",\"h_governorate\":\"أسوان\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"أسوان\"},{\"id\":109,\"hospital_id\":35,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":35,\"hospital_name\":\"ابوسمبل الدولي\",\"h_governorate\":\"أسوان\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"أسوان\"},{\"id\":110,\"hospital_id\":36,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":36,\"hospital_name\":\"المسلة التخصصي\",\"h_governorate\":\"أسوان\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"أسوان\"},{\"id\":111,\"hospital_id\":37,\"year\":2026,\"month\":6,\"blood_types\":\"{\\\"A+\\\":0,\\\"A-\\\":0,\\\"B+\\\":0,\\\"B-\\\":0,\\\"AB+\\\":0,\\\"AB-\\\":0,\\\"O+\\\":0,\\\"O-\\\":0}\",\"user_id\":1,\"h_id\":37,\"hospital_name\":\"السباعية التخصصي\",\"h_governorate\":\"أسوان\",\"h_type\":\"تخزيني\",\"h_code\":null,\"governorate\":\"أسوان\"}]",
       "user_id": 1,
       "user_name": "المدير العام"
+    },
+    {
+      "id": 111,
+      "type": "مؤشرات تجميعيه",
+      "title": "مؤشرات تجميعيه - أرشيف 2026/6",
+      "data": "[{\"data\":{\"ct\":1.0852713178294573,\"tested\":277,\"inc_rdp\":8,\"inc_sdp\":6,\"out_rdp\":8,\"out_sdp\":6,\"ratio_b\":0.007220216606498195,\"ratio_c\":0.0036101083032490976,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":30,\"ratio_exp\":0,\"disp_other\":0,\"inc_plasma\":0,\"ratio_open\":0,\"virology_b\":2,\"virology_c\":1,\"virology_i\":0,\"ratio_other\":0,\"uncompleted\":3,\"blood_groups\":530,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0,\"collect_total\":283,\"compatibility\":280,\"disp_reaction\":1,\"disp_returned\":0,\"out_blood_ext\":18,\"out_blood_int\":240,\"ratio_refused\":0.007168458781362007,\"refused_fatty\":2,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":3,\"out_plasma_int\":111,\"ratio_reaction\":0.004166666666666667,\"ratio_returned\":0,\"disp_exp_plasma\":19,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":20,\"ratio_uncompleted\":0.010638297872340425,\"donation_therapeutic\":1},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"أسوان\",\"hospital_id\":32,\"hospital_name\":\"كوم امبو *\",\"user_id\":1},{\"data\":{\"ct\":1.0664893617021276,\"tested\":466,\"inc_rdp\":0,\"inc_sdp\":18,\"out_rdp\":0,\"out_sdp\":18,\"ratio_b\":0.008583690987124463,\"ratio_c\":0.012875536480686695,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":6,\"ratio_exp\":0,\"disp_other\":4,\"inc_plasma\":0,\"ratio_open\":0,\"virology_b\":4,\"virology_c\":6,\"virology_i\":0,\"ratio_other\":0.013114754098360656,\"uncompleted\":14,\"blood_groups\":290,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0,\"collect_total\":487,\"compatibility\":401,\"disp_reaction\":0,\"disp_returned\":0,\"out_blood_ext\":71,\"out_blood_int\":305,\"ratio_refused\":0.012711864406779662,\"refused_fatty\":6,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":29,\"out_plasma_int\":60,\"ratio_reaction\":0,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":86,\"ratio_uncompleted\":0.02880658436213992,\"donation_therapeutic\":1},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"أسوان\",\"hospital_id\":30,\"hospital_name\":\"النيل التخصصي*(حورس ادفو)\",\"user_id\":1},{\"data\":{\"ct\":2,\"tested\":108,\"inc_rdp\":0,\"inc_sdp\":6,\"out_rdp\":0,\"out_sdp\":6,\"ratio_b\":0,\"ratio_c\":0.009259259259259259,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":33,\"ratio_exp\":0,\"disp_other\":0,\"inc_plasma\":110,\"ratio_open\":0,\"virology_b\":0,\"virology_c\":1,\"virology_i\":0,\"ratio_other\":0,\"uncompleted\":1,\"blood_groups\":141,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0,\"collect_total\":114,\"compatibility\":190,\"disp_reaction\":1,\"disp_returned\":0,\"out_blood_ext\":0,\"out_blood_int\":95,\"ratio_refused\":0.02702702702702703,\"refused_fatty\":3,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":0,\"out_plasma_int\":40,\"ratio_reaction\":0.010526315789473684,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":39,\"ratio_uncompleted\":0.008928571428571428,\"donation_therapeutic\":2},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"جنوب سيناء\",\"hospital_id\":28,\"hospital_name\":\"مجمع الفيروز *\",\"user_id\":1},{\"data\":{\"ct\":1.206896551724138,\"tested\":72,\"inc_rdp\":0,\"inc_sdp\":12,\"out_rdp\":0,\"out_sdp\":12,\"ratio_b\":0,\"ratio_c\":0,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":59,\"ratio_exp\":0.007633587786259542,\"disp_other\":0,\"inc_plasma\":0,\"ratio_open\":0,\"virology_b\":0,\"virology_c\":0,\"virology_i\":0,\"ratio_other\":0,\"uncompleted\":0,\"blood_groups\":160,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0,\"collect_total\":73,\"compatibility\":70,\"disp_reaction\":0,\"disp_returned\":0,\"out_blood_ext\":0,\"out_blood_int\":58,\"ratio_refused\":0.0136986301369863,\"refused_fatty\":1,\"disp_exp_blood\":1,\"out_blood_auth\":14,\"out_plasma_ext\":28,\"out_plasma_int\":13,\"ratio_reaction\":0,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":16,\"ratio_uncompleted\":0,\"donation_therapeutic\":0},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"جنوب سيناء\",\"hospital_id\":24,\"hospital_name\":\"راس سدر *\",\"user_id\":1},{\"data\":{\"ct\":1.274131274131274,\"tested\":248,\"inc_rdp\":18,\"inc_sdp\":168,\"out_rdp\":0,\"out_sdp\":168,\"ratio_b\":0.004032258064516129,\"ratio_c\":0.004032258064516129,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":29,\"ratio_exp\":0,\"disp_other\":1,\"inc_plasma\":0,\"ratio_open\":0,\"virology_b\":1,\"virology_c\":1,\"virology_i\":0,\"ratio_other\":0.0038910505836575876,\"uncompleted\":4,\"blood_groups\":315,\"disp_exp_rdp\":18,\"disp_exp_sdp\":0,\"ratio_dollar\":0.004032258064516129,\"collect_total\":265,\"compatibility\":330,\"disp_reaction\":0,\"disp_returned\":0,\"out_blood_ext\":2,\"out_blood_int\":257,\"ratio_refused\":0.004016064257028112,\"refused_fatty\":1,\"disp_exp_blood\":0,\"out_blood_auth\":15,\"out_plasma_ext\":56,\"out_plasma_int\":70,\"ratio_reaction\":0,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":1,\"out_blood_branch\":0,\"ratio_uncompleted\":0.015810276679841896,\"donation_therapeutic\":12},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"الأقصر\",\"hospital_id\":22,\"hospital_name\":\"الكرنك الدولي *\",\"user_id\":1},{\"data\":{\"ct\":1.2876712328767124,\"tested\":614,\"inc_rdp\":0,\"inc_sdp\":0,\"out_rdp\":51,\"out_sdp\":167,\"ratio_b\":0.004885993485342019,\"ratio_c\":0.004885993485342019,\"ratio_i\":0.004885993485342019,\"disp_open\":0,\"inc_blood\":13,\"ratio_exp\":0.017828200972447326,\"disp_other\":18,\"inc_plasma\":0,\"ratio_open\":0,\"virology_b\":3,\"virology_c\":3,\"virology_i\":3,\"ratio_other\":0.03119584055459272,\"uncompleted\":4,\"blood_groups\":561,\"disp_exp_rdp\":35,\"disp_exp_sdp\":0,\"ratio_dollar\":0.0016286644951140066,\"collect_total\":621,\"compatibility\":752,\"disp_reaction\":0,\"disp_returned\":1,\"out_blood_ext\":7,\"out_blood_int\":577,\"ratio_refused\":0,\"refused_fatty\":0,\"disp_exp_blood\":11,\"out_blood_auth\":1,\"out_plasma_ext\":19,\"out_plasma_int\":350,\"ratio_reaction\":0,\"ratio_returned\":0.0017331022530329288,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":1,\"out_blood_branch\":3,\"ratio_uncompleted\":0.006472491909385114,\"donation_therapeutic\":3},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"الأقصر\",\"hospital_id\":18,\"hospital_name\":\"طيبة التخصصي *\",\"user_id\":1},{\"data\":{\"ct\":1.8981481481481481,\"tested\":543,\"inc_rdp\":6,\"inc_sdp\":204,\"out_rdp\":6,\"out_sdp\":204,\"ratio_b\":0.0055248618784530384,\"ratio_c\":0.009208103130755065,\"ratio_i\":0.001841620626151013,\"disp_open\":0,\"inc_blood\":83,\"ratio_exp\":0,\"disp_other\":0,\"inc_plasma\":8,\"ratio_open\":0,\"virology_b\":3,\"virology_c\":5,\"virology_i\":1,\"ratio_other\":0,\"uncompleted\":13,\"blood_groups\":434,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0.0055248618784530384,\"collect_total\":557,\"compatibility\":820,\"disp_reaction\":0,\"disp_returned\":0,\"out_blood_ext\":16,\"out_blood_int\":416,\"ratio_refused\":0.001838235294117647,\"refused_fatty\":1,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":0,\"out_plasma_int\":185,\"ratio_reaction\":0,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":3,\"out_blood_branch\":136,\"ratio_uncompleted\":0.02333931777378815,\"donation_therapeutic\":0},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"بورسعيد\",\"hospital_id\":6,\"hospital_name\":\"السلام\",\"user_id\":1},{\"data\":{\"ct\":1.8064516129032258,\"tested\":205,\"inc_rdp\":0,\"inc_sdp\":54,\"out_rdp\":0,\"out_sdp\":54,\"ratio_b\":0,\"ratio_c\":0,\"ratio_i\":0,\"disp_open\":0,\"inc_blood\":13,\"ratio_exp\":0,\"disp_other\":0,\"inc_plasma\":25,\"ratio_open\":0,\"virology_b\":0,\"virology_c\":0,\"virology_i\":0,\"ratio_other\":0,\"uncompleted\":0,\"blood_groups\":300,\"disp_exp_rdp\":0,\"disp_exp_sdp\":0,\"ratio_dollar\":0,\"collect_total\":206,\"compatibility\":280,\"disp_reaction\":0,\"disp_returned\":0,\"out_blood_ext\":31,\"out_blood_int\":124,\"ratio_refused\":0.0048543689320388345,\"refused_fatty\":1,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":4,\"out_plasma_int\":63,\"ratio_reaction\":0,\"ratio_returned\":0,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":87,\"ratio_uncompleted\":0,\"donation_therapeutic\":0},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"بورسعيد\",\"hospital_id\":2,\"hospital_name\":\"النصر *\",\"user_id\":1},{\"data\":{\"ct\":1.5519568151147098,\"tested\":955,\"inc_rdp\":2,\"inc_sdp\":618,\"out_rdp\":0,\"out_sdp\":42,\"ratio_b\":0.0010471204188481676,\"ratio_c\":0.0062827225130890054,\"ratio_i\":0,\"disp_open\":1,\"inc_blood\":107,\"ratio_exp\":0,\"disp_other\":6,\"inc_plasma\":0,\"ratio_open\":0.0014792899408284023,\"virology_b\":1,\"virology_c\":6,\"virology_i\":0,\"ratio_other\":0.008875739644970414,\"uncompleted\":20,\"blood_groups\":1025,\"disp_exp_rdp\":0,\"disp_exp_sdp\":42,\"ratio_dollar\":0,\"collect_total\":984,\"compatibility\":1150,\"disp_reaction\":0,\"disp_returned\":8,\"out_blood_ext\":65,\"out_blood_int\":676,\"ratio_refused\":0,\"refused_fatty\":0,\"disp_exp_blood\":0,\"out_blood_auth\":0,\"out_plasma_ext\":49,\"out_plasma_int\":152,\"ratio_reaction\":0,\"ratio_returned\":0.011834319526627219,\"disp_exp_plasma\":0,\"refused_icteric\":0,\"virology_dollar\":0,\"out_blood_branch\":146,\"ratio_uncompleted\":0.020512820512820513,\"donation_therapeutic\":9},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"بورسعيد\",\"hospital_id\":1,\"hospital_name\":\"التضامن (مجمع الشفاء)*\",\"user_id\":1},{\"data\":{\"collect_total\":50,\"inc_blood\":188,\"inc_plasma\":0,\"inc_sdp\":0,\"inc_rdp\":0,\"out_blood_int\":220,\"out_blood_branch\":0,\"out_blood_auth\":0,\"out_blood_ext\":2,\"out_plasma_int\":43,\"out_plasma_ext\":0,\"out_sdp\":6,\"out_rdp\":0,\"blood_groups\":201,\"compatibility\":239,\"ct\":1.0765765765765767,\"disp_exp_blood\":0,\"disp_exp_plasma\":2,\"disp_exp_sdp\":1,\"disp_exp_rdp\":0,\"refused_fatty\":0,\"refused_icteric\":0,\"refused_all\":0,\"virology_c\":0,\"virology_b\":0,\"virology_i\":1,\"virology_dollar\":39,\"disp_exp_blood2\":0,\"disp_exp_plasma2\":0,\"disp_exp_sdp2\":0,\"disp_exp_rdp2\":2,\"disp_returned\":1,\"disp_reaction\":0,\"tested\":47,\"ratio_uncompleted\":0.04,\"ratio_refused\":0.020833333333333332,\"ratio_virus\":0,\"ratio_b\":0,\"ratio_c\":0,\"ratio_i\":0,\"ratio_dollar\":0.00425531914893617,\"ratio_exp\":0,\"ratio_returned\":0.00909090909090909,\"ratio_reaction\":0.004545454545454545,\"ratio_open\":0,\"ratio_other\":0,\"disp_open\":0,\"disp_other\":0,\"uncompleted\":0,\"donation_therapeutic\":0},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"بورسعيد\",\"hospital_id\":3,\"hospital_name\":\"الحياة بورفؤاد *\",\"user_id\":1},{\"data\":{\"collect_total\":1867,\"inc_blood\":8,\"inc_plasma\":0,\"inc_sdp\":0,\"inc_rdp\":196,\"out_blood_int\":826,\"out_blood_branch\":701,\"out_blood_auth\":0,\"out_blood_ext\":13,\"out_plasma_int\":323,\"out_plasma_ext\":291,\"out_sdp\":93,\"out_rdp\":192,\"blood_groups\":1295,\"compatibility\":1197,\"ct\":1.4266984505363527,\"disp_exp_blood\":6,\"disp_exp_plasma\":15,\"disp_exp_sdp\":2,\"disp_exp_rdp\":0,\"refused_fatty\":20,\"refused_icteric\":10,\"refused_all\":5,\"virology_c\":2,\"virology_b\":3,\"virology_i\":0,\"virology_dollar\":0,\"disp_exp_blood2\":0,\"disp_exp_plasma2\":15,\"disp_exp_sdp2\":0,\"disp_exp_rdp2\":0,\"disp_returned\":0,\"disp_reaction\":\"1dat\",\"tested\":1844,\"ratio_uncompleted\":0.008060182697474477,\"ratio_refused\":0.0010834236186348862,\"ratio_virus\":0.005422993492407809,\"ratio_b\":0.0027114967462039045,\"ratio_c\":0.0010845986984815619,\"ratio_i\":0.0016268980477223427,\"ratio_dollar\":0,\"ratio_exp\":0,\"ratio_returned\":0,\"ratio_reaction\":0,\"ratio_open\":0,\"ratio_other\":0,\"disp_open\":0,\"disp_other\":0,\"uncompleted\":0,\"donation_therapeutic\":0},\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"الإسماعيلية\",\"hospital_id\":7,\"hospital_name\":\"المجمع الطبي *\",\"user_id\":1},{\"data\":\"{\\\"collect_total\\\":897,\\\"inc_regional\\\":0,\\\"inc_blood\\\":12,\\\"inc_plasma\\\":20,\\\"inc_sdp\\\":0,\\\"inc_rdp\\\":0,\\\"out_blood_int\\\":731,\\\"out_blood_branch\\\":68,\\\"out_blood_auth\\\":23,\\\"out_blood_ext\\\":1,\\\"out_plasma_int\\\":439,\\\"out_plasma_ext\\\":0,\\\"out_sdp\\\":0,\\\"out_rdp\\\":20,\\\"blood_groups\\\":835,\\\"compatibility\\\":1427,\\\"ct\\\":1,\\\"donation_therapeutic\\\":0,\\\"uncompleted\\\":0,\\\"refused_fatty\\\":15,\\\"refused_icteric\\\":6,\\\"virology_c\\\":1,\\\"virology_b\\\":1,\\\"virology_i\\\":0,\\\"virology_dollar\\\":0,\\\"disp_exp_blood\\\":2,\\\"disp_exp_plasma\\\":21,\\\"disp_exp_sdp\\\":0,\\\"disp_exp_rdp\\\":1,\\\"disp_returned\\\":1,\\\"disp_reaction\\\":0,\\\"disp_open\\\":0,\\\"disp_other\\\":0,\\\"child_inc_collected\\\":0,\\\"child_inc_storage\\\":0,\\\"child_out_blood\\\":0,\\\"child_blood_groups\\\":0,\\\"child_compatibility\\\":0,\\\"child_ct\\\":0,\\\"child_disp_exp\\\":0,\\\"child_disp_returned\\\":0,\\\"child_disp_reaction\\\":0,\\\"child_disp_open\\\":0,\\\"child_disp_other\\\":0}\",\"year\":2026,\"month\":6,\"period\":\"monthly\",\"governorate\":\"السويس\",\"hospital_id\":15,\"hospital_name\":\"مجمع السويس الطبي *\",\"user_id\":1,\"day\":\"\",\"time\":\"\"}]",
+      "date": "2026-07-17T00:06:48.846Z",
+      "user_id": 1,
+      "user_name": "admin"
     }
   ],
   "employee_statements": [
@@ -73053,9 +73107,9 @@
   "donors": [],
   "donations": [],
   "_counters": {
-    "users": 168,
-    "hospitals": 38,
-    "governorates": 8,
+    "users": 172,
+    "hospitals": 39,
+    "governorates": 11,
     "hospital_types": 3,
     "daily_reports": 39,
     "monthly_big_indicators": 389,
@@ -73073,10 +73127,10 @@
     "equipment": 1,
     "monthly_consumption": 112,
     "indicator_columns": 110,
-    "blood_bags": 4,
-    "blood_bag_events": 12,
+    "blood_bags": 23,
+    "blood_bag_events": 72,
     "patients": 2,
-    "bag_reservations": 2,
+    "bag_reservations": 11,
     "hospital_departments": 2
   },
   "blood_bank_equipment": {
@@ -76027,7 +76081,8 @@
       "recipient_name": "محمد ندا",
       "issue_type": "داخلي",
       "issued_at": "2026-08-10T23:54:03.753Z",
-      "issued_by": "المدير العام"
+      "issued_by": "المدير العام",
+      "unit_category": "كبار"
     },
     {
       "id": 2,
@@ -76052,12 +76107,13 @@
       "test_nat": "سلبي",
       "notes": "",
       "created_at": "2026-08-10T23:48:31.113Z",
-      "updated_at": "2026-08-10T23:49:17.686Z",
+      "updated_at": "2026-08-11T13:14:04.477Z",
       "user_id": 1,
       "donation_id": 1,
       "return_reason": "",
       "tested_at": "2026-08-10T23:49:17.686Z",
-      "tested_by": "المدير العام"
+      "tested_by": "المدير العام",
+      "unit_category": "كبار"
     },
     {
       "id": 3,
@@ -76087,7 +76143,202 @@
       "donation_id": 1,
       "return_reason": "",
       "tested_at": "2026-08-10T23:49:17.738Z",
-      "tested_by": "المدير العام"
+      "tested_by": "المدير العام",
+      "unit_category": "كبار"
+    },
+    {
+      "id": 16,
+      "bag_no": "555",
+      "barcode": "666",
+      "hospital_id": 2,
+      "source_hospital_id": 2,
+      "collection_date": "2026-08-11",
+      "expiry_date": "2026-09-15",
+      "blood_type": "A-",
+      "product_type": "دم",
+      "units": 1,
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "available",
+      "test_hcv": "سلبي",
+      "test_hbv": "سلبي",
+      "test_hiv": "سلبي",
+      "test_syphilis": "سلبي",
+      "test_nat": "سلبي",
+      "notes": "",
+      "created_at": "2026-08-11T14:35:48.578Z",
+      "updated_at": "2026-08-12T07:18:19.656Z",
+      "user_id": 1,
+      "donation_id": 16,
+      "return_reason": "",
+      "tested_at": "2026-08-11T14:36:10.211Z",
+      "tested_by": "المدير العام",
+      "recipient_id": null,
+      "recipient_name": "",
+      "issue_type": "",
+      "issued_at": null,
+      "issued_by": "",
+      "unit_category": "كبار"
+    },
+    {
+      "id": 17,
+      "bag_no": "555",
+      "barcode": "666",
+      "hospital_id": 2,
+      "source_hospital_id": 2,
+      "collection_date": "2026-08-11",
+      "expiry_date": "2027-08-11",
+      "blood_type": "A",
+      "product_type": "بلازما",
+      "units": 1,
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "available",
+      "test_hcv": "سلبي",
+      "test_hbv": "سلبي",
+      "test_hiv": "سلبي",
+      "test_syphilis": "سلبي",
+      "test_nat": "سلبي",
+      "notes": "",
+      "created_at": "2026-08-11T14:35:48.677Z",
+      "updated_at": "2026-08-11T14:36:10.299Z",
+      "user_id": 1,
+      "donation_id": 16,
+      "return_reason": "",
+      "tested_at": "2026-08-11T14:36:10.299Z",
+      "tested_by": "المدير العام",
+      "unit_category": "كبار"
+    },
+    {
+      "id": 18,
+      "bag_no": "993",
+      "barcode": "994",
+      "hospital_id": 2,
+      "source_hospital_id": 2,
+      "collection_date": "2026-08-12",
+      "expiry_date": "2026-09-16",
+      "blood_type": "O+",
+      "product_type": "دم",
+      "units": 1,
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "available",
+      "test_hcv": "سلبي",
+      "test_hbv": "سلبي",
+      "test_hiv": "سلبي",
+      "test_syphilis": "سلبي",
+      "test_nat": "سلبي",
+      "notes": "",
+      "created_at": "2026-08-12T03:57:18.867Z",
+      "updated_at": "2026-08-12T03:58:03.944Z",
+      "user_id": 1,
+      "donation_id": 18,
+      "return_reason": "",
+      "tested_at": "2026-08-12T03:58:03.944Z",
+      "tested_by": "المدير العام",
+      "unit_category": "كبار"
+    },
+    {
+      "id": 19,
+      "bag_no": "993",
+      "barcode": "994",
+      "hospital_id": 2,
+      "source_hospital_id": 2,
+      "collection_date": "2026-08-12",
+      "expiry_date": "2027-08-12",
+      "blood_type": "O",
+      "product_type": "بلازما",
+      "units": 1,
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "available",
+      "test_hcv": "سلبي",
+      "test_hbv": "سلبي",
+      "test_hiv": "سلبي",
+      "test_syphilis": "سلبي",
+      "test_nat": "سلبي",
+      "notes": "",
+      "created_at": "2026-08-12T03:57:18.928Z",
+      "updated_at": "2026-08-12T03:58:04.002Z",
+      "user_id": 1,
+      "donation_id": 18,
+      "return_reason": "",
+      "tested_at": "2026-08-12T03:58:04.002Z",
+      "tested_by": "المدير العام",
+      "unit_category": "كبار"
+    },
+    {
+      "id": 21,
+      "bag_no": "2221",
+      "barcode": "2221",
+      "hospital_id": 7,
+      "source_hospital_id": 7,
+      "collection_date": "2026-08-12",
+      "expiry_date": "2026-09-16",
+      "blood_type": "O+",
+      "product_type": "دم",
+      "units": 1,
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "reserved",
+      "test_hcv": "سلبي",
+      "test_hbv": "سلبي",
+      "test_hiv": "سلبي",
+      "test_syphilis": "سلبي",
+      "test_nat": "سلبي",
+      "notes": "",
+      "created_at": "2026-08-12T06:42:22.915Z",
+      "updated_at": "2026-08-12T07:19:03.173Z",
+      "user_id": 1,
+      "donation_id": 21,
+      "return_reason": "",
+      "tested_at": "2026-08-12T06:42:40.712Z",
+      "tested_by": "المدير العام",
+      "recipient_id": 1,
+      "recipient_name": "محمد ندا",
+      "issue_type": "داخلي",
+      "unit_category": "كبار"
+    },
+    {
+      "id": 22,
+      "bag_no": "2221",
+      "barcode": "2221",
+      "hospital_id": 7,
+      "source_hospital_id": 7,
+      "collection_date": "2026-08-12",
+      "expiry_date": "2027-08-12",
+      "blood_type": "O",
+      "product_type": "بلازما",
+      "units": 1,
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "available",
+      "test_hcv": "سلبي",
+      "test_hbv": "سلبي",
+      "test_hiv": "سلبي",
+      "test_syphilis": "سلبي",
+      "test_nat": "سلبي",
+      "notes": "",
+      "created_at": "2026-08-12T06:42:22.992Z",
+      "updated_at": "2026-08-12T06:42:40.769Z",
+      "user_id": 1,
+      "donation_id": 21,
+      "return_reason": "",
+      "tested_at": "2026-08-12T06:42:40.769Z",
+      "tested_by": "المدير العام",
+      "unit_category": "كبار"
     }
   ],
   "blood_bag_events": [
@@ -76222,6 +76473,210 @@
       "user_id": 1,
       "user_name": "المدير العام",
       "created_at": "2026-08-10T23:54:25.097Z"
+    },
+    {
+      "id": 12,
+      "bag_id": 2,
+      "bag_no": "12455",
+      "event": "تغيير حالة",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "إعدام فردي — أخرى | المنتج: بلازما",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-11T13:14:04.519Z"
+    },
+    {
+      "id": 54,
+      "bag_id": 16,
+      "bag_no": "555",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: دم | رقم اللي: 555 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-11T14:35:48.712Z"
+    },
+    {
+      "id": 55,
+      "bag_id": 17,
+      "bag_no": "555",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: بلازما | رقم اللي: 555 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-11T14:35:48.744Z"
+    },
+    {
+      "id": 56,
+      "bag_id": 16,
+      "bag_no": "555",
+      "event": "اكتمال الفحص",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "الفحص سليم — المكون متاح | المنتج: دم | الفصيلة: A-",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-11T14:36:10.258Z"
+    },
+    {
+      "id": 57,
+      "bag_id": 17,
+      "bag_no": "555",
+      "event": "اكتمال الفحص",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "الفحص سليم — المكون متاح | المنتج: بلازما | الفصيلة: A",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-11T14:36:10.342Z"
+    },
+    {
+      "id": 58,
+      "bag_id": 16,
+      "bag_no": "555",
+      "event": "حجز كيس",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "حجز لمريض: محمد ندا — A- → A+ | كروت التوافق: 0 | الصرف خلال 48 ساعة",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-11T14:36:42.631Z"
+    },
+    {
+      "id": 59,
+      "bag_id": 16,
+      "bag_no": "555",
+      "event": "صرف كيس",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "صُرف للمريض: محمد ندا (داخلي)",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-11T14:36:58.091Z"
+    },
+    {
+      "id": 60,
+      "bag_id": 18,
+      "bag_no": "993",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: دم | رقم اللي: 993 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-12T03:57:18.952Z"
+    },
+    {
+      "id": 61,
+      "bag_id": 19,
+      "bag_no": "993",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: بلازما | رقم اللي: 993 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-12T03:57:18.978Z"
+    },
+    {
+      "id": 62,
+      "bag_id": 18,
+      "bag_no": "993",
+      "event": "اكتمال الفحص",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "الفحص سليم — المكون متاح | المنتج: دم | الفصيلة: O+",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-12T03:58:03.977Z"
+    },
+    {
+      "id": 63,
+      "bag_id": 19,
+      "bag_no": "993",
+      "event": "اكتمال الفحص",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "الفحص سليم — المكون متاح | المنتج: بلازما | الفصيلة: O",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-12T03:58:04.069Z"
+    },
+    {
+      "id": 66,
+      "bag_id": 21,
+      "bag_no": "2221",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: دم | رقم اللي: 2221 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-12T06:42:23.015Z"
+    },
+    {
+      "id": 67,
+      "bag_id": 22,
+      "bag_no": "2221",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: بلازما | رقم اللي: 2221 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-12T06:42:23.038Z"
+    },
+    {
+      "id": 68,
+      "bag_id": 21,
+      "bag_no": "2221",
+      "event": "اكتمال الفحص",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "الفحص سليم — المكون متاح | المنتج: دم | الفصيلة: O+",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-12T06:42:40.743Z"
+    },
+    {
+      "id": 69,
+      "bag_id": 22,
+      "bag_no": "2221",
+      "event": "اكتمال الفحص",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "الفحص سليم — المكون متاح | المنتج: بلازما | الفصيلة: O",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-12T06:42:40.795Z"
+    },
+    {
+      "id": 70,
+      "bag_id": 16,
+      "bag_no": "555",
+      "event": "إلغاء الصرف",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "أُلغي الصرف وأُعيد الكيس إلى الرصيد المتاح | المصروف إليه: محمد ندا",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-12T07:18:19.728Z"
+    },
+    {
+      "id": 71,
+      "bag_id": 21,
+      "bag_no": "2221",
+      "event": "حجز كيس",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "حجز لمريض: محمد ندا — O+ → A+ | كروت التوافق: 1 | الصرف خلال 48 ساعة",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-12T07:19:03.202Z"
     }
   ],
   "patients": [
@@ -76263,6 +76718,35 @@
       "issued_at": "2026-08-10T23:54:03.783Z",
       "issued_by": "المدير العام",
       "issued_department": "طوارئ"
+    },
+    {
+      "id": 9,
+      "bag_id": 16,
+      "patient_id": 1,
+      "patient_name": "محمد ندا",
+      "hospital_id": 2,
+      "reserved_at": "2026-08-11T14:36:42.564Z",
+      "reserved_until": "2026-08-13T14:36:42.564Z",
+      "status": "released",
+      "compat_cards": 0,
+      "user_id": 1,
+      "issued_at": "2026-08-11T14:36:58.061Z",
+      "issued_by": "المدير العام",
+      "issued_department": "",
+      "released_at": "2026-08-12T07:18:19.693Z"
+    },
+    {
+      "id": 10,
+      "bag_id": 21,
+      "patient_id": 1,
+      "patient_name": "محمد ندا",
+      "hospital_id": 7,
+      "reserved_at": "2026-08-12T07:19:03.142Z",
+      "reserved_until": "2026-08-14T07:19:03.142Z",
+      "status": "active",
+      "compat_cards": 1,
+      "user_id": 1,
+      "issued_department": ""
     }
   ],
   "hospital_departments": [

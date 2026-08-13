@@ -271,7 +271,7 @@ class JSONDB {
     if (!this.data._counters.indicator_columns) this.data._counters.indicator_columns = 1;
     // Blood bags module tables
     if (!this.data.blood_bags || !Array.isArray(this.data.blood_bags)) this.data.blood_bags = [];
-    this.data.blood_bags.forEach(b => { if (!b.product_type) b.product_type = 'دم'; if (b.units == null) b.units = 1; if (b.donation_id == null) b.donation_id = null; if (b.test_nat == null) b.test_nat = ''; });
+    this.data.blood_bags.forEach(b => { if (!b.product_type) b.product_type = 'دم'; if (b.units == null) b.units = 1; if (b.unit_category == null) b.unit_category = 'كبار'; if (b.donation_id == null) b.donation_id = null; if (b.test_nat == null) b.test_nat = ''; });
     if (!this.data.blood_bag_events || !Array.isArray(this.data.blood_bag_events)) this.data.blood_bag_events = [];
     if (!this.data.patients || !Array.isArray(this.data.patients)) this.data.patients = [];
     this.data.patients.forEach(p => {
@@ -373,7 +373,7 @@ class JSONDB {
   }
 
   async query(text, params) {
-    const sql = text.trim();
+    let sql = text.trim();
     const table = this._getTable(sql);
 
     if (!table || !this.data[table]) {
@@ -547,6 +547,17 @@ class JSONDB {
     }
 
     if (/^INSERT/i.test(sql)) {
+      // jsondb has no native unique constraints. Emulate PG's
+      // "ON CONFLICT (col1, col2) DO NOTHING" by skipping the insert
+      // when an existing row already has those column values.
+      let conflictCols = null;
+      const onConflict = sql.match(/ON\s+CONFLICT\s*\(([^)]+)\)\s+DO\s+NOTHING/i);
+      if (onConflict) {
+        conflictCols = onConflict[1].split(',').map(c => c.trim());
+        sql = sql.replace(/ON\s+CONFLICT\s*\([^)]+\)\s+DO\s+NOTHING/i, '');
+      } else {
+        sql = sql.replace(/ON\s+CONFLICT\s+DO\s+NOTHING/i, '');
+      }
       const m = sql.match(/VALUES\s*\((.+)\)\s*(?:RETURNING|;|$)/i);
       if (m) {
         const id = this._nextId(table);
@@ -573,6 +584,12 @@ class JSONDB {
             newRow[colName] = val;
           });
         }
+        if (conflictCols) {
+          const dup = this.data[table].some(row =>
+            conflictCols.every(c => String(row[c]) === String(newRow[c]))
+          );
+          if (dup) return { rows: [] };
+        }
         this.data[table].push(newRow);
         if (table === 'daily_stock') {
           const bt = newRow.blood_type;
@@ -596,7 +613,7 @@ class JSONDB {
       const setMatch = sql.match(/SET\s+(.+?)(?:WHERE|$)/is);
       const whereMatch = sql.match(/WHERE\s+(.+?)$/is);
       if (setMatch && whereMatch) {
-        const sets = this._splitCSV(setMatch[1]).map(s => s.trim());
+        const sets = this._splitDepth(setMatch[1], ',').map(s => s.trim());
         let updatedRows = [...this.data[table]];
         updatedRows = updatedRows.filter(row => this._evalWhere(row, whereMatch[1], params));
         updatedRows.forEach(row => {
@@ -609,6 +626,9 @@ class JSONDB {
                 val = params[idx];
               } else if (val.startsWith("'")) {
                 val = val.replace(/'/g, '');
+              } else if (/^CONCAT\(/i.test(val)) {
+                const cm = val.match(/^CONCAT\(([\s\S]*)\)$/i);
+                val = cm ? this._evalConcat(cm[1], row, params) : '';
               } else if (val.includes('GREATEST')) {
                 const gm = val.match(/GREATEST\(0,\s*(.+?)\)/i);
                 if (gm) {
@@ -662,8 +682,110 @@ class JSONDB {
   }
 
   _evalWhere(row, clause, params) {
-    const conditions = clause.split(/\s+AND\s+/i);
-    return conditions.every(cond => this._evalCondition(row, cond, params));
+    const orParts = this._splitTopLevel(clause, 'OR');
+    return orParts.some(orPart => {
+      const andParts = this._splitTopLevel(this._stripOuterParens(orPart), 'AND');
+      return andParts.every(cond => this._evalCondition(row, this._stripOuterParens(cond), params));
+    });
+  }
+
+  _splitTopLevel(str, op) {
+    const parts = [];
+    let depth = 0;
+    let inQuote = false;
+    let cur = '';
+    const opRe = new RegExp('\\s+' + op + '\\s+', 'i');
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i];
+      if (inQuote) {
+        cur += ch;
+        if (ch === "'") {
+          if (str[i + 1] === "'") { cur += "'"; i++; }
+          else inQuote = false;
+        }
+        continue;
+      }
+      if (ch === "'") { inQuote = true; cur += ch; continue; }
+      if (ch === '(') { depth++; cur += ch; continue; }
+      if (ch === ')') { depth--; cur += ch; continue; }
+      if (depth === 0) {
+        const rest = str.slice(i);
+        const m = rest.match(opRe);
+        if (m && m.index === 0) {
+          parts.push(cur.trim());
+          cur = '';
+          i += m[0].length - 1;
+          continue;
+        }
+      }
+      cur += ch;
+    }
+    parts.push(cur.trim());
+    return parts.filter(p => p.length > 0);
+  }
+
+  _stripOuterParens(s) {
+    let t = s.trim();
+    while (t.startsWith('(') && t.endsWith(')')) {
+      let depth = 0;
+      let wraps = true;
+      for (let i = 0; i < t.length; i++) {
+        if (t[i] === '(') depth++;
+        else if (t[i] === ')') { depth--; if (depth === 0 && i < t.length - 1) { wraps = false; break; } }
+      }
+      if (!wraps || depth !== 0) break;
+      t = t.slice(1, -1).trim();
+    }
+    return t;
+  }
+
+  _splitDepth(str, sep) {
+    const parts = [];
+    let depth = 0;
+    let inQuote = false;
+    let cur = '';
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i];
+      if (inQuote) {
+        cur += ch;
+        if (ch === "'") {
+          if (str[i + 1] === "'") { cur += "'"; i++; }
+          else inQuote = false;
+        }
+        continue;
+      }
+      if (ch === "'") { inQuote = true; cur += ch; continue; }
+      if (ch === '(') { depth++; cur += ch; continue; }
+      if (ch === ')') { depth--; cur += ch; continue; }
+      if (depth === 0 && ch === sep) {
+        parts.push(cur.trim());
+        cur = '';
+        continue;
+      }
+      cur += ch;
+    }
+    if (cur.trim()) parts.push(cur.trim());
+    return parts;
+  }
+
+  _evalConcat(inner, row, params) {
+    return this._splitDepth(inner, ',').map(arg => this._evalConcatArg(arg.trim(), row, params)).join('');
+  }
+
+  _evalConcatArg(arg, row, params) {
+    if (arg.startsWith('$')) return String(params[parseInt(arg.substring(1)) - 1]);
+    if (/^'([\s\S]*)'$/.test(arg)) return arg.slice(1, -1).replace(/''/g, "'");
+    const co = arg.match(/^COALESCE\(([\s\S]*)\)$/i);
+    if (co) {
+      const args = this._splitDepth(co[1], ',');
+      for (const a of args) {
+        const v = this._evalConcatArg(a.trim(), row, params);
+        if (v != null && v !== '') return v;
+      }
+      return '';
+    }
+    const rv = row[arg];
+    return rv == null ? '' : String(rv);
   }
 
   _evalCondition(row, cond, params) {
@@ -674,6 +796,18 @@ class JSONDB {
     if (notMatch) {
       const inner = cond.replace(/^NOT\s+/, '');
       return !this._evalCondition(row, inner, params);
+    }
+    const notInMatch = cond.match(/(\w+\.\w+|\w+)\s+NOT\s+IN\s+\((.+?)\)/i);
+    if (notInMatch) {
+      const col = notInMatch[1].replace(/^\w+\./i, '');
+      const inner = notInMatch[2].trim();
+      if (/^SELECT\b/i.test(inner)) return false;
+      const vals = inner.split(',').map(v => {
+        v = v.trim();
+        if (v.startsWith('$')) return params[parseInt(v.substring(1)) - 1];
+        return v.replace(/'/g, '');
+      });
+      return !vals.includes(row[col]);
     }
     const inMatch = cond.match(/(\w+)\s+IN\s+\((.+?)\)/i);
     if (inMatch) {

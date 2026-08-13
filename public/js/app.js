@@ -241,7 +241,7 @@ async function renderDailyStock() {
           h += `<td class="cell-auto-inc" title="رصيد سابق — تلقائياً (آخر متاح × نقل تلقائي كل 08:30 و20:30)" data-group="blood" data-type="${t}" data-sub="previous" data-rid="${r.id}">${d.previous || 0}</td>`;
           h += `<td class="cell-auto-inc" title="وارد — تلقائياً من أكياس الدم المفحوصة (المتاحة)" data-group="blood" data-type="${t}" data-sub="incoming" data-rid="${r.id}">${d.incoming || 0}</td>`;
           h += `<td class="cell-auto-inc" title="المنصرف — تلقائياً من أكياس الدم (إرسال لمستشفى آخر / صرف لمريض أو هيئة)" data-group="blood" data-type="${t}" data-sub="outgoing" data-rid="${r.id}">${d.outgoing || 0}</td>`;
-          h += `<td class="cell-auto-inc" title="الإعدام — تلقائياً من أكياس الدم المعدومة (نظام مفتوح / أخرى / انتهاء صلاحية)" data-group="blood" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
+          h += `<td class="cell-auto-inc" title="الإعدام — تلقائياً من أكياس الدم (مرتجع / نظام مفتوح / أخرى / انتهاء صلاحية / تفاعل) — بدون إعدام التجميع (فيروسات / لم يكتمل / غيرها)" data-group="blood" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
           h += `<td class="avail-cell" data-group="blood" data-type="${t}" data-sub="available" data-rid="${r.id}">${av}</td>`;
         });
         h += `<td class="total-cell" data-role="btotal" data-sub="previous">${bTot.previous}</td><td class="total-cell" data-role="btotal" data-sub="incoming">${bTot.incoming}</td><td class="total-cell" data-role="btotal" data-sub="outgoing">${bTot.outgoing}</td><td class="total-cell" data-role="btotal" data-sub="disposal">${bTot.disposal}</td><td class="total-cell" data-role="btotal" data-sub="available">${bTot.available}</td>`;
@@ -253,7 +253,7 @@ async function renderDailyStock() {
           h += `<td class="cell-auto-inc" title="رصيد سابق — تلقائياً (آخر متاح × نقل تلقائي كل 08:30 و20:30)" data-group="plasma" data-type="${t}" data-sub="previous" data-rid="${r.id}">${d.previous || 0}</td>`;
           h += `<td class="cell-auto-inc" title="وارد — تلقائياً من أكياس البلازما المفحوصة (المتاحة)" data-group="plasma" data-type="${t}" data-sub="incoming" data-rid="${r.id}">${d.incoming || 0}</td>`;
           h += `<td class="cell-auto-inc" title="المنصرف — تلقائياً من أكياس البلازما (إرسال لمستشفى آخر / صرف لمريض أو هيئة)" data-group="plasma" data-type="${t}" data-sub="outgoing" data-rid="${r.id}">${d.outgoing || 0}</td>`;
-          h += `<td class="cell-auto-inc" title="الإعدام — تلقائياً من أكياس البلازما المعدومة (نظام مفتوح / أخرى / انتهاء صلاحية)" data-group="plasma" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
+          h += `<td class="cell-auto-inc" title="الإعدام — تلقائياً من أكياس البلازما (مرتجع / نظام مفتوح / أخرى / انتهاء صلاحية / تفاعل / Lipemic / Hemolyzed) — بدون إعدام التجميع (فيروسات / لم يكتمل / ولادة)" data-group="plasma" data-type="${t}" data-sub="disposal" data-rid="${r.id}">${d.disposal || 0}</td>`;
           h += `<td class="avail-cell" data-group="plasma" data-type="${t}" data-sub="available" data-rid="${r.id}">${av}</td>`;
         });
         h += `<td class="total-cell" data-role="ptotal" data-sub="previous">${pTot.previous}</td><td class="total-cell" data-role="ptotal" data-sub="incoming">${pTot.incoming}</td><td class="total-cell" data-role="ptotal" data-sub="outgoing">${pTot.outgoing}</td><td class="total-cell" data-role="ptotal" data-sub="disposal">${pTot.disposal}</td><td class="total-cell" data-role="ptotal" data-sub="available">${pTot.available}</td>`;
@@ -1075,7 +1075,7 @@ async function renderBranchStatement() {
     }
     const reports = await api('GET', '/daily-reports');
     const govHospIds = [...new Set(reports.filter(r => r.governorate === gov).map(r => r.hospital_id))];
-    if (!govHospIds.length) { document.getElementById('branchStmtReport').innerHTML = `<div class="empty-msg">لا توجد تقارير للفرع: ${gov}</div>`; return; }
+    if (!govHospIds.length) { document.getElementById('branchStmtReport').innerHTML = `<div class="empty-msg">لا توجد تقارير للفرع: ${esc(gov)}</div>`; return; }
     const now = getCairoDate();
     const dayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
     const dd = now.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -1600,7 +1600,7 @@ function empFilterGovChanged() {
   const allHospNames = [...new Set(Object.keys(hospGovMap))];
   const filtered = gov ? allHospNames.filter(h => hospGovMap[h] === gov) : allHospNames;
   const curVal = hospEl.value;
-  hospEl.innerHTML = '<option value="">كل بنوك الدم</option>' + filtered.map(h => `<option value="${h}" ${h === curVal ? 'selected' : ''}>${h}</option>`).join('');
+  hospEl.innerHTML = '<option value="">كل بنوك الدم</option>' + filtered.map(h => `<option value="${esc(h)}" ${h === curVal ? 'selected' : ''}>${esc(h)}</option>`).join('');
   if (gov && curVal && !filtered.includes(curVal)) hospEl.value = '';
   applyEmpFilter();
 }
@@ -2675,9 +2675,10 @@ async function showArchiveConsumption() {
     const me = await api('GET', '/me');
     const items = await api('GET', '/archive');
     const consumptionArchives = items.filter(r => r.type === 'منصرف فصائل الدم').reverse();
-    const isAdmin = me.user.id === 1;
+    const isAdmin = me.user.role === 'admin';
     const canSeeAll = me.user.role === 'admin' || me.user.role === 'org_supervisor';
     window._isArchiveAdmin = canSeeAll;
+    window._archiveCanEdit = isAdmin;
 
     el.innerHTML = `<div class="page-actions">
       <button class="btn-back" data-click="renderArchive"><i class="fas fa-arrow-right"></i> الأرشيف</button>
@@ -2742,7 +2743,7 @@ async function showArchiveConsumption() {
 
     if (isAdmin) {
       const hospitals = await api('GET', '/hospitals');
-      document.getElementById('addArchHosp').innerHTML = hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
+      document.getElementById('addArchHosp').innerHTML = hospitals.map(h => `<option value="${h.id}">${esc(h.name)}</option>`).join('');
     }
 
     // Populate filter dropdowns
@@ -2750,9 +2751,9 @@ async function showArchiveConsumption() {
     const govs = [...new Set(allHospitals.map(h => h.governorate))];
     const govEl = document.getElementById('filterGov');
     if (canSeeAll) {
-      govs.forEach(g => { govEl.innerHTML += `<option value="${g}">${g}</option>`; });
+      govs.forEach(g => { govEl.innerHTML += `<option value="${esc(g)}">${esc(g)}</option>`; });
     } else if (me.user.governorate) {
-      govEl.innerHTML = `<option value="${me.user.governorate}" selected>${me.user.governorate}</option>`;
+      govEl.innerHTML = `<option value="${esc(me.user.governorate)}" selected>${esc(me.user.governorate)}</option>`;
     }
     [2026,2025,2024,2023,2022].forEach(y => { document.getElementById('filterYear').innerHTML += `<option value="${y}">${y}</option>`; });
 
@@ -2887,7 +2888,7 @@ async function renderArchiveConsumptionTable() {
           <td>${r._displayPeriod || periodLabel(r)}</td>
           ${BP.map(t => `<td style="text-align:center">${bt[t] || 0}</td>`).join('')}
           <td style="text-align:center;font-weight:bold">${total}</td>
-          <td>${r._archiveId && r.hospital_id && window._isArchiveAdmin ? `<button class="btn btn-sm btn-outline" data-click="editArchiveRecord" data-args="${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${r.period||'monthly'}'" style="color:#1976d2;font-size:10px;margin-left:4px"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline" data-click="deleteArchiveRecord" data-args="${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${r.period||'monthly'}'" style="color:#dc3545;font-size:10px"><i class="fas fa-trash"></i></button>` : ''}</td>
+          <td>${r._archiveId && r.hospital_id && window._archiveCanEdit ? `<button class="btn btn-sm btn-outline" data-click="editArchiveRecord" data-args="${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${r.period||'monthly'}'" style="color:#1976d2;font-size:10px;margin-left:4px"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline" data-click="deleteArchiveRecord" data-args="${r._archiveId},${r.hospital_id},${r.year},${r.month||0},'${r.period||'monthly'}'" style="color:#dc3545;font-size:10px"><i class="fas fa-trash"></i></button>` : ''}</td>
         </tr>`;
       }).join('')}
       </tbody></table></div>`;
@@ -2991,9 +2992,10 @@ async function showArchiveIndicators() {
   try {
     await ensureIndicatorColumnsLoaded();
     const me = await api('GET', '/me');
-const isAdmin = me.user.id === 1;
+    const isAdmin = me.user.role === 'admin';
     const canSeeAll = me.user.role === 'admin' || me.user.role === 'org_supervisor';
     window._isArchiveAdmin = canSeeAll;
+    window._archiveCanEdit = isAdmin;
     if (window._archiveEditLocked === undefined) window._archiveEditLocked = true;
 
     el.innerHTML = `<div class="page-actions">
@@ -3052,9 +3054,9 @@ const isAdmin = me.user.id === 1;
     const govs = [...new Set(allHospitals.map(h => h.governorate))];
     const govEl = document.getElementById('filterIndGov');
     if (canSeeAll) {
-      govs.forEach(g => { govEl.innerHTML += `<option value="${g}">${g}</option>`; });
+      govs.forEach(g => { govEl.innerHTML += `<option value="${esc(g)}">${esc(g)}</option>`; });
     } else if (me.user.governorate) {
-      govEl.innerHTML = `<option value="${me.user.governorate}" selected>${me.user.governorate}</option>`;
+      govEl.innerHTML = `<option value="${esc(me.user.governorate)}" selected>${esc(me.user.governorate)}</option>`;
     }
 [2026,2025,2024,2023,2022].forEach(y => { document.getElementById('filterIndYear').innerHTML += `<option value="${y}">${y}</option>`; });
 
@@ -3149,7 +3151,7 @@ function renderArchiveIndicatorsTable() {
 
     let filteredBig = applyFilters(bigRecords);
     let filteredSmall = applyFilters(smallRecords);
-    const isAdmin = window._isArchiveAdmin;
+    const isAdmin = window._archiveCanEdit;
     const fGovAgg = document.getElementById('filterIndGovAgg')?.checked || false;
 
     function aggregateByGovernorate(records) {
@@ -3236,7 +3238,7 @@ function renderArchiveIndicatorsTable() {
               }
             }
             let cls = c.formula ? 'class="formula-cell"' : '';
-            const isEditable = !c.formula && !isAgg && c.key !== 'governorate' && c.key !== 'hospital_name' && !window._archiveEditLocked && window._isArchiveAdmin;
+            const isEditable = !c.formula && !isAgg && c.key !== 'governorate' && c.key !== 'hospital_name' && !window._archiveEditLocked && window._archiveCanEdit;
             const contentEdit = isEditable ? ' contenteditable="true" directinput="true" data-focus="archiveCellFocus" data-blur="saveArchiveCell" data-paste="handleArchivePaste" data-keydown="archiveCellEnter"' : '';
             const edCls = isEditable ? ' class="editable-cell"' : '';
             let td = `<td style="text-align:center;${c.key === 'governorate' || c.key === 'hospital_name' ? 'text-align:right;font-weight:600' : ''}" ${cls}${style}${contentEdit}${edCls} data-key="${c.key}">${display}</td>`;
@@ -3291,7 +3293,7 @@ function archiveCellFocus(el) {
 }
 
 function handleArchivePaste(ev) {
-  if (!window._isArchiveAdmin || window._archiveEditLocked) return;
+  if (!window._archiveCanEdit || window._archiveEditLocked) return;
   ev.preventDefault();
   const data = (ev.clipboardData || window.clipboardData).getData('Text');
   if (!data) return;
@@ -9746,6 +9748,11 @@ function bbOptProduct(sel) {
 function bbOptCollectProduct(sel) {
   return ['دم', 'دم كلي', 'صفائح SDP', 'صفائح RDP'].map(t => `<option value="${t}" ${sel === t ? 'selected' : ''}>${t}</option>`).join('');
 }
+// فئة الوحدة: كبار / أطفال (تغذي أعمدة child_* في مؤشرات التجميع والتخزين)
+function bbCatOpts(sel) {
+  const v = sel === 'أطفال' ? 'أطفال' : 'كبار';
+  return `<option value="كبار" ${v === 'كبار' ? 'selected' : ''}>كبار</option><option value="أطفال" ${v === 'أطفال' ? 'selected' : ''}>أطفال</option>`;
+}
 // الفحص لدم فقط: كيس دم (فردي أو قائد التبرع المفصول) أو كيس مستقل (صفائح) — بلازما/كرايو تتبعان نتيجة فحص الدم
 function bbCanTest(b) { return !!(b && b.status === 'collected' && ((b.product_type || 'دم') === 'دم' || !b.donation_id)); }
 // تغيير الحالة: أي كيس مجمّع (دم / بلازما / كرايو / صفائح) — دم يُعدِم التبرع كاملاً، بلازما وكرايو بسببيّن خاصين، صفائح بأسباب عامة
@@ -9876,6 +9883,7 @@ async function renderBloodBags(tab) {
       ['trans', 'fa-right-left', 'الوارد والإرسال والاستلام', '#1976d2'],
       ['compat', 'fa-arrows-to-circle', 'الفصائل والتوافق', '#8e44ad'],
       ['reserve', 'fa-hand-holding-droplet', 'الحجز والصرف', '#f39c12'],
+      ['stock', 'fa-boxes-stacked', 'الرصيد المتاح', '#27ae60'],
       ['monthly', 'fa-calendar-check', 'الشهري التلقائي', '#16a085'],
       ['stats', 'fa-chart-line', 'اداره و الاحصائيات', '#e67e22']
     ];
@@ -9903,6 +9911,7 @@ function bbRenderTab(t) {
   else if (t === 'trans') bbTrans();
   else if (t === 'compat') bbCompat();
   else if (t === 'reserve') bbReserve();
+  else if (t === 'stock') bbStock();
   else if (t === 'monthly') bbMonthly();
   else if (t === 'stats') bbStats();
   else bbTrans();
@@ -10016,6 +10025,7 @@ function bbAddRow() {
     <div><label style="font-size:10px">رقم اللي</label><input class="form-control" id="bbR${i}_no" placeholder="تلقائي" dir="ltr" style="height:30px;font-size:11px"></div>
     <div><label style="font-size:10px">الباركود</label><input class="form-control" id="bbR${i}_barcode" dir="ltr" data-change="bbRBarChanged" data-args="${i}" style="height:30px;font-size:11px"></div>
     <div><label style="font-size:10px">المنتج</label><select class="form-control" id="bbR${i}_prod" data-change="bbRProdChanged" data-args="${i}" style="height:auto;min-height:30px;font-size:11px;padding:2px 6px;line-height:1.4">${bbOptCollectProduct('دم')}</select></div>
+    <div><label style="font-size:10px">الفئة</label><select class="form-control" id="bbR${i}_cat" style="height:30px;font-size:11px"><option value="كبار" selected>كبار</option><option value="أطفال">أطفال</option></select></div>
     <div id="bbR${i}_unitWrap" style="display:none"><label style="font-size:10px">عدد الوحدات</label><input class="form-control" id="bbR${i}_units" type="number" min="1" value="1" style="height:30px;font-size:11px"></div>
     <div><label style="font-size:10px">تاريخ انتهاء الصلاحية</label><input class="form-control" id="bbR${i}_exp" type="date" style="height:30px;font-size:11px"></div>
     <div id="bbR${i}_cryoWrap" style="display:flex;align-items:center;padding-top:14px"><label style="font-size:11px;color:#d35400;cursor:pointer;font-weight:700;background:#fff3e0;border:1px solid #ffcc80;border-radius:16px;padding:5px 12px;display:inline-flex;align-items:center;gap:5px"><input type="checkbox" id="bbR${i}_cryo" style="width:15px;height:15px;margin:0"> كرايو</label></div>
@@ -10071,6 +10081,8 @@ async function bbDoCollect() {
     if (!no) continue;
     const prodEl = document.getElementById(`bbR${i}_prod`);
     const prod = prodEl ? prodEl.value : 'دم';
+    const catEl = document.getElementById(`bbR${i}_cat`);
+    const unitCat = catEl ? catEl.value : 'كبار';
     const bar = document.getElementById(`bbR${i}_barcode`).value.trim();
     const exp = document.getElementById(`bbR${i}_exp`).value;
     const unitsEl = document.getElementById(`bbR${i}_units`);
@@ -10085,6 +10097,7 @@ async function bbDoCollect() {
       bag_no: no.value.trim(),
       barcode: bar,
       product_type: prod,
+      unit_category: unitCat,
       units: prodEl ? units : 1,
       cryo: document.getElementById(`bbR${i}_cryo`) ? document.getElementById(`bbR${i}_cryo`).checked : false,
       preg: document.getElementById(`bbR${i}_preg`) ? document.getElementById(`bbR${i}_preg`).checked : false,
@@ -10545,10 +10558,11 @@ function bbAddInRow() {
   const wrap = document.getElementById('bbInRows');
   if (!wrap) return;
   const i = _bb.inRowN++;
-  wrap.insertAdjacentHTML('beforeend', `<div class="bb-row" style="display:grid;grid-template-columns:repeat(8,minmax(80px,1fr));gap:6px;align-items:end;margin-bottom:6px;padding:8px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
+  wrap.insertAdjacentHTML('beforeend', `<div class="bb-row" style="display:grid;grid-template-columns:repeat(9,minmax(80px,1fr));gap:6px;align-items:end;margin-bottom:6px;padding:8px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
     <div><label style="font-size:10px">رقم اللي</label><input class="form-control" id="bbIN${i}_no" placeholder="تلقائي" dir="ltr" style="height:30px;font-size:11px"></div>
     <div><label style="font-size:10px">رقم الكود</label><input class="form-control" id="bbIN${i}_barcode" dir="ltr" style="height:30px;font-size:11px"></div>
     <div><label style="font-size:10px">المنتج</label><select class="form-control" id="bbIN${i}_prod" data-change="bbInProdChanged" data-args="${i}" style="height:auto;min-height:30px;font-size:11px;padding:2px 6px;line-height:1.4">${bbOptProduct('دم')}</select></div>
+    <div><label style="font-size:10px">الفئة</label><select class="form-control" id="bbIN${i}_cat" style="height:30px;font-size:11px"><option value="كبار" selected>كبار</option><option value="أطفال">أطفال</option></select></div>
     <div><label style="font-size:10px">الفصيلة</label><select class="form-control" id="bbIN${i}_bt" style="height:auto;min-height:30px;font-size:11px;padding:2px 6px;line-height:1.4">${bbOptBt('')}</select></div>
     <div id="bbIN${i}_unitWrap" style="display:none"><label style="font-size:10px">عدد الوحدات</label><input class="form-control" id="bbIN${i}_units" type="number" min="1" value="1" style="height:30px;font-size:11px"></div>
     <div><label style="font-size:10px">تاريخ انتهاء الصلاحية</label><input class="form-control" id="bbIN${i}_exp" type="date" style="height:30px;font-size:11px"></div>
@@ -10633,6 +10647,7 @@ async function bbDoInSave() {
       barcode: document.getElementById(`bbIN${i}_barcode`).value,
       product_type: document.getElementById(`bbIN${i}_prod`).value || 'دم',
       units: parseInt(document.getElementById(`bbIN${i}_units`).value) || 1,
+      unit_category: (document.getElementById(`bbIN${i}_cat`) ? document.getElementById(`bbIN${i}_cat`).value : '') || 'كبار',
       blood_type: document.getElementById(`bbIN${i}_bt`).value,
       expiry_date: document.getElementById(`bbIN${i}_exp`).value || null,
       notes: document.getElementById(`bbIN${i}_notes`).value
@@ -10686,9 +10701,35 @@ function bbExportInLog() {
     'سجل الوارد', 'سجل_الوارد.xlsx', 'نظام بنك الدم — سجل الوارد (القائمة المفلترة حالياً)');
 }
 
+function bbUndoBtns(b) {
+  if (!hasPerm('blood_bags', 'edit')) return '';
+  let h = '';
+  if (b.status === 'disposed') h += `<button class="btn btn-sm" data-click="bbUndoDispose" data-args="${b.id}" title="إلغاء الإعدام — إعادة الكيس إلى الرصيد المتاح" style="background:#27ae6022;color:#27ae60;border:1px solid #27ae60;padding:3px 8px;border-radius:6px;font-size:11px;margin-right:4px"><i class="fas fa-rotate-left"></i> إلغاء الإعدام</button>`;
+  if (b.status === 'issued') h += `<button class="btn btn-sm" data-click="bbUndoIssue" data-args="${b.id}" title="إلغاء الصرف — إعادة الكيس إلى الرصيد المتاح" style="background:#16a08522;color:#16a085;border:1px solid #16a085;padding:3px 8px;border-radius:6px;font-size:11px;margin-right:4px"><i class="fas fa-rotate-left"></i> إلغاء الصرف</button>`;
+  return h;
+}
+function bbUndoDispose(id) {
+  const b = _bb.bags.find(x => x.id === id);
+  if (!b) return;
+  showConfirmModal(`إلغاء الإعدام — الكيس ${esc(b.bag_no || '')}؟ سيُعاد الكيس إلى الرصيد المتاح (${esc(b.product_type || 'دم')}).`, () => bbUndoGo(id, 'dispose'));
+}
+function bbUndoIssue(id) {
+  const b = _bb.bags.find(x => x.id === id);
+  if (!b) return;
+  showConfirmModal(`إلغاء الصرف — الكيس ${esc(b.bag_no || '')}؟ سيُلغى الصرف ويُعاد الكيس إلى الرصيد المتاح.`, () => bbUndoGo(id, 'issue'));
+}
+async function bbUndoGo(id, mode) {
+  try {
+    await api('POST', '/blood-bags/' + id + '/undo', { mode });
+    showToast(mode === 'dispose' ? '✅ تم إلغاء الإعدام — عاد الكيس إلى الرصيد' : '✅ تم إلغاء الصرف — عاد الكيس إلى الرصيد');
+    await bbLoadBags(); await bbLoadReservations();
+    bbRenderBagReport(); bbRenderExpLog(); bbRenderDispLog(); bbRenderResLog(); bbResRefresh();
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
 function bbRenderBagReport() {
   const body = document.getElementById('bbBagReportBody');
   if (!body) return;
+  const canEdit = hasPerm('blood_bags', 'edit');
   const q = document.getElementById('bbBagRptQ') ? document.getElementById('bbBagRptQ').value.trim().toLowerCase() : '';
   const prod = document.getElementById('bbBagRptProd') ? document.getElementById('bbBagRptProd').value : '';
   const st = document.getElementById('bbBagRptSt') ? document.getElementById('bbBagRptSt').value : '';
@@ -10717,7 +10758,7 @@ function bbRenderBagReport() {
     <td style="text-align:center">${bbStBadge(b.status)}</td>
     <td style="text-align:center">${bbDaysBadge(b.days_left)}</td>
     <td style="text-align:center">${raiseColor(b)}</td>
-    <td style="text-align:center"><button class="btn btn-sm" data-click="bbEvents" data-args="${b.id}" title="سجل أحداث الكيس" style="background:#2e86c122;color:#2e86c1;border:none;padding:3px 10px;border-radius:6px;font-size:11px"><i class="fas fa-clock-rotate-left"></i></button></td>
+    <td style="text-align:center;white-space:nowrap">${canEdit ? bbUndoBtns(b) : ''}<button class="btn btn-sm" data-click="bbEvents" data-args="${b.id}" title="سجل أحداث الكيس" style="background:#2e86c122;color:#2e86c1;border:none;padding:3px 10px;border-radius:6px;font-size:11px"><i class="fas fa-clock-rotate-left"></i></button></td>
   </tr>`).join('') || `<tr><td colspan="11" class="empty-msg">لا توجد أكياس مطابقة</td></tr>`;
 }
 
@@ -10736,6 +10777,7 @@ function bbExportBagReport() {
 function bbRenderExpLog() {
   const body = document.getElementById('bbExpLogBody');
   if (!body) return;
+  const canEdit = hasPerm('blood_bags', 'edit');
   const qEl = document.getElementById('bbExpLogQ');
   const stEl = document.getElementById('bbExpLogSt');
   const q = qEl ? qEl.value.trim().toLowerCase() : '';
@@ -10768,7 +10810,7 @@ function bbRenderExpLog() {
     <td style="text-align:center">${rc(b)}</td>
     <td style="text-align:center;font-size:11px">${b.issued_at ? esc(String(b.issued_at).slice(0, 10)) : '—'}</td>
     <td style="text-align:center;font-size:11px">${esc(b.recipient_name || '—')}</td>
-    <td style="text-align:center"><button class="btn btn-sm" data-click="bbEvents" data-args="${b.id}" title="سجل أحداث الكيس" style="background:#2e86c122;color:#2e86c1;border:none;padding:3px 10px;border-radius:6px;font-size:11px"><i class="fas fa-clock-rotate-left"></i></button></td>
+    <td style="text-align:center;white-space:nowrap">${canEdit ? bbUndoBtns(b) : ''}<button class="btn btn-sm" data-click="bbEvents" data-args="${b.id}" title="سجل أحداث الكيس" style="background:#2e86c122;color:#2e86c1;border:none;padding:3px 10px;border-radius:6px;font-size:11px"><i class="fas fa-clock-rotate-left"></i></button></td>
   </tr>`).join('') || `<tr><td colspan="15" class="empty-msg">لا توجد أكياس مطابقة</td></tr>`;
 }
 function bbExportExpLog() {
@@ -10790,6 +10832,7 @@ function bbExportExpLog() {
 function bbRenderDispLog() {
   const body = document.getElementById('bbDispLogBody');
   if (!body) return;
+  const canEdit = hasPerm('blood_bags', 'edit');
   const qEl = document.getElementById('bbDispLogQ');
   const stEl = document.getElementById('bbDispLogSt');
   const q = qEl ? qEl.value.trim().toLowerCase() : '';
@@ -10823,7 +10866,7 @@ function bbRenderDispLog() {
     <td style="text-align:center;font-size:11px">${esc(b.issue_type || '—')}</td>
     <td style="text-align:center">${bbStBadge(b.status)}</td>
     <td style="text-align:center">${rc(b)}</td>
-    <td style="text-align:center"><button class="btn btn-sm" data-click="bbEvents" data-args="${b.id}" title="سجل أحداث الكيس" style="background:#2e86c122;color:#2e86c1;border:none;padding:3px 10px;border-radius:6px;font-size:11px"><i class="fas fa-clock-rotate-left"></i></button></td>
+    <td style="text-align:center;white-space:nowrap">${canEdit ? bbUndoBtns(b) : ''}<button class="btn btn-sm" data-click="bbEvents" data-args="${b.id}" title="سجل أحداث الكيس" style="background:#2e86c122;color:#2e86c1;border:none;padding:3px 10px;border-radius:6px;font-size:11px"><i class="fas fa-clock-rotate-left"></i></button></td>
   </tr>`).join('') || `<tr><td colspan="13" class="empty-msg">لا توجد أكياس مطابقة</td></tr>`;
 }
 function bbExportDispLog() {
@@ -11381,14 +11424,17 @@ function bbDoIssueDirect(bid) {
   const opts = '<option value="">—</option>' + depts.map(d => `<option value="${esc(d.name)}" ${d.name === def ? 'selected' : ''}>${esc(d.name)}</option>`).join('');
   openModal('صرف مباشر — الكيس ' + (b ? esc(b.bag_no) : ''),
     `<div class="form-group"><label>القسم المصرف له</label><select class="form-control" id="bbIssueDirectDept">${opts}</select></div>
+    <div class="form-group"><label>الفئة</label><select class="form-control" id="bbIssueDirectCat">${bbCatOpts(b ? b.unit_category : '')}</select></div>
     <div style="background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:8px 12px;border-radius:8px;font-size:12px"><i class="fas fa-info-circle" style="margin-left:4px"></i> سيُصرف الكيس مباشرةً للمريض <b>${p ? esc(p.name) : ''}</b> (${b ? esc(b.product_type || 'دم') : ''}) بدون حجز — يُخصم من الرصيد مع القسم المحدد</div>`,
     `<button class="btn btn-secondary" data-click="closeModal"><i class="fas fa-times"></i> إلغاء</button>
      <button class="btn btn-primary" data-click="bbDoIssueDirect2" data-args="${bid}"><i class="fas fa-hand-holding-heart"></i> صرف مباشر</button>`);
 }
 async function bbDoIssueDirect2(bid) {
   const dept = document.getElementById('bbIssueDirectDept').value;
+  const catEl = document.getElementById('bbIssueDirectCat');
+  const cat = catEl ? catEl.value : '';
   try {
-    await api('POST', '/blood-bags/issue-direct', { bagId: bid, patientId: _bb.selResPatient, issueType: 'داخلي', issuedDepartment: dept });
+    await api('POST', '/blood-bags/issue-direct', { bagId: bid, patientId: _bb.selResPatient, issueType: 'داخلي', issuedDepartment: dept, unitCategory: cat });
     showToast('✅ تم الصرف المباشر وخصم الكيس من الرصيد (' + (dept || 'بدون قسم') + ')');
     closeModal();
     await bbLoadBags(); await bbLoadReservations();
@@ -11422,6 +11468,8 @@ function bbResPickBag(rid) {
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
       <span style="font-size:12px;color:#555;white-space:nowrap"><i class="fas fa-users" style="margin-left:4px"></i> القسم المصرف له:</span>
       <select class="form-control" id="bbResDept" style="flex:1;max-width:280px;height:auto;min-height:30px;padding:4px 8px">${opts}</select>
+      <span style="font-size:12px;color:#555;white-space:nowrap"><i class="fas fa-baby" style="margin-left:4px"></i> الفئة:</span>
+      <select class="form-control" id="bbResCat" style="flex:1;max-width:120px;height:auto;min-height:30px;padding:4px 8px">${bbCatOpts(r.unit_category)}</select>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary" data-click="bbDoIssueInline" data-args="${r.id}" style="background:#16a085;border-color:#16a085"><i class="fas fa-hand-holding-heart"></i> صرف الكيس</button>
@@ -11454,14 +11502,17 @@ async function bbDoIssue(rid) {
   const opts = '<option value="">—</option>' + depts.map(d => `<option value="${esc(d.name)}" ${d.name === def ? 'selected' : ''}>${esc(d.name)}</option>`).join('');
   openModal('صرف الكيس ' + (r ? esc(r.bag_no) : ''),
     `<div class="form-group"><label>القسم المصرف له</label><select class="form-control" id="bbIssueDept">${opts}</select></div>
+    <div class="form-group"><label>الفئة</label><select class="form-control" id="bbIssueCat">${bbCatOpts(r ? r.unit_category : '')}</select></div>
     <div style="background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:8px 12px;border-radius:8px;font-size:12px"><i class="fas fa-info-circle" style="margin-left:4px"></i> سيُخصم الكيس من الرصيد ويُسجَّل صرفه للمريض مع القسم المحدد</div>`,
     `<button class="btn btn-secondary" data-click="closeModal"><i class="fas fa-times"></i> إلغاء</button>
      <button class="btn btn-primary" data-click="bbDoIssue2" data-args="${rid}"><i class="fas fa-check"></i> صرف</button>`);
 }
 async function bbDoIssue2(rid) {
   const dept = document.getElementById('bbIssueDept').value;
+  const catEl = document.getElementById('bbIssueCat');
+  const cat = catEl ? catEl.value : '';
   try {
-    await api('POST', '/blood-bags/issue', { reservationId: rid, issuedDepartment: dept });
+    await api('POST', '/blood-bags/issue', { reservationId: rid, issuedDepartment: dept, unitCategory: cat });
     showToast('✅ تم الصرف وخصم الكيس من الرصيد');
     closeModal();
     await bbLoadBags(); await bbLoadReservations();
@@ -11471,8 +11522,10 @@ async function bbDoIssue2(rid) {
 async function bbDoIssueInline(rid) {
   const deptEl = document.getElementById('bbResDept');
   const dept = deptEl ? deptEl.value : '';
+  const catEl = document.getElementById('bbResCat');
+  const cat = catEl ? catEl.value : '';
   try {
-    await api('POST', '/blood-bags/issue', { reservationId: rid, issuedDepartment: dept });
+    await api('POST', '/blood-bags/issue', { reservationId: rid, issuedDepartment: dept, unitCategory: cat });
     showToast('✅ تم الصرف وخصم الكيس من الرصيد (' + (dept || 'بدون قسم') + ')');
     const det = document.getElementById('bbResBagDetail');
     if (det) det.innerHTML = '';
@@ -11531,7 +11584,9 @@ function bbRenderResLog() {
   body.innerHTML = list.map(r => {
     const active = r.status === 'active';
     const bag = _bb.bags.find(x => x.id === r.bag_id);
-    const canReturn = !!bag && bag.status === 'issued';
+    const bagIssued = !!bag && bag.status === 'issued';
+    // إعدام الكيس المُصرف متاح فقط خلال 4 ساعات من الصرف (مرتجع/تفاعل/نظام مفتوح/أخرى)
+    const canReturn = bagIssued && !!bag.issued_at && (Date.now() - new Date(bag.issued_at).getTime()) <= 4 * 3600000;
     const rh = r.remaining_hours;
     const color = active && rh !== null ? (rh <= 6 ? '#e74c3c' : rh <= 12 ? '#f39c12' : '#27ae60') : '#999';
     const badge = active ? (rh === null ? '—' : rh <= 0 ? 'منتهي' : Math.floor(rh) + ' ساعة') : (r.issued_at ? esc(new Date(r.issued_at).toLocaleDateString('ar-EG')) : '—');
@@ -11556,8 +11611,10 @@ function bbRenderResLog() {
       ${canEdit ? `<td style="text-align:center;white-space:nowrap">${active
         ? `<button class="btn btn-sm" data-click="bbDoIssue" data-args="${r.id}" style="background:#16a085;color:#fff" title="صرف"><i class="fas fa-hand-holding-heart"></i> صرف</button>
            <button class="btn btn-sm btn-outline" data-click="bbRelease" data-args="${r.id}" style="margin-right:4px" title="تفكيك"><i class="fas fa-undo"></i></button>`
-        : canReturn
-          ? `<button class="btn btn-sm btn-outline" data-click="bbReturn" data-args="${r.bag_id}" title="مرتجع / تفاعل / نظام مفتوح / أخرى" style="color:#e74c3c"><i class="fas fa-trash-can"></i> إعدام</button>`
+        : bagIssued
+          ? `${canReturn
+            ? `<button class="btn btn-sm btn-outline" data-click="bbReturn" data-args="${r.bag_id}" title="مرتجع / تفاعل / نظام مفتوح / أخرى — خلال 4 ساعات من الصرف" style="color:#e74c3c"><i class="fas fa-trash-can"></i> إعدام</button>`
+            : ''}<button class="btn btn-sm btn-outline" data-click="bbUndoIssue" data-args="${bag.id}" title="إلغاء الصرف — إعادة الكيس إلى الرصيد" style="color:#16a085;margin-right:4px"><i class="fas fa-rotate-left"></i> إلغاء الصرف</button>`
           : `<span style="color:#7f8c8d;font-size:11px;font-weight:700">${bag ? esc(BB_ST_LABELS[bag.status] || bag.status) : ''}</span>`}</td>` : ''}
     </tr>`;
   }).join('') || `<tr><td colspan="${canEdit ? 18 : 17}" class="empty-msg">لا توجد بيانات</td></tr>`;
@@ -11608,6 +11665,93 @@ async function bbDoReturn(id) {
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
 function bbGoPatients() { renderBloodBags('compat'); }
+
+/* ----- الرصيد المتاح (إعدام من الرصيد) ----- */
+async function bbStock() {
+  const el = document.getElementById('bbBody');
+  if (!el) return;
+  await bbLoadBags();
+  const canEdit = hasPerm('blood_bags', 'edit');
+  el.innerHTML = `<div class="card" style="margin-bottom:16px;border-right:4px solid #27ae60">
+    <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-boxes-stacked" style="margin-left:6px"></i> الرصيد المتاح — إعدام من الرصيد</strong></div>
+    <div class="card-body" style="padding:10px 16px">
+      <div style="background:#e8f8f5;border:1px solid #a2d9ce;color:#117864;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:10px"><i class="fas fa-info-circle" style="margin-left:4px"></i> هنا تُعدَم الأكياس في رصيد بنوك الدم. <b>دم / صفائح / كرايو</b>: نظام مفتوح أو أخرى — <b>بلازما</b>: شرخ أو كسر / تم الفك و تصرف / Lipemic / Hemolyzed. الإعدام فردي على الكيس.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+        <div class="form-group"><label>بحث</label><input class="form-control" id="bbStkQ" data-input="bbRenderStock" placeholder="رقم اللي / باركود / بنك / فصيلة"></div>
+        <div class="form-group"><label>بنك الدم</label><select class="form-control" id="bbStkHosp" data-change="bbRenderStock">${bbOptHosp('', '')}</select></div>
+        <div class="form-group"><label>المنتج</label><select class="form-control" id="bbStkProd" data-change="bbRenderStock">${bbOptProduct('')}</select></div>
+        <div class="form-group"><label>الحالة</label><select class="form-control" id="bbStkSt" data-change="bbRenderStock"><option value="stock">المتاح</option><option value="reserved">محجوز</option><option value="all">كل الأكياس</option></select></div>
+      </div>
+      <div id="bbStockBody" style="margin-top:10px"></div>
+    </div>
+  </div>`;
+  bbRenderStock();
+}
+function bbRenderStock() {
+  const body = document.getElementById('bbStockBody');
+  if (!body) return;
+  const g = id => { const e = document.getElementById(id); return e ? e.value : ''; };
+  const q = g('bbStkQ').toLowerCase();
+  const hid = g('bbStkHosp');
+  const prod = g('bbStkProd');
+  const st = g('bbStkSt') || 'stock';
+  let list = _bb.bags.filter(function (b) {
+    if (st === 'stock') return b.status === 'available' || b.status === 'returned';
+    if (st === 'reserved') return b.status === 'reserved';
+    return true;
+  });
+  if (hid) list = list.filter(function (b) { return String(b.hospital_id) === String(hid); });
+  if (prod) list = list.filter(function (b) { return (b.product_type || 'دم') === prod; });
+  if (q) list = list.filter(function (b) {
+    return (b.bag_no || '').toLowerCase().indexOf(q) !== -1 ||
+      (b.barcode || '').toLowerCase().indexOf(q) !== -1 ||
+      (b.hospital_name || bbHospName(b.hospital_id) || '').toLowerCase().indexOf(q) !== -1 ||
+      (b.blood_type || '').toLowerCase().indexOf(q) !== -1;
+  });
+  _bb.lastStock = list;
+  const canEdit = hasPerm('blood_bags', 'edit');
+  const btCell = bt => `<span style="font-weight:700;color:${bt && bt.endsWith('+') ? '#c0392b' : '#27ae60'}">${esc(bt || '—')}</span>`;
+  body.innerHTML = `<div style="margin-bottom:8px;color:#555;font-size:12px"><b>${list.length}</b> كيس</div>
+  <div style="overflow-x:auto"><table class="data-table" style="width:100%">
+    <thead><tr><th>رقم اللي</th><th>الباركود</th><th>بنك الدم</th><th>المنتج</th><th>الفصيلة</th><th>تاريخ الانتهاء</th><th>المتبقي</th><th>الحالة</th>${canEdit ? '<th>إجراءات</th>' : ''}</tr></thead>
+    <tbody>${list.map(b => `<tr>
+      <td style="text-align:center;direction:ltr;font-weight:700;color:#f39c12">${esc(b.bag_no)}</td>
+      <td style="text-align:center;direction:ltr;font-size:11px;color:#8e44ad">${esc(b.barcode || '—')}</td>
+      <td style="text-align:right;font-size:11px">${esc(b.hospital_name || bbHospName(b.hospital_id))}</td>
+      <td style="text-align:center">${bbProdCell(b)}</td>
+      <td style="text-align:center">${btCell(b.blood_type)}</td>
+      <td style="text-align:center;direction:ltr;font-size:11px">${esc(String(b.expiry_date || '').slice(0, 10) || '—')}</td>
+      <td style="text-align:center">${bbDaysBadge(b.days_left)}</td>
+      <td style="text-align:center">${bbStBadge(b.status)}</td>
+      ${canEdit ? `<td style="text-align:center">${(b.status === 'available' || b.status === 'returned') ? `<button class="btn btn-sm" data-click="bbStockDispose" data-args="${b.id}" style="background:#e74c3c;color:#fff" title="إعدام من الرصيد"><i class="fas fa-skull"></i> إعدام</button>` : '—'}</td>` : ''}
+    </tr>`).join('') || `<tr><td colspan="${canEdit ? 9 : 8}" class="empty-msg">لا توجد أكياس</td></tr>`}</tbody>
+  </table></div>`;
+}
+function bbStockDispose(id) {
+  const b = _bb.bags.find(x => x.id === id);
+  if (!b) return;
+  const prod = b.product_type || 'دم';
+  const opts = prod === 'بلازما'
+    ? ['شرخ أو كسر', 'تم الفك و تصرف', 'Lipemic', 'Hemolyzed']
+    : ['نظام مفتوح', 'أخرى'];
+  openModal('إعدام الكيس ' + esc(b.bag_no) + ' — ' + bbProdCell(b),
+    `<div class="form-group"><label>سبب الإعدام</label><select class="form-control" id="bbStkReason">${opts.map(s => `<option value="${s}" ${s === opts[0] ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+    <div class="form-group"><label>الفئة</label><select class="form-control" id="bbStkCat">${bbCatOpts(b.unit_category)}</select></div>
+    <div style="font-size:12px;color:#e74c3c;background:#fdecea;border:1px solid #f5b7b1;padding:8px 12px;border-radius:8px;margin-top:8px"><i class="fas fa-skull-crossbones" style="margin-left:4px"></i> إعدام <b>فردي</b> لهذا الكيس فقط من الرصيد المتاح — بقية مكونات التبرع تبقى كما هي.</div>`,
+    `<button class="btn btn-secondary" data-click="closeModal"><i class="fas fa-times"></i> إلغاء</button>
+     <button class="btn btn-primary" data-click="bbDoStockDispose" data-args="${id}" style="background:#e74c3c;border-color:#e74c3c"><i class="fas fa-skull"></i> إعدام</button>`);
+}
+async function bbDoStockDispose(id) {
+  const reason = document.getElementById('bbStkReason').value;
+  const catEl = document.getElementById('bbStkCat');
+  const cat = catEl ? catEl.value : '';
+  try {
+    const r = await api('POST', '/blood-bags/' + id + '/status', { status: 'disposed', reason, unitCategory: cat });
+    showToast('✅ تم إعدام الكيس (' + reason + ')' + (r.affected > 1 ? ' — ' + r.affected + ' مكونات' : ''));
+    closeModal();
+    await bbLoadBags(); bbRenderStock();
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
 
 /* ----- الشهري التلقائي ----- */
 async function bbMonthly() {

@@ -284,6 +284,7 @@ const PG_TABLES = [
     blood_type VARCHAR(10) DEFAULT '',
     product_type VARCHAR(30) DEFAULT 'دم',
     units INTEGER DEFAULT 1,
+    unit_category VARCHAR(20) DEFAULT 'كبار',
     donation_id INTEGER,
     donor_name VARCHAR(200) DEFAULT '',
     donor_national_id VARCHAR(20) DEFAULT '',
@@ -431,6 +432,8 @@ class Database {
         try { await client.query("ALTER TABLE patients ADD COLUMN IF NOT EXISTS req_cryo INTEGER DEFAULT 0"); } catch(e) {}
         // Migration: NAT test result on blood bags
         try { await client.query("ALTER TABLE blood_bags ADD COLUMN IF NOT EXISTS test_nat VARCHAR(20) DEFAULT ''"); } catch(e) {}
+        // Migration: adult/child unit category on blood bags
+        try { await client.query("ALTER TABLE blood_bags ADD COLUMN IF NOT EXISTS unit_category VARCHAR(20) DEFAULT 'كبار'"); } catch(e) {}
         // Migration: department the bag was issued to on reservations
         try { await client.query("ALTER TABLE bag_reservations ADD COLUMN IF NOT EXISTS issued_department VARCHAR(200) DEFAULT ''"); } catch(e) {}
         // Migration: rename hospital users h{id} → emp{seq}
@@ -666,6 +669,15 @@ class Database {
   async save() {
     if (this.mode === 'json' && jsondb) {
       jsondb._save();
+    }
+    // PG mode: auto-committed
+  }
+
+  async flush() {
+    if (this.mode === 'json' && jsondb) {
+      if (jsondb._saveTimer) clearTimeout(jsondb._saveTimer);
+      jsondb._saveTimer = null;
+      jsondb._write();
     }
     // PG mode: auto-committed
   }

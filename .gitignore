@@ -30,3 +30,4 @@ UsersPC*
 .env
 .env.*
 !.env.example
+data/.session-secret

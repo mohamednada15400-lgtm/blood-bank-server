@@ -12,7 +12,6 @@ const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const app = express();
 const PORT = process.env.PORT || 3001;
-const SESSION_SECRET = process.env.SESSION_SECRET || 'blood-bank-secret-key-2026';
 const BASE_DIR = process.pkg ? path.dirname(process.execPath) : __dirname;
 const os = require('os');
 function getWritableDir() {
@@ -30,6 +29,23 @@ function getWritableDir() {
   }
 }
 const DATA_DIR = getWritableDir();
+function loadOrCreateSecret() {
+  // Persist a random secret in the writable data dir so sessions survive restarts
+  // without shipping a hardcoded fallback in source.
+  const file = path.join(DATA_DIR, '.session-secret');
+  try {
+    if (fs.existsSync(file)) {
+      const s = fs.readFileSync(file, 'utf8').trim();
+      if (s.length >= 32) return s;
+    }
+    const fresh = crypto.randomBytes(32).toString('hex');
+    try { fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(file, fresh, { encoding: 'utf8', mode: 0o600 }); } catch {}
+    return fresh;
+  } catch {
+    return crypto.randomBytes(32).toString('hex');
+  }
+}
+const SESSION_SECRET = process.env.SESSION_SECRET || loadOrCreateSecret();
 // Consistent error sanitization: secure by default — hide details unless SHOW_ERROR_DETAILS=true
 const showError = process.env.SHOW_ERROR_DETAILS === 'true';
 function errMsg(e) { return showError ? e.message : 'خطأ في الخادم'; }
@@ -432,7 +448,7 @@ app.get('/api/me', async (req, res) => {
 
 function requireMaster() {
   return (req, res, next) => {
-    if (!req.session.user || req.session.user.id !== 1) return res.status(403).json({ error: 'ليس لديك صلاحية' });
+    if (!req.session.user || req.session.user.role !== 'admin') return res.status(403).json({ error: 'ليس لديك صلاحية' });
     next();
   };
 }
@@ -440,7 +456,7 @@ function requireMaster() {
 app.get('/api/users', requireAuth(), async (req, res) => {
   const user = req.session.user;
   let rows;
-  if (user.id === 1) {
+  if (user.role === 'admin') {
     const result = await query('SELECT * FROM users ORDER BY id');
     rows = result.rows;
   } else if (user.role === 'branch_supervisor') {
@@ -544,7 +560,7 @@ app.put('/api/users/:id', requireAuth(), async (req, res) => {
   const { password, name, role, hospitalId, governorate, viewPermission, phone, email, viewHospitalIds } = req.body;
 
   // Master can update anything
-  if (user.id === 1) {
+  if (user.role === 'admin') {
     const sets = []; const vals = []; let idx = 1;
     if (phone !== undefined) { sets.push(`phone = $${idx++}`); vals.push(phone); }
     if (email !== undefined) { sets.push(`email = $${idx++}`); vals.push(email); }
@@ -636,7 +652,7 @@ app.put('/api/users/:id/password', requireAuth(), async (req, res) => {
     if (!passwordOk) return res.status(401).json({ error: 'كلمة المرور الحالية غير صحيحة' });
   } else {
     // Admin or branch_supervisor changing someone else's password
-    if (user.id !== 1 && user.role !== 'branch_supervisor') return res.status(403).json({ error: 'ليس لديك صلاحية' });
+    if (user.role !== 'admin' && user.role !== 'branch_supervisor') return res.status(403).json({ error: 'ليس لديك صلاحية' });
     if (user.role === 'branch_supervisor') {
       if (!['hospital', 'hospital_manager'].includes(t.role)) return res.status(403).json({ error: 'لا يمكن تغيير كلمة سر هذا الدور' });
       if (t.governorate !== user.governorate) return res.status(403).json({ error: 'المستخدم ليس في محافظتك' });
@@ -900,9 +916,11 @@ app.get('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'view'),
   // تحت الفحص = الدم غير المفحوص (collected) يُحسب كيساً واحداً فقط، بدون صفائح
   // الوارد = الأكياس المتاحة المفحوصة (available) لكل فصيلة — دم بالفصائل الثماني، بلازما بالأربع
   // المنصرف = إرسال كيس لمستشفى آخر (أحداث «إرسال كيس» ناقص «رفض استلام») + صرف كيس لمريض/هيئة (status='issued') — بالفصيلة والمنتج
-  // الإعدام = الأكياس المُعدَمة (status='disposed': نظام مفتوح / أخرى / انتهاء صلاحية) — بالفصيلة والمنتج
+  // الإعدام = الإعدام قبل/بعد الصرف (نظام مفتوح / أخرى / انتهاء صلاحية / تفاعل) + المرتجع (returned) + Lipemic/Hemolyzed (أسباب البلازما/الكرايو) — بالفصيلة والمنتج
+  // يُستثنى إعدام التجميع: فيروسات/نات (positive) و لم يكتمل و دهون و Icteric و تبرع علاجي
+  // و ولادة (status='disposed' + return_reason='ولادة') — لا تُحسب في الإعدام
   try {
-    const bagRows = await query('SELECT hospital_id, status, product_type, blood_type FROM blood_bags');
+    const bagRows = await query('SELECT hospital_id, status, product_type, blood_type, return_reason FROM blood_bags');
     const uiCounts = {};
     const incBlood = {};   // hospital_id -> { 'A+': n, ... }
     const incPlasma = {};  // hospital_id -> { 'A': n, ... }
@@ -910,23 +928,26 @@ app.get('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'view'),
     const outPlasma = {};  // hospital_id -> { 'A': n, ... }
     const disBlood = {};   // hospital_id -> { 'A+': n, ... }
     const disPlasma = {};  // hospital_id -> { 'A': n, ... }
+    const isBlood = prod => { const p = (prod || '').trim(); return p === 'دم' || p === 'دم كلي'; };
     const outAdd = (map, hid, prod, bt) => {
       const key = bbNormBt(bt, prod);
       if (!key) return;
-      if (prod === 'دم') { (map.blood[hid] = map.blood[hid] || {})[key] = (map.blood[hid][key] || 0) + 1; }
+      if (isBlood(prod)) { (map.blood[hid] = map.blood[hid] || {})[key] = (map.blood[hid][key] || 0) + 1; }
       else if (prod === 'بلازما') { (map.plasma[hid] = map.plasma[hid] || {})[key] = (map.plasma[hid][key] || 0) + 1; }
     };
     bagRows.rows.forEach(b => {
       const prod = b.product_type || 'دم';
-      if (b.status === 'collected' && prod === 'دم') {
+      if (b.status === 'collected' && isBlood(prod)) {
         uiCounts[b.hospital_id] = (uiCounts[b.hospital_id] || 0) + 1;
       } else if (b.status === 'available' && b.blood_type) {
         outAdd({ blood: incBlood, plasma: incPlasma }, b.hospital_id, prod, b.blood_type);
       } else if (b.status === 'issued' && b.blood_type) {
         // صرف لمريض أو لهيئة/جهة — الكيس يبقى في المستشفى بحالة issued
         outAdd({ blood: outBlood, plasma: outPlasma }, b.hospital_id, prod, b.blood_type);
-      } else if (b.status === 'disposed' && b.blood_type) {
-        // إعدام (نظام مفتوح / أخرى / انتهاء صلاحية) — يُحسب لكل كيس مُعدَم
+      } else if (b.blood_type && (b.status === 'disposed' || b.status === 'reaction' || b.status === 'returned' || b.status === 'lipemic' || b.status === 'hemolyzed')) {
+        // إعدام قبل/بعد الصرف: نظام مفتوح / أخرى / انتهاء صلاحية / تفاعل / مرتجع + Lipemic/Hemolyzed (البلازما والكرايو) — يُحسب لكل كيس مُعدَم أو مُرتجع
+        // يُستثنى إعدام التجميع (ولادة: status='disposed' + return_reason='ولادة' تُخزَّن كإعدام جمع-time)
+        if (b.status === 'disposed' && b.return_reason === 'ولادة') return;
         outAdd({ blood: disBlood, plasma: disPlasma }, b.hospital_id, prod, b.blood_type);
       }
     });
@@ -935,7 +956,7 @@ app.get('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'view'),
     const outDelta = (map, hid, prod, bt, delta) => {
       const key = bbNormBt(bt, prod);
       if (!key) return;
-      if (prod === 'دم') { (map.blood[hid] = map.blood[hid] || {})[key] = (map.blood[hid][key] || 0) + delta; }
+      if (isBlood(prod)) { (map.blood[hid] = map.blood[hid] || {})[key] = (map.blood[hid][key] || 0) + delta; }
       else if (prod === 'بلازما') { (map.plasma[hid] = map.plasma[hid] || {})[key] = (map.plasma[hid][key] || 0) + delta; }
     };
     try {
@@ -1493,7 +1514,7 @@ app.put('/api/monthly-big-indicators/:id', requireAuth(), requirePerm('monthly_b
   res.json(result.rows[0]);
 });
 
-app.delete('/api/monthly-big-indicators/:id', requireAuth(), requirePerm('monthly_big', 'edit'), async (req, res) => {
+app.delete('/api/monthly-big-indicators/:id', requireAuth(), requirePerm('monthly_big', 'delete'), async (req, res) => {
   await query(`DELETE FROM ${BIG_INDICATOR_TABLE} WHERE id = $1`, [parseInt(req.params.id)]);
   res.json({ ok: true });
 });
@@ -1570,7 +1591,7 @@ app.put('/api/monthly-small-indicators/:id', requireAuth(), requirePerm('monthly
   res.json(result.rows[0]);
 });
 
-app.delete('/api/monthly-small-indicators/:id', requireAuth(), requirePerm('monthly_small', 'edit'), async (req, res) => {
+app.delete('/api/monthly-small-indicators/:id', requireAuth(), requirePerm('monthly_small', 'delete'), async (req, res) => {
   await query(`DELETE FROM ${SMALL_INDICATOR_TABLE} WHERE id = $1`, [parseInt(req.params.id)]);
   res.json({ ok: true });
 });
@@ -1625,15 +1646,13 @@ app.post('/api/archive', requireAuth(), requirePerm('archive', 'edit'), async (r
   res.json(result.rows[0]);
 });
 
-app.put('/api/archive/:id', requireAuth(), async (req, res) => {
-  if (req.session.user.role !== 'admin') return res.status(403).json({ error: 'غير مصرح - فقط المدير' });
+app.put('/api/archive/:id', requireAuth(), requirePerm('archive', 'edit'), async (req, res) => {
   const { data } = req.body;
   if (data) await query('UPDATE archives SET data = $1 WHERE id = $2', [JSON.stringify(data), parseInt(req.params.id)]);
   res.json({ ok: true });
 });
 
-app.delete('/api/archive/:id', requireAuth(), async (req, res) => {
-  if (req.session.user.role !== 'admin') return res.status(403).json({ error: 'غير مصرح - فقط المدير' });
+app.delete('/api/archive/:id', requireAuth(), requirePerm('archive', 'delete'), async (req, res) => {
   await query('DELETE FROM archives WHERE id = $1', [parseInt(req.params.id)]);
   res.json({ ok: true });
 });
@@ -3411,6 +3430,7 @@ app.post('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'add'), asy
       const makeCryo = !!item.cryo;
       const productType = (item.product_type || '').trim() || 'دم';
       const units = parseInt(item.units) || 1;
+      const unitCategory = (item.unit_category || 'كبار').trim() === 'أطفال' ? 'أطفال' : 'كبار';
       // أسباب الإعدام حسب المنتج: دم ودم كلي = أسباب عامة فقط، بلازما/كرايو/صفائح = قد تُعدم بأسباب عامة أو أسباب خاصة بالبلازما
       const generalDiscard = ['incomplete', 'therapeutic', 'fatty', 'icteric'];
       const plasmaDiscard = ['lipemic', 'hemolyzed'];
@@ -3422,9 +3442,9 @@ app.post('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'add'), asy
       if (productType !== 'دم') {
         const cExp = exp || bbDefaultExpiry(collectionDate, productType);
         const r = await db.query(
-          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, notes, created_at, updated_at, user_id, donation_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW(),NOW(),$20,NULL)`,
-          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, units, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', status, '', '', '', '', item.notes || '', user ? user.id : null]
+          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, unit_category, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, notes, created_at, updated_at, user_id, donation_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,NOW(),NOW(),$21,NULL)`,
+          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, units, unitCategory, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', status, '', '', '', '', item.notes || '', user ? user.id : null]
         );
         const bag = r.rows[0];
         const stLabel = BB_STATUS_LABELS[status] || '';
@@ -3442,9 +3462,9 @@ app.post('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'add'), asy
         const compStatus = birthDiscard ? 'disposed' : status;
         const compReason = birthDiscard ? 'ولادة' : '';
         const r = await db.query(
-          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, test_nat, notes, created_at, updated_at, user_id, donation_id, return_reason)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,NOW(),NOW(),$21,$22,$23)`,
-          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, 1, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', compStatus, '', '', '', '', '', item.notes || '', user ? user.id : null, donationId, compReason]
+          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, unit_category, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, test_nat, notes, created_at, updated_at, user_id, donation_id, return_reason)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,NOW(),NOW(),$22,$23,$24)`,
+          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, 1, unitCategory, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', compStatus, '', '', '', '', '', item.notes || '', user ? user.id : null, donationId, compReason]
         );
         return r.rows[0];
       };
@@ -3494,11 +3514,12 @@ app.post('/api/blood-bags/external-in', requireAuth(), requirePerm('blood_bags',
       const bagNo = (item.bag_no || '').trim() || await bbNextBagNo(hid);
       const productType = (item.product_type || '').trim() || 'دم';
       const units = parseInt(item.units) || 1;
+      const unitCategory = (item.unit_category || 'كبار').trim() === 'أطفال' ? 'أطفال' : 'كبار';
       const barcode = (item.barcode || '').trim();
       const r = await db.query(
-        `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, source_name, collection_date, expiry_date, blood_type, product_type, units, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, received_at, received_by, notes, created_at, updated_at, user_id)
-         VALUES ($1,$2,$3,0,$4,NULL,$5,$6,$7,$8,'','',NULL,'','available','','','','',$9,$10,$11,NOW(),NOW(),$12)`,
-        [bagNo, barcode, hid, srcName, item.expiry_date || bbDefaultExpiry(receivedDate || null, productType), bbNormBt(item.blood_type, productType), productType, units, receivedDate || null, user ? user.name : '', item.notes || '', user ? user.id : null]
+        `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, source_name, collection_date, expiry_date, blood_type, product_type, units, unit_category, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, received_at, received_by, notes, created_at, updated_at, user_id)
+         VALUES ($1,$2,$3,0,$4,NULL,$5,$6,$7,$8,$9,'','',NULL,'','available','','','','',$10,$11,$12,NOW(),NOW(),$13)`,
+        [bagNo, barcode, hid, srcName, item.expiry_date || bbDefaultExpiry(receivedDate || null, productType), bbNormBt(item.blood_type, productType), productType, units, unitCategory, receivedDate || null, user ? user.name : '', item.notes || '', user ? user.id : null]
       );
       const bag = r.rows[0];
       const det = srcName ? ('وارد من: ' + srcName) : 'وارد إقليمي (خارجي)';
@@ -3625,7 +3646,7 @@ app.post('/api/blood-bags/:id/test', requireAuth(), requirePerm('blood_bags', 'e
 app.post('/api/blood-bags/:id/status', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { status, reason } = req.body || {};
+    const { status, reason, unitCategory } = req.body || {};
     if (!id || !status) return res.status(400).json({ error: 'بيانات ناقصة' });
     const allowed = ['incomplete', 'therapeutic', 'fatty', 'icteric', 'lipemic', 'hemolyzed', 'disposed'];
     if (allowed.indexOf(status) === -1) return res.status(400).json({ error: 'حالة غير مسموحة' });
@@ -3634,11 +3655,12 @@ app.post('/api/blood-bags/:id/status', requireAuth(), requirePerm('blood_bags', 
     const isStock = ['available', 'returned'].indexOf(bag.status) !== -1;
     const isReserved = bag.status === 'reserved';
     if (bag.status !== 'collected' && !isStock && !(isReserved && status === 'disposed')) return res.status(400).json({ error: 'تغيير الحالة متاح لأكياس التجميع فقط' });
-    if (isStock && status !== 'disposed') return res.status(400).json({ error: 'الإعدام من الرصيد المتاح فقط (نظام مفتوح / أخرى) — فردي على الكيس' });
+    if (isStock && status !== 'disposed') return res.status(400).json({ error: 'الإعدام من الرصيد المتاح فقط (نظام مفتوح / أخرى / شرخ أو كسر / تم الفك و تصرف / Lipemic / Hemolyzed) — فردي على الكيس' });
     if (isReserved && status === 'disposed') {
       await db.query("UPDATE bag_reservations SET status = 'released', released_at = NOW() WHERE bag_id = $1 AND status = 'active'", [bag.id]);
       await db.query("UPDATE blood_bags SET recipient_id = NULL, recipient_name = '', issue_type = '' WHERE id = $1", [bag.id]);
     }
+    const newCat = String(unitCategory || bag.unit_category || 'كبار').trim() === 'أطفال' ? 'أطفال' : 'كبار';
     // أسباب إعدام التبرع كاملاً (تُطبق على كل مكونات التبرع) — دم فقط
     const wholeDonationReasons = ['incomplete', 'therapeutic', 'fatty', 'icteric', 'disposed'];
     let affected = 1;
@@ -3649,12 +3671,41 @@ app.post('/api/blood-bags/:id/status', requireAuth(), requirePerm('blood_bags', 
     }
     const dispLabel = reason || BB_STATUS_LABELS[status] || status;
     for (const t of targets) {
-      await db.query('UPDATE blood_bags SET status = $1, return_reason = $2, updated_at = NOW() WHERE id = $3', [status, reason || BB_STATUS_LABELS[status] || '', t.id]);
+      await db.query('UPDATE blood_bags SET status = $1, return_reason = $2, unit_category = $3, updated_at = NOW() WHERE id = $4', [status, reason || BB_STATUS_LABELS[status] || '', newCat, t.id]);
       await bbAddEvent(t, 'تغيير حالة', (targets.length > 1 ? 'إعدام — ' + dispLabel + ' (كل مكونات التبرع)' : 'إعدام فردي — ' + dispLabel) + ' | المنتج: ' + (t.product_type || 'دم'), req.session.user, null, null);
     }
     affected = targets.length;
     res.json({ ok: true, affected });
   } catch (e) { console.error('POST blood-bags/status:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+// ----- التراجع: إلغاء الإعدام (disposed → available) / إلغاء الصرف (issued → available) -----
+app.post('/api/blood-bags/:id/undo', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { mode } = req.body || {};
+    if (!id || !mode) return res.status(400).json({ error: 'بيانات ناقصة' });
+    if (mode !== 'dispose' && mode !== 'issue') return res.status(400).json({ error: 'نوع التراجع غير صالح' });
+    const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [id])).rows[0];
+    if (!bag) return res.status(404).json({ error: 'الكيس غير موجود' });
+    const user = req.session.user;
+    if (user && user.hospitalId && parseInt(user.hospitalId) !== bag.hospital_id) {
+      return res.status(403).json({ error: 'يمكنك تعديل كيس من رصيد مستشفاك فقط' });
+    }
+    if (mode === 'dispose') {
+      if (bag.status !== 'disposed') return res.status(400).json({ error: 'إلغاء الإعدام متاح فقط للكيس المُعدَم' });
+      await db.query("UPDATE blood_bags SET status = 'available', return_reason = '', updated_at = NOW() WHERE id = $1", [bag.id]);
+      await bbAddEvent(bag, 'إلغاء الإعدام', 'أُلغي الإعدام وأُعيد الكيس إلى الرصيد المتاح | المنتج: ' + (bag.product_type || 'دم'), user, null, null);
+    } else {
+      if (bag.status !== 'issued') return res.status(400).json({ error: 'إلغاء الصرف متاح فقط للكيس المُصرف' });
+      const buyer = bag.recipient_name || '';
+      const recipientId = bag.recipient_id;
+      await db.query("UPDATE blood_bags SET status = 'available', recipient_id = NULL, recipient_name = '', issued_at = NULL, issued_by = '', issue_type = '', updated_at = NOW() WHERE id = $1", [bag.id]);
+      await db.query("UPDATE bag_reservations SET status = 'released', released_at = NOW() WHERE bag_id = $1 AND status = 'issued' AND patient_id = $2", [bag.id, recipientId]);
+      await bbAddEvent(bag, 'إلغاء الصرف', 'أُلغي الصرف وأُعيد الكيس إلى الرصيد المتاح' + (buyer ? ' | المصروف إليه: ' + buyer : ''), user, null, null);
+    }
+    res.json({ ok: true, status: 'available' });
+  } catch (e) { console.error('POST blood-bags/undo:', e.message); res.status(500).json({ error: errMsg(e) }); }
 });
 
 // ----- الإرسال بين المستشفيات -----
@@ -3814,6 +3865,7 @@ app.get('/api/blood-bags/reservations', requireAuth(), requirePerm('blood_bags',
       return Object.assign({}, r, {
         bag_no: b.bag_no || '', barcode: b.barcode || '', blood_type: b.blood_type || '',
         product_type: b.product_type || 'دم', units: b.units != null ? b.units : 1,
+        unit_category: b.unit_category || 'كبار',
         expiry_date: b.expiry_date || '', hospital_name: hospMap[r.hospital_id] ? hospMap[r.hospital_id].name : '',
         governorate: hospMap[r.hospital_id] ? hospMap[r.hospital_id].governorate : '',
         patient_name: r.patient_name || p.name || '', patient_blood_type: p.blood_type || '',
@@ -3863,7 +3915,7 @@ app.post('/api/blood-bags/reserve', requireAuth(), requirePerm('blood_bags', 'ed
 // ----- الصرف للمريض -----
 app.post('/api/blood-bags/issue', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
   try {
-    const { reservationId, issuedDepartment } = req.body || {};
+    const { reservationId, issuedDepartment, unitCategory } = req.body || {};
     const rid = parseInt(reservationId);
     if (!rid) return res.status(400).json({ error: 'معرف غير صالح' });
     const resv = (await db.query('SELECT * FROM bag_reservations WHERE id = $1', [rid])).rows[0];
@@ -3871,9 +3923,10 @@ app.post('/api/blood-bags/issue', requireAuth(), requirePerm('blood_bags', 'edit
     if (resv.status !== 'active') return res.status(400).json({ error: 'الحجز غير نشط' });
     const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [resv.bag_id])).rows[0];
     if (!bag || bag.status !== 'reserved') return res.status(400).json({ error: 'الكيس غير محجوز' });
+    const newCat = String(unitCategory || bag.unit_category || 'كبار').trim() === 'أطفال' ? 'أطفال' : 'كبار';
     const user = req.session.user;
-    await db.query("UPDATE blood_bags SET status = 'issued', issued_at = NOW(), issued_by = $1, recipient_id = $2, recipient_name = $3, updated_at = NOW() WHERE id = $4",
-      [user ? user.name : '', resv.patient_id, resv.patient_name || '', bag.id]);
+    await db.query("UPDATE blood_bags SET status = 'issued', issued_at = NOW(), issued_by = $1, recipient_id = $2, recipient_name = $3, unit_category = $4, updated_at = NOW() WHERE id = $5",
+      [user ? user.name : '', resv.patient_id, resv.patient_name || '', newCat, bag.id]);
     await db.query("UPDATE bag_reservations SET status = 'issued', issued_at = NOW(), issued_by = $1, issued_department = $3 WHERE id = $2", [user ? user.name : '', rid, issuedDepartment || '']);
     const others = (await db.query("SELECT * FROM bag_reservations WHERE bag_id = $1 AND status = 'active' AND id != $2", [bag.id, rid])).rows;
     if (others.length) {
@@ -3890,12 +3943,13 @@ app.post('/api/blood-bags/issue', requireAuth(), requirePerm('blood_bags', 'edit
 // ----- الصرف المباشر (بلازما / صفائح / كرايو — بدون حجز) -----
 app.post('/api/blood-bags/issue-direct', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
   try {
-    const { bagId, patientId, issueType, issuedDepartment } = req.body || {};
+    const { bagId, patientId, issueType, issuedDepartment, unitCategory } = req.body || {};
     const bid = parseInt(bagId), pid = parseInt(patientId);
     if (!bid || !pid) return res.status(400).json({ error: 'بيانات ناقصة — الكيس والمريض مطلوبان' });
     const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [bid])).rows[0];
     if (!bag) return res.status(404).json({ error: 'الكيس غير موجود' });
     if (BB_STOCK_STATUSES.indexOf(bag.status) === -1) return res.status(400).json({ error: 'الكيس غير متاح للصرف المباشر' });
+    const newCat = String(unitCategory || bag.unit_category || 'كبار').trim() === 'أطفال' ? 'أطفال' : 'كبار';
     if ((bag.product_type || 'دم') === 'دم') return res.status(400).json({ error: 'أكياس الدم تُحجز أولاً (48 ساعة) من تبويب الفصائل والتوافق — الصرف المباشر للبلازما / الصفائح / الكرايو فقط' });
     const user = req.session.user;
     if (user && user.hospitalId && parseInt(user.hospitalId) !== bag.hospital_id) {
@@ -3904,8 +3958,8 @@ app.post('/api/blood-bags/issue-direct', requireAuth(), requirePerm('blood_bags'
     const patient = (await db.query('SELECT * FROM patients WHERE id = $1', [pid])).rows[0];
     if (!patient) return res.status(404).json({ error: 'المريض غير موجود' });
     const it = BB_ISSUE_TYPES.indexOf(issueType) !== -1 ? issueType : 'داخلي';
-    await db.query("UPDATE blood_bags SET status = 'issued', issued_at = NOW(), issued_by = $1, recipient_id = $2, recipient_name = $3, issue_type = $4, updated_at = NOW() WHERE id = $5",
-      [user ? user.name : '', pid, patient.name, it, bid]);
+    await db.query("UPDATE blood_bags SET status = 'issued', issued_at = NOW(), issued_by = $1, recipient_id = $2, recipient_name = $3, issue_type = $4, unit_category = $5, updated_at = NOW() WHERE id = $6",
+      [user ? user.name : '', pid, patient.name, it, newCat, bid]);
     const r = await db.query('INSERT INTO bag_reservations (bag_id, patient_id, patient_name, hospital_id, reserved_at, reserved_until, status, compat_cards, user_id, issued_at, issued_department) VALUES ($1,$2,$3,$4,NOW(),NOW(),$5,0,$6,NOW(),$7) RETURNING *',
       [bid, pid, patient.name, bag.hospital_id, 'issued', user ? user.id : null, issuedDepartment || '']);
     await bbAddEvent(bag, 'صرف كيس', 'صرف مباشر (بدون حجز) — المنتج: ' + (bag.product_type || 'دم') + ' لمريض: ' + patient.name + ' (' + it + ')' + (issuedDepartment ? ' — القسم المصرف له: ' + issuedDepartment : ''), user, null, null);
@@ -3963,6 +4017,10 @@ app.post('/api/blood-bags/return', requireAuth(), requirePerm('blood_bags', 'edi
     const bag = (await db.query('SELECT * FROM blood_bags WHERE id = $1', [bid])).rows[0];
     if (!bag) return res.status(404).json({ error: 'الكيس غير موجود' });
     if (bag.status !== 'issued') return res.status(400).json({ error: 'المرتجع/التفاعل متاح فقط للكيس المُصرف' });
+    // إعدام الكيس المُصرف (مرتجع/تفاعل/نظام مفتوح/أخرى) متاح فقط خلال 4 ساعات من الصرف
+    if (bag.issued_at && (Date.now() - new Date(bag.issued_at).getTime()) > 4 * 3600000) {
+      return res.status(400).json({ error: 'انتهت فترة الإعدام — يُسمح بالمرتجع / التفاعل / نظام مفتوح / أخرى خلال 4 ساعات فقط من الصرف' });
+    }
     let newStatus = 'disposed', label = 'أخرى';
     if (returnType === 'returned') { newStatus = 'returned'; label = 'مرتجع'; }
     else if (returnType === 'reaction') { newStatus = 'reaction'; label = 'تفاعل'; }
@@ -3977,10 +4035,17 @@ app.post('/api/blood-bags/return', requireAuth(), requirePerm('blood_bags', 'edi
 const BB_BTYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 function bbZeroCons() { const o = {}; BB_BTYPES.forEach(t => { o[t] = 0; }); return o; }
 function bbZeroBig() {
-  return { collect_total: 0, donation_therapeutic: 0, uncompleted: 0, refused_fatty: 0, refused_icteric: 0, virology_c: 0, virology_b: 0, virology_i: 0, virology_dollar: 0, blood_groups: 0, compatibility: 0, inc_regional: 0, disp_returned: 0, disp_reaction: 0, disp_open: 0, disp_other: 0, disp_exp_blood: 0 };
+  return { collect_total: 0, donation_therapeutic: 0, uncompleted: 0, refused_fatty: 0, refused_icteric: 0, virology_c: 0, virology_b: 0, virology_i: 0, virology_dollar: 0, blood_groups: 0, compatibility: 0, inc_regional: 0, disp_returned: 0, disp_reaction: 0, disp_open: 0, disp_other: 0, disp_exp_blood: 0, child_inc_collected: 0, child_inc_regional: 0, child_out_blood: 0, child_blood_groups: 0, child_compatibility: 0, child_disp_exp: 0, child_disp_returned: 0, child_disp_reaction: 0, child_disp_open: 0, child_disp_other: 0 };
 }
 function bbZeroSmall() {
-  return { inc_collected: 0, inc_regional: 0, out_blood: 0, out_blood_int: 0, out_blood_branch: 0, out_blood_auth: 0, out_blood_ext: 0, compatibility: 0, disp_returned: 0, disp_reaction: 0, disp_open: 0, disp_other: 0, disp_exp_blood: 0 };
+  return { inc_collected: 0, inc_regional: 0, out_blood: 0, out_blood_int: 0, out_blood_branch: 0, out_blood_auth: 0, out_blood_ext: 0, compatibility: 0, disp_returned: 0, disp_reaction: 0, disp_open: 0, disp_other: 0, disp_exp_blood: 0, child_inc_collected: 0, child_inc_regional: 0, child_out_blood: 0, child_blood_groups: 0, child_compatibility: 0, child_disp_exp: 0, child_disp_returned: 0, child_disp_reaction: 0, child_disp_open: 0, child_disp_other: 0 };
+}
+// إعدام «أخرى» في الشهري: Lipemic/Hemolyzed (تجميع) أو أي كيس مُعدَم بغير «نظام مفتوح» و«انتهاء الصلاحية»
+// (صرف: أخرى — رصيد: شرخ أو كسر / تم الفك و تصرف / Lipemic / Hemolyzed)
+function bbIsDispOther(b) {
+  if (b.status === 'lipemic' || b.status === 'hemolyzed') return true;
+  if (b.status === 'disposed' && b.return_reason && ['أخرى', 'شرخ أو كسر', 'تم الفك و تصرف', 'Lipemic', 'Hemolyzed'].indexOf(b.return_reason) !== -1) return true;
+  return false;
 }
 async function bbComputeRange(from, to, user) {
   await bbReleaseExpiredReservations();
@@ -3999,6 +4064,7 @@ async function bbComputeRange(from, to, user) {
     cons[h.id] = bbZeroCons();
   });
   for (const b of bags) {
+    const isChild = (b.unit_category || 'كبار') === 'أطفال';
     // مؤشرات التجميع تُحسب مرة واحدة لكل تبرع (مكوّن الدم فقط) — التبرع الواحد = عملية تجميع واحدة
     if (big[b.source_hospital_id] && inRange(b.collection_date) && (b.product_type || 'دم') === 'دم') {
       const row = big[b.source_hospital_id];
@@ -4012,6 +4078,7 @@ async function bbComputeRange(from, to, user) {
       else if (b.test_hiv === 'إيجابي') row.virology_i++;
       else if (b.test_syphilis === 'إيجابي') row.virology_dollar++;
       if (b.blood_type && b.status !== 'positive') row.blood_groups++;
+      if (isChild && b.blood_type && b.status !== 'positive') row.child_blood_groups++;
     }
     // الإعدامات والمرتجعات والتفاعل: لكل وحدة فعلية (المكونات المنفصلة تُحسب كل منها)
     // مرتجع (صرف) → disp_returned، تفاعل (صرف) → disp_reaction، نظام مفتوح (صرف) → disp_open، Lipemic/Hemolyzed (تجميع) أو أخرى (صرف) → disp_other
@@ -4021,15 +4088,25 @@ async function bbComputeRange(from, to, user) {
       if (b.return_reason === 'مرتجع') row.disp_returned++;
       if (b.status === 'reaction') row.disp_reaction++;
       if (b.status === 'disposed' && b.return_reason === 'نظام مفتوح') row.disp_open++;
-      if (b.status === 'lipemic' || b.status === 'hemolyzed') row.disp_other++;
-      else if (b.status === 'disposed' && b.return_reason === 'أخرى') row.disp_other++;
+      if (bbIsDispOther(b)) row.disp_other++;
+      if (isChild) {
+        if (b.return_reason === 'مرتجع') row.child_disp_returned++;
+        if (b.status === 'reaction') row.child_disp_reaction++;
+        if (b.status === 'disposed' && b.return_reason === 'نظام مفتوح') row.child_disp_open++;
+        if (bbIsDispOther(b)) row.child_disp_other++;
+      }
     }
     if (b.source_hospital_id !== 0 && small[b.hospital_id] && inRange(b.received_at)) small[b.hospital_id].inc_collected++;
+    if (b.source_hospital_id !== 0 && isChild && small[b.hospital_id] && inRange(b.received_at)) small[b.hospital_id].child_inc_collected++;
+    if (b.source_hospital_id !== 0 && isChild && big[b.hospital_id] && inRange(b.received_at)) big[b.hospital_id].child_inc_collected++;
     if (b.source_hospital_id === 0 && small[b.hospital_id] && inRange(b.received_at)) small[b.hospital_id].inc_regional++;
+    if (b.source_hospital_id === 0 && isChild && small[b.hospital_id] && inRange(b.received_at)) small[b.hospital_id].child_inc_regional++;
     if (b.source_hospital_id === 0 && big[b.hospital_id] && inRange(b.received_at)) big[b.hospital_id].inc_regional++;
+    if (b.source_hospital_id === 0 && isChild && big[b.hospital_id] && inRange(b.received_at)) big[b.hospital_id].child_inc_regional++;
     if (small[b.hospital_id] && inRange(b.issued_at)) {
       const row = small[b.hospital_id];
       row.out_blood++;
+      if (isChild) row.child_out_blood++;
       if (b.issue_type === 'فرع') row.out_blood_branch++;
       else if (b.issue_type === 'هيئة') row.out_blood_auth++;
       else if (b.issue_type === 'خارجي') row.out_blood_ext++;
@@ -4037,14 +4114,42 @@ async function bbComputeRange(from, to, user) {
       if (b.return_reason === 'مرتجع') row.disp_returned++;
       if (b.status === 'reaction') row.disp_reaction++;
       if (b.status === 'disposed' && b.return_reason === 'نظام مفتوح') row.disp_open++;
-      if (b.status === 'disposed' && b.return_reason === 'أخرى') row.disp_other++;
+      if (bbIsDispOther(b)) row.disp_other++;
+      if (isChild) {
+        if (b.return_reason === 'مرتجع') row.child_disp_returned++;
+        if (b.status === 'reaction') row.child_disp_reaction++;
+        if (b.status === 'disposed' && b.return_reason === 'نظام مفتوح') row.child_disp_open++;
+        if (bbIsDispOther(b)) row.child_disp_other++;
+      }
+    }
+    // إعدام من الرصيد المتاح (كيس لم يُصرف أبداً) — يُحسب في مؤشرات التخزيني حسب تاريخ الوارد
+    if (small[b.hospital_id] && !b.issued_at && inRange(b.received_at)) {
+      const row = small[b.hospital_id];
+      if (b.return_reason === 'مرتجع') row.disp_returned++;
+      if (b.status === 'reaction') row.disp_reaction++;
+      if (b.status === 'disposed' && b.return_reason === 'نظام مفتوح') row.disp_open++;
+      if (bbIsDispOther(b)) row.disp_other++;
+      if (isChild) {
+        if (b.return_reason === 'مرتجع') row.child_disp_returned++;
+        if (b.status === 'reaction') row.child_disp_reaction++;
+        if (b.status === 'disposed' && b.return_reason === 'نظام مفتوح') row.child_disp_open++;
+        if (bbIsDispOther(b)) row.child_disp_other++;
+      }
     }
     if (cons[b.hospital_id] && b.blood_type && inRange(b.issued_at)) cons[b.hospital_id][b.blood_type]++;
   }
+  const bagMap = {}; bags.forEach(b => { bagMap[b.id] = b; });
   reservations.forEach(r => {
     if (inRange(r.reserved_at)) {
-      if (big[r.hospital_id]) big[r.hospital_id].compatibility++;
-      if (small[r.hospital_id]) small[r.hospital_id].compatibility++;
+      const rcat = bagMap[r.bag_id] ? (bagMap[r.bag_id].unit_category || 'كبار') : 'كبار';
+      if (big[r.hospital_id]) {
+        big[r.hospital_id].compatibility++;
+        if (rcat === 'أطفال') big[r.hospital_id].child_compatibility++;
+      }
+      if (small[r.hospital_id]) {
+        small[r.hospital_id].compatibility++;
+        if (rcat === 'أطفال') small[r.hospital_id].child_compatibility++;
+      }
     }
   });
   return { big, small, cons };
@@ -4280,6 +4385,11 @@ app.get('/api/indicator-analysis', requireAuth(), requirePerm('indicator_analysi
   }
 });
 
+// API 404 — unknown /api/* routes return JSON (never the SPA shell)
+app.use('/api/', (req, res) => {
+  res.status(404).json({ error: 'API route not found' });
+});
+
 // Catch-all — serve index.html for SPA routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(BASE_DIR, 'public', 'index.html'));
@@ -4296,7 +4406,7 @@ process.on('unhandledRejection', (err) => {
 });
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION:', err.message);
-  process.exit(1);
+  db.flush().then(() => process.exit(1)).catch(() => process.exit(1));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
