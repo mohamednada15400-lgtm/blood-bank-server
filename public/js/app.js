@@ -9641,7 +9641,7 @@ function _iaRenderGroupAnalysis(divId, p1Data, p2Data, cols, label, lP1, lP2) {
 }
 
 /* ================= أكياس الدم — التتبع الكامل ================= */
-const _bb = { hospitals: [], bags: [], patients: [], reservations: [], departments: [], user: null, tab: 'dash', tTab: null, cTab: null, rowN: 0, selPatient: null, selBagIds: [], lastFilteredBags: [], lastFilteredInLog: [], lastFilteredBagReport: [], lastExpLog: [], lastDispLog: [], lastMonthly: null, selResPatient: null, selResv: null, lastResLog: [], barPat: {}, barTyped: {}, histHidden: false };
+const _bb = { hospitals: [], bags: [], patients: [], reservations: [], departments: [], user: null, tab: 'dash', tTab: null, cTab: null, rowN: 0, selPatient: null, selBagIds: [], lastFilteredBags: [], lastFilteredInLog: [], lastFilteredBagReport: [], lastExpLog: [], lastDispLog: [], lastMonthly: null, selResPatient: null, selResv: null, lastResLog: [], barPat: {}, barTyped: {}, histHidden: false, statsSel: '' };
 const BB_BTYPES_CLI = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
 const BB_BTYPES_SIMPLE = ['A','B','O','AB'];
 const BB_PRODUCT_TYPES = ['دم','دم كلي','بلازما','صفائح SDP','صفائح RDP','كرايو'];
@@ -11905,6 +11905,21 @@ async function bbStats() {
       <div style="background:#fde9e0;border:1px solid #f5c6aa;color:#a04000;padding:8px 12px;border-radius:8px;font-size:12px;margin-top:10px"><i class="fas fa-info-circle" style="margin-left:4px"></i> تُحسب مؤشرات التجميع والوارد والمنصرف والإعدامات تلقائياً من سجلات الأكياس خلال الفترة المحددة (من/إلى) — بدون حفظ في الشهري.</div>
     </div>
   </div>`;
+  html += `<div class="card" style="margin-bottom:16px;border-right:4px solid #6c3483">
+    <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-filter" style="margin-left:6px"></i> تصفية الجداول</strong></div>
+    <div class="card-body" style="padding:10px 16px">
+      <div class="form-group" style="max-width:320px"><label>عرض جدول</label><select class="form-control" id="bbStatsTab" data-change="bbStatsFilterTables">
+        <option value="">كل الجداول</option>
+        <option value="inlog"${_bb.statsSel === 'inlog' ? ' selected' : ''}>سجل الوارد</option>
+        <option value="bagrpt"${_bb.statsSel === 'bagrpt' ? ' selected' : ''}>تقرير الأكياس التفصيلي</option>
+        <option value="explog"${_bb.statsSel === 'explog' ? ' selected' : ''}>سجل انتهاء صلاحيه</option>
+        <option value="displog"${_bb.statsSel === 'displog' ? ' selected' : ''}>سجل التفاعل والمرتجع ونظام مفتوح</option>
+        <option value="big"${_bb.statsSel === 'big' ? ' selected' : ''}>مؤشرات تجميعيه (معاينة)</option>
+        <option value="small"${_bb.statsSel === 'small' ? ' selected' : ''}>مؤشرات تخزينيه (معاينة)</option>
+        <option value="cons"${_bb.statsSel === 'cons' ? ' selected' : ''}>منصرف فصائل الدم (معاينة)</option>
+      </select></div>
+    </div>
+  </div>`;
   if (canEdit || canDelete) {
     html += `<div class="card" style="margin-bottom:16px;border-right:4px solid #6a1b9a">
     <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-building-columns" style="margin-left:6px"></i> إدارة أقسام المستشفيات</strong></div>
@@ -11918,7 +11933,7 @@ async function bbStats() {
     </div>
   </div>`;
   }
-  html += `<div class="card"><div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-clock-rotate-left" style="margin-left:6px"></i> سجل الوارد</strong></div>
+  html += `<div id="bbStatsCardInLog"><div class="card"><div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-clock-rotate-left" style="margin-left:6px"></i> سجل الوارد</strong></div>
     <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
       <div class="form-group"><label>بحث (رقم / باركود / الجهة / المستلم)</label><input class="form-control" id="bbInLogQ" data-input="bbRenderInLog" style="min-width:180px"></div>
       <div class="form-group"><label>من تاريخ</label><input class="form-control" type="date" id="bbInLogFrom" data-change="bbRenderInLog"></div>
@@ -11927,9 +11942,9 @@ async function bbStats() {
     </div>
     <table class="data-table" style="font-size:12px"><thead>
       <tr><th>رقم اللي</th><th>رقم الكود</th><th>من (الجهة)</th><th>إلى</th><th>المنتج</th><th>الفصيلة</th><th>الصلاحية</th><th>تاريخ الوصول</th><th>بواسطة</th><th>الحالة</th></tr>
-    </thead><tbody id="bbInLogBody"></tbody></table></div></div>`;
+    </thead><tbody id="bbInLogBody"></tbody></table></div></div></div>`;
   if (canEdit || canDelete) {
-    html += `<div class="card" style="margin-top:16px;border-right:4px solid #27ae60"><div class="card-header" style="padding:10px 16px;background:#27ae6022;color:#27ae60"><strong><i class="fas fa-table" style="margin-left:6px"></i> تقرير الأكياس التفصيلي</strong></div>
+    html += `<div id="bbStatsCardBagRpt"><div class="card" style="margin-top:16px;border-right:4px solid #27ae60"><div class="card-header" style="padding:10px 16px;background:#27ae6022;color:#27ae60"><strong><i class="fas fa-table" style="margin-left:6px"></i> تقرير الأكياس التفصيلي</strong></div>
       <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
         <div class="form-group"><label>بحث (رقم لي / باركود / مستشفى / فصيلة)</label><input class="form-control" id="bbBagRptQ" data-input="bbRenderBagReport" style="min-width:180px"></div>
         <div class="form-group"><label>المنتج</label><select class="form-control" id="bbBagRptProd" data-change="bbRenderBagReport" style="min-width:140px">${bbOptProduct('')}</select></div>
@@ -11938,8 +11953,8 @@ async function bbStats() {
       </div>
       <table class="data-table" style="font-size:12px"><thead>
         <tr><th>الفرع</th><th>اسم المستشفي</th><th>المنتج</th><th>فصيلة الوحدة</th><th>رقم اللي</th><th>الباركود</th><th>تاريخ الانتهاء</th><th>الحالة</th><th>المتبقي</th><th>سبب الإعدام</th><th>إجراءات</th></tr>
-      </thead><tbody id="bbBagReportBody"></tbody></table></div></div>`;
-    html += `<div class="card" style="margin-top:16px;border-right:4px solid #b7950b"><div class="card-header" style="padding:10px 16px;background:#b7950b22;color:#b7950b"><strong><i class="fas fa-hourglass-half" style="margin-left:6px"></i> سجل انتهاء صلاحيه — كل الأكياس الواردة + بيان الصرف + ما تم إعدامه</strong></div>
+      </thead><tbody id="bbBagReportBody"></tbody></table></div></div></div>`;
+    html += `<div id="bbStatsCardExpLog"><div class="card" style="margin-top:16px;border-right:4px solid #b7950b"><div class="card-header" style="padding:10px 16px;background:#b7950b22;color:#b7950b"><strong><i class="fas fa-hourglass-half" style="margin-left:6px"></i> سجل انتهاء صلاحيه — كل الأكياس الواردة + بيان الصرف + ما تم إعدامه</strong></div>
       <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
         <div class="form-group"><label>بحث (رقم لي / باركود / مستشفى / فصيلة / مصروف إليه)</label><input class="form-control" id="bbExpLogQ" data-input="bbRenderExpLog" style="min-width:190px"></div>
         <div class="form-group"><label>النوع</label><select class="form-control" id="bbExpLogSt" data-change="bbRenderExpLog" style="min-width:150px"><option value="">كل الحالات</option><option value="expired">انتهاء الصلاحية (المنتهية صلاحيتها)</option><option value="issued">مُصرف</option><option value="disposed">مُعدَم (الرصيد + التجميع)</option><option value="returned">مرتجع</option><option value="reaction">تفاعل</option></select></div>
@@ -11947,8 +11962,8 @@ async function bbStats() {
       </div>
       <table class="data-table" style="font-size:12px"><thead>
         <tr><th>الفرع</th><th>اسم المستشفي</th><th>رقم اللي</th><th>الباركود</th><th>المنتج</th><th>فصيلة الوحدة</th><th>تاريخ الوارد</th><th>تاريخ الجمع</th><th>تاريخ الانتهاء</th><th>المتبقي</th><th>الحالة</th><th>سبب الإعدام</th><th>تاريخ الصرف</th><th>المصروف إليه</th><th>إجراءات</th></tr>
-      </thead><tbody id="bbExpLogBody"></tbody></table></div></div>`;
-    html += `<div class="card" style="margin-top:16px;border-right:4px solid #8e44ad"><div class="card-header" style="padding:10px 16px;background:#8e44ad22;color:#8e44ad"><strong><i class="fas fa-rotate-right" style="margin-left:6px"></i> سجل التفاعل والمرتجع ونظام مفتوح — سجل الصرف كاملاً + ما تم إعدامه (تفاعل / غيره)</strong></div>
+      </thead><tbody id="bbExpLogBody"></tbody></table></div></div></div>`;
+    html += `<div id="bbStatsCardDispLog"><div class="card" style="margin-top:16px;border-right:4px solid #8e44ad"><div class="card-header" style="padding:10px 16px;background:#8e44ad22;color:#8e44ad"><strong><i class="fas fa-rotate-right" style="margin-left:6px"></i> سجل التفاعل والمرتجع ونظام مفتوح — سجل الصرف كاملاً + ما تم إعدامه (تفاعل / غيره)</strong></div>
       <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
         <div class="form-group"><label>بحث (رقم لي / باركود / مستشفى / فصيلة / مصروف إليه)</label><input class="form-control" id="bbDispLogQ" data-input="bbRenderDispLog" style="min-width:190px"></div>
         <div class="form-group"><label>النوع</label><select class="form-control" id="bbDispLogSt" data-change="bbRenderDispLog" style="min-width:150px"><option value="">كل الحالات</option><option value="issued">مُصرف</option><option value="reaction">تفاعل</option><option value="returned">مرتجع</option><option value="disposed">إعدام آخر (نظام مفتوح / أخرى)</option></select></div>
@@ -11956,7 +11971,7 @@ async function bbStats() {
       </div>
       <table class="data-table" style="font-size:12px"><thead>
         <tr><th>الفرع</th><th>اسم المستشفي</th><th>رقم اللي</th><th>الباركود</th><th>المنتج</th><th>فصيلة الوحدة</th><th>تاريخ الصرف</th><th>المصروف إليه</th><th>بواسطة</th><th>نوع الصرف</th><th>الحالة</th><th>سبب الإعدام</th><th>إجراءات</th></tr>
-      </thead><tbody id="bbDispLogBody"></tbody></table></div></div>`;
+      </thead><tbody id="bbDispLogBody"></tbody></table></div></div></div>`;
   }
   html += `<div id="bbStatsOut"></div>`;
   el.innerHTML = html;
@@ -11967,6 +11982,22 @@ async function bbStats() {
   bbRenderBagReport();
   bbRenderExpLog();
   bbRenderDispLog();
+  bbStatsFilterTables();
+}
+function bbStatsFilterTables() {
+  const sel = document.getElementById('bbStatsTab');
+  const v = sel ? sel.value : (_bb.statsSel || '');
+  _bb.statsSel = v;
+  const show = (id, on) => { const elm = document.getElementById(id); if (elm) elm.style.display = on ? '' : 'none'; };
+  const kpi = document.getElementById('bbStatsKpi');
+  if (kpi) kpi.style.display = v === '' ? '' : 'none';
+  show('bbStatsCardInLog', v === '' || v === 'inlog');
+  show('bbStatsCardBagRpt', v === '' || v === 'bagrpt');
+  show('bbStatsCardExpLog', v === '' || v === 'explog');
+  show('bbStatsCardDispLog', v === '' || v === 'displog');
+  show('bbStatsCardBig', v === 'big');
+  show('bbStatsCardSmall', v === 'small');
+  show('bbStatsCardCons', v === 'cons');
 }
 async function bbPreviewStats() {
   const out = document.getElementById('bbStatsOut');
@@ -11995,39 +12026,40 @@ async function bbPreviewStats() {
       kp.push(['إعدامات أخرى', '#7f8c8d', sum(r.small, 'disp_other')]);
     }
     if (kp.length) {
-      html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px">` +
+      html += `<div id="bbStatsKpi" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px">` +
         kp.map(k => `<div class="bb-stat-card" style="text-align:center;padding:12px;border-radius:10px;background:var(--card-bg);border:1px solid var(--border)">
           <div style="font-size:22px;font-weight:700;color:${k[1]}">${_bbNum(k[2]) ?? k[2]}</div>
           <div style="font-size:12px;color:var(--text-soft);margin-top:2px">${k[0]}</div></div>`).join('') + `</div>`;
     }
     if (big.length) {
-      html += `<div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#c0392b22;color:#c0392b"><strong><i class="fas fa-chart-simple" style="margin-left:6px"></i> مؤشرات تجميعيه — ${from} إلى ${to}</strong></div>
+      html += `<div id="bbStatsCardBig"><div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#c0392b22;color:#c0392b"><strong><i class="fas fa-chart-simple" style="margin-left:6px"></i> مؤشرات تجميعيه — ${from} إلى ${to}</strong></div>
       <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th><th>إجمالي التجميع</th><th>وارد</th><th>تبرع علاجي</th><th>لم يكتمل</th><th>دهون</th><th>صفراء</th><th>سي</th><th>بي</th><th>ايدز</th><th>زهري</th><th>فحوصات الدم</th><th>مرتجع</th><th>تفاعل</th><th>نظام مفتوح</th><th>إعدامات أخرى</th></tr></thead><tbody>
       ${big.map(hid => { const d = r.big[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>
       <td style="text-align:center;font-weight:700">${d.collect_total || 0}</td><td style="text-align:center;font-weight:700;color:#2e86c1">${d.inc_regional || 0}</td><td style="text-align:center">${d.donation_therapeutic || 0}</td><td style="text-align:center">${d.uncompleted || 0}</td>
       <td style="text-align:center">${d.refused_fatty || 0}</td><td style="text-align:center">${d.refused_icteric || 0}</td><td style="text-align:center">${d.virology_c || 0}</td>
       <td style="text-align:center">${d.virology_b || 0}</td><td style="text-align:center">${d.virology_i || 0}</td><td style="text-align:center">${d.virology_dollar || 0}</td>
       <td style="text-align:center">${d.blood_groups || 0}</td><td style="text-align:center">${d.disp_returned || 0}</td><td style="text-align:center">${d.disp_reaction || 0}</td><td style="text-align:center">${d.disp_open || 0}</td><td style="text-align:center;font-weight:700;color:#c0392b">${d.disp_other || 0}</td></tr>`; }).join('')}
-      </tbody></table></div></div>`;
+      </tbody></table></div></div></div>`;
     }
     if (small.length) {
-      html += `<div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#16a08522;color:#16a085"><strong><i class="fas fa-boxes-stacked" style="margin-left:6px"></i> مؤشرات تخزينيه — ${from} إلى ${to}</strong></div>
+      html += `<div id="bbStatsCardSmall"><div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#16a08522;color:#16a085"><strong><i class="fas fa-boxes-stacked" style="margin-left:6px"></i> مؤشرات تخزينيه — ${from} إلى ${to}</strong></div>
       <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th><th>وارد من التجميعي</th><th>وارد إقليمي</th><th>إجمالي الصرف</th><th>داخلي</th><th>فرع</th><th>هيئة</th><th>خارجي</th><th>مرتجع</th><th>تفاعل</th><th>نظام مفتوح</th><th>إعدامات أخرى</th></tr></thead><tbody>
       ${small.map(hid => { const d = r.small[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>
       <td style="text-align:center;font-weight:700">${d.inc_collected || 0}</td><td style="text-align:center">${d.inc_regional || 0}</td><td style="text-align:center;font-weight:700">${d.out_blood || 0}</td>
       <td style="text-align:center">${d.out_blood_int || 0}</td><td style="text-align:center">${d.out_blood_branch || 0}</td><td style="text-align:center">${d.out_blood_auth || 0}</td>
       <td style="text-align:center">${d.out_blood_ext || 0}</td><td style="text-align:center">${d.disp_returned || 0}</td><td style="text-align:center">${d.disp_reaction || 0}</td><td style="text-align:center">${d.disp_open || 0}</td><td style="text-align:center;font-weight:700;color:#c0392b">${d.disp_other || 0}</td></tr>`; }).join('')}
-      </tbody></table></div></div>`;
+      </tbody></table></div></div></div>`;
     }
     if (cons.length) {
-      html += `<div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#e91e6322;color:#e91e63"><strong><i class="fas fa-droplet" style="margin-left:6px"></i> منصرف فصائل الدم — ${from} إلى ${to}</strong></div>
+      html += `<div id="bbStatsCardCons"><div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#e91e6322;color:#e91e63"><strong><i class="fas fa-droplet" style="margin-left:6px"></i> منصرف فصائل الدم — ${from} إلى ${to}</strong></div>
       <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th>${BB_BTYPES_CLI.map(t => `<th>${t}</th>`).join('')}</tr></thead><tbody>
       ${cons.map(hid => { const d = r.cons[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>${BB_BTYPES_CLI.map(t => `<td style="text-align:center">${d[t] || 0}</td>`).join('')}</tr>`; }).join('')}
-      </tbody></table></div></div>`;
+      </tbody></table></div></div></div>`;
     }
     if (!html) html = '<div class="empty-msg">لا توجد أكياس مسجلة في هذه الفترة</div>';
     _bb.lastStats = { r, from, to };
     out.innerHTML = html;
+    bbStatsFilterTables();
   } catch (e) { out.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
 }
 function bbExportStats() {
