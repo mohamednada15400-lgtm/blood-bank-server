@@ -4425,21 +4425,39 @@ process.on('uncaughtException', (err) => {
   db.flush().then(() => process.exit(1)).catch(() => process.exit(1));
 });
 
-app.listen(PORT, HOST, () => {
-  const ip = getLocalIP();
-  const isCloud = !!process.env.DATA_DIR || !!process.env.RENDER;
-  console.log(`✅ Blood Bank Server running on port ${PORT}`);
-  console.log(`   Mode: ${isCloud ? '☁️ Cloud (persistent disk)' : isPG ? 'PostgreSQL (production)' : '💻 Local (JSON file)'}`);
-  if (isCloud) {
-    console.log(`   🌍 متاح للجميع على الرابط أعلاه (موبايل/كمبيوتر/تابلت)`);
-    console.log(`   ⚡ أي جهاز في العالم يقدر يستخدم النظام`);
-  } else {
-    console.log(`   📱 افتح http://${ip}:${PORT} من أي جهاز في نفس الشبكة`);
-  }
-  // Start auto-backup scheduler
-  startAutoBackup();
-  // Start daily stock rollover scheduler
-  startStockRollover();
+// Listen on the configured port AND common cloud fallbacks (3001/8080) so the
+// app answers whichever port the platform routes to (some PaaS inject PORT=3000
+// while the public URL forwards to 3001 — this caused a 503 on Suga).
+const LISTEN_PORTS = [];
+if (PORT && LISTEN_PORTS.indexOf(PORT) === -1) LISTEN_PORTS.push(PORT);
+[3001, 8080].forEach((p) => { if (LISTEN_PORTS.indexOf(p) === -1) LISTEN_PORTS.push(p); });
+
+let listenersStarted = 0;
+let booted = false;
+LISTEN_PORTS.forEach((p) => {
+  const srv = app.listen(p, HOST, () => {
+    listenersStarted++;
+    console.log(`✅ Blood Bank Server listening on port ${p} (${srv.address().address})`);
+    if (!booted) {
+      booted = true;
+      const ip = getLocalIP();
+      const isCloud = !!process.env.DATA_DIR || !!process.env.RENDER;
+      console.log(`   Mode: ${isCloud ? '☁️ Cloud (persistent disk)' : isPG ? 'PostgreSQL (production)' : '💻 Local (JSON file)'}`);
+      if (isCloud) {
+        console.log(`   🌍 متاح للجميع على الرابط أعلاه (موبايل/كمبيوتر/تابلت)`);
+        console.log(`   ⚡ أي جهاز في العالم يقدر يستخدم النظام`);
+      } else {
+        console.log(`   📱 افتح http://${ip}:${PORT} من أي جهاز في نفس الشبكة`);
+      }
+      // Start auto-backup scheduler
+      startAutoBackup();
+      // Start daily stock rollover scheduler
+      startStockRollover();
+    }
+  });
+  srv.on('error', (e) => {
+    console.error(`❌ Cannot listen on port ${p}: ${e.code || e.message}`);
+  });
 });
 
 } // end startServer()
