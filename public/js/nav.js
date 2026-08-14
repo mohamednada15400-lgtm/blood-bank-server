@@ -115,6 +115,21 @@ function showToast(msg, type) {
 
 function grad(arr) { return `linear-gradient(135deg,${arr[0]},${arr[1]})`; }
 
+// --- Shared notification severity helpers (used by checkAlerts / toggleNotifDropdown / showAlertList) ---
+const NOTIF_SEV_STYLES = {
+  critical: { bg: '#ffebee', border: '#e53935', dot: '#e53935', label: 'خطير' },
+  warning:  { bg: '#fff8e1', border: '#ff8f00', dot: '#ff8f00', label: 'تحذيري' },
+  info:     { bg: '#e3f2fd', border: '#1e88e5', dot: '#1e88e5', label: 'تنبيهي' }
+};
+const NOTIF_SEV_ORDER = { critical: 0, warning: 1, info: 2 };
+function notifGetSev(a) {
+  const t = a.title || '';
+  if (t.includes('STOCK') || t.includes('منصرف فصائل') || t.includes('لم يتم إدخال بيانات')) return 'critical';
+  if (t.includes('مؤشرات') || t.includes('لم يُراجع') || t.includes('لم يراجع')) return 'warning';
+  return 'info';
+}
+function notifSevStyle(a) { return NOTIF_SEV_STYLES[notifGetSev(a)]; }
+
 function showMenu() { _navStack = [];
   const m = document.getElementById('mainContent');
   const menuHtml = '<div style="position:relative;display:inline-flex;flex-direction:column;margin-bottom:2px"><div data-click="toggleNotifDropdown" id="menuBellBtn" style="position:relative;cursor:pointer;font-size:28px;color:#e53935;padding:8px;transition:0.15s;align-self:flex-start"><i class="fas fa-bell"></i><span id="menuNotifBadge" style="display:none;position:absolute;top:-4px;left:-4px;background:#e53935;color:#fff;border-radius:50%;min-width:20px;height:20px;line-height:20px;font-size:10px;font-weight:700;text-align:center;padding:0 5px;box-shadow:0 0 6px #e5393580"></span></div><div id="menuNotifDropdown" style="display:none;position:absolute;top:100%;right:0;z-index:997;background:var(--card-bg,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);width:320px;max-height:400px;overflow-y:auto;direction:rtl;font-size:12px"></div></div><div class="main-icons-grid">' + MENU_CATS.map(c => {
@@ -127,6 +142,11 @@ function showMenu() { _navStack = [];
   }).join('') + '</div>';
   m.innerHTML = menuHtml;
   checkAlerts();
+  if (!window._notifRefreshTimer) {
+    window._notifRefreshTimer = setInterval(function () {
+      if (document.getElementById('alertArea') || document.getElementById('menuBellBtn')) checkAlerts();
+    }, 5 * 60 * 1000);
+  }
 }
 
 async function checkAlerts() {
@@ -137,13 +157,17 @@ async function checkAlerts() {
       api('GET', '/monthly-consumption'),
       api('GET', '/archive'),
       api('GET', '/hospitals'),
-      api('GET', '/me')
+      api('GET', '/me'),
+      api('GET', '/monthly-big-indicators'),
+      api('GET', '/monthly-small-indicators')
     ]);
     const reports = results[0].status === 'fulfilled' ? results[0].value : [];
     const consumption = results[1].status === 'fulfilled' ? results[1].value : [];
     const archiveItems = results[2].status === 'fulfilled' ? results[2].value : [];
     const hospitals = results[3].status === 'fulfilled' ? results[3].value : [];
     const meRes = results[4].status === 'fulfilled' ? results[4].value : {};
+    const bigInd = results[5].status === 'fulfilled' ? results[5].value : [];
+    const smallInd = results[6].status === 'fulfilled' ? results[6].value : [];
     const me = meRes.user || { role: 'visitor' };
     const now = getCairoDate();
     const today = String(now.getUTCFullYear()).padStart(4,'0')+'-'+String(now.getUTCMonth()+1).padStart(2,'0')+'-'+String(now.getUTCDate()).padStart(2,'0');
@@ -155,12 +179,12 @@ async function checkAlerts() {
     const months = ['','يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
     let alerts = [];
     let myHospitals = hospitals;
-    if (me.role === 'hospital') myHospitals = hospitals.filter(h => h.id === me.hospitalId);
+    if (me.role === 'hospital' || me.role === 'hospital_manager') myHospitals = hospitals.filter(h => h.id === me.hospitalId);
     else if (me.role === 'branch_supervisor') myHospitals = hospitals.filter(h => h.governorate === me.governorate);
     const todayIds = reports.filter(r => r.date === today).map(r => r.hospital_id);
     const missStock = myHospitals.filter(h => !todayIds.includes(h.id));
     if (missStock.length > 0) {
-      alerts.push({ icon: 'fa-chart-bar', color: '#e74c3c', title: 'لم يتم تحديث STOCK Mang', detail: missStock.slice(0,5).map(h => h.name).join('، ') + (missStock.length > 5 ? ' +' + (missStock.length - 5) : ''), all: missStock.map(h => ({name: h.name, gov: h.governorate})), _page: 'renderDailyStock' });
+      alerts.push({ icon: 'fa-chart-bar', color: '#e74c3c', title: 'لم يتم تحديث بيان الرصيد اليومي', detail: missStock.slice(0,5).map(h => h.name).join('، ') + (missStock.length > 5 ? ' +' + (missStock.length - 5) : ''), all: missStock.map(h => ({name: h.name, gov: h.governorate})), _page: 'renderDailyStock' });
     }
     const prevConsumed = consumption.filter(r => r.year === prevYear && r.month === prevMonth).map(r => r.hospital_id);
     archiveItems.filter(a => a.type === 'منصرف فصائل الدم').forEach(a => {
@@ -173,8 +197,6 @@ async function checkAlerts() {
     if (missCons.length > 0) {
       alerts.push({ icon: 'fa-droplet', color: '#e91e63', title: 'لم يتم إدخال منصرف فصائل ' + months[prevMonth] + ' ' + prevYear, detail: missCons.slice(0,5).map(h => h.name).join('، ') + (missCons.length > 5 ? ' +' + (missCons.length - 5) : ''), all: missCons.map(h => ({name: h.name, gov: h.governorate})), _page: 'renderBloodConsumption' });
     }
-    const bigInd = await api('GET', '/monthly-big-indicators');
-    const smallInd = await api('GET', '/monthly-small-indicators');
     const prevBig = bigInd.filter(r => r.year === prevYear && r.month === prevMonth).map(r => r.hospital_id);
     archiveItems.filter(a => a.type === 'مؤشرات تجميعيه').forEach(a => {
       (tryParse(a.data) || []).filter(r => r.year === prevYear && r.month === prevMonth).forEach(r => { if (!prevBig.includes(r.hospital_id)) prevBig.push(r.hospital_id); });
@@ -231,20 +253,11 @@ async function checkAlerts() {
         alerts.push({ icon: 'fa-clipboard-check', color: '#9c27b0', title: n.message, detail: n._missingHospitals ? n._missingHospitals.slice(0,5).join('، ') : '', all: n._missingHospitals || [], _rdnNotifId: n.id, _rdnNotifDismiss: true, _page: 'renderReadinessSheet' });
       });
     } catch (e) { /* ignore */ }
+    alerts.forEach(a => { a.sev = notifGetSev(a); });
+    alerts.sort((x, y) => NOTIF_SEV_ORDER[x.sev] - NOTIF_SEV_ORDER[y.sev]);
     window._alertsData = alerts;
-    const sevMap = {
-      critical: { bg: '#ffebee', border: '#e53935', dot: '#e53935', label: 'خطير' },
-      warning:  { bg: '#fff8e1', border: '#ff8f00', dot: '#ff8f00', label: 'تحذيري' },
-      info:     { bg: '#e3f2fd', border: '#1e88e5', dot: '#1e88e5', label: 'تنبيهي' }
-    };
-    const getSev = a => {
-      const t = a.title || '';
-      if (t.includes('STOCK') || t.includes('منصرف فصائل') || t.includes('لم يتم إدخال بيانات')) return sevMap.critical;
-      if (t.includes('مؤشرات') || t.includes('لم يُراجع') || t.includes('لم يراجع')) return sevMap.warning;
-      return sevMap.info;
-    };
     const al = alerts.map((a, i) => {
-      const sev = getSev(a);
+      const sev = notifSevStyle(a);
       const count = a.all ? a.all.length : 0;
       return `<span data-click="showAlertList" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="${sev.bg}" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:${sev.bg};border:1px solid ${sev.border}22;border-right:3px solid ${sev.border};border-radius:6px;padding:4px 8px;margin-left:4px;font-size:10px;white-space:nowrap;transition:0.15s;box-shadow:0 1px 2px #00000008">
         <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};display:inline-block;flex-shrink:0"></span>
@@ -282,23 +295,14 @@ function toggleNotifDropdown() {
   if (!alerts.length) {
     dd.innerHTML = '<div style="padding:16px;text-align:center;color:#999;font-size:11px"><i class="fas fa-check-circle" style="color:#43a047;font-size:14px;display:block;margin-bottom:6px"></i>كل البيانات محدثة ✓</div>';
   } else {
-    const sevMap = {
-      critical: { dot: '#e53935', bg: '#ffebee' },
-      warning:  { dot: '#ff8f00', bg: '#fff8e1' },
-      info:     { dot: '#1e88e5', bg: '#e3f2fd' }
-    };
-    const getSev = t => {
-      if (t.includes('STOCK') || t.includes('منصرف فصائل') || t.includes('لم يتم إدخال بيانات')) return sevMap.critical;
-      if (t.includes('مؤشرات') || t.includes('لم يُراجع') || t.includes('لم يراجع')) return sevMap.warning;
-      return sevMap.info;
-    };
     dd.innerHTML = alerts.map((a, i) => {
-      const sev = getSev(a.title);
+      const sev = notifSevStyle(a);
       const count = a.all ? a.all.length : 0;
       return `<div data-click="notifNavToPage" data-args="${i}" data-mouseover="hoverOn" data-mouseout="hoverOff" data-hover-bg="${sev.bg}" data-hover-off="transparent" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border,#f0f0f0);transition:0.1s">
         <span style="width:8px;height:8px;border-radius:50%;background:${sev.dot};flex-shrink:0"></span>
         <span style="flex:1;font-size:10px;color:var(--text,#333)">${esc(a.title)}</span>
         ${count > 0 ? `<span style="background:${sev.dot};color:#fff;border-radius:10px;padding:0 5px;font-size:8px;font-weight:700;line-height:15px;flex-shrink:0">${count}</span>` : ''}
+        ${a._rdnNotifDismiss ? `<i class="fas fa-times" data-click="rdnDismissNotifAlert" data-args="${i}" title="إخفاء التنبيه" style="color:#bbb;font-size:9px;padding:2px 4px;cursor:pointer;flex-shrink:0"></i>` : ''}
       </div>`;
     }).join('');
   }
@@ -331,17 +335,7 @@ document.addEventListener('click', function(e) {
 function showAlertList(idx) {
   const a = window._alertsData && window._alertsData[idx];
   if (!a || !a.all || a.all.length === 0) return;
-  const sevMap = {
-    critical: { dot: '#e53935', bg: '#ffebee' },
-    warning:  { dot: '#ff8f00', bg: '#fff8e1' },
-    info:     { dot: '#1e88e5', bg: '#e3f2fd' }
-  };
-  const getSev = t => {
-    if (t.includes('STOCK') || t.includes('منصرف فصائل') || t.includes('لم يتم إدخال بيانات')) return sevMap.critical;
-    if (t.includes('مؤشرات') || t.includes('لم يُراجع') || t.includes('لم يراجع')) return sevMap.warning;
-    return sevMap.info;
-  };
-  const sev = getSev(a.title);
+  const sev = notifSevStyle(a);
   // Group by governorate preserving original order
   const groups = [];
   const flatItems = [];

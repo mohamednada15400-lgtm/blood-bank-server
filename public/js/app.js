@@ -193,6 +193,18 @@ function formatTimeAmPm(t) {
   return `${h12}:${String(m).padStart(2, '0')} ${ap}`;
 }
 
+function buildLastUpdateNote(reports) {
+  const latest = (reports || []).reduce((a, r) => {
+    const lu = r.last_update || ((r.date ? r.date + ' ' : '') + (r.time || ''));
+    return lu > a.k ? { k: lu, last_update: r.last_update, date: r.date || '', time: r.time || '' } : a;
+  }, { k: '', last_update: '', date: '', time: '' });
+  if (!latest.k) return '';
+  const date = latest.last_update ? latest.last_update.slice(0, 10) : latest.date;
+  const time = latest.last_update ? latest.last_update.slice(11, 16) : latest.time;
+  if (!date && !time) return '';
+  return `<div style="margin:0 0 10px;padding:9px 14px;background:var(--card-bg);border:1px solid var(--border);border-right:4px solid #2c3e50;border-radius:8px;font-weight:700;color:var(--text)">آخر تحديث: ${date} الساعة ${formatTimeAmPm(time)}</div>`;
+}
+
 async function renderDailyStock() {
   const el = document.getElementById('mainContent');
   try {
@@ -204,13 +216,7 @@ async function renderDailyStock() {
       ${canExport ? '<button class="btn btn-success" data-click="exportStockExcel"><i class="fas fa-file-excel"></i> تحميل Excel</button>' : ''}</div>
       <div class="card-body table-scroll" id="dailyStockWrap"></div>`;
     const reports = await api('GET', '/daily-reports');
-    const latest = reports.reduce((a, r) => {
-      const k = (r.date || '') + ' ' + (r.time || '');
-      return k > a.k ? { k, date: r.date || '', time: r.time || '' } : a;
-    }, { k: '', date: '', time: '' });
-    const note = latest.k
-      ? `<div style="margin:0 0 10px;padding:9px 14px;background:var(--card-bg);border:1px solid var(--border);border-right:4px solid #2c3e50;border-radius:8px;font-weight:700;color:var(--text)">آخر تحديث: ${latest.date} الساعة ${formatTimeAmPm(latest.time)}</div>`
-      : '';
+    const note = buildLastUpdateNote(reports);
     const SUB = ['رصيد سابق', 'وارد', 'منصرف', 'اعدام', 'رصيد متاح'];
     const SUB_TOT = ['رصيد سابق', 'وارد', 'منصرف', 'اعدام', 'رصيد متاح'];
     let h = '<table class="data-table" id="dailyStockTable"><thead>';
@@ -790,7 +796,7 @@ async function renderTotal() {
     el.innerHTML = `<div class="page-actions"><button class="btn-back" data-click="goBack"><i class="fas fa-arrow-right"></i> الرئيسية</button>
       ${canExport ? '<button class="btn btn-success" data-click="exportTotalExcel"><i class="fas fa-file-excel"></i> تحميل Excel</button>' : ''}
       ${canExport ? '<button class="btn btn-danger" data-click="exportTotalPDF"><i class="fas fa-file-pdf"></i> تحميل PDF</button>' : ''}</div>
-      <div class="card"><div class="card-body table-scroll"><table id="totalTable"><thead id="totalThead"></thead><tbody id="totalTbody"></tbody></table></div></div>`;
+      <div class="card"><div class="card-body table-scroll"><div id="totalNote"></div><table id="totalTable"><thead id="totalThead"></thead><tbody id="totalTbody"></tbody></table></div></div>`;
     const data = await api('GET', '/daily-reports');
     renderTotalTable(data);
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
@@ -799,9 +805,11 @@ async function renderTotal() {
 renderTotal = renderTotal;
 
 function renderTotalTable(data) {
-  const nCols = 5 + BTYPES.length + 1 + PTYPES.length + 1 + 4;
+  const nCols = 3 + BTYPES.length + 1 + PTYPES.length + 1 + 4;
+  const noteEl = document.getElementById('totalNote');
+  if (noteEl) noteEl.innerHTML = buildLastUpdateNote(data);
   document.getElementById('totalThead').innerHTML = `
-    <tr><th rowspan="2">الفرع</th><th rowspan="2">اسم بنك الدم</th><th rowspan="2">اليوم</th><th rowspan="2">الوقت</th><th rowspan="2">تحت فحص</th>
+    <tr><th rowspan="2">الفرع</th><th rowspan="2">اسم بنك الدم</th><th rowspan="2">تحت فحص</th>
       <th colspan="${BTYPES.length}" class="blood-header">رصيــــــد الـــــــــــدم</th>
       <th rowspan="2" class="total-header">المجموع</th>
       <th colspan="${PTYPES.length}" class="plasma-header">رصيد البلازما المفحوص</th>
@@ -828,11 +836,7 @@ function renderTotalTable(data) {
       const pTotal = pAvail.reduce((s, v) => s + v, 0);
       tbody += `<tr class="data-row ${govIdx % 2 === 0 ? 'gov-light' : 'gov-dark'}">`;
       if (idx === 0) tbody += `<td class="gov-cell gov-${govIdx % 2 === 0 ? 'even' : 'odd'}" rowspan="${reports.length}">${gov}</td>`;
-      const cT = getCairoDate(); const todayStr2 = String(cT.getUTCFullYear()).padStart(4,'0')+'-'+String(cT.getUTCMonth()+1).padStart(2,'0')+'-'+String(cT.getUTCDate()).padStart(2,'0');
-      const isOld = r.date && r.date.slice(0,10) !== todayStr2;
-      const dateStyle = isOld ? ' style="color:red;font-weight:700"' : '';
-      const timeStyle = isOld ? ' style="font-weight:700"' : '';
-      tbody += `<td class="hosp-name">${r.hospital_name || ''}</td><td class="date-cell"${dateStyle}>${r.date ? r.date.slice(5) : ''}</td><td${timeStyle}>${r.time || ''}</td><td>${r.under_inspection || 0}</td>`;
+      tbody += `<td class="hosp-name">${r.hospital_name || ''}</td><td>${r.under_inspection || 0}</td>`;
       bAvail.forEach(v => tbody += `<td class="avail-cell">${v}</td>`);
       tbody += `<td class="total-cell">${bTotal}</td>`;
       pAvail.forEach(v => tbody += `<td class="avail-cell">${v}</td>`);
@@ -927,7 +931,7 @@ function renderStatementReport(data, hospitals) {
     return getPlat('previous', pkey) + getPlat('incoming', pkey) - getPlat('outgoing', pkey) - getPlat('disposal', pkey);
   }
 
-  let html = `
+  let html = buildLastUpdateNote([report]) + `
     <div class="stmt-header">
       <div class="stmt-title">البيان اليومي</div>
       <div><strong>المستشفى</strong> ${hosp.name}</div>

@@ -1804,7 +1804,7 @@ app.get('/api/employee-statements', requireAuth(), requirePerm('employees', 'vie
   const user = req.session.user;
   let sql = 'SELECT * FROM employee_statements WHERE 1=1';
   const params = [];
-  if (user.role === 'hospital') {
+  if (user.role === 'hospital' || user.role === 'hospital_manager') {
     sql += ` AND hospital_id = $${params.length + 1}`;
     params.push(user.hospitalId);
   }
@@ -1827,7 +1827,9 @@ app.get('/api/employee-statements', requireAuth(), requirePerm('employees', 'vie
   });
   // Also get hospitals list with update status for alerts
   const allHospitalsResult = await query('SELECT * FROM hospitals ORDER BY id');
-  const allHospitals = allHospitalsResult.rows || [];
+  let allHospitals = allHospitalsResult.rows || [];
+  if (user.role === 'hospital' || user.role === 'hospital_manager') allHospitals = allHospitals.filter(h => String(h.id) === String(user.hospitalId));
+  else if (user.role === 'branch_supervisor' && user.governorate) allHospitals = allHospitals.filter(h => h.governorate === user.governorate);
   const hospitalStatus = allHospitals.map(h => ({
     id: h.id,
     name: h.name,
@@ -2417,9 +2419,17 @@ app.get('/api/readiness-notifications', requireAuth(), requirePerm('readiness', 
     const missing = allHospitals.rows.filter(h => !reportHospIds.has(h.id));
     if (missing.length === 0) {
       await query('UPDATE readiness_notifications SET dismissed = true WHERE id = $1', [n.id]);
-    } else {
-      n.message = `جاهزية بنوك الدم بمناسبة "${occasion.name}" من ${occasion.date_from} إلى ${occasion.date_to} - ${missing.length} بنك دم لم يدخل الجاهزية`;
-      n._missingHospitals = missing.map(h => ({name: h.name, gov: h.governorate}));
+      continue;
+    }
+    let scopedMissing = missing;
+    if (user.role === 'hospital' || user.role === 'hospital_manager') {
+      scopedMissing = missing.filter(h => String(h.id) === String(user.hospitalId));
+    } else if (user.role === 'branch_supervisor') {
+      scopedMissing = missing.filter(h => h.governorate === user.governorate);
+    }
+    if (scopedMissing.length > 0) {
+      n.message = `جاهزية بنوك الدم بمناسبة "${occasion.name}" من ${occasion.date_from} إلى ${occasion.date_to} - ${scopedMissing.length} بنك دم لم يدخل الجاهزية`;
+      n._missingHospitals = scopedMissing.map(h => ({name: h.name, gov: h.governorate}));
       rows.push(n);
     }
   }

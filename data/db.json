@@ -1804,7 +1804,8 @@
       "license_type": "تخزيني",
       "license_status": "",
       "user_id": 59,
-      "_key": "2026-08-11 02:34"
+      "_key": "2026-08-11 02:34",
+      "updated_at": null
     },
     {
       "id": 1,
@@ -1820,7 +1821,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 2,
@@ -1836,7 +1838,8 @@
       "license_status": "غير مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 3,
@@ -1852,7 +1855,8 @@
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 4,
@@ -1868,7 +1872,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-11 02:27"
+      "_key": "2026-08-11 02:27",
+      "updated_at": null
     },
     {
       "id": 5,
@@ -1884,7 +1889,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-09 13:29"
+      "_key": "2026-08-09 13:29",
+      "updated_at": null
     },
     {
       "id": 6,
@@ -1900,7 +1906,8 @@
       "license_status": "تم تقديم الملف",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-11 02:21"
+      "_key": "2026-08-11 02:21",
+      "updated_at": null
     },
     {
       "id": 7,
@@ -1913,10 +1920,11 @@
       "platelets": 0,
       "cryo": 0,
       "license_type": "تخزيني",
-      "license_status": "تخزيني",
+      "license_status": "??????",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-14 01:53"
+      "_key": "2026-08-14 01:53",
+      "updated_at": "2026-08-14T09:54:27.002Z"
     },
     {
       "id": 8,
@@ -1932,7 +1940,8 @@
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 9,
@@ -1947,7 +1956,8 @@
       "license_type": "تخزيني",
       "license_status": "غير مرخص",
       "plat_data": null,
-      "user_id": 1
+      "user_id": 1,
+      "updated_at": null
     },
     {
       "id": 10,
@@ -1988,7 +1998,8 @@
         }
       },
       "user_id": 1,
-      "_key": "2026-08-09 13:29"
+      "_key": "2026-08-09 13:29",
+      "updated_at": null
     },
     {
       "id": 11,
@@ -2004,7 +2015,8 @@
       "license_status": "تم تقديم الملف",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-09 13:29"
+      "_key": "2026-08-09 13:29",
+      "updated_at": null
     },
     {
       "id": 12,
@@ -2020,7 +2032,8 @@
       "license_status": "تم تقديم الملف",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-09 13:29"
+      "_key": "2026-08-09 13:29",
+      "updated_at": null
     },
     {
       "id": 13,
@@ -2036,7 +2049,8 @@
       "license_status": "تم تقديم الملف",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 14,
@@ -2052,7 +2066,8 @@
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:17"
+      "_key": "2026-07-27 16:17",
+      "updated_at": null
     },
     {
       "id": 15,
@@ -2068,7 +2083,8 @@
       "license_status": "غير مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 16,
@@ -2084,7 +2100,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 17,
@@ -2100,7 +2117,8 @@
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 18,
@@ -2116,7 +2134,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 19,
@@ -2132,7 +2151,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-11 02:34"
+      "_key": "2026-08-11 02:34",
+      "updated_at": null
     },
     {
       "id": 20,
@@ -2148,7 +2168,8 @@
       "license_status": "تم تقديم الملف",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 21,
@@ -2164,7 +2185,8 @@
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 22,
@@ -2180,7 +2202,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 23,
@@ -2196,7 +2219,8 @@
       "license_status": "تم تقديم الملف",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 25,
@@ -2212,7 +2236,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 26,
@@ -2228,7 +2253,8 @@
       "license_status": "غير مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 27,
@@ -2244,7 +2270,8 @@
       "license_status": "غير مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 28,
@@ -2260,7 +2287,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 29,
@@ -2276,7 +2304,8 @@
       "license_status": "تم تقديم الملف",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-10 15:40"
+      "_key": "2026-08-10 15:40",
+      "updated_at": null
     },
     {
       "id": 30,
@@ -2292,7 +2321,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 31,
@@ -2308,7 +2338,8 @@
       "license_status": "غير مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-10 15:40"
+      "_key": "2026-08-10 15:40",
+      "updated_at": null
     },
     {
       "id": 32,
@@ -2349,7 +2380,8 @@
         }
       },
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 33,
@@ -2365,7 +2397,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-09 13:29"
+      "_key": "2026-08-09 13:29",
+      "updated_at": null
     },
     {
       "id": 34,
@@ -2381,7 +2414,8 @@
       "license_status": "تم تقديم الملف",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 35,
@@ -2397,7 +2431,8 @@
       "license_status": "مرخص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-10 15:40"
+      "_key": "2026-08-10 15:40",
+      "updated_at": null
     },
     {
       "id": 36,
@@ -2413,7 +2448,8 @@
       "license_status": "جارى تجديد الترخيص",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-07-27 16:52"
+      "_key": "2026-07-27 16:52",
+      "updated_at": null
     },
     {
       "id": 37,
@@ -2429,7 +2465,8 @@
       "license_status": "تخزيني",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-11 02:27"
+      "_key": "2026-08-11 02:27",
+      "updated_at": null
     }
   ],
   "daily_statements": [],
@@ -72167,7 +72204,7 @@
           "x": 1
         },
         "employees": {
-          "v": 0,
+          "v": 1,
           "a": 1,
           "e": 1,
           "d": 1,
@@ -73117,13 +73154,13 @@
     "archives": 115,
     "employee_statements": 469,
     "equipment_types": 2,
-    "readiness_occasions": 14,
-    "readiness_notifications": 14,
+    "readiness_occasions": 15,
+    "readiness_notifications": 15,
     "role_perms": 7,
     "strategic_settings": 3,
     "strategic_reserves": 38,
     "equipment_hospitals": 37,
-    "readiness_reports": 3,
+    "readiness_reports": 4,
     "equipment": 1,
     "monthly_consumption": 112,
     "indicator_columns": 110,
