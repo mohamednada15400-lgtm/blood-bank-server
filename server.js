@@ -1,4 +1,4 @@
-﻿require('express-async-errors');
+require('express-async-errors');
 require('dotenv').config();
 const express = require('express');
 const compression = require('compression');
@@ -149,6 +149,7 @@ async function ensureIndicatorColumns() {
 
 async function startServer() {
   await db.init();
+  await restoreFromDrive(); // pull latest data from Drive before anything else
   await ensureIndicatorColumns();
   await refreshFormulaKeys();
   const isPG = db.mode === 'pg';
@@ -2580,7 +2581,14 @@ const DRIVE_CONFIG_PATH = path.join(DATA_DIR, 'drive-config.json');
 const DRIVE_TOKENS_PATH = path.join(DATA_DIR, 'drive-tokens.json');
 
 function loadDriveConfig() {
-  try { return JSON.parse(fs.readFileSync(DRIVE_CONFIG_PATH, 'utf8')); } catch { return null; }
+  let fileCfg = null;
+  try { fileCfg = JSON.parse(fs.readFileSync(DRIVE_CONFIG_PATH, 'utf8')); } catch { fileCfg = null; }
+  const envCfg = {};
+  if (process.env.DRIVE_CLIENT_ID) envCfg.client_id = process.env.DRIVE_CLIENT_ID;
+  if (process.env.DRIVE_CLIENT_SECRET) envCfg.client_secret = process.env.DRIVE_CLIENT_SECRET;
+  if (process.env.DRIVE_REDIRECT_URI) envCfg.redirect_uri = process.env.DRIVE_REDIRECT_URI;
+  if (!fileCfg && Object.keys(envCfg).length === 0) return null;
+  return Object.assign({}, fileCfg || {}, envCfg);
 }
 function loadDriveTokens() {
   try { return JSON.parse(fs.readFileSync(DRIVE_TOKENS_PATH, 'utf8')); } catch { return null; }
@@ -2597,6 +2605,53 @@ function createOAuth2Client() {
 }
 function getDriveDbFileName() {
   return 'blood-bank-db.json';
+}
+
+// On boot: pull the latest db.json from Google Drive (source of truth) into DATA_DIR,
+// so data survives Render free's ephemeral disk / redeploys. Best-effort with a
+// bounded timeout so a slow Drive call can never block a cold start.
+async function restoreFromDrive() {
+  try {
+    await Promise.race([
+      restoreFromDriveInner(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
+    ]);
+  } catch (e) {
+    console.log('💾 Drive restore skipped:', e.message);
+  }
+}
+async function restoreFromDriveInner() {
+  if (db.mode === 'pg') return; // PG is the store itself — nothing to restore
+  const tokens = loadDriveTokens();
+  if (!tokens || !tokens.access_token) return;
+  const oauth2Client = createOAuth2Client();
+  if (!oauth2Client) return;
+  oauth2Client.setCredentials(tokens);
+
+  const { google } = require('googleapis');
+  const drive = google.drive({ version: 'v3', auth: oauth2Client });
+  const fileName = getDriveDbFileName();
+
+  const listRes = await drive.files.list({
+    q: `name='${fileName}' and trashed=false`,
+    fields: 'files(id, name)',
+    spaces: 'drive'
+  });
+  if (!listRes.data.files || listRes.data.files.length === 0) {
+    console.log('💾 Drive restore skipped: no backup file in Google Drive yet');
+    return;
+  }
+  const fileId = listRes.data.files[0].id;
+  const fileRes = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'json' });
+  const data = fileRes.data;
+  if (!data || !Array.isArray(data.users)) {
+    console.log('💾 Drive restore skipped: downloaded file is not a valid database');
+    return;
+  }
+  const dbPath = path.join(DATA_DIR, 'db.json');
+  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
+  await db.reload();
+  console.log(`✅ Restored ${(data.users || []).length} users from Google Drive`);
 }
 
 // GET /api/sync/status
@@ -2860,9 +2915,9 @@ app.get('/api/sync/drive/download', requireAuth(), requireMaster(), async (req, 
 
 
 
-// ============== Auto Backup (نسخ احتياطي تلقائي كل 24 ساعة) ==============
+// ============== Auto Backup (نسخ احتياطي تلقائي كل ساعة) ==============
 
-const AUTO_BACKUP_INTERVAL = 24 * 60 * 60 * 1000;
+const AUTO_BACKUP_INTERVAL = 60 * 60 * 1000;
 let lastAutoBackupTime = null;
 let autoBackupTimer = null;
 
