@@ -183,6 +183,16 @@ function tryParse(v) {
   return v;
 }
 
+function formatTimeAmPm(t) {
+  if (!t) return '';
+  const p = String(t).split(':');
+  const h = parseInt(p[0], 10) || 0;
+  const m = parseInt(p[1], 10) || 0;
+  const ap = h < 12 ? 'صباحًا' : 'مساءً';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ap}`;
+}
+
 async function renderDailyStock() {
   const el = document.getElementById('mainContent');
   try {
@@ -194,22 +204,29 @@ async function renderDailyStock() {
       ${canExport ? '<button class="btn btn-success" data-click="exportStockExcel"><i class="fas fa-file-excel"></i> تحميل Excel</button>' : ''}</div>
       <div class="card-body table-scroll" id="dailyStockWrap"></div>`;
     const reports = await api('GET', '/daily-reports');
+    const latest = reports.reduce((a, r) => {
+      const k = (r.date || '') + ' ' + (r.time || '');
+      return k > a.k ? { k, date: r.date || '', time: r.time || '' } : a;
+    }, { k: '', date: '', time: '' });
+    const note = latest.k
+      ? `<div style="margin:0 0 10px;padding:9px 14px;background:var(--card-bg);border:1px solid var(--border);border-right:4px solid #2c3e50;border-radius:8px;font-weight:700;color:var(--text)">آخر تحديث: ${latest.date} الساعة ${formatTimeAmPm(latest.time)}</div>`
+      : '';
     const SUB = ['رصيد سابق', 'وارد', 'منصرف', 'اعدام', 'رصيد متاح'];
     const SUB_TOT = ['رصيد سابق', 'وارد', 'منصرف', 'اعدام', 'رصيد متاح'];
     let h = '<table class="data-table" id="dailyStockTable"><thead>';
-    h += '<tr><th rowspan="3">الفرع</th><th rowspan="3">اسم بنك الدم</th><th colspan="2">تاريخ الإرسال</th><th rowspan="3">تحت فحص</th>';
+    h += '<tr><th rowspan="3">الفرع</th><th rowspan="3">اسم بنك الدم</th><th rowspan="3">تحت فحص</th>';
     h += `<th colspan="${BTYPES.length * 5}" class="blood-header">رصيــــــد الـــــــــــدم</th>`;
     h += '<th colspan="5" class="total-header">المجموع</th>';
     h += `<th colspan="${PTYPES.length * 5}" class="plasma-header">رصيد البلازما المفحوص</th>`;
     h += '<th colspan="5" class="total-header">المجموع</th>';
     h += '<th rowspan="3">الصفائح</th><th rowspan="3">الكرايو</th><th rowspan="3">الترخيص</th><th rowspan="3">وضع الترخيص</th></tr>';
-    h += '<tr><th>اليوم</th><th>الوقت</th>';
+    h += '<tr>';
     BTYPES.forEach(t => h += `<th colspan="5">${t}</th>`);
     SUB_TOT.forEach(l => h += `<th>${l}</th>`);
     PTYPES.forEach(t => h += `<th colspan="5">${t}</th>`);
     SUB_TOT.forEach(l => h += `<th>${l}</th>`);
     h += '</tr>';
-    h += '<tr><th></th><th></th>';
+    h += '<tr>';
     for (let i = 0; i < BTYPES.length; i++) SUB.forEach(l => h += `<th>${l}</th>`);
     for (let i = 0; i < 5; i++) h += '<th></th>';
     for (let i = 0; i < PTYPES.length; i++) SUB.forEach(l => h += `<th>${l}</th>`);
@@ -229,9 +246,7 @@ async function renderDailyStock() {
         const pTot = { previous: 0, incoming: 0, outgoing: 0, disposal: 0, available: 0 };
         h += `<tr class="data-row gov-${govIdx % 2 === 0 ? 'even' : 'odd'}" data-rid="${r.id}">`;
         if (idx === 0) h += `<td class="gov-cell" rowspan="${reps.length}">${gov}</td>`;
-        const todayStr = fmtCairoDate('date');
-        const dateStyle = r.date && r.date !== todayStr ? ' style="color:red;font-weight:700"' : '';
-        h += `<td>${r.hospital_name || ''}</td><td data-role="date"${dateStyle}>${r.date || ''}</td><td data-role="time">${r.time || ''}</td>`;
+        h += `<td>${r.hospital_name || ''}</td>`;
         h += `<td class="cell-under" title="تحت الفحص — تلقائياً من أكياس الدم (الدم غير المفحوص)">${r.under_inspection || 0}</td>`;
         BTYPES.forEach(t => {
           const d = bd[t] || {};
@@ -260,9 +275,9 @@ async function renderDailyStock() {
         h += `<td class="${canEdit ? 'editable' : ''}" data-group="plat_cryo" data-sub="platelets" data-rid="${r.id}">${r.platelets || 0}</td><td class="${canEdit ? 'editable' : ''}" data-group="plat_cryo" data-sub="cryo" data-rid="${r.id}">${r.cryo || 0}</td><td class="${canEdit ? 'editable' : ''}" data-group="license" data-sub="license_type" data-rid="${r.id}">${r.license_type || ''}</td><td class="${canEdit ? 'editable' : ''}" data-group="license" data-sub="license_status" data-rid="${r.id}">${r.license_status || ''}</td></tr>`;
       });
     });
-    if (!Object.keys(groups).length) h += '<tr><td colspan="79" class="empty-msg">لا توجد بيانات</td></tr>';
+    if (!Object.keys(groups).length) h += '<tr><td colspan="77" class="empty-msg">لا توجد بيانات</td></tr>';
     h += '</tbody></table>';
-    document.getElementById('dailyStockWrap').innerHTML = h;
+    document.getElementById('dailyStockWrap').innerHTML = note + h;
     if (canEdit) setupInlineEdit();
   } catch (e) { el.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
 }
@@ -361,10 +376,13 @@ async function collectGroupData(table, rid) {
 function updateRow(row, bd, pd, bTot, pTot, date, time) {
   const todayStr = fmtCairoDate('date');
   const dateCell = row.querySelector('[data-role="date"]');
-  dateCell.textContent = date;
-  dateCell.style.color = date && date.slice(0,10) !== todayStr ? 'red' : '';
-  dateCell.style.fontWeight = date && date.slice(0,10) !== todayStr ? '700' : '';
-  row.querySelector('[data-role="time"]').textContent = time;
+  if (dateCell) {
+    dateCell.textContent = date;
+    dateCell.style.color = date && date.slice(0,10) !== todayStr ? 'red' : '';
+    dateCell.style.fontWeight = date && date.slice(0,10) !== todayStr ? '700' : '';
+  }
+  const timeCell = row.querySelector('[data-role="time"]');
+  if (timeCell) timeCell.textContent = time;
   BTYPES.forEach(t => {
     const cell = row.querySelector(`[data-group="blood"][data-type="${t}"][data-sub="available"]`);
     if (cell) cell.textContent = calcAvail(bd, t);
@@ -913,7 +931,7 @@ function renderStatementReport(data, hospitals) {
     <div class="stmt-header">
       <div class="stmt-title">البيان اليومي</div>
       <div><strong>المستشفى</strong> ${hosp.name}</div>
-      <div><strong>عن يوم</strong> ${dd} ${dayName} ${m} ${y} الموافق ${reportDate} الساعة ${report.time || ''}</div>
+      <div><strong>عن يوم</strong> ${dd} ${dayName} ${m} ${y} الموافق ${reportDate}</div>
     </div>
     <table class="stmt-table" id="stmtReportTable">
       <thead>
@@ -1095,16 +1113,11 @@ async function renderBranchStatement() {
     <table class="stmt-table">
       <thead>
         <tr>
-          <th rowspan="2">اسم بنك الدم</th>
-          <th rowspan="2">نوع المشتق</th>
+          <th>اسم بنك الدم</th>
+          <th>نوع المشتق</th>
           ${BTYPES.map(t => `<th>${t}</th>`).join('')}
-          <th rowspan="2">الاجمالي</th>
-          <th rowspan="2">المنصرف</th>
-          <th colspan="2">اخر تحديث</th>
-        </tr>
-        <tr>
-          <th colspan="8"></th>
-          <th>اليوم</th><th>الوقت</th>
+          <th>الاجمالي</th>
+          <th>المنصرف</th>
         </tr>
       </thead>
       <tbody>`;
@@ -1122,18 +1135,11 @@ async function renderBranchStatement() {
       const pOut = PTYPES.reduce((s, t) => s + ((pd[t]?.outgoing || 0)), 0);
       grandBTotal += bSum; grandPTotal += pSum;
       grandBDisp += bOut; grandPDisp += pOut;
-      const dateParts = r.date ? r.date.split('-') : [];
-      const d = dateParts.length >= 3 ? `${dateParts[2]}-${dateParts[1]}` : (r.date || '');
-      const cT2 = getCairoDate(); const todayStr3 = String(cT2.getUTCFullYear()).padStart(4,'0')+'-'+String(cT2.getUTCMonth()+1).padStart(2,'0')+'-'+String(cT2.getUTCDate()).padStart(2,'0');
-      const isOld = r.date && r.date.slice(0,10) !== todayStr3;
-      const dtStyle = isOld ? ' style="color:red;font-weight:700"' : '';
-      const tmStyle = isOld ? ' style="font-weight:700"' : '';
       html += `<tr>
         <td rowspan="2">${r.hospital_name || ''}</td>
         <td class="deriv-label">الدم</td>
         ${bVals.map(v => `<td>${v}</td>`).join('')}
         <td class="total-cell">${bSum}</td><td>${bOut}</td>
-        <td rowspan="2"${dtStyle}>${d}</td><td rowspan="2"${tmStyle}>${r.time || ''}</td>
       </tr>
       <tr>
         <td class="deriv-label">البلازما</td>
@@ -1145,13 +1151,13 @@ async function renderBranchStatement() {
       <td>الاجمالي</td>
       <td class="deriv-label">الدم</td>
       ${BTYPES.map(t => `<td>${grandBVals[t]}</td>`).join('')}
-      <td class="total-cell">${grandBTotal}</td><td>${grandBDisp}</td><td></td><td></td>
+      <td class="total-cell">${grandBTotal}</td><td>${grandBDisp}</td>
     </tr>
     <tr class="avail-row">
       <td></td>
       <td class="deriv-label">البلازما</td>
       ${PTYPES.map(t => `<td colspan="2">${grandPVals[t]}</td>`).join('')}
-      <td class="total-cell">${grandPTotal}</td><td>${grandPDisp}</td><td></td><td></td>
+      <td class="total-cell">${grandPTotal}</td><td>${grandPDisp}</td>
     </tr>`;
     html += '</tbody></table>';
     document.getElementById('branchStmtReport').innerHTML = html;
