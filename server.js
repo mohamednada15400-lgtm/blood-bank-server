@@ -2406,6 +2406,7 @@ app.delete('/api/readiness-reports/:id', requireAuth(), requirePerm('readiness',
 
 // --- Notifications ---
 app.get('/api/readiness-notifications', requireAuth(), requirePerm('readiness', 'view'), async (req, res) => {
+  const user = req.session.user;
   await query(`DELETE FROM readiness_notifications WHERE occasion_id NOT IN (SELECT id FROM readiness_occasions)`);
   const activeNotifs = await query('SELECT * FROM readiness_notifications WHERE dismissed = false ORDER BY id DESC');
   const rows = [];

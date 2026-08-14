@@ -657,6 +657,8 @@ class JSONDB {
                 val = null;
               } else if (/^NOW\(\)$/i.test(val)) {
                 val = new Date().toISOString();
+              } else if (/^(true|false)$/i.test(val)) {
+                val = /^true$/i.test(val);
               } else {
                 val = parseInt(val);
               }
@@ -831,6 +833,8 @@ class JSONDB {
       if (val.startsWith('$')) val = params[parseInt(val.substring(1)) - 1];
       else if (val.startsWith("'") || val.endsWith("'")) {
         val = val.replace(/'/g, '').trim();
+      } else if (/^(true|false)$/i.test(val)) {
+        val = /^true$/i.test(val);
       } else val = parseInt(val);
 
       const rowVal = row[col];
@@ -860,6 +864,10 @@ class JSONDB {
         if (oper === '!=') return rv !== val;
         if (oper === '>=') return rv >= val;
         if (oper === '<=') return rv <= val;
+      }
+      if (typeof val === 'boolean' || typeof rowVal === 'boolean') {
+        if (oper === '=') return !!rowVal === !!val;
+        if (oper === '!=') return !!rowVal !== !!val;
       }
     }
     return false;
