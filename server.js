@@ -30,6 +30,21 @@ function getWritableDir() {
   }
 }
 const DATA_DIR = getWritableDir();
+
+// Mirror console output to DATA_DIR/server.log so cloud crashes are diagnosable
+// even when the platform log stream is unavailable.
+(function bootLogMirror() {
+  const file = path.join(DATA_DIR, 'server.log');
+  const ts = () => new Date().toISOString();
+  try { fs.appendFileSync(file, ts() + ' [BOOT] server.js loading\n', 'utf8'); } catch {}
+  ['log', 'warn', 'error'].forEach((m) => {
+    const orig = console[m].bind(console);
+    console[m] = (...args) => {
+      try { fs.appendFileSync(file, ts() + ' [' + m.toUpperCase() + '] ' + args.map(String).join(' ') + '\n', 'utf8'); } catch {}
+      orig(...args);
+    };
+  });
+})();
 function loadOrCreateSecret() {
   // Persist a random secret in the writable data dir so sessions survive restarts
   // without shipping a hardcoded fallback in source.

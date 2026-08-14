@@ -21,8 +21,8 @@ ENV NODE_ENV=production
 ENV DATA_DIR=/data
 EXPOSE 3001
 
-HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl -fsS "http://localhost:${PORT:-3001}/health" || exit 1
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node", "--max-old-space-size=128", "--gc-interval=100", "server.js"]
