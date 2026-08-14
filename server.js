@@ -904,7 +904,7 @@ const HOSP_ORDER = {
 
 app.get('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'view'), async (req, res) => {
   const user = req.session.user;
-  let sql = "SELECT dr.id, dr.hospital_id, TO_CHAR(dr.date, 'YYYY-MM-DD') as date, dr.time, dr.under_inspection, dr.blood_data, dr.plasma_data, dr.platelets, dr.cryo, dr.license_type, dr.license_status, dr.plat_data, dr.user_id, h.name as hospital_name, h.governorate, h.type FROM daily_reports dr JOIN hospitals h ON h.id = dr.hospital_id WHERE 1=1";
+  let sql = "SELECT dr.id, dr.hospital_id, TO_CHAR(dr.date, 'YYYY-MM-DD') as date, dr.time, dr.under_inspection, dr.blood_data, dr.plasma_data, dr.platelets, dr.cryo, dr.license_type, dr.license_status, dr.plat_data, dr.user_id, dr.updated_at, h.name as hospital_name, h.governorate, h.type FROM daily_reports dr JOIN hospitals h ON h.id = dr.hospital_id WHERE 1=1";
   let params = [];
   const f = await filterByRole(user, sql, params);
   sql = f.sql; params = f.params;
@@ -986,6 +986,7 @@ app.get('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'view'),
     const BT8 = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
     const PT4 = ['A','B','O','AB'];
     deduped.forEach(r => {
+      r.last_update = dailyLastUpdate(r.updated_at);
       r.under_inspection = uiCounts[r.hospital_id] || 0;
       let bd = null, pd = null;
       try { bd = typeof r.blood_data === 'string' ? JSON.parse(r.blood_data) : (r.blood_data || null); } catch(e) { bd = null; }
@@ -1032,7 +1033,7 @@ app.post('/api/daily-reports', requireAuth(), requirePerm('daily_stock', 'edit')
     });
   }
   const result = await query(
-    'INSERT INTO daily_reports (hospital_id, date, time, under_inspection, blood_data, plasma_data, platelets, cryo, license_type, license_status, user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *',
+    'INSERT INTO daily_reports (hospital_id, date, time, under_inspection, blood_data, plasma_data, platelets, cryo, license_type, license_status, user_id, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW()) RETURNING *',
     [hospitalId, d, t, def.under_inspection, JSON.stringify(def.blood), JSON.stringify(def.plasma), def.platelets, def.cryo, def.license_type, def.license_status, user.id]
   );
   res.json(result.rows[0]);
@@ -1052,6 +1053,7 @@ app.put('/api/daily-reports/:id', requireAuth(), requirePerm('daily_stock', 'edi
   if (licenseStatus !== undefined) { sets.push(`license_status = $${idx++}`); vals.push(licenseStatus); }
   if (platData !== undefined) { sets.push(`plat_data = $${idx++}`); vals.push(JSON.stringify(platData)); }
   if (sets.length === 0) return res.json({ ok: true });
+  sets.push('updated_at = NOW()');
   vals.push(parseInt(req.params.id));
   const result = await query(`UPDATE daily_reports SET ${sets.join(', ')} WHERE id = $${idx} RETURNING *`, vals);
   if (result.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
@@ -1066,18 +1068,18 @@ app.patch('/api/daily-reports/:id/cell', requireAuth(), requirePerm('daily_stock
   const r = result.rows[0];
   if (group === 'license') {
     const f = sub === 'type' ? 'license_type' : 'license_status';
-    await query(`UPDATE daily_reports SET ${f} = $1 WHERE id = $2`, [value, parseInt(req.params.id)]);
+    await query(`UPDATE daily_reports SET ${f} = $1, updated_at = NOW() WHERE id = $2`, [value, parseInt(req.params.id)]);
   } else if (group === 'plat_cryo') {
     const ALLOWED_PC = ['platelets', 'cryo'];
     if (!ALLOWED_PC.includes(sub)) return res.status(400).json({ error: 'حقل غير صالح' });
-    await query(`UPDATE daily_reports SET ${sub} = $1 WHERE id = $2`, [parseInt(value) || 0, parseInt(req.params.id)]);
+    await query(`UPDATE daily_reports SET ${sub} = $1, updated_at = NOW() WHERE id = $2`, [parseInt(value) || 0, parseInt(req.params.id)]);
   } else {
     const field = group === 'plasma' ? 'plasma_data' : 'blood_data';
     const raw = r[field];
     const data = raw && typeof raw === 'object' ? raw : (raw ? JSON.parse(raw) : {});
     if (!data[type]) data[type] = {};
     data[type][sub] = parseInt(value) || 0;
-    await query(`UPDATE daily_reports SET ${field} = $1 WHERE id = $2`, [JSON.stringify(data), parseInt(req.params.id)]);
+    await query(`UPDATE daily_reports SET ${field} = $1, updated_at = NOW() WHERE id = $2`, [JSON.stringify(data), parseInt(req.params.id)]);
   }
   res.json({ ok: true });
 });
@@ -1089,6 +1091,7 @@ app.patch('/api/daily-reports/:id/pc', requireAuth(), requirePerm('daily_stock',
   if (platelets !== undefined) { sets.push(`platelets = $${idx++}`); vals.push(platelets); }
   if (cryo !== undefined) { sets.push(`cryo = $${idx++}`); vals.push(cryo); }
   if (sets.length === 0) return res.json({ ok: true });
+  sets.push('updated_at = NOW()');
   vals.push(parseInt(req.params.id));
   const result = await query(`UPDATE daily_reports SET ${sets.join(', ')} WHERE id = $${idx} RETURNING *`, vals);
   if (result.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
@@ -2934,6 +2937,21 @@ function cairoDateKey() {
   if (!p) return '';
   return p.year + '-' + String(p.month).padStart(2, '0') + '-' + String(p.day).padStart(2, '0');
 }
+// Cairo-localized last-update timestamp for the «آخر تحديث» notes (YYYY-MM-DD HH:MM)
+function dailyLastUpdate(v) {
+  if (!v) return '';
+  const d = (v instanceof Date) ? v : new Date(v);
+  if (isNaN(d.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Cairo', hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit'
+  }).format(d);
+  const m = parts.match(/(\d{4})-(\d{2})-(\d{2}),\s*(\d{2}):(\d{2})/);
+  if (!m) return '';
+  let hh = +m[4]; if (hh >= 24) hh -= 24;
+  return m[1] + '-' + m[2] + '-' + m[3] + ' ' + String(hh).padStart(2, '0') + ':' + m[5];
+}
 const STOCK_ROLLOVER_SLOTS = [510, 1230]; // 08:30 & 20:30 minutes-of-day (Cairo)
 let __stockRolloverKey = '';
 
@@ -2977,7 +2995,7 @@ async function performStockRollover() {
       }
     }
     if (bdChanged || pdChanged) {
-      await query('UPDATE daily_reports SET blood_data = $1, plasma_data = $2 WHERE id = $3', [
+      await query('UPDATE daily_reports SET blood_data = $1, plasma_data = $2, updated_at = NOW() WHERE id = $3', [
         bdChanged ? JSON.stringify(bd) : row.blood_data,
         pdChanged ? JSON.stringify(pd) : row.plasma_data,
         row.id

@@ -138,6 +138,8 @@ class JSONDB {
     // Ensure tables exist even when loading existing db
     if (!this.data.daily_reports) this.data.daily_reports = [];
     if (!this.data._counters.daily_reports) this.data._counters.daily_reports = this.data.daily_reports.length + 1 || 1;
+    // Migration: last-update timestamp on daily reports (آخر تحديث note) — keep null until next save/rollover
+    this.data.daily_reports.forEach(r => { if (r.updated_at === undefined) r.updated_at = null; });
     // Migration: is_aggregation -> type
     if (this.data.hospitals && this.data.hospitals.length && this.data.hospitals[0].is_aggregation !== undefined) {
       this.data.hospitals.forEach(h => {

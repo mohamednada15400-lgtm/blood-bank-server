@@ -70,7 +70,8 @@ const PG_TABLES = [
     license_type VARCHAR(50) DEFAULT 'تخزيني',
     license_status VARCHAR(200) DEFAULT '',
     plat_data JSONB DEFAULT '{}',
-    user_id INTEGER
+    user_id INTEGER,
+    updated_at TIMESTAMP DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS daily_statements (
     id SERIAL PRIMARY KEY,
@@ -436,6 +437,8 @@ class Database {
         try { await client.query("ALTER TABLE blood_bags ADD COLUMN IF NOT EXISTS unit_category VARCHAR(20) DEFAULT 'كبار'"); } catch(e) {}
         // Migration: department the bag was issued to on reservations
         try { await client.query("ALTER TABLE bag_reservations ADD COLUMN IF NOT EXISTS issued_department VARCHAR(200) DEFAULT ''"); } catch(e) {}
+        // Migration: last-update timestamp on daily reports (آخر تحديث note)
+        try { await client.query("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()"); } catch(e) {}
         // Migration: rename hospital users h{id} → emp{seq}
         try {
           await client.query("UPDATE users SET username = 'emp' || seq.num FROM (SELECT id, ROW_NUMBER() OVER (ORDER BY id)::text as num FROM users WHERE role = 'hospital' AND username ~ '^h\\d+$') seq WHERE users.id = seq.id AND users.username LIKE 'h%'");
