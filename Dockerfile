@@ -25,4 +25,4 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
 
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["node", "--max-old-space-size=256", "--gc-interval=100", "server.js"]
+CMD ["node", "--max-old-space-size=128", "--gc-interval=100", "server.js"]
