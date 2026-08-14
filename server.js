@@ -11,7 +11,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || process.env.ALWAYSDATA_HTTPD_PORT || 3001;
+const HOST = process.env.ALWAYSDATA_HTTPD_IP || '0.0.0.0';
 const BASE_DIR = process.pkg ? path.dirname(process.execPath) : __dirname;
 const os = require('os');
 function getWritableDir() {
@@ -4409,7 +4410,7 @@ process.on('uncaughtException', (err) => {
   db.flush().then(() => process.exit(1)).catch(() => process.exit(1));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, HOST, () => {
   const ip = getLocalIP();
   const isCloud = !!process.env.DATA_DIR || !!process.env.RENDER;
   console.log(`✅ Blood Bank Server running on port ${PORT}`);
