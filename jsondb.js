@@ -61,9 +61,11 @@ class JSONDB {
       patients: [],
       bag_reservations: [],
       hospital_departments: [],
+      donors: [],
+      donations: [],
       app_config: { time_offset: 2 },
       role_perms: Object.entries(DEF_PERMS).map(([role, perms]) => ({ role, permissions: JSON.parse(JSON.stringify(perms)) })),
-      _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1, indicator_columns: 1, blood_bags: 1, blood_bag_events: 1, patients: 1, bag_reservations: 1, hospital_departments: 1 }
+      _counters: { users: 1, hospitals: 1, governorates: 1, hospital_types: 1, daily_stock: 1, daily_statements: 1, daily_reports: 1, monthly_storage: 1, monthly_aggregate: 1, monthly_indicators: 1, monthly_consumption: 1, monthly_big_indicators: 1, monthly_small_indicators: 1, consumption: 1, archives: 1, strategic_reserves: 1, employee_statements: 1, readiness_occasions: 1, readiness_reports: 1, readiness_notifications: 1, indicator_columns: 1, blood_bags: 1, blood_bag_events: 1, patients: 1, bag_reservations: 1, hospital_departments: 1, donors: 1, donations: 1 }
     };
   }
 
@@ -273,7 +275,7 @@ class JSONDB {
     if (!this.data._counters.indicator_columns) this.data._counters.indicator_columns = 1;
     // Blood bags module tables
     if (!this.data.blood_bags || !Array.isArray(this.data.blood_bags)) this.data.blood_bags = [];
-    this.data.blood_bags.forEach(b => { if (!b.product_type) b.product_type = 'دم'; if (b.units == null) b.units = 1; if (b.unit_category == null) b.unit_category = 'كبار'; if (b.donation_id == null) b.donation_id = null; if (b.test_nat == null) b.test_nat = ''; });
+    this.data.blood_bags.forEach(b => { if (!b.product_type) b.product_type = 'دم'; if (b.units == null) b.units = 1; if (b.unit_category == null) b.unit_category = 'كبار'; if (b.donation_id == null) b.donation_id = null; if (b.donor_id == null) b.donor_id = null; if (b.test_nat == null) b.test_nat = ''; });
     if (!this.data.blood_bag_events || !Array.isArray(this.data.blood_bag_events)) this.data.blood_bag_events = [];
     if (!this.data.patients || !Array.isArray(this.data.patients)) this.data.patients = [];
     this.data.patients.forEach(p => {
@@ -286,11 +288,15 @@ class JSONDB {
     if (!this.data.bag_reservations || !Array.isArray(this.data.bag_reservations)) this.data.bag_reservations = [];
     this.data.bag_reservations.forEach(r => { if (r.issued_department == null) r.issued_department = ''; });
     if (!this.data.hospital_departments || !Array.isArray(this.data.hospital_departments)) this.data.hospital_departments = [];
+    if (!this.data.donors || !Array.isArray(this.data.donors)) this.data.donors = [];
+    if (!this.data.donations || !Array.isArray(this.data.donations)) this.data.donations = [];
     if (!this.data._counters.blood_bags) this.data._counters.blood_bags = 1;
     if (!this.data._counters.blood_bag_events) this.data._counters.blood_bag_events = 1;
     if (!this.data._counters.patients) this.data._counters.patients = 1;
     if (!this.data._counters.bag_reservations) this.data._counters.bag_reservations = 1;
     if (!this.data._counters.hospital_departments) this.data._counters.hospital_departments = 1;
+    if (!this.data._counters.donors) this.data._counters.donors = 1;
+    if (!this.data._counters.donations) this.data._counters.donations = 1;
     this._save();
   }
 
@@ -822,6 +828,45 @@ class JSONDB {
         return v.replace(/'/g, '');
       });
       return vals.includes(row[col]);
+    }
+    const anyMatch = cond.match(/(\w+\.\w+|\w+)\s*(=|!=)\s*ANY\((.+?)\)/i);
+    if (anyMatch) {
+      let col = anyMatch[1].replace(/^\w+\./i, '');
+      const oper = anyMatch[2];
+      let inner = anyMatch[3].trim();
+      let vals = [];
+      if (inner.startsWith('$')) {
+        const arr = params[parseInt(inner.substring(1)) - 1];
+        vals = Array.isArray(arr) ? arr : [];
+      } else {
+        vals = inner.split(',').map(v => {
+          v = v.trim();
+          if (v.startsWith('$')) return params[parseInt(v.substring(1)) - 1];
+          return v.replace(/'/g, '');
+        });
+      }
+      const rowVal = row[col];
+      if (rowVal === undefined) return false;
+      const hit = vals.some(v => String(v) === String(rowVal));
+      return oper === '=' ? hit : !hit;
+    }
+    const likeMatch = cond.match(/(\w+\.\w+|\w+)\s+LIKE\s+(.+)/i);
+    if (likeMatch) {
+      let col = likeMatch[1].replace(/^\w+\./i, '');
+      let val = likeMatch[2].trim().replace(/::date/g, '');
+      if (val.startsWith('$')) val = params[parseInt(val.substring(1)) - 1];
+      else if (val.startsWith("'") || val.endsWith("'")) val = val.replace(/'/g, '').trim();
+      const rowVal = row[col];
+      if (rowVal === undefined || val == null) return false;
+      let re = '';
+      const src = String(val);
+      for (let i = 0; i < src.length; i++) {
+        const ch = src[i];
+        if (ch === '%') re += '.*';
+        else if (ch === '_') re += '.';
+        else re += ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+      return new RegExp('^' + re + '$', 'i').test(String(rowVal));
     }
 
     cond = cond.replace(/(\w+\.\w+|\w+)::date/g, '$1');

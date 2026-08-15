@@ -287,6 +287,7 @@ const PG_TABLES = [
     units INTEGER DEFAULT 1,
     unit_category VARCHAR(20) DEFAULT 'كبار',
     donation_id INTEGER,
+    donor_id INTEGER,
     donor_name VARCHAR(200) DEFAULT '',
     donor_national_id VARCHAR(20) DEFAULT '',
     donor_age INTEGER,
@@ -370,6 +371,33 @@ const PG_TABLES = [
     hospital_id INTEGER NOT NULL,
     name VARCHAR(200) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS donors (
+    id SERIAL PRIMARY KEY,
+    national_id VARCHAR(20) UNIQUE NOT NULL,
+    name VARCHAR(200) NOT NULL,
+    birth_date DATE,
+    age INTEGER,
+    governorate VARCHAR(100) DEFAULT '',
+    gender VARCHAR(10) DEFAULT '',
+    phone VARCHAR(50) DEFAULT '',
+    address VARCHAR(300) DEFAULT '',
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS donations (
+    id SERIAL PRIMARY KEY,
+    donor_id INTEGER NOT NULL,
+    hospital_id INTEGER,
+    user_id INTEGER,
+    status VARCHAR(20) DEFAULT 'تبرع الآن',
+    deferral_reason VARCHAR(200) DEFAULT '',
+    deferral_duration INTEGER,
+    return_date DATE,
+    screening JSONB DEFAULT '{}',
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT NOW()
   )`
 ];
 
@@ -435,6 +463,8 @@ class Database {
         try { await client.query("ALTER TABLE blood_bags ADD COLUMN IF NOT EXISTS test_nat VARCHAR(20) DEFAULT ''"); } catch(e) {}
         // Migration: adult/child unit category on blood bags
         try { await client.query("ALTER TABLE blood_bags ADD COLUMN IF NOT EXISTS unit_category VARCHAR(20) DEFAULT 'كبار'"); } catch(e) {}
+        // Migration: donor linkage on blood bags (donation card)
+        try { await client.query("ALTER TABLE blood_bags ADD COLUMN IF NOT EXISTS donor_id INTEGER"); } catch(e) {}
         // Migration: department the bag was issued to on reservations
         try { await client.query("ALTER TABLE bag_reservations ADD COLUMN IF NOT EXISTS issued_department VARCHAR(200) DEFAULT ''"); } catch(e) {}
         // Migration: last-update timestamp on daily reports (آخر تحديث note)

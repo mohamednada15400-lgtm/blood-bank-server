@@ -3347,6 +3347,47 @@ function bbDefaultExpiry(dateStr, productType) {
   return bbAddDays(dateStr, bbShelfDays(productType));
 }
 
+// ----- كارت التبرع: إنشاء/تحديث المتبرع + تسجيل قرار التبرع -----
+async function bbUpsertDonor(d) {
+  if (!d) return null;
+  const nid = String(d.national_id || '').trim();
+  if (!nid) return null;
+  const existing = (await db.query('SELECT * FROM donors WHERE national_id = $1', [nid])).rows[0];
+  const vals = {
+    name: (d.name || (existing && existing.name) || '').trim(),
+    birth_date: d.birth_date || (existing && existing.birth_date) || null,
+    age: d.age != null ? parseInt(d.age) : (existing ? existing.age : null),
+    governorate: (d.governorate || (existing && existing.governorate) || '').trim(),
+    gender: (d.gender || (existing && existing.gender) || '').trim(),
+    address: (d.address || (existing && existing.address) || '').trim(),
+    phone: (d.phone || (existing && existing.phone) || '').trim(),
+    notes: (d.notes || (existing && existing.notes) || '').trim()
+  };
+  if (existing) {
+    await db.query('UPDATE donors SET name=$1, birth_date=$2, age=$3, governorate=$4, gender=$5, address=$6, phone=$7, notes=$8, updated_at=NOW() WHERE id=$9',
+      [vals.name, vals.birth_date, vals.age, vals.governorate, vals.gender, vals.address, vals.phone, vals.notes, existing.id]);
+    return existing.id;
+  }
+  const r = await db.query(
+    `INSERT INTO donors (national_id, name, birth_date, age, governorate, gender, address, phone, notes, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),NOW()) RETURNING id`,
+    [nid, vals.name, vals.birth_date, vals.age, vals.governorate, vals.gender, vals.address, vals.phone, vals.notes]
+  );
+  return r.rows[0].id;
+}
+
+async function bbCreateDonation(donorId, screening, decision, hid, user) {
+  if (!donorId) return null;
+  const s = screening || {};
+  const st = decision || s.decision || 'تبرع الآن';
+  const r = await db.query(
+    `INSERT INTO donations (donor_id, hospital_id, user_id, status, deferral_reason, deferral_duration, return_date, screening, notes, created_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW()) RETURNING id`,
+    [donorId, hid, user ? user.id : null, st, s.deferral_reason || '', s.deferral_duration || '', s.return_date || null, JSON.stringify(s) || null, s.notes || '']
+  );
+  return r.rows[0].id;
+}
+
 async function bbReleaseExpiredReservations() {
   try {
     const now = Date.now();
@@ -3384,6 +3425,50 @@ async function bbMarkExpiredBags() {
     }
   } catch (e) { console.error('bbMarkExpiredBags:', e.message); }
 }
+
+// ----- المتبرعون: بحث + إضافة/تحديث + تسجيل تبرع (كارت التبرع) -----
+app.get('/api/donors', requireAuth(), async (req, res) => {
+  try {
+    const q = ((req.query.q || '').trim());
+    let rows = [];
+    if (q) {
+      const like = '%' + q + '%';
+      rows = (await db.query("SELECT * FROM donors WHERE national_id LIKE $1 OR name LIKE $1 ORDER BY updated_at DESC LIMIT 10", [like])).rows;
+    } else {
+      rows = (await db.query('SELECT * FROM donors ORDER BY updated_at DESC LIMIT 20')).rows;
+    }
+    if (rows.length) {
+      const ids = rows.map(d => d.id);
+      const donRows = (await db.query('SELECT * FROM donations WHERE donor_id = ANY($1) ORDER BY created_at DESC', [ids])).rows;
+      const donMap = {};
+      donRows.forEach(d => { (donMap[d.donor_id] = donMap[d.donor_id] || []).push(d); });
+      rows.forEach(d => { d.donations = donMap[d.id] || []; });
+    }
+    res.json({ donors: rows });
+  } catch (e) { console.error('GET donors:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+app.post('/api/donors', requireAuth(), requirePerm('blood_bags', 'edit'), async (req, res) => {
+  try {
+    const d = req.body || {};
+    if (!d.national_id) return res.status(400).json({ error: 'الرقم القومي مطلوب' });
+    const id = await bbUpsertDonor(d);
+    const donor = (await db.query('SELECT * FROM donors WHERE id = $1', [id])).rows[0];
+    res.json({ ok: true, donor });
+  } catch (e) { console.error('POST donors:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
+
+app.post('/api/donations', requireAuth(), requirePerm('blood_bags', 'add'), async (req, res) => {
+  try {
+    const { donor, screening, decision } = req.body || {};
+    if (!donor || !donor.national_id) return res.status(400).json({ error: 'بيانات المتبرع مطلوبة' });
+    const user = req.session.user;
+    const hid = parseInt(req.body.hospitalId) || (user && user.hospitalId ? parseInt(user.hospitalId) : null);
+    const donorId = await bbUpsertDonor(donor);
+    const donation = await bbCreateDonation(donorId, screening || null, decision, hid, user);
+    res.json({ ok: true, donation });
+  } catch (e) { console.error('POST donations:', e.message); res.status(500).json({ error: errMsg(e) }); }
+});
 
 // ----- الأكياس: القائمة -----
 app.get('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'view'), async (req, res) => {
@@ -3508,6 +3593,9 @@ app.post('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'add'), asy
     if (hosp && hosp.type !== 'تجميعي') return res.status(403).json({ error: 'التجميع متاح لبنوك الدم التجميعية فقط' });
     const user = req.session.user;
     const created = [];
+    // كارت التبرع: يُحسب معرّف المتبرع والتبرع مرة واحدة قبل حلقة الأكياس (كارت واحد لكل دفعة)
+    const donorId = (req.body.donor && req.body.donor.national_id) ? await bbUpsertDonor(req.body.donor) : null;
+    const donationRecordId = (donorId && req.body.decision && req.body.screening) ? await bbCreateDonation(donorId, req.body.screening, req.body.decision, hid, user) : null;
     // تمريرة تحقق مسبقة — لا يُكتب أي شيء قبل التأكد من خلو الأرقام من التكرار (لا تكرار في نفس الدفعة ولا في القاعدة)
     const seen = {};
     for (const item of bags) {
@@ -3542,9 +3630,9 @@ app.post('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'add'), asy
       if (productType !== 'دم') {
         const cExp = exp || bbDefaultExpiry(collectionDate, productType);
         const r = await db.query(
-          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, unit_category, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, notes, created_at, updated_at, user_id, donation_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,NOW(),NOW(),$21,NULL)`,
-          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, units, unitCategory, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', status, '', '', '', '', item.notes || '', user ? user.id : null]
+          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, unit_category, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, notes, created_at, updated_at, user_id, donor_id, donation_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,NOW(),NOW(),$21,$22,NULL)`,
+          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, units, unitCategory, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', status, '', '', '', '', item.notes || '', user ? user.id : null, donorId]
         );
         const bag = r.rows[0];
         const stLabel = BB_STATUS_LABELS[status] || '';
@@ -3562,9 +3650,9 @@ app.post('/api/blood-bags', requireAuth(), requirePerm('blood_bags', 'add'), asy
         const compStatus = birthDiscard ? 'disposed' : status;
         const compReason = birthDiscard ? 'ولادة' : '';
         const r = await db.query(
-          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, unit_category, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, test_nat, notes, created_at, updated_at, user_id, donation_id, return_reason)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,NOW(),NOW(),$22,$23,$24)`,
-          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, 1, unitCategory, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', compStatus, '', '', '', '', '', item.notes || '', user ? user.id : null, donationId, compReason]
+          `INSERT INTO blood_bags (bag_no, barcode, hospital_id, source_hospital_id, collection_date, expiry_date, blood_type, product_type, units, unit_category, donor_name, donor_national_id, donor_age, donor_gender, status, test_hcv, test_hbv, test_hiv, test_syphilis, test_nat, notes, created_at, updated_at, user_id, donor_id, donation_id, return_reason)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,NOW(),NOW(),$22,$23,$24,$25)`,
+          [bagNo, barcode, hid, hid, collectionDate || null, cExp, bbNormBt(item.blood_type, productType), productType, 1, unitCategory, item.donor_name || '', item.donor_national_id || '', item.donor_age != null ? parseInt(item.donor_age) : null, item.donor_gender || '', compStatus, '', '', '', '', '', item.notes || '', user ? user.id : null, donorId, donationRecordId, compReason]
         );
         return r.rows[0];
       };

@@ -73141,8 +73141,178 @@
     "equipment_last_updated": "2026-07-14T19:43:15.108Z",
     "bb_seq": 23
   },
-  "donors": [],
-  "donations": [],
+  "donors": [
+    {
+      "id": 1,
+      "national_id": "TEST1786778789951",
+      "name": "متبرع اختبار A",
+      "birth_date": null,
+      "age": 30,
+      "governorate": "بورسعيد",
+      "gender": "ذكر",
+      "address": "",
+      "phone": "",
+      "notes": "",
+      "created_at": "2026-08-15T07:26:29.974Z",
+      "updated_at": "2026-08-15T07:26:29.974Z",
+      "donations": [
+        {
+          "id": 1,
+          "donor_id": 1,
+          "hospital_id": 2,
+          "user_id": 1,
+          "status": "موجل",
+          "deferral_reason": "",
+          "deferral_duration": "",
+          "return_date": null,
+          "screening": "{\"weight\":70,\"hb\":13}",
+          "notes": "",
+          "created_at": "2026-08-15T07:26:30.024Z"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "national_id": "TEST1786778789951B",
+      "name": "متبرع اختبار B",
+      "birth_date": null,
+      "age": 35,
+      "governorate": "بورسعيد",
+      "gender": "ذكر",
+      "address": "",
+      "phone": "",
+      "notes": "",
+      "created_at": "2026-08-15T07:26:30.130Z",
+      "updated_at": "2026-08-15T07:26:30.130Z",
+      "donations": [
+        {
+          "id": 2,
+          "donor_id": 2,
+          "hospital_id": 2,
+          "user_id": 1,
+          "status": "تبرع الآن",
+          "deferral_reason": "",
+          "deferral_duration": "",
+          "return_date": null,
+          "screening": "{\"weight\":80,\"hb\":14}",
+          "notes": "",
+          "created_at": "2026-08-15T07:26:30.167Z"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "national_id": "TEST1786779239563",
+      "name": "متبرع اختبار A",
+      "birth_date": null,
+      "age": 30,
+      "governorate": "بورسعيد",
+      "gender": "ذكر",
+      "address": "",
+      "phone": "",
+      "notes": "",
+      "created_at": "2026-08-15T07:33:59.577Z",
+      "updated_at": "2026-08-15T07:33:59.577Z",
+      "donations": [
+        {
+          "id": 3,
+          "donor_id": 3,
+          "hospital_id": 2,
+          "user_id": 1,
+          "status": "موجل",
+          "deferral_reason": "",
+          "deferral_duration": "",
+          "return_date": null,
+          "screening": "{\"weight\":70,\"hb\":13}",
+          "notes": "",
+          "created_at": "2026-08-15T07:33:59.603Z"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "national_id": "TEST1786779239563B",
+      "name": "متبرع اختبار B",
+      "birth_date": null,
+      "age": 35,
+      "governorate": "بورسعيد",
+      "gender": "ذكر",
+      "address": "",
+      "phone": "",
+      "notes": "",
+      "created_at": "2026-08-15T07:33:59.669Z",
+      "updated_at": "2026-08-15T07:33:59.669Z",
+      "donations": [
+        {
+          "id": 4,
+          "donor_id": 4,
+          "hospital_id": 2,
+          "user_id": 1,
+          "status": "تبرع الآن",
+          "deferral_reason": "",
+          "deferral_duration": "",
+          "return_date": null,
+          "screening": "{\"weight\":80,\"hb\":14}",
+          "notes": "",
+          "created_at": "2026-08-15T07:33:59.697Z"
+        }
+      ]
+    }
+  ],
+  "donations": [
+    {
+      "id": 1,
+      "donor_id": 1,
+      "hospital_id": 2,
+      "user_id": 1,
+      "status": "موجل",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "screening": "{\"weight\":70,\"hb\":13}",
+      "notes": "",
+      "created_at": "2026-08-15T07:26:30.024Z"
+    },
+    {
+      "id": 2,
+      "donor_id": 2,
+      "hospital_id": 2,
+      "user_id": 1,
+      "status": "تبرع الآن",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "screening": "{\"weight\":80,\"hb\":14}",
+      "notes": "",
+      "created_at": "2026-08-15T07:26:30.167Z"
+    },
+    {
+      "id": 3,
+      "donor_id": 3,
+      "hospital_id": 2,
+      "user_id": 1,
+      "status": "موجل",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "screening": "{\"weight\":70,\"hb\":13}",
+      "notes": "",
+      "created_at": "2026-08-15T07:33:59.603Z"
+    },
+    {
+      "id": 4,
+      "donor_id": 4,
+      "hospital_id": 2,
+      "user_id": 1,
+      "status": "تبرع الآن",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "screening": "{\"weight\":80,\"hb\":14}",
+      "notes": "",
+      "created_at": "2026-08-15T07:33:59.697Z"
+    }
+  ],
   "_counters": {
     "users": 172,
     "hospitals": 39,
@@ -73164,11 +73334,13 @@
     "equipment": 1,
     "monthly_consumption": 112,
     "indicator_columns": 110,
-    "blood_bags": 23,
-    "blood_bag_events": 73,
+    "blood_bags": 27,
+    "blood_bag_events": 77,
     "patients": 2,
     "bag_reservations": 11,
-    "hospital_departments": 2
+    "hospital_departments": 2,
+    "donors": 5,
+    "donations": 5
   },
   "blood_bank_equipment": {
     "types": [
@@ -76119,7 +76291,8 @@
       "issue_type": "داخلي",
       "issued_at": "2026-08-10T23:54:03.753Z",
       "issued_by": "المدير العام",
-      "unit_category": "كبار"
+      "unit_category": "كبار",
+      "donor_id": null
     },
     {
       "id": 2,
@@ -76150,7 +76323,8 @@
       "return_reason": "",
       "tested_at": "2026-08-10T23:49:17.686Z",
       "tested_by": "المدير العام",
-      "unit_category": "كبار"
+      "unit_category": "كبار",
+      "donor_id": null
     },
     {
       "id": 3,
@@ -76181,7 +76355,8 @@
       "return_reason": "",
       "tested_at": "2026-08-10T23:49:17.738Z",
       "tested_by": "المدير العام",
-      "unit_category": "كبار"
+      "unit_category": "كبار",
+      "donor_id": null
     },
     {
       "id": 16,
@@ -76217,7 +76392,8 @@
       "issue_type": "",
       "issued_at": null,
       "issued_by": "",
-      "unit_category": "كبار"
+      "unit_category": "كبار",
+      "donor_id": null
     },
     {
       "id": 17,
@@ -76248,7 +76424,8 @@
       "return_reason": "",
       "tested_at": "2026-08-11T14:36:10.299Z",
       "tested_by": "المدير العام",
-      "unit_category": "كبار"
+      "unit_category": "كبار",
+      "donor_id": null
     },
     {
       "id": 18,
@@ -76279,7 +76456,8 @@
       "return_reason": "",
       "tested_at": "2026-08-12T03:58:03.944Z",
       "tested_by": "المدير العام",
-      "unit_category": "كبار"
+      "unit_category": "كبار",
+      "donor_id": null
     },
     {
       "id": 19,
@@ -76310,7 +76488,8 @@
       "return_reason": "",
       "tested_at": "2026-08-12T03:58:04.002Z",
       "tested_by": "المدير العام",
-      "unit_category": "كبار"
+      "unit_category": "كبار",
+      "donor_id": null
     },
     {
       "id": 21,
@@ -76344,7 +76523,8 @@
       "recipient_id": null,
       "recipient_name": "",
       "issue_type": "داخلي",
-      "unit_category": "كبار"
+      "unit_category": "كبار",
+      "donor_id": null
     },
     {
       "id": 22,
@@ -76375,7 +76555,8 @@
       "return_reason": "",
       "tested_at": "2026-08-12T06:42:40.769Z",
       "tested_by": "المدير العام",
-      "unit_category": "كبار"
+      "unit_category": "كبار",
+      "donor_id": null
     }
   ],
   "blood_bag_events": [

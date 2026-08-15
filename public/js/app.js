@@ -9789,6 +9789,210 @@ function bbAddDays(dateStr, days) {
 function bbDefaultExpiry(dateStr, productType) {
   return bbAddDays(dateStr, bbShelfDays(productType));
 }
+/* ==== كارت بيانات المتبرع في التجميع (اختياري): الرقم الطبي → مشتقاته + سجل تبرعاته + فحص + قرار ==== */
+const BB_GOV_CODES = { '01':'القاهرة','02':'الجيزة','03':'الإسكندرية','04':'الدقهلية','05':'البحيرة','06':'الإسماعيلية','07':'السويس','08':'الشرقية','09':'بورسعيد','10':'دمياط','11':'كفر الشيخ','12':'الغربية','13':'المنوفية','14':'قنا','15':'أسيوط','16':'سوهاج','17':'المنيا','18':'الأقصر','19':'أسوان','21':'بني سويف','22':'الفيوم','23':'مطروح','24':'شمال سيناء','25':'جنوب سيناء','26':'البحر الأحمر','27':'الوادي الجديد','29':'أكتوبر','31':'الإسكندرية','32':'بني سويف','33':'القاهرة','34':'الإسماعيلية','35':'أسوان','88':'خارج الجمهورية' };
+function parseNationalId(id) {
+  if (!id || !/^\d{14}$/.test(id)) return null;
+  const c = String(id[0]);
+  if (c !== '2' && c !== '3') return null;
+  const y = (c === '2' ? 1900 : 2000) + parseInt(id.slice(1, 3), 10);
+  const m = parseInt(id.slice(3, 5), 10);
+  const dd = parseInt(id.slice(5, 7), 10);
+  if (!m || m > 12 || !dd || dd > 31) return null;
+  const now = getCairoDate();
+  let age = now.getFullYear() - y;
+  if (now.getMonth() + 1 < m || (now.getMonth() + 1 === m && now.getDate() < dd)) age--;
+  if (age < 0) age = 0;
+  return {
+    birthDate: y + '-' + String(m).padStart(2, '0') + '-' + String(dd).padStart(2, '0'),
+    age,
+    governorate: BB_GOV_CODES[id.slice(7, 9)] || 'غير محدد',
+    gender: parseInt(id[12], 10) % 2 === 1 ? 'ذكر' : 'أنثى'
+  };
+}
+function bbDonorCardHtml() {
+  return `<div class="card" style="margin-bottom:14px;border-right:4px solid #1e8449">
+    <div class="card-header" style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
+      <strong><i class="fas fa-user-injured" style="margin-left:6px"></i> بيانات المتبرع <span style="font-size:11px;color:#1e8449;font-weight:400">(اختياري — يُربط الكيس بالمتبرع ويُحفظ سجل التبرع)</span></strong>
+    </div>
+    <div class="card-body" style="padding:10px 16px">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
+        <div class="form-group"><label>الرقم الطبي / القومي</label><input class="form-control" type="text" id="bbD_nid" maxlength="14" dir="ltr" placeholder="14 رقم" style="min-width:190px"></div>
+        <button class="btn btn-outline" data-click="bbDNidSearch" style="border-color:#1e8449;color:#1e8449"><i class="fas fa-search"></i> بحث</button>
+        <button class="btn btn-outline" data-click="bbDNidClear" style="border-color:#7f8c8d;color:#7f8c8d"><i class="fas fa-eraser"></i> مسح</button>
+      </div>
+      <div id="bbD_derived"></div>
+      <div id="bbD_donations"></div>
+      <div id="bbD_details" style="display:none">
+        <div style="font-size:12px;font-weight:700;color:#1e8449;margin:4px 0"><i class="fas fa-address-card"></i> بيانات المتبرع</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+          <div class="form-group" style="flex:1;min-width:160px"><label>الاسم رباعي</label><input class="form-control" type="text" id="bbD_name"></div>
+          <div class="form-group" style="flex:1;min-width:160px"><label>العنوان</label><input class="form-control" type="text" id="bbD_address"></div>
+          <div class="form-group" style="flex:1;min-width:130px"><label>الهاتف</label><input class="form-control" type="text" id="bbD_phone" dir="ltr"></div>
+        </div>
+      </div>
+      <div id="bbD_screening" style="display:none">
+        <div style="font-size:12px;font-weight:700;color:#1e8449;margin:6px 0"><i class="fas fa-stethoscope"></i> الفحص والاستبيان</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+          <div class="form-group" style="width:90px"><label>الوزن (كجم)</label><input class="form-control" type="number" id="bbD_weight" min="0"></div>
+          <div class="form-group" style="width:90px"><label>الطول (سم)</label><input class="form-control" type="number" id="bbD_height" min="0" data-input="bbDReadCard"></div>
+          <div class="form-group" style="width:110px"><label>مؤشر الكتلة</label><input class="form-control" type="text" id="bbD_bmi" readonly style="background:#f4f6f7;color:#7f8c8d"></div>
+          <div class="form-group" style="width:110px"><label>ضغط الدم</label><input class="form-control" type="text" id="bbD_bp" dir="ltr" placeholder="120/80"></div>
+          <div class="form-group" style="width:90px"><label>الهيموجلوبين</label><input class="form-control" type="number" id="bbD_hb" step="0.1" min="0"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-top:6px">
+          <div class="form-group" style="width:160px"><label>أدوية بانتظام؟</label><select class="form-control" id="bbD_meds" data-change="bbDMedsChanged"><option value="">لا</option><option value="نعم">نعم</option></select></div>
+          <div class="form-group" style="width:200px"><label>مرض مزمن؟</label><select class="form-control" id="bbD_chronic" data-change="bbDChronicChanged"><option value="">لا</option><option value="نعم">نعم</option></select></div>
+          <div class="form-group" style="width:200px"><label>عملية جراحية؟</label><select class="form-control" id="bbD_surgery" data-change="bbDSurgeryChanged"><option value="">لا</option><option value="نعم">نعم</option></select></div>
+          <div class="form-group" style="width:200px"><label>زيارة طبيب أسنان؟</label><select class="form-control" id="bbD_dental"><option value="">لا</option><option value="كشف / تنظيف">كشف / تنظيف</option><option value="خلع بسيط">خلع بسيط</option><option value="جراحة فم">جراحة فم</option></select></div>
+          <div class="form-group" style="width:130px"><label>وشم؟</label><select class="form-control" id="bbD_tattoo"><option value="">لا</option><option value="نعم">نعم</option></select></div>
+          <div class="form-group" style="width:180px"><label>سفر ملاريا؟</label><select class="form-control" id="bbD_travel" data-change="bbDTravelChanged"><option value="">لا</option><option value="نعم">نعم</option></select></div>
+          <div class="form-group" style="width:150px"><label>حامل أو ولادة؟</label><select class="form-control" id="bbD_preg"><option value="">لا</option><option value="نعم">نعم</option></select></div>
+          <div class="form-group" style="width:170px"><label>رضاعة طبيعية؟</label><select class="form-control" id="bbD_breastfeed"><option value="">لا</option><option value="نعم">نعم</option></select></div>
+        </div>
+        <div id="bbD_medsBox" style="display:none;margin-top:6px"><div class="form-group" style="width:300px"><label>الأدوية (بانتظام)</label><input class="form-control" type="text" id="bbD_medsRegular" placeholder="اسم الدواء"></div></div>
+        <div id="bbD_chronicBox" style="display:none;margin-top:6px"><div class="form-group" style="width:300px"><label>المرض المزمن</label><input class="form-control" type="text" id="bbD_chronicType"></div></div>
+        <div id="bbD_surgeryBox" style="display:none;margin-top:6px"><div class="form-group" style="width:200px"><label>تاريخ العملية</label><input class="form-control" type="date" id="bbD_surgeryDate"></div></div>
+        <div id="bbD_travelBox" style="display:none;margin-top:6px"><div class="form-group" style="width:200px"><label>تاريخ السفر</label><input class="form-control" type="date" id="bbD_travelDate"></div></div>
+        <div class="form-group" style="width:100%;margin-top:6px"><label>ملاحظات</label><input class="form-control" type="text" id="bbD_notes"></div>
+      </div>
+      <div id="bbD_decision" style="display:none;margin-top:8px;background:#fdf6ec;border:1px solid #f0c36d;border-radius:8px;padding:8px 10px">
+        <div style="font-size:12px;font-weight:700;color:#7b5e0a;margin-bottom:6px"><i class="fas fa-clipboard-check"></i> قرار التبرع (يُختار يدوياً)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+          <label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:400"><input type="radio" name="bbD_decision" id="bbD_now" value="تبرع الآن" checked data-change="bbDDecisionChanged"> <span>تبرع الآن</span></label>
+          <label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:400"><input type="radio" name="bbD_decision" id="bbD_defer" value="موجل" data-change="bbDDecisionChanged"> <span>موجل</span></label>
+          <label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:400"><input type="radio" name="bbD_decision" id="bbD_refused" value="مرفوض دائم" data-change="bbDDecisionChanged"> <span>مرفوض دائم</span></label>
+        </div>
+        <div id="bbD_deferWrap" style="display:none;margin-top:6px">
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+            <div class="form-group" style="flex:1;min-width:200px"><label>سبب التأجيل</label><input class="form-control" type="text" id="bbD_deferReason"></div>
+            <div class="form-group" style="width:140px"><label>المدة (أيام)</label><input class="form-control" type="number" id="bbD_deferDays" min="1" data-change="bbDDeferDaysChanged"></div>
+            <div class="form-group" style="width:150px"><label>تاريخ العودة</label><input class="form-control" type="text" id="bbD_returnDate" readonly style="background:#f4f6f7;color:#7f8c8d"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function bbDReadCard() {
+  const w = parseFloat(document.getElementById('bbD_weight') ? document.getElementById('bbD_weight').value : '');
+  const h = parseFloat(document.getElementById('bbD_height') ? document.getElementById('bbD_height').value : '');
+  const bmi = document.getElementById('bbD_bmi');
+  if (bmi) bmi.value = w > 0 && h > 0 ? (w / ((h / 100) * (h / 100))).toFixed(1) : '';
+  const dd = document.getElementById('bbD_deferDays');
+  const ret = document.getElementById('bbD_returnDate');
+  if (dd && ret) { const days = parseInt(dd.value || ''); ret.value = days > 0 ? bbAddDays('', days) : ''; }
+}
+function bbDMedsChanged() { const box = document.getElementById('bbD_medsBox'); if (box) box.style.display = (document.getElementById('bbD_meds') && document.getElementById('bbD_meds').value === 'نعم') ? '' : 'none'; }
+function bbDChronicChanged() { const box = document.getElementById('bbD_chronicBox'); if (box) box.style.display = (document.getElementById('bbD_chronic') && document.getElementById('bbD_chronic').value === 'نعم') ? '' : 'none'; }
+function bbDSurgeryChanged() { const box = document.getElementById('bbD_surgeryBox'); if (box) box.style.display = (document.getElementById('bbD_surgery') && document.getElementById('bbD_surgery').value === 'نعم') ? '' : 'none'; }
+function bbDTravelChanged() { const box = document.getElementById('bbD_travelBox'); if (box) box.style.display = (document.getElementById('bbD_travel') && document.getElementById('bbD_travel').value === 'نعم') ? '' : 'none'; }
+function bbDDeferDaysChanged() { bbDReadCard(); }
+function bbDDecisionChanged() {
+  const wrap = document.getElementById('bbD_deferWrap');
+  if (!wrap) return;
+  const defer = document.getElementById('bbD_defer');
+  wrap.style.display = defer && defer.checked ? '' : 'none';
+  if (defer && defer.checked) bbDReadCard();
+}
+async function bbDNidSearch() {
+  const nid = (document.getElementById('bbD_nid') ? document.getElementById('bbD_nid').value : '').trim();
+  const derivedEl = document.getElementById('bbD_derived');
+  if (!derivedEl) return;
+  if (!/^\d{14}$/.test(nid)) { showToast('❌ الرقم الطبي يجب أن يكون 14 رقماً', 'error'); return; }
+  const parsed = parseNationalId(nid);
+  if (!parsed) { showToast('❌ رقم طبي غير صالح', 'error'); return; }
+  let found = null;
+  let donations = [];
+  try {
+    const r = await api('GET', '/api/donors?q=' + encodeURIComponent(nid));
+    const list = (r && r.donors) || [];
+    found = list[0] || null;
+    if (found) donations = found.donations || [];
+  } catch (e) { found = null; }
+  derivedEl.innerHTML = `<div style="background:#eaf7f0;border:1px solid #a9dfbf;color:#1e8449;padding:6px 10px;border-radius:8px;font-size:12px;margin-bottom:8px">
+    <i class="fas fa-id-card" style="margin-left:4px"></i> <b>${esc(parsed.governorate)}</b> — تاريخ الميلاد: <b dir="ltr">${parsed.birthDate}</b> — السن: <b>${parsed.age} سنة</b> — النوع: <b>${parsed.gender}</b>
+    ${found ? ' — <b>متبرع مسجّل</b> (بياناته مُعبأة)' : ' — <span style="color:#b7950b">متبرع جديد — أدخل بياناته</span>'}
+  </div>`;
+  const donationsEl = document.getElementById('bbD_donations');
+  if (donationsEl) {
+    if (donations.length) {
+      donationsEl.innerHTML = `<div style="font-size:12px;font-weight:700;color:#1e8449;margin:4px 0"><i class="fas fa-history"></i> سجل التبرعات السابقة (${donations.length})</div>
+        <table class="data-table" style="width:100%;font-size:11px;margin-bottom:8px"><thead><tr><th>التاريخ</th><th>القرار</th><th>الملاحظات</th></tr></thead><tbody>
+        ${donations.slice(0, 5).map(d => `<tr><td>${esc(String(d.collected_at || d.created_at || '').slice(0, 10))}</td><td>${esc(d.status || 'تبرع')}</td><td>${esc(d.defer_reason || '—')}</td></tr>`).join('')}
+        </tbody></table>`;
+    } else donationsEl.innerHTML = '';
+  }
+  const details = document.getElementById('bbD_details');
+  const screening = document.getElementById('bbD_screening');
+  const decision = document.getElementById('bbD_decision');
+  if (details) {
+    details.style.display = '';
+    const nameEl = document.getElementById('bbD_name'), addrEl = document.getElementById('bbD_address'), phoneEl = document.getElementById('bbD_phone');
+    if (nameEl) nameEl.value = found ? (found.name || '') : '';
+    if (addrEl) addrEl.value = found ? (found.address || '') : '';
+    if (phoneEl) phoneEl.value = found ? (found.phone || '') : '';
+  }
+  if (screening) screening.style.display = '';
+  if (decision) decision.style.display = '';
+}
+function bbDNidClear() {
+  const nid = document.getElementById('bbD_nid'); if (nid) nid.value = '';
+  ['bbD_derived', 'bbD_donations'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+  ['bbD_details', 'bbD_screening', 'bbD_decision'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  ['bbD_name', 'bbD_address', 'bbD_phone', 'bbD_weight', 'bbD_height', 'bbD_bp', 'bbD_hb', 'bbD_medsRegular', 'bbD_chronicType', 'bbD_surgeryDate', 'bbD_travelDate', 'bbD_notes', 'bbD_deferReason', 'bbD_deferDays', 'bbD_returnDate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const bmi = document.getElementById('bbD_bmi'); if (bmi) bmi.value = '';
+  ['bbD_meds', 'bbD_chronic', 'bbD_surgery', 'bbD_dental', 'bbD_tattoo', 'bbD_travel', 'bbD_preg', 'bbD_breastfeed'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const now = document.getElementById('bbD_now'); if (now) now.checked = true;
+  bbDDecisionChanged();
+}
+function bbDCollect() {
+  const nidEl = document.getElementById('bbD_nid');
+  if (!nidEl) return null;
+  const nid = nidEl.value.trim();
+  if (!nid) return null;
+  if (!/^\d{14}$/.test(nid)) { showToast('❌ الرقم الطبي يجب أن يكون 14 رقماً', 'error'); return 'ERROR'; }
+  const parsed = parseNationalId(nid);
+  if (!parsed) { showToast('❌ رقم طبي غير صالح', 'error'); return 'ERROR'; }
+  const defer = document.getElementById('bbD_defer'), refused = document.getElementById('bbD_refused');
+  const decision = refused && refused.checked ? 'مرفوض دائم' : (defer && defer.checked ? 'موجل' : 'تبرع الآن');
+  const v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  return {
+    donor: {
+      national_id: nid,
+      name: v('bbD_name'),
+      birth_date: parsed.birthDate,
+      age: parsed.age,
+      governorate: parsed.governorate,
+      gender: parsed.gender,
+      address: v('bbD_address'),
+      phone: v('bbD_phone'),
+      notes: v('bbD_notes')
+    },
+    screening: {
+      weight: parseFloat(v('bbD_weight')) || null,
+      height: parseFloat(v('bbD_height')) || null,
+      bmi: parseFloat(v('bbD_bmi')) || null,
+      bp: v('bbD_bp'),
+      hb: parseFloat(v('bbD_hb')) || null,
+      meds: v('bbD_meds'),
+      meds_regular: v('bbD_medsRegular'),
+      chronic: v('bbD_chronic'),
+      chronic_type: v('bbD_chronicType'),
+      surgery: v('bbD_surgery'),
+      surgery_date: v('bbD_surgeryDate'),
+      dental: v('bbD_dental'),
+      tattoo: v('bbD_tattoo'),
+      travel: v('bbD_travel'),
+      travel_date: v('bbD_travelDate'),
+      pregnant: v('bbD_preg'),
+      breastfeeding: v('bbD_breastfeed')
+    },
+    decision,
+    defer_reason: v('bbD_deferReason'),
+    defer_days: parseInt(v('bbD_deferDays')) || 0
+  };
+}
 /* ==== تعلم نمط الباركود (أرقام فقط): بعد 5 إدخالات بنفس الشكل يتعلم النمط ويكمل تصاعدياً لكل بنك ==== */
 function bbBarList(hospId) {
   const out = [];
@@ -9981,6 +10185,7 @@ async function bbRenderCollectTab(t) {
             <div class="form-group"><label>تاريخ التجميع</label><input class="form-control" type="date" id="bbCollDate" data-change="bbCollDateChanged" value="${today}"></div>
           </div>
           <div style="background:#eaf7f0;border:1px solid #a9dfbf;color:#1e8449;padding:6px 10px;border-radius:8px;font-size:11px;margin-bottom:8px"><i class="fas fa-fill-drip" style="margin-left:4px"></i> كيس الدم يُفصل تلقائياً إلى دم + بلازما بنفس رقم اللي والباركود (كرايو مكوّن ثالث اختياري بدون وحدات) — البلازما والكرايو تابعتان للدم ولا تُجمعان منفردتين، والدم يُفحص يدوياً لاحقاً. ولادة : تُعدَم البلازما والكرايو فوراً بدون فحص والدم يُفحص ويُحفظ. الصفائح والدم الكلي: كيس واحد مستقل — فحص الصفائح تلقائي، والدم الكلي يدوي لاحقاً.</div>
+          ${bbDonorCardHtml()}
           <div id="bbCollRows"></div>
           <div style="display:flex;gap:10px;margin-top:6px">
             <button class="btn btn-outline" data-click="bbAddRow" style="border-color:#0d7377;color:#0d7377"><i class="fas fa-plus"></i> إضافة كيس</button>
@@ -10116,14 +10321,25 @@ async function bbDoCollect() {
   }
   if (!bags.length) { showToast('❌ أضف كيس واحد على الأقل', 'error'); return; }
   if (missing.length) { showToast('❌ أكمل البيانات الناقصة: ' + missing.join('، '), 'error'); return; }
+  const dc = bbDCollect();
+  if (dc === 'ERROR') return;
+  if (dc && dc.decision !== 'تبرع الآن') {
+    try {
+      await api('POST', '/donations', { donor: dc.donor, screening: dc.screening, decision: dc.decision, deferReason: dc.defer_reason, deferDays: dc.defer_days, hospitalId });
+      showToast(`✅ تم تسجيل بيانات المتبرع (${dc.decision}) — بدون أكياس`);
+      bbDNidClear();
+    } catch (e) { showToast('❌ ' + e.message, 'error'); }
+    return;
+  }
   try {
-    const r = await api('POST', '/blood-bags', { hospitalId, collectionDate, bags });
+    const r = await api('POST', '/blood-bags', Object.assign({ hospitalId, collectionDate, bags }, dc ? { donor: dc.donor, screening: dc.screening, decision: dc.decision } : {}));
     const comps = r.bags || [];
     const groups = new Set();
     comps.forEach(b => groups.add(b.donation_id || ('s:' + b.id)));
     const autoTest = comps.filter(b => b.status === 'collected' && !b.donation_id && (b.product_type || '') !== 'دم كلي');
     showToast(`✅ تم تسجيل ${comps.length} كيس من ${groups.size} تبرع${autoTest.length ? ' — فحص الصفائح تلقائياً' : ''}`);
     _bb.pendingTest = autoTest.map(b => b.id);
+    if (dc) bbDNidClear();
     await bbCollect();
     bbTestNext();
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
@@ -10673,19 +10889,16 @@ async function bbDoInSave() {
 function bbRenderInLog() {
   const body = document.getElementById('bbInLogBody');
   if (!body) return;
-  const q = document.getElementById('bbInLogQ') ? document.getElementById('bbInLogQ').value.trim().toLowerCase() : '';
-  const dateFrom = document.getElementById('bbInLogFrom') ? document.getElementById('bbInLogFrom').value : '';
-  const dateTo = document.getElementById('bbInLogTo') ? document.getElementById('bbInLogTo').value : '';
+  const q = bbStatsQ();
+  const { from, to } = bbStatsPeriod();
   let list = _bb.bags
-    .filter(b => b.received_at)
+    .filter(b => b.received_at && bbInPeriod(b.received_at, from, to))
     .sort((a, b) => (b.received_at || '').localeCompare(a.received_at || ''));
   if (q) list = list.filter(b =>
     (b.bag_no || '').toLowerCase().indexOf(q) !== -1 ||
     (b.barcode || '').toLowerCase().indexOf(q) !== -1 ||
     (b.source_hospital_name || '').toLowerCase().indexOf(q) !== -1 ||
     (b.received_by || '').toLowerCase().indexOf(q) !== -1);
-  if (dateFrom) list = list.filter(b => b.received_at && String(b.received_at).slice(0, 10) >= dateFrom);
-  if (dateTo) list = list.filter(b => b.received_at && String(b.received_at).slice(0, 10) <= dateTo);
   _bb.lastFilteredInLog = list;
   body.innerHTML = list.map(b => `<tr>
     <td style="text-align:center;direction:ltr;font-weight:700;color:#2e86c1">${esc(b.bag_no)}</td>
@@ -10740,10 +10953,11 @@ function bbRenderBagReport() {
   const body = document.getElementById('bbBagReportBody');
   if (!body) return;
   const canEdit = hasPerm('blood_bags', 'edit');
-  const q = document.getElementById('bbBagRptQ') ? document.getElementById('bbBagRptQ').value.trim().toLowerCase() : '';
+  const q = bbStatsQ();
+  const { from, to } = bbStatsPeriod();
   const prod = document.getElementById('bbBagRptProd') ? document.getElementById('bbBagRptProd').value : '';
   const st = document.getElementById('bbBagRptSt') ? document.getElementById('bbBagRptSt').value : '';
-  let list = (_bb.bags || []).slice().sort((a, b) => (b.created_at || b.updated_at || '').localeCompare(a.created_at || a.updated_at || ''));
+  let list = (_bb.bags || []).slice().filter(b => bbInPeriod(b.created_at || b.updated_at, from, to)).sort((a, b) => (b.created_at || b.updated_at || '').localeCompare(a.created_at || a.updated_at || ''));
   if (q) list = list.filter(b =>
     (b.bag_no || '').toLowerCase().indexOf(q) !== -1 ||
     (b.barcode || '').toLowerCase().indexOf(q) !== -1 ||
@@ -10788,11 +11002,11 @@ function bbRenderExpLog() {
   const body = document.getElementById('bbExpLogBody');
   if (!body) return;
   const canEdit = hasPerm('blood_bags', 'edit');
-  const qEl = document.getElementById('bbExpLogQ');
   const stEl = document.getElementById('bbExpLogSt');
-  const q = qEl ? qEl.value.trim().toLowerCase() : '';
+  const q = bbStatsQ();
+  const { from, to } = bbStatsPeriod();
   const st = stEl ? stEl.value : '';
-  let list = (_bb.bags || []).slice();
+  let list = (_bb.bags || []).slice().filter(b => bbInPeriod(b.received_at || b.collection_date || b.created_at, from, to));
   if (st) {
     if (st === 'expired') list = list.filter(b => (b.return_reason || '') === 'انتهاء الصلاحية');
     else if (st === 'issued') list = list.filter(b => b.status === 'issued');
@@ -10843,11 +11057,12 @@ function bbRenderDispLog() {
   const body = document.getElementById('bbDispLogBody');
   if (!body) return;
   const canEdit = hasPerm('blood_bags', 'edit');
-  const qEl = document.getElementById('bbDispLogQ');
   const stEl = document.getElementById('bbDispLogSt');
-  const q = qEl ? qEl.value.trim().toLowerCase() : '';
+  const q = bbStatsQ();
+  const { from, to } = bbStatsPeriod();
   const st = stEl ? stEl.value : '';
   let list = (_bb.bags || []).slice().filter(b => {
+    if (!bbInPeriod(b.issued_at || b.updated_at, from, to)) return false;
     if (b.status === 'issued') return true;
     if (b.status === 'reaction' || b.status === 'returned') return true;
     if (b.status === 'disposed' && b.return_reason && String(b.return_reason) !== 'انتهاء الصلاحية') return true;
@@ -11897,8 +12112,9 @@ async function bbStats() {
     <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-chart-line" style="margin-left:6px"></i> إحصائيات بين فترتين — حساب تلقائي من الأكياس</strong></div>
     <div class="card-body" style="padding:10px 16px">
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
-        <div class="form-group"><label>من تاريخ</label><input type="date" class="form-control" id="bbStFrom" value="${dfltFrom}" style="min-width:150px"></div>
-        <div class="form-group"><label>إلى تاريخ</label><input type="date" class="form-control" id="bbStTo" value="${dfltTo}" style="min-width:150px"></div>
+        <div class="form-group"><label>بحث في كل الجداول</label><input class="form-control" id="bbStatsQ" data-input="bbStatsQChanged" style="min-width:220px" placeholder="رقم لي / باركود / مستشفى / فصيلة / مريض"></div>
+        <div class="form-group"><label>من تاريخ</label><input type="date" class="form-control" id="bbStFrom" data-change="bbStatsPeriodChanged" value="${dfltFrom}" style="min-width:150px"></div>
+        <div class="form-group"><label>إلى تاريخ</label><input type="date" class="form-control" id="bbStTo" data-change="bbStatsPeriodChanged" value="${dfltTo}" style="min-width:150px"></div>
         <button class="btn btn-outline" data-click="bbPreviewStats" style="border-color:#e67e22;color:#e67e22"><i class="fas fa-eye"></i> معاينة الحساب</button>
         <button class="btn btn-outline" data-click="bbExportStats" style="border-color:#16a085;color:#16a085" title="تحميل نتائج المعاينة Excel"><i class="fas fa-file-excel"></i> تحميل Excel</button>
       </div>
@@ -11914,6 +12130,7 @@ async function bbStats() {
         <option value="bagrpt"${_bb.statsSel === 'bagrpt' ? ' selected' : ''}>تقرير الأكياس التفصيلي</option>
         <option value="explog"${_bb.statsSel === 'explog' ? ' selected' : ''}>سجل انتهاء صلاحيه</option>
         <option value="displog"${_bb.statsSel === 'displog' ? ' selected' : ''}>سجل التفاعل والمرتجع ونظام مفتوح</option>
+        <option value="dept"${_bb.statsSel === 'dept' ? ' selected' : ''}>الصرف حسب القسم</option>
         <option value="big"${_bb.statsSel === 'big' ? ' selected' : ''}>مؤشرات تجميعيه (معاينة)</option>
         <option value="small"${_bb.statsSel === 'small' ? ' selected' : ''}>مؤشرات تخزينيه (معاينة)</option>
         <option value="cons"${_bb.statsSel === 'cons' ? ' selected' : ''}>منصرف فصائل الدم (معاينة)</option>
@@ -11935,9 +12152,6 @@ async function bbStats() {
   }
   html += `<div id="bbStatsCardInLog"><div class="card"><div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-clock-rotate-left" style="margin-left:6px"></i> سجل الوارد</strong></div>
     <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
-      <div class="form-group"><label>بحث (رقم / باركود / الجهة / المستلم)</label><input class="form-control" id="bbInLogQ" data-input="bbRenderInLog" style="min-width:180px"></div>
-      <div class="form-group"><label>من تاريخ</label><input class="form-control" type="date" id="bbInLogFrom" data-change="bbRenderInLog"></div>
-      <div class="form-group"><label>إلى تاريخ</label><input class="form-control" type="date" id="bbInLogTo" data-change="bbRenderInLog"></div>
       <button class="btn btn-outline" data-click="bbExportInLog" style="border-color:#16a085;color:#16a085;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
     </div>
     <table class="data-table" style="font-size:12px"><thead>
@@ -11946,7 +12160,6 @@ async function bbStats() {
   if (canEdit || canDelete) {
     html += `<div id="bbStatsCardBagRpt"><div class="card" style="margin-top:16px;border-right:4px solid #27ae60"><div class="card-header" style="padding:10px 16px;background:#27ae6022;color:#27ae60"><strong><i class="fas fa-table" style="margin-left:6px"></i> تقرير الأكياس التفصيلي</strong></div>
       <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
-        <div class="form-group"><label>بحث (رقم لي / باركود / مستشفى / فصيلة)</label><input class="form-control" id="bbBagRptQ" data-input="bbRenderBagReport" style="min-width:180px"></div>
         <div class="form-group"><label>المنتج</label><select class="form-control" id="bbBagRptProd" data-change="bbRenderBagReport" style="min-width:140px">${bbOptProduct('')}</select></div>
         <div class="form-group"><label>الحالة</label><select class="form-control" id="bbBagRptSt" data-change="bbRenderBagReport" style="min-width:140px"><option value="">كل الحالات</option><option value="collected">تحت الفحص</option><option value="available">مُفحوص / متاح</option><option value="returned">مرتجع</option><option value="reserved">محجوز</option><option value="issued">مُصرف</option><option value="disposed">مُعدَم</option><option value="reaction">تفاعل</option></select></div>
         <button class="btn btn-outline" data-click="bbExportBagReport" style="border-color:#27ae60;color:#27ae60;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
@@ -11956,7 +12169,6 @@ async function bbStats() {
       </thead><tbody id="bbBagReportBody"></tbody></table></div></div></div>`;
     html += `<div id="bbStatsCardExpLog"><div class="card" style="margin-top:16px;border-right:4px solid #b7950b"><div class="card-header" style="padding:10px 16px;background:#b7950b22;color:#b7950b"><strong><i class="fas fa-hourglass-half" style="margin-left:6px"></i> سجل انتهاء صلاحيه — كل الأكياس الواردة + بيان الصرف + ما تم إعدامه</strong></div>
       <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
-        <div class="form-group"><label>بحث (رقم لي / باركود / مستشفى / فصيلة / مصروف إليه)</label><input class="form-control" id="bbExpLogQ" data-input="bbRenderExpLog" style="min-width:190px"></div>
         <div class="form-group"><label>النوع</label><select class="form-control" id="bbExpLogSt" data-change="bbRenderExpLog" style="min-width:150px"><option value="">كل الحالات</option><option value="expired">انتهاء الصلاحية (المنتهية صلاحيتها)</option><option value="issued">مُصرف</option><option value="disposed">مُعدَم (الرصيد + التجميع)</option><option value="returned">مرتجع</option><option value="reaction">تفاعل</option></select></div>
         <button class="btn btn-outline" data-click="bbExportExpLog" style="border-color:#b7950b;color:#b7950b;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
       </div>
@@ -11965,24 +12177,31 @@ async function bbStats() {
       </thead><tbody id="bbExpLogBody"></tbody></table></div></div></div>`;
     html += `<div id="bbStatsCardDispLog"><div class="card" style="margin-top:16px;border-right:4px solid #8e44ad"><div class="card-header" style="padding:10px 16px;background:#8e44ad22;color:#8e44ad"><strong><i class="fas fa-rotate-right" style="margin-left:6px"></i> سجل التفاعل والمرتجع ونظام مفتوح — سجل الصرف كاملاً + ما تم إعدامه (تفاعل / غيره)</strong></div>
       <div class="card-body table-scroll"><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
-        <div class="form-group"><label>بحث (رقم لي / باركود / مستشفى / فصيلة / مصروف إليه)</label><input class="form-control" id="bbDispLogQ" data-input="bbRenderDispLog" style="min-width:190px"></div>
         <div class="form-group"><label>النوع</label><select class="form-control" id="bbDispLogSt" data-change="bbRenderDispLog" style="min-width:150px"><option value="">كل الحالات</option><option value="issued">مُصرف</option><option value="reaction">تفاعل</option><option value="returned">مرتجع</option><option value="disposed">إعدام آخر (نظام مفتوح / أخرى)</option></select></div>
         <button class="btn btn-outline" data-click="bbExportDispLog" style="border-color:#8e44ad;color:#8e44ad;height:32px" title="تحميل القائمة المفلترة حالياً"><i class="fas fa-file-excel"></i> تحميل Excel</button>
       </div>
       <table class="data-table" style="font-size:12px"><thead>
         <tr><th>الفرع</th><th>اسم المستشفي</th><th>رقم اللي</th><th>الباركود</th><th>المنتج</th><th>فصيلة الوحدة</th><th>تاريخ الصرف</th><th>المصروف إليه</th><th>بواسطة</th><th>نوع الصرف</th><th>الحالة</th><th>سبب الإعدام</th><th>إجراءات</th></tr>
       </thead><tbody id="bbDispLogBody"></tbody></table></div></div></div>`;
+    html += `<div id="bbStatsCardDept"><div class="card" style="margin-top:16px;border-right:4px solid #1e88e5"><div class="card-header" style="padding:10px 16px;background:#1e88e522;color:#1e88e5"><strong><i class="fas fa-building" style="margin-left:6px"></i> الصرف حسب القسم — خلال الفترة المحددة</strong></div>
+      <div class="card-body table-scroll">
+      <table class="data-table" style="font-size:12px"><thead>
+        <tr><th>القسم المصرف له</th><th>عدد الأكياس المُصرفة</th></tr>
+      </thead><tbody id="bbStatsDeptBody"></tbody></table></div></div></div>`;
   }
   html += `<div id="bbStatsOut"></div>`;
   el.innerHTML = html;
   await bbLoadDepartments();
   await bbLoadBags();
+  await bbLoadReservations();
   bbRenderDepts();
   bbRenderInLog();
   bbRenderBagReport();
   bbRenderExpLog();
   bbRenderDispLog();
+  bbRenderDeptStats();
   bbStatsFilterTables();
+  bbPreviewStats();
 }
 function bbStatsFilterTables() {
   const sel = document.getElementById('bbStatsTab');
@@ -11998,6 +12217,46 @@ function bbStatsFilterTables() {
   show('bbStatsCardBig', v === 'big');
   show('bbStatsCardSmall', v === 'small');
   show('bbStatsCardCons', v === 'cons');
+  show('bbStatsCardDept', v === '' || v === 'dept');
+}
+function bbStatsQ() {
+  const el = document.getElementById('bbStatsQ');
+  return el ? el.value.trim().toLowerCase() : '';
+}
+function bbStatsPeriod() {
+  const f = document.getElementById('bbStFrom'), t = document.getElementById('bbStTo');
+  return { from: f ? f.value : '', to: t ? t.value : '' };
+}
+function bbInPeriod(d, from, to) {
+  if (!from && !to) return true;
+  if (!d) return false;
+  const s = String(d).slice(0, 10);
+  return (from ? s >= from : true) && (to ? s <= to : true);
+}
+function bbStatsQChanged() {
+  bbRenderInLog(); bbRenderBagReport(); bbRenderExpLog(); bbRenderDispLog(); bbRenderDeptStats(); bbRenderStatsPreview();
+}
+function bbStatsPeriodChanged() {
+  bbRenderInLog(); bbRenderBagReport(); bbRenderExpLog(); bbRenderDispLog(); bbRenderDeptStats(); bbPreviewStats();
+}
+function bbRenderDeptStats() {
+  const body = document.getElementById('bbStatsDeptBody');
+  if (!body) return;
+  const q = bbStatsQ();
+  const { from, to } = bbStatsPeriod();
+  const counts = {};
+  (_bb.reservations || []).forEach(r => {
+    if (r.status !== 'issued') return;
+    if (!bbInPeriod(r.issued_at, from, to)) return;
+    const dept = (r.issued_department && String(r.issued_department).trim()) || 'بدون قسم';
+    counts[dept] = (counts[dept] || 0) + 1;
+  });
+  let rows = Object.keys(counts).map(k => [k, counts[k]]);
+  if (q) rows = rows.filter(x => String(x[0]).toLowerCase().indexOf(q) !== -1);
+  rows.sort((a, b) => b[1] - a[1]);
+  body.innerHTML = rows.length
+    ? rows.map(x => `<tr><td style="text-align:right;font-weight:600">${esc(x[0])}</td><td style="text-align:center;font-weight:700">${x[1]}</td></tr>`).join('')
+    : `<tr><td colspan="2" class="empty-msg">لا توجد بيانات</td></tr>`;
 }
 async function bbPreviewStats() {
   const out = document.getElementById('bbStatsOut');
@@ -12007,60 +12266,70 @@ async function bbPreviewStats() {
   showPageLoading(out, 'جاري حساب الإحصائيات...');
   try {
     const r = await api('GET', '/blood-bags/stats-range?from=' + from + '&to=' + to);
-    const big = Object.keys(r.big || {}), small = Object.keys(r.small || {}), cons = Object.keys(r.cons || {});
-    const hosp = r.hospitals || {};
-    const sum = (m, k) => Object.keys(m || {}).reduce((a, h) => a + (m[h][k] || 0), 0);
-    let html = '';
-    const kp = [];
-    if (big.length) {
-      kp.push(['إجمالي التجميع', '#c0392b', sum(r.big, 'collect_total')]);
-      kp.push(['وارد إقليمي', '#2e86c1', sum(r.big, 'inc_regional')]);
-      kp.push(['إعدامات أخرى', '#c0392b', sum(r.big, 'disp_other')]);
-    }
-    if (small.length) {
-      kp.push(['وارد من التجميعي', '#16a085', sum(r.small, 'inc_collected')]);
-      kp.push(['إجمالي الصرف', '#e67e22', sum(r.small, 'out_blood')]);
-      kp.push(['مرتجع', '#f39c12', sum(r.small, 'disp_returned')]);
-      kp.push(['تفاعل', '#8e44ad', sum(r.small, 'disp_reaction')]);
-      kp.push(['نظام مفتوح', '#e74c3c', sum(r.small, 'disp_open')]);
-      kp.push(['إعدامات أخرى', '#7f8c8d', sum(r.small, 'disp_other')]);
-    }
-    if (kp.length) {
-      html += `<div id="bbStatsKpi" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px">` +
-        kp.map(k => `<div class="bb-stat-card" style="text-align:center;padding:12px;border-radius:10px;background:var(--card-bg);border:1px solid var(--border)">
-          <div style="font-size:22px;font-weight:700;color:${k[1]}">${_bbNum(k[2]) ?? k[2]}</div>
-          <div style="font-size:12px;color:var(--text-soft);margin-top:2px">${k[0]}</div></div>`).join('') + `</div>`;
-    }
-    if (big.length) {
-      html += `<div id="bbStatsCardBig"><div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#c0392b22;color:#c0392b"><strong><i class="fas fa-chart-simple" style="margin-left:6px"></i> مؤشرات تجميعيه — ${from} إلى ${to}</strong></div>
-      <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th><th>إجمالي التجميع</th><th>وارد</th><th>تبرع علاجي</th><th>لم يكتمل</th><th>دهون</th><th>صفراء</th><th>سي</th><th>بي</th><th>ايدز</th><th>زهري</th><th>فحوصات الدم</th><th>مرتجع</th><th>تفاعل</th><th>نظام مفتوح</th><th>إعدامات أخرى</th></tr></thead><tbody>
-      ${big.map(hid => { const d = r.big[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>
-      <td style="text-align:center;font-weight:700">${d.collect_total || 0}</td><td style="text-align:center;font-weight:700;color:#2e86c1">${d.inc_regional || 0}</td><td style="text-align:center">${d.donation_therapeutic || 0}</td><td style="text-align:center">${d.uncompleted || 0}</td>
-      <td style="text-align:center">${d.refused_fatty || 0}</td><td style="text-align:center">${d.refused_icteric || 0}</td><td style="text-align:center">${d.virology_c || 0}</td>
-      <td style="text-align:center">${d.virology_b || 0}</td><td style="text-align:center">${d.virology_i || 0}</td><td style="text-align:center">${d.virology_dollar || 0}</td>
-      <td style="text-align:center">${d.blood_groups || 0}</td><td style="text-align:center">${d.disp_returned || 0}</td><td style="text-align:center">${d.disp_reaction || 0}</td><td style="text-align:center">${d.disp_open || 0}</td><td style="text-align:center;font-weight:700;color:#c0392b">${d.disp_other || 0}</td></tr>`; }).join('')}
-      </tbody></table></div></div></div>`;
-    }
-    if (small.length) {
-      html += `<div id="bbStatsCardSmall"><div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#16a08522;color:#16a085"><strong><i class="fas fa-boxes-stacked" style="margin-left:6px"></i> مؤشرات تخزينيه — ${from} إلى ${to}</strong></div>
-      <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th><th>وارد من التجميعي</th><th>وارد إقليمي</th><th>إجمالي الصرف</th><th>داخلي</th><th>فرع</th><th>هيئة</th><th>خارجي</th><th>مرتجع</th><th>تفاعل</th><th>نظام مفتوح</th><th>إعدامات أخرى</th></tr></thead><tbody>
-      ${small.map(hid => { const d = r.small[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>
-      <td style="text-align:center;font-weight:700">${d.inc_collected || 0}</td><td style="text-align:center">${d.inc_regional || 0}</td><td style="text-align:center;font-weight:700">${d.out_blood || 0}</td>
-      <td style="text-align:center">${d.out_blood_int || 0}</td><td style="text-align:center">${d.out_blood_branch || 0}</td><td style="text-align:center">${d.out_blood_auth || 0}</td>
-      <td style="text-align:center">${d.out_blood_ext || 0}</td><td style="text-align:center">${d.disp_returned || 0}</td><td style="text-align:center">${d.disp_reaction || 0}</td><td style="text-align:center">${d.disp_open || 0}</td><td style="text-align:center;font-weight:700;color:#c0392b">${d.disp_other || 0}</td></tr>`; }).join('')}
-      </tbody></table></div></div></div>`;
-    }
-    if (cons.length) {
-      html += `<div id="bbStatsCardCons"><div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#e91e6322;color:#e91e63"><strong><i class="fas fa-droplet" style="margin-left:6px"></i> منصرف فصائل الدم — ${from} إلى ${to}</strong></div>
-      <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th>${BB_BTYPES_CLI.map(t => `<th>${t}</th>`).join('')}</tr></thead><tbody>
-      ${cons.map(hid => { const d = r.cons[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>${BB_BTYPES_CLI.map(t => `<td style="text-align:center">${d[t] || 0}</td>`).join('')}</tr>`; }).join('')}
-      </tbody></table></div></div></div>`;
-    }
-    if (!html) html = '<div class="empty-msg">لا توجد أكياس مسجلة في هذه الفترة</div>';
     _bb.lastStats = { r, from, to };
-    out.innerHTML = html;
-    bbStatsFilterTables();
+    bbRenderStatsPreview();
   } catch (e) { out.innerHTML = `<div class="empty-msg">${sanitize(e.message)}</div>`; }
+}
+function bbRenderStatsPreview() {
+  const d = _bb.lastStats;
+  if (!d || !d.r) return;
+  const { r, from, to } = d;
+  const big = Object.keys(r.big || {}), small = Object.keys(r.small || {}), cons = Object.keys(r.cons || {});
+  const hosp = r.hospitals || {};
+  const sum = (m, k) => Object.keys(m || {}).reduce((a, h) => a + (m[h][k] || 0), 0);
+  const q = bbStatsQ();
+  const qf = hid => (hosp[hid]?.name || '').toLowerCase().indexOf(q) !== -1;
+  let html = '';
+  const kp = [];
+  if (big.length) {
+    kp.push(['إجمالي التجميع', '#c0392b', sum(r.big, 'collect_total')]);
+    kp.push(['وارد إقليمي', '#2e86c1', sum(r.big, 'inc_regional')]);
+    kp.push(['إعدامات أخرى', '#c0392b', sum(r.big, 'disp_other')]);
+  }
+  if (small.length) {
+    kp.push(['وارد من التجميعي', '#16a085', sum(r.small, 'inc_collected')]);
+    kp.push(['إجمالي الصرف', '#e67e22', sum(r.small, 'out_blood')]);
+    kp.push(['مرتجع', '#f39c12', sum(r.small, 'disp_returned')]);
+    kp.push(['تفاعل', '#8e44ad', sum(r.small, 'disp_reaction')]);
+    kp.push(['نظام مفتوح', '#e74c3c', sum(r.small, 'disp_open')]);
+    kp.push(['إعدامات أخرى', '#7f8c8d', sum(r.small, 'disp_other')]);
+  }
+  if (kp.length) {
+    html += `<div id="bbStatsKpi" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px">` +
+      kp.map(k => `<div class="bb-stat-card" style="text-align:center;padding:12px;border-radius:10px;background:var(--card-bg);border:1px solid var(--border)">
+        <div style="font-size:22px;font-weight:700;color:${k[1]}">${_bbNum(k[2]) ?? k[2]}</div>
+        <div style="font-size:12px;color:var(--text-soft);margin-top:2px">${k[0]}</div></div>`).join('') + `</div>`;
+  }
+  if (big.length) {
+    const rows = big.filter(qf);
+    html += `<div id="bbStatsCardBig"><div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#c0392b22;color:#c0392b"><strong><i class="fas fa-chart-simple" style="margin-left:6px"></i> مؤشرات تجميعيه — ${from} إلى ${to}</strong></div>
+    <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th><th>إجمالي التجميع</th><th>وارد</th><th>تبرع علاجي</th><th>لم يكتمل</th><th>دهون</th><th>صفراء</th><th>سي</th><th>بي</th><th>ايدز</th><th>زهري</th><th>فحوصات الدم</th><th>مرتجع</th><th>تفاعل</th><th>نظام مفتوح</th><th>إعدامات أخرى</th></tr></thead><tbody>
+    ${rows.length ? rows.map(hid => { const d = r.big[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>
+    <td style="text-align:center;font-weight:700">${d.collect_total || 0}</td><td style="text-align:center;font-weight:700;color:#2e86c1">${d.inc_regional || 0}</td><td style="text-align:center">${d.donation_therapeutic || 0}</td><td style="text-align:center">${d.uncompleted || 0}</td>
+    <td style="text-align:center">${d.refused_fatty || 0}</td><td style="text-align:center">${d.refused_icteric || 0}</td><td style="text-align:center">${d.virology_c || 0}</td>
+    <td style="text-align:center">${d.virology_b || 0}</td><td style="text-align:center">${d.virology_i || 0}</td><td style="text-align:center">${d.virology_dollar || 0}</td>
+    <td style="text-align:center">${d.blood_groups || 0}</td><td style="text-align:center">${d.disp_returned || 0}</td><td style="text-align:center">${d.disp_reaction || 0}</td><td style="text-align:center">${d.disp_open || 0}</td><td style="text-align:center;font-weight:700;color:#c0392b">${d.disp_other || 0}</td></tr>`; }).join('') : `<tr><td colspan="17" class="empty-msg">لا توجد بيانات</td></tr>`}
+    </tbody></table></div></div></div>`;
+  }
+  if (small.length) {
+    const rows = small.filter(qf);
+    html += `<div id="bbStatsCardSmall"><div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#16a08522;color:#16a085"><strong><i class="fas fa-boxes-stacked" style="margin-left:6px"></i> مؤشرات تخزينيه — ${from} إلى ${to}</strong></div>
+    <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th><th>وارد من التجميعي</th><th>وارد إقليمي</th><th>إجمالي الصرف</th><th>داخلي</th><th>فرع</th><th>هيئة</th><th>خارجي</th><th>مرتجع</th><th>تفاعل</th><th>نظام مفتوح</th><th>إعدامات أخرى</th></tr></thead><tbody>
+    ${rows.length ? rows.map(hid => { const d = r.small[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>
+    <td style="text-align:center;font-weight:700">${d.inc_collected || 0}</td><td style="text-align:center">${d.inc_regional || 0}</td><td style="text-align:center;font-weight:700">${d.out_blood || 0}</td>
+    <td style="text-align:center">${d.out_blood_int || 0}</td><td style="text-align:center">${d.out_blood_branch || 0}</td><td style="text-align:center">${d.out_blood_auth || 0}</td>
+    <td style="text-align:center">${d.out_blood_ext || 0}</td><td style="text-align:center">${d.disp_returned || 0}</td><td style="text-align:center">${d.disp_reaction || 0}</td><td style="text-align:center">${d.disp_open || 0}</td><td style="text-align:center;font-weight:700;color:#c0392b">${d.disp_other || 0}</td></tr>`; }).join('') : `<tr><td colspan="13" class="empty-msg">لا توجد بيانات</td></tr>`}
+    </tbody></table></div></div></div>`;
+  }
+  const consRows = cons.filter(qf);
+  html += `<div id="bbStatsCardCons"><div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#e91e6322;color:#e91e63"><strong><i class="fas fa-droplet" style="margin-left:6px"></i> منصرف فصائل الدم — ${from} إلى ${to}</strong></div>
+  <div class="card-body table-scroll"><table class="data-table" style="font-size:12px"><thead><tr><th>بنك الدم</th><th>المحافظة</th>${BB_BTYPES_CLI.map(t => `<th>${t}</th>`).join('')}</tr></thead><tbody>
+  ${consRows.length ? consRows.map(hid => { const d = r.cons[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>${BB_BTYPES_CLI.map(t => `<td style="text-align:center">${d[t] || 0}</td>`).join('')}</tr>`; }).join('') : `<tr><td colspan="${BB_BTYPES_CLI.length + 2}" class="empty-msg">لا توجد بيانات</td></tr>`}
+  </tbody></table></div></div></div>`;
+  if (!big.length && !small.length && !cons.length) html = '<div class="empty-msg">لا توجد أكياس مسجلة في هذه الفترة</div>';
+  const out = document.getElementById('bbStatsOut');
+  out.innerHTML = html;
+  bbStatsFilterTables();
 }
 function bbExportStats() {
   const d = _bb.lastStats;
