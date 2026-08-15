@@ -9957,6 +9957,9 @@ function bbDCollect() {
   const defer = document.getElementById('bbD_defer'), refused = document.getElementById('bbD_refused');
   const decision = refused && refused.checked ? 'مرفوض دائم' : (defer && defer.checked ? 'موجل' : 'تبرع الآن');
   const v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const deferDays = parseInt(v('bbD_deferDays')) || 0;
+  const deferReason = v('bbD_deferReason');
+  const returnDate = deferDays > 0 ? bbAddDays('', deferDays) : null;
   return {
     donor: {
       national_id: nid,
@@ -9986,11 +9989,15 @@ function bbDCollect() {
       travel: v('bbD_travel'),
       travel_date: v('bbD_travelDate'),
       pregnant: v('bbD_preg'),
-      breastfeeding: v('bbD_breastfeed')
+      breastfeeding: v('bbD_breastfeed'),
+      deferral_reason: deferReason,
+      deferral_duration: deferDays,
+      return_date: returnDate,
+      notes: v('bbD_notes')
     },
     decision,
-    defer_reason: v('bbD_deferReason'),
-    defer_days: parseInt(v('bbD_deferDays')) || 0
+    defer_reason: deferReason,
+    defer_days: deferDays
   };
 }
 /* ==== تعلم نمط الباركود (أرقام فقط): بعد 5 إدخالات بنفس الشكل يتعلم النمط ويكمل تصاعدياً لكل بنك ==== */

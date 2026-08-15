@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "node init-db.js",
+    "build": "node --check server.js",
     "pkg": "node \"C:\\Users\\PC\\AppData\\Roaming\\npm\\node_modules\\pkg\\lib-es5\\bin.js\" server.js --targets node18-win-x64 --output dist/BloodBankServer.exe --public"
   },
   "dependencies": {
