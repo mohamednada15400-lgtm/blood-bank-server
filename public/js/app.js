@@ -9830,6 +9830,10 @@ function bbDonorCardHtml() {
           <div class="form-group" style="flex:1;min-width:160px"><label>العنوان</label><input class="form-control" type="text" id="bbD_address"></div>
           <div class="form-group" style="flex:1;min-width:130px"><label>الهاتف</label><input class="form-control" type="text" id="bbD_phone" dir="ltr"></div>
         </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-top:6px">
+          <div class="form-group" style="flex:1;min-width:160px"><label>السن</label><input class="form-control" type="text" id="bbD_age" readonly style="background:#f4f6f7;color:#7f8c8d"></div>
+          <div class="form-group" style="flex:1;min-width:160px"><label>الفصيلة</label><select class="form-control" id="bbD_bt"><option value="">غير محدد</option>${BB_BTYPES_CLI.map(t => `<option value="${t}">${t}</option>`).join('')}</select></div>
+        </div>
       </div>
       <div id="bbD_screening" style="display:none">
         <div style="font-size:12px;font-weight:700;color:#1e8449;margin:6px 0"><i class="fas fa-stethoscope"></i> الفحص والاستبيان</div>
@@ -9910,8 +9914,12 @@ async function bbDNidSearch() {
     found = list[0] || null;
     if (found) donations = found.donations || [];
   } catch (e) { found = null; }
+  const btLine = found && found.blood_type
+    ? ` — الفصيلة: <b style="color:#8e44ad">${esc(found.blood_type)}</b>`
+    : (found ? ' — <span style="color:#b7950b">الفصيلة غير محددة بعد (تُسجَّل من الفحص)</span>' : '');
   derivedEl.innerHTML = `<div style="background:#eaf7f0;border:1px solid #a9dfbf;color:#1e8449;padding:6px 10px;border-radius:8px;font-size:12px;margin-bottom:8px">
     <i class="fas fa-id-card" style="margin-left:4px"></i> <b>${esc(parsed.governorate)}</b> — تاريخ الميلاد: <b dir="ltr">${parsed.birthDate}</b> — السن: <b>${parsed.age} سنة</b> — النوع: <b>${parsed.gender}</b>
+    ${btLine}
     ${found ? ' — <b>متبرع مسجّل</b> (بياناته مُعبأة)' : ' — <span style="color:#b7950b">متبرع جديد — أدخل بياناته</span>'}
   </div>`;
   const donationsEl = document.getElementById('bbD_donations');
@@ -9932,6 +9940,9 @@ async function bbDNidSearch() {
     if (nameEl) nameEl.value = found ? (found.name || '') : '';
     if (addrEl) addrEl.value = found ? (found.address || '') : '';
     if (phoneEl) phoneEl.value = found ? (found.phone || '') : '';
+    const ageEl = document.getElementById('bbD_age'), btEl = document.getElementById('bbD_bt');
+    if (ageEl) ageEl.value = parsed.age;
+    if (btEl) btEl.value = found ? (found.blood_type || '') : '';
   }
   if (screening) screening.style.display = '';
   if (decision) decision.style.display = '';
@@ -9940,9 +9951,9 @@ function bbDNidClear() {
   const nid = document.getElementById('bbD_nid'); if (nid) nid.value = '';
   ['bbD_derived', 'bbD_donations'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
   ['bbD_details', 'bbD_screening', 'bbD_decision'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-  ['bbD_name', 'bbD_address', 'bbD_phone', 'bbD_weight', 'bbD_height', 'bbD_bp', 'bbD_hb', 'bbD_medsRegular', 'bbD_chronicType', 'bbD_surgeryDate', 'bbD_travelDate', 'bbD_notes', 'bbD_deferReason', 'bbD_deferDays', 'bbD_returnDate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['bbD_name', 'bbD_address', 'bbD_phone', 'bbD_age', 'bbD_weight', 'bbD_height', 'bbD_bp', 'bbD_hb', 'bbD_medsRegular', 'bbD_chronicType', 'bbD_surgeryDate', 'bbD_travelDate', 'bbD_notes', 'bbD_deferReason', 'bbD_deferDays', 'bbD_returnDate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   const bmi = document.getElementById('bbD_bmi'); if (bmi) bmi.value = '';
-  ['bbD_meds', 'bbD_chronic', 'bbD_surgery', 'bbD_dental', 'bbD_tattoo', 'bbD_travel', 'bbD_preg', 'bbD_breastfeed'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['bbD_meds', 'bbD_chronic', 'bbD_surgery', 'bbD_dental', 'bbD_tattoo', 'bbD_travel', 'bbD_preg', 'bbD_breastfeed', 'bbD_bt'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   const now = document.getElementById('bbD_now'); if (now) now.checked = true;
   bbDDecisionChanged();
 }
@@ -9966,6 +9977,7 @@ function bbDCollect() {
       name: v('bbD_name'),
       birth_date: parsed.birthDate,
       age: parsed.age,
+      blood_type: v('bbD_bt'),
       governorate: parsed.governorate,
       gender: parsed.gender,
       address: v('bbD_address'),

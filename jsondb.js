@@ -289,6 +289,7 @@ class JSONDB {
     this.data.bag_reservations.forEach(r => { if (r.issued_department == null) r.issued_department = ''; });
     if (!this.data.hospital_departments || !Array.isArray(this.data.hospital_departments)) this.data.hospital_departments = [];
     if (!this.data.donors || !Array.isArray(this.data.donors)) this.data.donors = [];
+    this.data.donors.forEach(d => { if (d.blood_type == null) d.blood_type = ''; });
     if (!this.data.donations || !Array.isArray(this.data.donations)) this.data.donations = [];
     if (!this.data._counters.blood_bags) this.data._counters.blood_bags = 1;
     if (!this.data._counters.blood_bag_events) this.data._counters.blood_bag_events = 1;

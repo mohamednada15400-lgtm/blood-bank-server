@@ -378,6 +378,7 @@ const PG_TABLES = [
     name VARCHAR(200) NOT NULL,
     birth_date DATE,
     age INTEGER,
+    blood_type VARCHAR(10) DEFAULT '',
     governorate VARCHAR(100) DEFAULT '',
     gender VARCHAR(10) DEFAULT '',
     phone VARCHAR(50) DEFAULT '',

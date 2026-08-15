@@ -3357,6 +3357,7 @@ async function bbUpsertDonor(d) {
     name: (d.name || (existing && existing.name) || '').trim(),
     birth_date: d.birth_date || (existing && existing.birth_date) || null,
     age: d.age != null ? parseInt(d.age) : (existing ? existing.age : null),
+    blood_type: (d.blood_type || (existing && existing.blood_type) || '').trim(),
     governorate: (d.governorate || (existing && existing.governorate) || '').trim(),
     gender: (d.gender || (existing && existing.gender) || '').trim(),
     address: (d.address || (existing && existing.address) || '').trim(),
@@ -3364,14 +3365,14 @@ async function bbUpsertDonor(d) {
     notes: (d.notes || (existing && existing.notes) || '').trim()
   };
   if (existing) {
-    await db.query('UPDATE donors SET name=$1, birth_date=$2, age=$3, governorate=$4, gender=$5, address=$6, phone=$7, notes=$8, updated_at=NOW() WHERE id=$9',
-      [vals.name, vals.birth_date, vals.age, vals.governorate, vals.gender, vals.address, vals.phone, vals.notes, existing.id]);
+    await db.query('UPDATE donors SET name=$1, birth_date=$2, age=$3, blood_type=$4, governorate=$5, gender=$6, address=$7, phone=$8, notes=$9, updated_at=NOW() WHERE id=$10',
+      [vals.name, vals.birth_date, vals.age, vals.blood_type, vals.governorate, vals.gender, vals.address, vals.phone, vals.notes, existing.id]);
     return existing.id;
   }
   const r = await db.query(
-    `INSERT INTO donors (national_id, name, birth_date, age, governorate, gender, address, phone, notes, created_at, updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),NOW()) RETURNING id`,
-    [nid, vals.name, vals.birth_date, vals.age, vals.governorate, vals.gender, vals.address, vals.phone, vals.notes]
+    `INSERT INTO donors (national_id, name, birth_date, age, blood_type, governorate, gender, address, phone, notes, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW()) RETURNING id`,
+    [nid, vals.name, vals.birth_date, vals.age, vals.blood_type, vals.governorate, vals.gender, vals.address, vals.phone, vals.notes]
   );
   return r.rows[0].id;
 }
@@ -3825,6 +3826,11 @@ app.post('/api/blood-bags/:id/test', requireAuth(), requirePerm('blood_bags', 'e
       );
       await bbAddEvent(t, status === 'positive' ? 'نتيجة إيجابية' : 'اكتمال الفحص',
         (status === 'positive' ? 'إيجابي — تم إعدام التبرع كاملاً (كل المكونات)' : 'الفحص سليم — المكون متاح') + ' | المنتج: ' + (t.product_type || 'دم') + ' | الفصيلة: ' + (tBt || 'غير محدد') + (results.length ? ' | إيجابي: ' + results.join(',') : ''), user, null, null);
+    }
+    // كتابة الفصيلة على بطاقة المتبرع (إن وجدت) — تظهر تلقائياً في زيارته القادمة
+    if (bag.donor_id) {
+      const donorBt = bbNormBt(blood_type, 'دم');
+      await db.query('UPDATE donors SET blood_type = $1, updated_at = NOW() WHERE id = $2', [donorBt, bag.donor_id]);
     }
     res.json({ ok: true, status, affected: targets.length });
   } catch (e) { console.error('POST blood-bags/test:', e.message); res.status(500).json({ error: errMsg(e) }); }
@@ -4597,12 +4603,13 @@ process.on('uncaughtException', (err) => {
   db.flush().then(() => process.exit(1)).catch(() => process.exit(1));
 });
 
-// Listen on the configured port AND common cloud fallbacks (3001/8080) so the
+// Listen on the configured port AND common cloud fallbacks (3001/8080/80) so the
 // app answers whichever port the platform routes to (some PaaS inject PORT=3000
-// while the public URL forwards to 3001 — this caused a 503 on Suga).
+// while the public URL forwards to 3001 — this caused a 503 on Suga; Suga itself
+// routes Generated-URL traffic to container port 80).
 const LISTEN_PORTS = [];
 if (PORT && LISTEN_PORTS.indexOf(PORT) === -1) LISTEN_PORTS.push(PORT);
-[3001, 8080].forEach((p) => { if (LISTEN_PORTS.indexOf(p) === -1) LISTEN_PORTS.push(p); });
+[3001, 8080, 80].forEach((p) => { if (LISTEN_PORTS.indexOf(p) === -1) LISTEN_PORTS.push(p); });
 
 let listenersStarted = 0;
 let booted = false;
