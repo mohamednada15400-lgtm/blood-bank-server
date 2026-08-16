@@ -290,7 +290,9 @@ class JSONDB {
     if (!this.data.hospital_departments || !Array.isArray(this.data.hospital_departments)) this.data.hospital_departments = [];
     if (!this.data.donors || !Array.isArray(this.data.donors)) this.data.donors = [];
     this.data.donors.forEach(d => { if (d.blood_type == null) d.blood_type = ''; });
+    this.data.donors.forEach(d => { if (d.donor_status == null) d.donor_status = ''; });
     if (!this.data.donations || !Array.isArray(this.data.donations)) this.data.donations = [];
+    this.data.donations.forEach(d => { if (d.rejection_reason == null) d.rejection_reason = ''; });
     if (!this.data._counters.blood_bags) this.data._counters.blood_bags = 1;
     if (!this.data._counters.blood_bag_events) this.data._counters.blood_bag_events = 1;
     if (!this.data._counters.patients) this.data._counters.patients = 1;

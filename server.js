@@ -3466,7 +3466,8 @@ app.post('/api/donations', requireAuth(), requirePerm('blood_bags', 'add'), asyn
     const user = req.session.user;
     const hid = parseInt(req.body.hospitalId) || (user && user.hospitalId ? parseInt(user.hospitalId) : null);
     const donorId = await bbUpsertDonor(donor);
-    const donation = await bbCreateDonation(donorId, screening || null, decision, hid, user);
+    const donationId = await bbCreateDonation(donorId, screening || null, decision, hid, user);
+    const donation = donationId ? (await db.query('SELECT * FROM donations WHERE id = $1', [donationId])).rows[0] : null;
     res.json({ ok: true, donation });
   } catch (e) { console.error('POST donations:', e.message); res.status(500).json({ error: errMsg(e) }); }
 });

@@ -384,6 +384,7 @@ const PG_TABLES = [
     phone VARCHAR(50) DEFAULT '',
     address VARCHAR(300) DEFAULT '',
     notes TEXT DEFAULT '',
+    donor_status VARCHAR(20) DEFAULT '',
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
   )`,
@@ -392,11 +393,12 @@ const PG_TABLES = [
     donor_id INTEGER NOT NULL,
     hospital_id INTEGER,
     user_id INTEGER,
-    status VARCHAR(20) DEFAULT 'تبرع الآن',
+    status VARCHAR(20) DEFAULT 'مقبول',
     deferral_reason VARCHAR(200) DEFAULT '',
     deferral_duration INTEGER,
     return_date DATE,
     screening JSONB DEFAULT '{}',
+    rejection_reason VARCHAR(200) DEFAULT '',
     notes TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT NOW()
   )`

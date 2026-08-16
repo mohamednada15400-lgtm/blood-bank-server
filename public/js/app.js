@@ -194,13 +194,19 @@ function formatTimeAmPm(t) {
 }
 
 function buildLastUpdateNote(reports) {
+  const roll = (reports || []).reduce((a, r) => ((r.last_rollover || '') > a ? r.last_rollover : a), '');
   const latest = (reports || []).reduce((a, r) => {
     const lu = r.last_update || ((r.date ? r.date + ' ' : '') + (r.time || ''));
     return lu > a.k ? { k: lu, last_update: r.last_update, date: r.date || '', time: r.time || '' } : a;
   }, { k: '', last_update: '', date: '', time: '' });
-  if (!latest.k) return '';
-  const date = latest.last_update ? latest.last_update.slice(0, 10) : latest.date;
-  const time = latest.last_update ? latest.last_update.slice(11, 16) : latest.time;
+  let date = '', time = '';
+  if (roll) {
+    date = roll.slice(0, 10);
+    time = roll.slice(11, 16);
+  } else if (latest.k) {
+    date = latest.last_update ? latest.last_update.slice(0, 10) : latest.date;
+    time = latest.last_update ? latest.last_update.slice(11, 16) : latest.time;
+  }
   if (!date && !time) return '';
   return `<div style="margin:0 0 10px;padding:9px 14px;background:var(--card-bg);border:1px solid var(--border);border-right:4px solid #2c3e50;border-radius:8px;font-weight:700;color:var(--text)">آخر تحديث: ${date} الساعة ${formatTimeAmPm(time)}</div>`;
 }
@@ -9813,7 +9819,7 @@ function parseNationalId(id) {
 function bbDonorCardHtml() {
   return `<div class="card" style="margin-bottom:14px;border-right:4px solid #1e8449">
     <div class="card-header" style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
-      <strong><i class="fas fa-user-injured" style="margin-left:6px"></i> بيانات المتبرع <span style="font-size:11px;color:#1e8449;font-weight:400">(اختياري — يُربط الكيس بالمتبرع ويُحفظ سجل التبرع)</span></strong>
+      <strong><i class="fas fa-user-injured" style="margin-left:6px"></i> بيانات المتبرع <span style="font-size:11px;color:#c0392b;font-weight:700">(إجباري — الرقم القومي والاسم مطلوبان لفتح إدخال الأكياس)</span></strong>
     </div>
     <div class="card-body" style="padding:10px 16px">
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
@@ -9826,46 +9832,30 @@ function bbDonorCardHtml() {
       <div id="bbD_details" style="display:none">
         <div style="font-size:12px;font-weight:700;color:#1e8449;margin:4px 0"><i class="fas fa-address-card"></i> بيانات المتبرع</div>
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
-          <div class="form-group" style="flex:1;min-width:160px"><label>الاسم رباعي</label><input class="form-control" type="text" id="bbD_name"></div>
+          <div class="form-group" style="flex:1;min-width:160px"><label>الاسم رباعي</label><input class="form-control" type="text" id="bbD_name" data-input="bbSyncCollectRows"></div>
           <div class="form-group" style="flex:1;min-width:160px"><label>العنوان</label><input class="form-control" type="text" id="bbD_address"></div>
           <div class="form-group" style="flex:1;min-width:130px"><label>الهاتف</label><input class="form-control" type="text" id="bbD_phone" dir="ltr"></div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-top:6px">
           <div class="form-group" style="flex:1;min-width:160px"><label>السن</label><input class="form-control" type="text" id="bbD_age" readonly style="background:#f4f6f7;color:#7f8c8d"></div>
+          <div class="form-group" style="flex:1;min-width:130px"><label>الجنس</label><input class="form-control" type="text" id="bbD_gender" readonly style="background:#f4f6f7;color:#7f8c8d"></div>
           <div class="form-group" style="flex:1;min-width:160px"><label>الفصيلة</label><select class="form-control" id="bbD_bt"><option value="">غير محدد</option>${BB_BTYPES_CLI.map(t => `<option value="${t}">${t}</option>`).join('')}</select></div>
         </div>
-      </div>
-      <div id="bbD_screening" style="display:none">
-        <div style="font-size:12px;font-weight:700;color:#1e8449;margin:6px 0"><i class="fas fa-stethoscope"></i> الفحص والاستبيان</div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
-          <div class="form-group" style="width:90px"><label>الوزن (كجم)</label><input class="form-control" type="number" id="bbD_weight" min="0"></div>
-          <div class="form-group" style="width:90px"><label>الطول (سم)</label><input class="form-control" type="number" id="bbD_height" min="0" data-input="bbDReadCard"></div>
-          <div class="form-group" style="width:110px"><label>مؤشر الكتلة</label><input class="form-control" type="text" id="bbD_bmi" readonly style="background:#f4f6f7;color:#7f8c8d"></div>
-          <div class="form-group" style="width:110px"><label>ضغط الدم</label><input class="form-control" type="text" id="bbD_bp" dir="ltr" placeholder="120/80"></div>
-          <div class="form-group" style="width:90px"><label>الهيموجلوبين</label><input class="form-control" type="number" id="bbD_hb" step="0.1" min="0"></div>
+        <div id="bbD_cooldown" style="display:none;margin-top:8px;background:#eaf2f8;border:1px solid #aed6f1;border-radius:8px;padding:8px 10px">
+          <div style="font-size:12px;font-weight:700;color:#1a5276;margin-bottom:6px"><i class="fas fa-clock"></i> مدة الأمان بين التبرعات</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+            <div class="form-group" style="flex:1;min-width:150px"><label>تاريخ آخر تبرع</label><input class="form-control" type="text" id="bbD_lastDon" readonly style="background:#f4f6f7;color:#7f8c8d"></div>
+            <div class="form-group" style="flex:1;min-width:150px"><label>تاريخ التبرع القادم</label><input class="form-control" type="text" id="bbD_nextDon" readonly style="background:#f4f6f7;color:#7f8c8d"></div>
+          </div>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-top:6px">
-          <div class="form-group" style="width:160px"><label>أدوية بانتظام؟</label><select class="form-control" id="bbD_meds" data-change="bbDMedsChanged"><option value="">لا</option><option value="نعم">نعم</option></select></div>
-          <div class="form-group" style="width:200px"><label>مرض مزمن؟</label><select class="form-control" id="bbD_chronic" data-change="bbDChronicChanged"><option value="">لا</option><option value="نعم">نعم</option></select></div>
-          <div class="form-group" style="width:200px"><label>عملية جراحية؟</label><select class="form-control" id="bbD_surgery" data-change="bbDSurgeryChanged"><option value="">لا</option><option value="نعم">نعم</option></select></div>
-          <div class="form-group" style="width:200px"><label>زيارة طبيب أسنان؟</label><select class="form-control" id="bbD_dental"><option value="">لا</option><option value="كشف / تنظيف">كشف / تنظيف</option><option value="خلع بسيط">خلع بسيط</option><option value="جراحة فم">جراحة فم</option></select></div>
-          <div class="form-group" style="width:130px"><label>وشم؟</label><select class="form-control" id="bbD_tattoo"><option value="">لا</option><option value="نعم">نعم</option></select></div>
-          <div class="form-group" style="width:180px"><label>سفر ملاريا؟</label><select class="form-control" id="bbD_travel" data-change="bbDTravelChanged"><option value="">لا</option><option value="نعم">نعم</option></select></div>
-          <div class="form-group" style="width:150px"><label>حامل أو ولادة؟</label><select class="form-control" id="bbD_preg"><option value="">لا</option><option value="نعم">نعم</option></select></div>
-          <div class="form-group" style="width:170px"><label>رضاعة طبيعية؟</label><select class="form-control" id="bbD_breastfeed"><option value="">لا</option><option value="نعم">نعم</option></select></div>
-        </div>
-        <div id="bbD_medsBox" style="display:none;margin-top:6px"><div class="form-group" style="width:300px"><label>الأدوية (بانتظام)</label><input class="form-control" type="text" id="bbD_medsRegular" placeholder="اسم الدواء"></div></div>
-        <div id="bbD_chronicBox" style="display:none;margin-top:6px"><div class="form-group" style="width:300px"><label>المرض المزمن</label><input class="form-control" type="text" id="bbD_chronicType"></div></div>
-        <div id="bbD_surgeryBox" style="display:none;margin-top:6px"><div class="form-group" style="width:200px"><label>تاريخ العملية</label><input class="form-control" type="date" id="bbD_surgeryDate"></div></div>
-        <div id="bbD_travelBox" style="display:none;margin-top:6px"><div class="form-group" style="width:200px"><label>تاريخ السفر</label><input class="form-control" type="date" id="bbD_travelDate"></div></div>
-        <div class="form-group" style="width:100%;margin-top:6px"><label>ملاحظات</label><input class="form-control" type="text" id="bbD_notes"></div>
       </div>
+      
       <div id="bbD_decision" style="display:none;margin-top:8px;background:#fdf6ec;border:1px solid #f0c36d;border-radius:8px;padding:8px 10px">
         <div style="font-size:12px;font-weight:700;color:#7b5e0a;margin-bottom:6px"><i class="fas fa-clipboard-check"></i> قرار التبرع (يُختار يدوياً)</div>
         <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
-          <label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:400"><input type="radio" name="bbD_decision" id="bbD_now" value="تبرع الآن" checked data-change="bbDDecisionChanged"> <span>تبرع الآن</span></label>
+          <label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:400"><input type="radio" name="bbD_decision" id="bbD_now" value="مقبول" checked data-change="bbDDecisionChanged"> <span>مقبول</span></label>
           <label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:400"><input type="radio" name="bbD_decision" id="bbD_defer" value="موجل" data-change="bbDDecisionChanged"> <span>موجل</span></label>
-          <label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:400"><input type="radio" name="bbD_decision" id="bbD_refused" value="مرفوض دائم" data-change="bbDDecisionChanged"> <span>مرفوض دائم</span></label>
+          <label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:400"><input type="radio" name="bbD_decision" id="bbD_refused" value="مرفوض" data-change="bbDDecisionChanged"> <span>مرفوض</span></label>
         </div>
         <div id="bbD_deferWrap" style="display:none;margin-top:6px">
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
@@ -9874,23 +9864,20 @@ function bbDonorCardHtml() {
             <div class="form-group" style="width:150px"><label>تاريخ العودة</label><input class="form-control" type="text" id="bbD_returnDate" readonly style="background:#f4f6f7;color:#7f8c8d"></div>
           </div>
         </div>
+        <div id="bbD_refuseWrap" style="display:none;margin-top:6px">
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+            <div class="form-group" style="flex:1;min-width:240px"><label>سبب الرفض</label><input class="form-control" type="text" id="bbD_refuseReason" placeholder="سبب الرفض (يُمنع المتبرع من التبرع لاحقاً)"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>`;
 }
 function bbDReadCard() {
-  const w = parseFloat(document.getElementById('bbD_weight') ? document.getElementById('bbD_weight').value : '');
-  const h = parseFloat(document.getElementById('bbD_height') ? document.getElementById('bbD_height').value : '');
-  const bmi = document.getElementById('bbD_bmi');
-  if (bmi) bmi.value = w > 0 && h > 0 ? (w / ((h / 100) * (h / 100))).toFixed(1) : '';
   const dd = document.getElementById('bbD_deferDays');
   const ret = document.getElementById('bbD_returnDate');
   if (dd && ret) { const days = parseInt(dd.value || ''); ret.value = days > 0 ? bbAddDays('', days) : ''; }
 }
-function bbDMedsChanged() { const box = document.getElementById('bbD_medsBox'); if (box) box.style.display = (document.getElementById('bbD_meds') && document.getElementById('bbD_meds').value === 'نعم') ? '' : 'none'; }
-function bbDChronicChanged() { const box = document.getElementById('bbD_chronicBox'); if (box) box.style.display = (document.getElementById('bbD_chronic') && document.getElementById('bbD_chronic').value === 'نعم') ? '' : 'none'; }
-function bbDSurgeryChanged() { const box = document.getElementById('bbD_surgeryBox'); if (box) box.style.display = (document.getElementById('bbD_surgery') && document.getElementById('bbD_surgery').value === 'نعم') ? '' : 'none'; }
-function bbDTravelChanged() { const box = document.getElementById('bbD_travelBox'); if (box) box.style.display = (document.getElementById('bbD_travel') && document.getElementById('bbD_travel').value === 'نعم') ? '' : 'none'; }
 function bbDDeferDaysChanged() { bbDReadCard(); }
 function bbDDecisionChanged() {
   const wrap = document.getElementById('bbD_deferWrap');
@@ -9898,6 +9885,45 @@ function bbDDecisionChanged() {
   const defer = document.getElementById('bbD_defer');
   wrap.style.display = defer && defer.checked ? '' : 'none';
   if (defer && defer.checked) bbDReadCard();
+  const rwrap = document.getElementById('bbD_refuseWrap');
+  if (rwrap) {
+    const refused = document.getElementById('bbD_refused');
+    rwrap.style.display = refused && refused.checked ? '' : 'none';
+  }
+  bbSyncCollectRows();
+}
+function bbSyncCollectRows() {
+  const rows = document.getElementById('bbCollRows');
+  if (!rows) return;
+  const nid = (document.getElementById('bbD_nid') ? document.getElementById('bbD_nid').value : '').trim();
+  const name = (document.getElementById('bbD_name') ? document.getElementById('bbD_name').value : '').trim();
+  const now = document.getElementById('bbD_now');
+  const ready = /^\d{14}$/.test(nid) && name.length > 0 && !!now && now.checked;
+  let hint = document.getElementById('bbCollRowsHint');
+  if (ready) {
+    rows.style.display = '';
+    if (hint) { hint.remove(); hint = null; }
+    return;
+  }
+  rows.style.display = 'none';
+  const missing = [];
+  if (!/^\d{14}$/.test(nid)) missing.push('الرقم القومي (14 رقم)');
+  if (!name.length) missing.push('الاسم رباعي');
+  if (!now || !now.checked) missing.push('القرار «مقبول»');
+  const msg = '<i class="fas fa-lock" style="margin-left:4px"></i> قائمة إدخال اللي والباركود مقفولة — أكمل: ' + missing.join('، ');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = 'bbCollRowsHint';
+    hint.style.cssText = 'background:#fdecea;border:1px solid #e74c3c;color:#c0392b;padding:6px 10px;border-radius:8px;font-size:11px;margin-bottom:8px';
+    hint.innerHTML = msg;
+    rows.parentNode.insertBefore(hint, rows);
+  } else {
+    hint.innerHTML = msg;
+  }
+}
+function bbDaysBetween(a, b) {
+  const p = s => { const m = String(s).split('-').map(Number); return Date.UTC(m[0], (m[1] || 1) - 1, m[2] || 1); };
+  return Math.round((p(b) - p(a)) / 86400000);
 }
 async function bbDNidSearch() {
   const nid = (document.getElementById('bbD_nid') ? document.getElementById('bbD_nid').value : '').trim();
@@ -9914,6 +9940,19 @@ async function bbDNidSearch() {
     found = list[0] || null;
     if (found) donations = found.donations || [];
   } catch (e) { found = null; }
+  if (found && String(found.donor_status) === 'مرفوض') {
+    const rr = (donations[0] && donations[0].rejection_reason) || '';
+    derivedEl.innerHTML = `<div style="background:#fdecea;border:1px solid #f5b7b1;color:#c0392b;padding:6px 10px;border-radius:8px;font-size:12px;margin-bottom:8px">
+      <i class="fas fa-ban" style="margin-left:4px"></i> <b>ممنوع من التبرع</b>${rr ? ' — السبب: ' + esc(rr) : ''}
+    </div>`;
+    const donationsEl = document.getElementById('bbD_donations');
+    if (donationsEl) donationsEl.innerHTML = '';
+['bbD_details', 'bbD_decision', 'bbD_cooldown'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    showToast('❌ المتبرع ممنوع من التبرع', 'error');
+    if (_bb) _bb.bannedDonorNid = nid;
+    return;
+  }
+  if (_bb) _bb.bannedDonorNid = null;
   const btLine = found && found.blood_type
     ? ` — الفصيلة: <b style="color:#8e44ad">${esc(found.blood_type)}</b>`
     : (found ? ' — <span style="color:#b7950b">الفصيلة غير محددة بعد (تُسجَّل من الفحص)</span>' : '');
@@ -9932,7 +9971,6 @@ async function bbDNidSearch() {
     } else donationsEl.innerHTML = '';
   }
   const details = document.getElementById('bbD_details');
-  const screening = document.getElementById('bbD_screening');
   const decision = document.getElementById('bbD_decision');
   if (details) {
     details.style.display = '';
@@ -9940,21 +9978,69 @@ async function bbDNidSearch() {
     if (nameEl) nameEl.value = found ? (found.name || '') : '';
     if (addrEl) addrEl.value = found ? (found.address || '') : '';
     if (phoneEl) phoneEl.value = found ? (found.phone || '') : '';
-    const ageEl = document.getElementById('bbD_age'), btEl = document.getElementById('bbD_bt');
+    const ageEl = document.getElementById('bbD_age'), btEl = document.getElementById('bbD_bt'), genderEl = document.getElementById('bbD_gender');
     if (ageEl) ageEl.value = parsed.age;
     if (btEl) btEl.value = found ? (found.blood_type || '') : '';
+    if (genderEl) genderEl.value = parsed.gender;
   }
-  if (screening) screening.style.display = '';
   if (decision) decision.style.display = '';
+  const todayStr = fmtCairoDate('date');
+  let forceDefer = false;
+  let lastDon = '';
+  let nextDon = '';
+  let autoReason = '';
+  let autoDays = 0;
+  const cooldownEl = document.getElementById('bbD_cooldown');
+  const lastDonEl = document.getElementById('bbD_lastDon');
+  const nextDonEl = document.getElementById('bbD_nextDon');
+  if (parsed.age < 18) {
+    forceDefer = true;
+    const by = parseInt(parsed.birthDate.slice(0, 4), 10);
+    const bd18 = (by + 18) + parsed.birthDate.slice(4);
+    autoDays = Math.max(1, bbDaysBetween(todayStr, bd18));
+    autoReason = 'السن أقل من 18 سنة';
+  } else if (parsed.age > 60) {
+    forceDefer = true;
+    autoReason = 'السن أكبر من 60 سنة';
+  } else {
+    donations.forEach(d => {
+      if (String(d.status) === 'مقبول') {
+        const dt = String(d.collected_at || d.created_at || '').slice(0, 10);
+        if (dt && dt > lastDon) lastDon = dt;
+      }
+    });
+    if (lastDon) {
+      nextDon = bbAddDays(lastDon, parsed.gender === 'أنثى' ? 120 : 90);
+      if (cooldownEl) cooldownEl.style.display = '';
+      if (lastDonEl) lastDonEl.value = lastDon;
+      if (nextDonEl) nextDonEl.value = nextDon;
+      if (todayStr < nextDon) {
+        forceDefer = true;
+        autoDays = bbDaysBetween(todayStr, nextDon);
+        autoReason = 'لم تمضِ مدة الأمان منذ آخر تبرع';
+      }
+    } else if (cooldownEl) cooldownEl.style.display = 'none';
+  }
+  if (forceDefer) {
+    const deferEl = document.getElementById('bbD_defer');
+    if (deferEl) deferEl.checked = true;
+    const deferReasonEl = document.getElementById('bbD_deferReason');
+    if (deferReasonEl) deferReasonEl.value = autoReason;
+    const ddEl = document.getElementById('bbD_deferDays');
+    if (ddEl) ddEl.value = autoDays > 0 ? autoDays : '';
+    const rdEl = document.getElementById('bbD_returnDate');
+    if (rdEl) rdEl.value = autoDays > 0 ? (nextDon || bbAddDays('', autoDays)) : '';
+    bbDDecisionChanged();
+  }
 }
 function bbDNidClear() {
   const nid = document.getElementById('bbD_nid'); if (nid) nid.value = '';
   ['bbD_derived', 'bbD_donations'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
-  ['bbD_details', 'bbD_screening', 'bbD_decision'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-  ['bbD_name', 'bbD_address', 'bbD_phone', 'bbD_age', 'bbD_weight', 'bbD_height', 'bbD_bp', 'bbD_hb', 'bbD_medsRegular', 'bbD_chronicType', 'bbD_surgeryDate', 'bbD_travelDate', 'bbD_notes', 'bbD_deferReason', 'bbD_deferDays', 'bbD_returnDate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  const bmi = document.getElementById('bbD_bmi'); if (bmi) bmi.value = '';
-  ['bbD_meds', 'bbD_chronic', 'bbD_surgery', 'bbD_dental', 'bbD_tattoo', 'bbD_travel', 'bbD_preg', 'bbD_breastfeed', 'bbD_bt'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['bbD_details', 'bbD_decision', 'bbD_cooldown'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  ['bbD_name', 'bbD_address', 'bbD_phone', 'bbD_age', 'bbD_gender', 'bbD_deferReason', 'bbD_deferDays', 'bbD_returnDate', 'bbD_refuseReason', 'bbD_lastDon', 'bbD_nextDon'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['bbD_bt'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   const now = document.getElementById('bbD_now'); if (now) now.checked = true;
+  if (_bb) _bb.bannedDonorNid = null;
   bbDDecisionChanged();
 }
 function bbDCollect() {
@@ -9965,12 +10051,43 @@ function bbDCollect() {
   if (!/^\d{14}$/.test(nid)) { showToast('❌ الرقم الطبي يجب أن يكون 14 رقماً', 'error'); return 'ERROR'; }
   const parsed = parseNationalId(nid);
   if (!parsed) { showToast('❌ رقم طبي غير صالح', 'error'); return 'ERROR'; }
+  if (_bb && _bb.bannedDonorNid === nid) { showToast('❌ المتبرع ممنوع من التبرع', 'error'); return 'ERROR'; }
   const defer = document.getElementById('bbD_defer'), refused = document.getElementById('bbD_refused');
-  const decision = refused && refused.checked ? 'مرفوض دائم' : (defer && defer.checked ? 'موجل' : 'تبرع الآن');
+  let decision = refused && refused.checked ? 'مرفوض' : (defer && defer.checked ? 'موجل' : 'مقبول');
   const v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const forceDefer = (reason, days, retDate) => {
+    decision = 'موجل';
+    if (defer) defer.checked = true;
+    if (refused) refused.checked = false;
+    const rEl = document.getElementById('bbD_deferReason'), dEl = document.getElementById('bbD_deferDays'), rtEl = document.getElementById('bbD_returnDate');
+    if (rEl) rEl.value = reason;
+    if (dEl) dEl.value = days > 0 ? days : '';
+    if (rtEl) rtEl.value = retDate || '';
+    if (typeof bbDDecisionChanged === 'function') bbDDecisionChanged();
+  };
+  if (decision !== 'مرفوض') {
+    const todayStr = fmtCairoDate('date');
+    if (parsed.age != null && parsed.age < 18) {
+      const by = parseInt(parsed.birthDate.slice(0, 4), 10);
+      const bd18 = (by + 18) + parsed.birthDate.slice(4);
+      forceDefer('السن أقل من 18 سنة', Math.max(1, bbDaysBetween(todayStr, bd18)), bd18);
+    } else if (parsed.age != null && parsed.age > 60) {
+      forceDefer('السن أكبر من 60 سنة', 0, '');
+    } else {
+      const lastDon = v('bbD_lastDon'), nextDon = v('bbD_nextDon');
+      if (nextDon && todayStr < nextDon) {
+        forceDefer('لم تمضِ مدة الأمان منذ آخر تبرع', Math.max(1, bbDaysBetween(todayStr, nextDon)), nextDon);
+      } else if (lastDon && !nextDon) {
+        forceDefer('لم تمضِ مدة الأمان منذ آخر تبرع', 0, '');
+      }
+    }
+  }
   const deferDays = parseInt(v('bbD_deferDays')) || 0;
   const deferReason = v('bbD_deferReason');
+  const refuseReason = v('bbD_refuseReason');
   const returnDate = deferDays > 0 ? bbAddDays('', deferDays) : null;
+  if (decision === 'مرفوض' && !refuseReason.trim()) { showToast('❌ حدد سبب الرفض للمتبرع', 'error'); return 'ERROR'; }
+  if (decision === 'موجل' && !deferReason.trim()) { showToast('❌ حدد سبب التأجيل', 'error'); return 'ERROR'; }
   return {
     donor: {
       national_id: nid,
@@ -9982,34 +10099,18 @@ function bbDCollect() {
       gender: parsed.gender,
       address: v('bbD_address'),
       phone: v('bbD_phone'),
-      notes: v('bbD_notes')
+      notes: ''
     },
     screening: {
-      weight: parseFloat(v('bbD_weight')) || null,
-      height: parseFloat(v('bbD_height')) || null,
-      bmi: parseFloat(v('bbD_bmi')) || null,
-      bp: v('bbD_bp'),
-      hb: parseFloat(v('bbD_hb')) || null,
-      meds: v('bbD_meds'),
-      meds_regular: v('bbD_medsRegular'),
-      chronic: v('bbD_chronic'),
-      chronic_type: v('bbD_chronicType'),
-      surgery: v('bbD_surgery'),
-      surgery_date: v('bbD_surgeryDate'),
-      dental: v('bbD_dental'),
-      tattoo: v('bbD_tattoo'),
-      travel: v('bbD_travel'),
-      travel_date: v('bbD_travelDate'),
-      pregnant: v('bbD_preg'),
-      breastfeeding: v('bbD_breastfeed'),
       deferral_reason: deferReason,
       deferral_duration: deferDays,
       return_date: returnDate,
-      notes: v('bbD_notes')
+      rejection_reason: refuseReason
     },
     decision,
     defer_reason: deferReason,
-    defer_days: deferDays
+    defer_days: deferDays,
+    rejection_reason: refuseReason
   };
 }
 /* ==== تعلم نمط الباركود (أرقام فقط): بعد 5 إدخالات بنفس الشكل يتعلم النمط ويكمل تصاعدياً لكل بنك ==== */
@@ -10215,6 +10316,7 @@ async function bbRenderCollectTab(t) {
       _bb.rowN = 0;
       bbAddRow();
       bbAutoHosp('bbCollHosp');
+      bbSyncCollectRows();
     } else if (t === 'test') {
       el.innerHTML = `<div class="card" style="margin-bottom:16px;border-right:4px solid #c2185b">
         <div class="card-header" style="padding:10px 16px"><strong><i class="fas fa-flask-vial" style="margin-left:6px"></i> سجل الأكياس</strong> <span style="font-size:11px;color:#c2185b;font-weight:400"><i class="fas fa-eye" style="margin-left:3px"></i> يُعرض تحت الفحص فقط — الأكياس المفحوصة تختفي من السجل بعد فحصها</span></div>
@@ -10342,12 +10444,8 @@ async function bbDoCollect() {
   if (missing.length) { showToast('❌ أكمل البيانات الناقصة: ' + missing.join('، '), 'error'); return; }
   const dc = bbDCollect();
   if (dc === 'ERROR') return;
-  if (dc && dc.decision !== 'تبرع الآن') {
-    try {
-      await api('POST', '/donations', { donor: dc.donor, screening: dc.screening, decision: dc.decision, deferReason: dc.defer_reason, deferDays: dc.defer_days, hospitalId });
-      showToast(`✅ تم تسجيل بيانات المتبرع (${dc.decision}) — بدون أكياس`);
-      bbDNidClear();
-    } catch (e) { showToast('❌ ' + e.message, 'error'); }
+  if (dc && dc.decision !== 'مقبول') {
+    showToast('❌ لا يمكن الحفظ — قرار التبرع يجب أن يكون «مقبول» (القرار الحالي: «' + (dc.decision || 'غير محدد') + '»). اختر «مقبول» لتسجيل التبرع والأكياس', 'error');
     return;
   }
   try {
