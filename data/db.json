@@ -373,8 +373,8 @@
     {
       "id": 2,
       "username": "por",
-      "password": "$2b$10$c4a2BtZ3od.SI7pqeNbd4elrf36S46QYX4Rqw6cPt2/Ff/.2CWSBS",
-      "name": "مشر�� بورسعيد",
+      "password": "$2b$10$UktwSGAubBSVRm3OJIwJyu/sAY3vMMzgfxedY6j.ATXSONynfWqgC",
+      "name": "مشرف  بورسعيد",
       "role": "branch_supervisor",
       "hospital_id": null,
       "governorate": "بورسعيد",
@@ -1003,8 +1003,8 @@
     {
       "id": 93,
       "username": "emp3",
-      "password": "$2b$10$ZVNebxmyMKUyYUsbng2sSelr3kVGENnILSd6n4OriZH7YE2JE3H6q",
-      "name": "مستخدم ا��زهور",
+      "password": "$2b$10$/VSAjpeBnGGAQusp50N8Qu8cvc1mvDVKgvAK/cABObl8hQ00Mf1Ky",
+      "name": "مستخدم االزهور",
       "role": "hospital",
       "hospital_id": 4,
       "governorate": "بورسعيد",
@@ -1463,30 +1463,12 @@
       "permissions": {}
     },
     {
-      "id": 166,
-      "username": "sup_المينيا",
-      "password": "$2b$10$HYNuE3juB1GoT1oQbII2V.n1bBFJ50xsIpIWbyr1DK6XStRi1jNlm",
-      "name": "مشرف المينيا",
-      "role": "branch_supervisor",
-      "governorate": "المينيا",
-      "view_permission": "governorate"
-    },
-    {
-      "id": 167,
-      "username": "sup_المنيا",
-      "password": "$2b$10$kCTvHItOTRki2OfXI3nd8ubC3kJzJOnV3oEaxGs2/VQBaLNb2wP2C",
-      "name": "مشرف المنيا",
-      "role": "branch_supervisor",
-      "governorate": "المنيا",
-      "view_permission": "governorate"
-    },
-    {
       "id": 168,
       "username": "sup_",
-      "password": "$2b$10$IBQOw9zrw4Rl8SWI0pC.9O6d8epuTZrY5tHKmWBB8tKs5b1rXRfNq",
-      "name": "مشرف ???????",
+      "password": "$2b$10$hTCoot.RUeNNw/x4vqcWreGyu7moEMlNSsaMgCdam12XlYY9PqooW",
+      "name": "مشرف المنيا",
       "role": "branch_supervisor",
-      "governorate": "???????",
+      "governorate": "بورسعيد",
       "view_permission": "governorate"
     },
     {
@@ -1497,6 +1479,125 @@
       "role": "branch_supervisor",
       "governorate": "السويس",
       "view_permission": "governorate"
+    },
+    {
+      "id": 172,
+      "username": "hosp39",
+      "password": "$2b$10$56nQu.32yR9JgYk.rrotI.j1LmirJ./LsOLCt7YYR06etYc8h1dZy",
+      "name": "ملوي",
+      "role": "hospital",
+      "hospital_id": 39,
+      "governorate": "المنيا",
+      "view_permission": "own"
+    },
+    {
+      "id": 173,
+      "username": "hosp40",
+      "password": "$2b$10$hOZ8.A9CfZsBVV/m9Cn5nehxZ/bxEyX6gxDnD3u3B/mBkgtCTWy/y",
+      "name": "سمالوط التخصصي",
+      "role": "hospital",
+      "hospital_id": 40,
+      "governorate": "المنيا",
+      "view_permission": "own"
+    },
+    {
+      "id": 174,
+      "username": "hosp41",
+      "password": "$2b$10$l7IK74imMS3/GsIfeJflGO9K0AgzaDvwRCepcKUr/LLdkwDErfYSK",
+      "name": "جراحات اليوم الواحد",
+      "role": "hospital",
+      "hospital_id": 41,
+      "governorate": "المنيا",
+      "view_permission": "own"
+    },
+    {
+      "id": 175,
+      "username": "hosp42",
+      "password": "$2b$10$E.DmfvaKqrv8lrjEv8fuduqjX4VuhpvRLSNlmIJQpZ2OMOC9SjMTi",
+      "name": "اورام سمالوط",
+      "role": "hospital",
+      "hospital_id": 42,
+      "governorate": "المنيا",
+      "view_permission": "own"
+    },
+    {
+      "id": 176,
+      "username": "hosp43",
+      "password": "$2b$10$QkP0v1cR.OKUw2Un4Yf1iOe9Zjznyi1f6nPylXGg9JgLkqfq0E9BG",
+      "name": "أورام المنيا",
+      "role": "hospital",
+      "hospital_id": 43,
+      "governorate": "المنيا",
+      "view_permission": "own"
+    },
+    {
+      "id": 177,
+      "username": "hosp44",
+      "password": "$2b$10$yoKHuX9pwgHQTJozvVFPQur1UlEGF.hjfEwbN.s795A.FbGSimb6S",
+      "name": "التأمين الصحي",
+      "role": "hospital",
+      "hospital_id": 44,
+      "governorate": "بورسعيد",
+      "view_permission": "own"
+    },
+    {
+      "id": 178,
+      "username": "hosp45",
+      "password": "$2b$10$e.PFFZup2p0.NavNbLikCO3DofDgRu1S.YHY0zqzVRw/Kv6hQZmZ.",
+      "name": "الصحة الانجابية",
+      "role": "hospital",
+      "hospital_id": 45,
+      "governorate": "المنيا",
+      "view_permission": "own"
+    },
+    {
+      "id": 179,
+      "username": "hosp46",
+      "password": "$2b$10$0h0y9F3BWKYpnh05jHjBfOyxNq8ny6MGmsahL5mFnfHdi/fiDFHX2",
+      "name": "العدوة المركزي",
+      "role": "hospital",
+      "hospital_id": 46,
+      "governorate": "المنيا",
+      "view_permission": "own"
+    },
+    {
+      "id": 180,
+      "username": "hosp47",
+      "password": "$2b$10$16YFptDLpgPy4amjmoeG/edzv5qReG1ytNpi/M1g5twcCkwrWqS8u",
+      "name": "حميات ديرمواس",
+      "role": "hospital",
+      "hospital_id": 47,
+      "governorate": "المنيا",
+      "view_permission": "own"
+    },
+    {
+      "id": 181,
+      "username": "hosp48",
+      "password": "$2b$10$6YoHqZFa5Yh7YfPzanYmsOu8arG0yZsdmiUDkN4j4YiCK4yiR/Bzi",
+      "name": "مستشفى ديرمواس التخصصي",
+      "role": "hospital",
+      "hospital_id": 48,
+      "governorate": "المنيا",
+      "view_permission": "own"
+    },
+    {
+      "id": 182,
+      "username": "sup_المنيا",
+      "password": "$2b$10$ytIrjrwt3/fU34RaXyk3Duiu.5NdVq92CAg9g/c.ulzJudD.rZWYu",
+      "name": "مشرف المنيا",
+      "role": "branch_supervisor",
+      "governorate": "المنيا",
+      "view_permission": "governorate"
+    },
+    {
+      "id": 183,
+      "username": "hosp49",
+      "password": "$2b$10$Mz/D0/ZHFM8PYiFv7yHG3Og01gZMB13Y4bkrFOKzofEu3iwTZo4rO",
+      "name": "ملوي",
+      "role": "hospital",
+      "hospital_id": 49,
+      "governorate": "المنيا",
+      "view_permission": "own"
     }
   ],
   "hospitals": [
@@ -1554,7 +1655,7 @@
       "name": "طوارئ ابو خليفه",
       "governorate": "الإسماعيلية",
       "type": "تخزيني",
-      "code": null
+      "code": ""
     },
     {
       "id": 9,
@@ -1751,6 +1852,83 @@
       "governorate": "أسوان",
       "type": "تخزيني",
       "code": null
+    },
+    {
+      "id": 39,
+      "name": "ملوي",
+      "governorate": "المنيا",
+      "type": "تجميعي",
+      "code": ""
+    },
+    {
+      "id": 40,
+      "name": "سمالوط التخصصي",
+      "governorate": "المنيا",
+      "type": "تخزيني",
+      "code": ""
+    },
+    {
+      "id": 41,
+      "name": "جراحات اليوم الواحد",
+      "governorate": "المنيا",
+      "type": "تخزيني",
+      "code": ""
+    },
+    {
+      "id": 42,
+      "name": "اورام سمالوط",
+      "governorate": "المنيا",
+      "type": "تخزيني",
+      "code": ""
+    },
+    {
+      "id": 43,
+      "name": "أورام المنيا",
+      "governorate": "المنيا",
+      "type": "تخزيني",
+      "code": ""
+    },
+    {
+      "id": 44,
+      "name": "التأمين الصحي",
+      "governorate": "بورسعيد",
+      "type": "تخزيني",
+      "code": ""
+    },
+    {
+      "id": 45,
+      "name": "الصحة الانجابية",
+      "governorate": "المنيا",
+      "type": "تخزيني",
+      "code": ""
+    },
+    {
+      "id": 46,
+      "name": "العدوة المركزي",
+      "governorate": "المنيا",
+      "type": "تجميعي",
+      "code": ""
+    },
+    {
+      "id": 47,
+      "name": "حميات ديرمواس",
+      "governorate": "المنيا",
+      "type": "تخزيني",
+      "code": ""
+    },
+    {
+      "id": 48,
+      "name": "مستشفى ديرمواس التخصصي",
+      "governorate": "المنيا",
+      "type": "تخزيني",
+      "code": ""
+    },
+    {
+      "id": 49,
+      "name": "ملوي",
+      "governorate": "المنيا",
+      "type": "تجميعي",
+      "code": ""
     }
   ],
   "governorates": [
@@ -1777,6 +1955,10 @@
     {
       "id": 7,
       "name": "السويس"
+    },
+    {
+      "id": 11,
+      "name": "المنيا"
     }
   ],
   "hospital_types": [
@@ -1805,7 +1987,7 @@
       "license_status": "",
       "user_id": 59,
       "_key": "2026-08-11 02:34",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.489Z"
     },
     {
       "id": 1,
@@ -1822,7 +2004,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:15.099Z"
     },
     {
       "id": 2,
@@ -1839,7 +2021,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:15.008Z"
     },
     {
       "id": 3,
@@ -1856,7 +2038,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.817Z"
     },
     {
       "id": 4,
@@ -1873,7 +2055,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-08-11 02:27",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.301Z"
     },
     {
       "id": 5,
@@ -1890,7 +2072,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-08-09 13:29",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.668Z"
     },
     {
       "id": 6,
@@ -1907,24 +2089,24 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-08-11 02:21",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.420Z"
     },
     {
       "id": 7,
       "hospital_id": 4,
-      "date": "2026-08-14",
-      "time": "01:53",
+      "date": "2026-08-15",
+      "time": "13:07",
       "under_inspection": 0,
       "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
       "plasma_data": "{\"A\":{\"previous\":29,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":29},\"B\":{\"previous\":36,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":36},\"AB\":{\"previous\":26,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":26},\"O\":{\"previous\":56,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":56}}",
       "platelets": 0,
       "cryo": 0,
       "license_type": "تخزيني",
-      "license_status": "??????",
+      "license_status": "",
       "plat_data": null,
       "user_id": 1,
-      "_key": "2026-08-14 01:53",
-      "updated_at": "2026-08-14T09:54:27.002Z"
+      "_key": "2026-08-15 13:07",
+      "updated_at": "2026-08-16T05:28:14.443Z"
     },
     {
       "id": 8,
@@ -1941,7 +2123,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:15.141Z"
     },
     {
       "id": 9,
@@ -1999,7 +2181,7 @@
       },
       "user_id": 1,
       "_key": "2026-08-09 13:29",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.598Z"
     },
     {
       "id": 11,
@@ -2016,7 +2198,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-08-09 13:29",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.645Z"
     },
     {
       "id": 12,
@@ -2033,7 +2215,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-08-09 13:29",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.620Z"
     },
     {
       "id": 13,
@@ -2050,7 +2232,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.837Z"
     },
     {
       "id": 14,
@@ -2067,7 +2249,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:17",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.510Z"
     },
     {
       "id": 15,
@@ -2084,7 +2266,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.774Z"
     },
     {
       "id": 16,
@@ -2101,7 +2283,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.711Z"
     },
     {
       "id": 17,
@@ -2118,7 +2300,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:15.119Z"
     },
     {
       "id": 18,
@@ -2135,7 +2317,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.731Z"
     },
     {
       "id": 19,
@@ -2152,7 +2334,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-08-11 02:34",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.385Z"
     },
     {
       "id": 20,
@@ -2169,7 +2351,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.986Z"
     },
     {
       "id": 21,
@@ -2186,7 +2368,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.796Z"
     },
     {
       "id": 22,
@@ -2203,7 +2385,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.859Z"
     },
     {
       "id": 23,
@@ -2220,7 +2402,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:15.056Z"
     },
     {
       "id": 25,
@@ -2237,7 +2419,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.881Z"
     },
     {
       "id": 26,
@@ -2254,7 +2436,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.945Z"
     },
     {
       "id": 27,
@@ -2271,7 +2453,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.901Z"
     },
     {
       "id": 28,
@@ -2288,7 +2470,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.922Z"
     },
     {
       "id": 29,
@@ -2305,7 +2487,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-08-10 15:40",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.532Z"
     },
     {
       "id": 30,
@@ -2322,7 +2504,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.753Z"
     },
     {
       "id": 31,
@@ -2339,7 +2521,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-08-10 15:40",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.576Z"
     },
     {
       "id": 32,
@@ -2381,7 +2563,7 @@
       },
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:15.032Z"
     },
     {
       "id": 33,
@@ -2398,7 +2580,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-08-09 13:29",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.690Z"
     },
     {
       "id": 34,
@@ -2415,7 +2597,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.965Z"
     },
     {
       "id": 35,
@@ -2432,7 +2614,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-08-10 15:40",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.554Z"
     },
     {
       "id": 36,
@@ -2449,7 +2631,7 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-07-27 16:52",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:15.078Z"
     },
     {
       "id": 37,
@@ -2466,7 +2648,55 @@
       "plat_data": null,
       "user_id": 1,
       "_key": "2026-08-11 02:27",
-      "updated_at": null
+      "updated_at": "2026-08-16T05:28:14.465Z"
+    },
+    {
+      "id": 39,
+      "hospital_id": 39,
+      "date": "2026-08-15",
+      "time": "13:13",
+      "under_inspection": 0,
+      "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "plasma_data": "{\"A\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "platelets": 0,
+      "cryo": 0,
+      "license_type": "تخزيني",
+      "license_status": "يب",
+      "user_id": 1,
+      "updated_at": "2026-08-16T05:28:15.163Z",
+      "_key": "2026-08-15 13:13"
+    },
+    {
+      "id": 40,
+      "hospital_id": 40,
+      "date": "2026-08-15",
+      "time": "13:13",
+      "under_inspection": 0,
+      "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "plasma_data": "{\"A\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "platelets": 0,
+      "cryo": 0,
+      "license_type": "تخزيني",
+      "license_status": "",
+      "user_id": 1,
+      "updated_at": "2026-08-16T05:28:15.184Z",
+      "_key": "2026-08-15 13:13"
+    },
+    {
+      "id": 41,
+      "hospital_id": 41,
+      "date": "2026-08-15",
+      "time": "13:07",
+      "under_inspection": 0,
+      "blood_data": "{\"A+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"A-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O+\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O-\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "plasma_data": "{\"A\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"B\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"O\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0},\"AB\":{\"previous\":0,\"incoming\":0,\"outgoing\":0,\"disposal\":0,\"available\":0}}",
+      "platelets": 0,
+      "cryo": 0,
+      "license_type": "تخزيني",
+      "license_status": "",
+      "user_id": 1,
+      "updated_at": "2026-08-16T05:28:15.206Z",
+      "_key": "2026-08-15 13:07"
     }
   ],
   "daily_statements": [],
@@ -73141,14 +73371,244 @@
     "equipment_last_updated": "2026-07-14T19:43:15.108Z",
     "bb_seq": 23
   },
-  "donors": [],
-  "donations": [],
+  "donors": [
+    {
+      "id": 1,
+      "national_id": "29109151312552",
+      "name": "محمد عبدالمنعم حسن متولي",
+      "birth_date": "1991-09-15",
+      "age": 34,
+      "governorate": "المنوفية",
+      "gender": "ذكر",
+      "address": "نسيلنسن لتت ثلنصق",
+      "phone": "01068880999",
+      "notes": "",
+      "created_at": "2026-08-15T09:47:59.139Z",
+      "updated_at": "2026-08-17T12:47:35.910Z",
+      "blood_type": "A+",
+      "donor_status": "مقبول",
+      "donations": [
+        {
+          "id": 2,
+          "donor_id": 1,
+          "hospital_id": 6,
+          "user_id": 1,
+          "status": "مقبول",
+          "deferral_reason": "",
+          "deferral_duration": "",
+          "return_date": null,
+          "screening": "{\"deferral_reason\":\"\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"\"}",
+          "notes": "",
+          "created_at": "2026-08-16T06:55:11.399Z",
+          "rejection_reason": ""
+        },
+        {
+          "id": 1,
+          "donor_id": 1,
+          "hospital_id": 7,
+          "user_id": 1,
+          "status": "موجل",
+          "deferral_reason": "خلع",
+          "deferral_duration": 20,
+          "return_date": "2026-09-04",
+          "screening": "{\"weight\":null,\"height\":null,\"bmi\":null,\"bp\":\"\",\"hb\":null,\"meds\":\"\",\"meds_regular\":\"\",\"chronic\":\"\",\"chronic_type\":\"\",\"surgery\":\"\",\"surgery_date\":\"\",\"dental\":\"\",\"tattoo\":\"\",\"travel\":\"\",\"travel_date\":\"\",\"pregnant\":\"\",\"breastfeeding\":\"\",\"deferral_reason\":\"خلع\",\"deferral_duration\":20,\"return_date\":\"2026-09-04\",\"rejection_reason\":\"\",\"notes\":\"\"}",
+          "notes": "",
+          "created_at": "2026-08-15T09:47:59.188Z",
+          "rejection_reason": ""
+        }
+      ]
+    }
+  ],
+  "donations": [
+    {
+      "id": 1,
+      "donor_id": 1,
+      "hospital_id": 7,
+      "user_id": 1,
+      "status": "موجل",
+      "deferral_reason": "خلع",
+      "deferral_duration": 20,
+      "return_date": "2026-09-04",
+      "screening": "{\"weight\":null,\"height\":null,\"bmi\":null,\"bp\":\"\",\"hb\":null,\"meds\":\"\",\"meds_regular\":\"\",\"chronic\":\"\",\"chronic_type\":\"\",\"surgery\":\"\",\"surgery_date\":\"\",\"dental\":\"\",\"tattoo\":\"\",\"travel\":\"\",\"travel_date\":\"\",\"pregnant\":\"\",\"breastfeeding\":\"\",\"deferral_reason\":\"خلع\",\"deferral_duration\":20,\"return_date\":\"2026-09-04\",\"rejection_reason\":\"\",\"notes\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-15T09:47:59.188Z",
+      "rejection_reason": ""
+    },
+    {
+      "id": 2,
+      "donor_id": 1,
+      "hospital_id": 6,
+      "user_id": 1,
+      "status": "مقبول",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "screening": "{\"deferral_reason\":\"\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-16T06:55:11.399Z",
+      "rejection_reason": ""
+    },
+    {
+      "id": 3,
+      "donor_id": 1,
+      "hospital_id": null,
+      "user_id": 1,
+      "status": "موجل",
+      "deferral_reason": "قلشلقلقثسلقث",
+      "deferral_duration": "",
+      "return_date": null,
+      "rejection_reason": "",
+      "screening": "{\"deferral_reason\":\"قلشلقلقثسلقث\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-16T10:07:54.795Z"
+    },
+    {
+      "id": 4,
+      "donor_id": 1,
+      "hospital_id": null,
+      "user_id": 1,
+      "status": "مرفوض",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "rejection_reason": "اتثقفا4قفثاثف5فتغتتقت",
+      "screening": "{\"deferral_reason\":\"\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"اتثقفا4قفثاثف5فتغتتقت\"}",
+      "notes": "",
+      "created_at": "2026-08-16T10:10:28.982Z"
+    },
+    {
+      "id": 5,
+      "donor_id": 1,
+      "hospital_id": 30,
+      "user_id": 1,
+      "status": "مقبول",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "rejection_reason": "",
+      "screening": "{\"deferral_reason\":\"\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-17T11:26:15.604Z"
+    },
+    {
+      "id": 6,
+      "donor_id": 1,
+      "hospital_id": 30,
+      "user_id": 1,
+      "status": "مقبول",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "rejection_reason": "",
+      "screening": "{\"deferral_reason\":\"\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-17T11:26:15.873Z"
+    },
+    {
+      "id": 7,
+      "donor_id": 1,
+      "hospital_id": 2,
+      "user_id": 1,
+      "status": "مقبول",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "rejection_reason": "",
+      "screening": "{\"deferral_reason\":\"\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-17T12:37:27.918Z"
+    },
+    {
+      "id": 8,
+      "donor_id": 1,
+      "hospital_id": 2,
+      "user_id": 1,
+      "status": "مقبول",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "rejection_reason": "",
+      "screening": "{\"deferral_reason\":\"\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-17T12:37:28.230Z"
+    },
+    {
+      "id": 9,
+      "donor_id": 1,
+      "hospital_id": 2,
+      "user_id": 1,
+      "status": "مقبول",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "rejection_reason": "",
+      "screening": "{\"deferral_reason\":\"\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-17T12:38:02.803Z"
+    },
+    {
+      "id": 10,
+      "donor_id": 1,
+      "hospital_id": 2,
+      "user_id": 1,
+      "status": "مقبول",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "rejection_reason": "",
+      "screening": "{\"deferral_reason\":\"\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-17T12:38:03.088Z"
+    },
+    {
+      "id": 11,
+      "donor_id": 1,
+      "hospital_id": null,
+      "user_id": 1,
+      "status": "موجل",
+      "deferral_reason": "قلشلقلقثسلقث",
+      "deferral_duration": 20,
+      "return_date": "2026-09-06",
+      "rejection_reason": "",
+      "screening": "{\"deferral_reason\":\"قلشلقلقثسلقث\",\"deferral_duration\":20,\"return_date\":\"2026-09-06\",\"rejection_reason\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-17T12:38:36.322Z"
+    },
+    {
+      "id": 12,
+      "donor_id": 1,
+      "hospital_id": 2,
+      "user_id": 1,
+      "status": "مقبول",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "rejection_reason": "",
+      "screening": "{\"deferral_reason\":\"\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-17T12:41:21.546Z"
+    },
+    {
+      "id": 13,
+      "donor_id": 1,
+      "hospital_id": 3,
+      "user_id": 1,
+      "status": "مقبول",
+      "deferral_reason": "",
+      "deferral_duration": "",
+      "return_date": null,
+      "rejection_reason": "",
+      "screening": "{\"deferral_reason\":\"\",\"deferral_duration\":0,\"return_date\":null,\"rejection_reason\":\"\"}",
+      "notes": "",
+      "created_at": "2026-08-17T12:47:35.940Z"
+    }
+  ],
   "_counters": {
-    "users": 172,
-    "hospitals": 39,
-    "governorates": 11,
+    "users": 184,
+    "hospitals": 50,
+    "governorates": 13,
     "hospital_types": 3,
-    "daily_reports": 39,
+    "daily_reports": 42,
     "monthly_big_indicators": 389,
     "monthly_small_indicators": 739,
     "archives": 115,
@@ -73164,13 +73624,13 @@
     "equipment": 1,
     "monthly_consumption": 112,
     "indicator_columns": 110,
-    "blood_bags": 27,
-    "blood_bag_events": 77,
+    "blood_bags": 40,
+    "blood_bag_events": 94,
     "patients": 2,
     "bag_reservations": 11,
     "hospital_departments": 2,
-    "donors": 1,
-    "donations": 1,
+    "donors": 2,
+    "donations": 14,
     "screening_questionnaires": 1
   },
   "blood_bank_equipment": {
@@ -76388,6 +76848,402 @@
       "tested_by": "المدير العام",
       "unit_category": "كبار",
       "donor_id": null
+    },
+    {
+      "id": 27,
+      "bag_no": "9999",
+      "barcode": "554544",
+      "hospital_id": 6,
+      "source_hospital_id": 6,
+      "collection_date": "2026-08-16",
+      "expiry_date": "2026-09-20",
+      "blood_type": "",
+      "product_type": "دم",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "collected",
+      "test_hcv": "",
+      "test_hbv": "",
+      "test_hiv": "",
+      "test_syphilis": "",
+      "test_nat": "",
+      "notes": "",
+      "created_at": "2026-08-16T06:55:11.457Z",
+      "updated_at": "2026-08-16T06:55:11.457Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 27,
+      "return_reason": ""
+    },
+    {
+      "id": 28,
+      "bag_no": "9999",
+      "barcode": "554544",
+      "hospital_id": 6,
+      "source_hospital_id": 6,
+      "collection_date": "2026-08-16",
+      "expiry_date": "2027-08-16",
+      "blood_type": "",
+      "product_type": "بلازما",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "collected",
+      "test_hcv": "",
+      "test_hbv": "",
+      "test_hiv": "",
+      "test_syphilis": "",
+      "test_nat": "",
+      "notes": "",
+      "created_at": "2026-08-16T06:55:11.511Z",
+      "updated_at": "2026-08-16T06:55:11.511Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 27,
+      "return_reason": ""
+    },
+    {
+      "id": 29,
+      "bag_no": "00",
+      "barcode": "001",
+      "hospital_id": 30,
+      "source_hospital_id": 30,
+      "collection_date": "2026-08-17",
+      "expiry_date": "2026-09-21",
+      "blood_type": "A+",
+      "product_type": "دم",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "available",
+      "test_hcv": "سلبي",
+      "test_hbv": "سلبي",
+      "test_hiv": "سلبي",
+      "test_syphilis": "سلبي",
+      "test_nat": "سلبي",
+      "notes": "",
+      "created_at": "2026-08-17T11:26:15.655Z",
+      "updated_at": "2026-08-17T11:28:41.593Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 29,
+      "return_reason": "",
+      "tested_at": "2026-08-17T11:28:41.593Z",
+      "tested_by": "المدير العام"
+    },
+    {
+      "id": 30,
+      "bag_no": "00",
+      "barcode": "001",
+      "hospital_id": 30,
+      "source_hospital_id": 30,
+      "collection_date": "2026-08-17",
+      "expiry_date": "2027-08-17",
+      "blood_type": "A",
+      "product_type": "بلازما",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "available",
+      "test_hcv": "سلبي",
+      "test_hbv": "سلبي",
+      "test_hiv": "سلبي",
+      "test_syphilis": "سلبي",
+      "test_nat": "سلبي",
+      "notes": "",
+      "created_at": "2026-08-17T11:26:15.701Z",
+      "updated_at": "2026-08-17T11:28:41.653Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 29,
+      "return_reason": "",
+      "tested_at": "2026-08-17T11:28:41.653Z",
+      "tested_by": "المدير العام"
+    },
+    {
+      "id": 31,
+      "bag_no": "158",
+      "barcode": "158",
+      "hospital_id": 33,
+      "source_hospital_id": 0,
+      "source_name": "الاقليمي",
+      "collection_date": null,
+      "expiry_date": "2026-08-18",
+      "blood_type": "A+",
+      "product_type": "دم",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "available",
+      "test_hcv": "",
+      "test_hbv": "",
+      "test_hiv": "",
+      "test_syphilis": "",
+      "received_at": "2026-08-17T11:30:33.719Z",
+      "received_by": "المدير العام",
+      "notes": "",
+      "created_at": "2026-08-17T11:27:36.014Z",
+      "updated_at": "2026-08-17T11:30:33.719Z",
+      "user_id": 1,
+      "dispatch_from": null,
+      "dispatch_to": null,
+      "dispatched_at": "2026-08-17T11:30:14.791Z"
+    },
+    {
+      "id": 32,
+      "bag_no": "17",
+      "barcode": "17",
+      "hospital_id": 2,
+      "source_hospital_id": 2,
+      "collection_date": "2026-08-17",
+      "expiry_date": "2026-09-21",
+      "blood_type": "",
+      "product_type": "دم",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "collected",
+      "test_hcv": "",
+      "test_hbv": "",
+      "test_hiv": "",
+      "test_syphilis": "",
+      "test_nat": "",
+      "notes": "",
+      "created_at": "2026-08-17T12:37:27.980Z",
+      "updated_at": "2026-08-17T12:37:27.980Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 32,
+      "return_reason": ""
+    },
+    {
+      "id": 33,
+      "bag_no": "17",
+      "barcode": "17",
+      "hospital_id": 2,
+      "source_hospital_id": 2,
+      "collection_date": "2026-08-17",
+      "expiry_date": "2027-08-17",
+      "blood_type": "",
+      "product_type": "بلازما",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "collected",
+      "test_hcv": "",
+      "test_hbv": "",
+      "test_hiv": "",
+      "test_syphilis": "",
+      "test_nat": "",
+      "notes": "",
+      "created_at": "2026-08-17T12:37:28.027Z",
+      "updated_at": "2026-08-17T12:37:28.027Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 32,
+      "return_reason": ""
+    },
+    {
+      "id": 34,
+      "bag_no": "19",
+      "barcode": "19",
+      "hospital_id": 2,
+      "source_hospital_id": 2,
+      "collection_date": "2026-08-17",
+      "expiry_date": "2026-09-21",
+      "blood_type": "",
+      "product_type": "دم",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "collected",
+      "test_hcv": "",
+      "test_hbv": "",
+      "test_hiv": "",
+      "test_syphilis": "",
+      "test_nat": "",
+      "notes": "",
+      "created_at": "2026-08-17T12:38:02.859Z",
+      "updated_at": "2026-08-17T12:38:02.859Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 34,
+      "return_reason": ""
+    },
+    {
+      "id": 35,
+      "bag_no": "19",
+      "barcode": "19",
+      "hospital_id": 2,
+      "source_hospital_id": 2,
+      "collection_date": "2026-08-17",
+      "expiry_date": "2027-08-17",
+      "blood_type": "",
+      "product_type": "بلازما",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "collected",
+      "test_hcv": "",
+      "test_hbv": "",
+      "test_hiv": "",
+      "test_syphilis": "",
+      "test_nat": "",
+      "notes": "",
+      "created_at": "2026-08-17T12:38:02.908Z",
+      "updated_at": "2026-08-17T12:38:02.908Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 34,
+      "return_reason": ""
+    },
+    {
+      "id": 36,
+      "bag_no": "98",
+      "barcode": "98",
+      "hospital_id": 2,
+      "source_hospital_id": 2,
+      "collection_date": "2026-08-17",
+      "expiry_date": "2026-09-21",
+      "blood_type": "",
+      "product_type": "دم",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "collected",
+      "test_hcv": "",
+      "test_hbv": "",
+      "test_hiv": "",
+      "test_syphilis": "",
+      "test_nat": "",
+      "notes": "",
+      "created_at": "2026-08-17T12:41:21.607Z",
+      "updated_at": "2026-08-17T12:41:21.607Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 36,
+      "return_reason": ""
+    },
+    {
+      "id": 37,
+      "bag_no": "98",
+      "barcode": "98",
+      "hospital_id": 2,
+      "source_hospital_id": 2,
+      "collection_date": "2026-08-17",
+      "expiry_date": "2027-08-17",
+      "blood_type": "",
+      "product_type": "بلازما",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "collected",
+      "test_hcv": "",
+      "test_hbv": "",
+      "test_hiv": "",
+      "test_syphilis": "",
+      "test_nat": "",
+      "notes": "",
+      "created_at": "2026-08-17T12:41:21.656Z",
+      "updated_at": "2026-08-17T12:41:21.656Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 36,
+      "return_reason": ""
+    },
+    {
+      "id": 38,
+      "bag_no": "78",
+      "barcode": "78",
+      "hospital_id": 3,
+      "source_hospital_id": 3,
+      "collection_date": "2026-08-17",
+      "expiry_date": "2026-09-21",
+      "blood_type": "",
+      "product_type": "دم",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "collected",
+      "test_hcv": "",
+      "test_hbv": "",
+      "test_hiv": "",
+      "test_syphilis": "",
+      "test_nat": "",
+      "notes": "",
+      "created_at": "2026-08-17T12:47:35.995Z",
+      "updated_at": "2026-08-17T12:47:35.995Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 38,
+      "return_reason": ""
+    },
+    {
+      "id": 39,
+      "bag_no": "78",
+      "barcode": "78",
+      "hospital_id": 3,
+      "source_hospital_id": 3,
+      "collection_date": "2026-08-17",
+      "expiry_date": "2027-08-17",
+      "blood_type": "",
+      "product_type": "بلازما",
+      "units": 1,
+      "unit_category": "كبار",
+      "donor_name": "",
+      "donor_national_id": "",
+      "donor_age": null,
+      "donor_gender": "",
+      "status": "collected",
+      "test_hcv": "",
+      "test_hbv": "",
+      "test_hiv": "",
+      "test_syphilis": "",
+      "test_nat": "",
+      "notes": "",
+      "created_at": "2026-08-17T12:47:36.045Z",
+      "updated_at": "2026-08-17T12:47:36.045Z",
+      "user_id": 1,
+      "donor_id": 1,
+      "donation_id": 38,
+      "return_reason": ""
     }
   ],
   "blood_bag_events": [
@@ -76738,6 +77594,210 @@
       "user_id": null,
       "user_name": "",
       "created_at": "2026-08-14T08:43:40.663Z"
+    },
+    {
+      "id": 77,
+      "bag_id": 27,
+      "bag_no": "9999",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: دم | رقم اللي: 9999 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-16T06:55:11.534Z"
+    },
+    {
+      "id": 78,
+      "bag_id": 28,
+      "bag_no": "9999",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: بلازما | رقم اللي: 9999 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-16T06:55:11.559Z"
+    },
+    {
+      "id": 79,
+      "bag_id": 29,
+      "bag_no": "00",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: دم | رقم اللي: 00 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T11:26:15.724Z"
+    },
+    {
+      "id": 80,
+      "bag_id": 30,
+      "bag_no": "00",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: بلازما | رقم اللي: 00 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T11:26:15.747Z"
+    },
+    {
+      "id": 81,
+      "bag_id": 31,
+      "bag_no": "158",
+      "event": "وارد",
+      "from_hospital_id": null,
+      "to_hospital_id": 30,
+      "detail": "وارد من: الاقليمي — تم تسجيله متاحاً | المنتج: دم | الفصيلة: A+",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T11:27:36.045Z"
+    },
+    {
+      "id": 82,
+      "bag_id": 29,
+      "bag_no": "00",
+      "event": "اكتمال الفحص",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "الفحص سليم — المكون متاح | المنتج: دم | الفصيلة: A+",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T11:28:41.625Z"
+    },
+    {
+      "id": 83,
+      "bag_id": 30,
+      "bag_no": "00",
+      "event": "اكتمال الفحص",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "الفحص سليم — المكون متاح | المنتج: بلازما | الفصيلة: A",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T11:28:41.679Z"
+    },
+    {
+      "id": 84,
+      "bag_id": 31,
+      "bag_no": "158",
+      "event": "إرسال كيس",
+      "from_hospital_id": 30,
+      "to_hospital_id": 33,
+      "detail": "أُرسل إلى المستشفى المستقبل",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T11:30:14.825Z"
+    },
+    {
+      "id": 85,
+      "bag_id": 31,
+      "bag_no": "158",
+      "event": "قبول كيس",
+      "from_hospital_id": null,
+      "to_hospital_id": 33,
+      "detail": "تم القبول والاستلام بنجاح",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T11:30:33.767Z"
+    },
+    {
+      "id": 86,
+      "bag_id": 32,
+      "bag_no": "17",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: دم | رقم اللي: 17 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T12:37:28.051Z"
+    },
+    {
+      "id": 87,
+      "bag_id": 33,
+      "bag_no": "17",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: بلازما | رقم اللي: 17 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T12:37:28.081Z"
+    },
+    {
+      "id": 88,
+      "bag_id": 34,
+      "bag_no": "19",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: دم | رقم اللي: 19 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T12:38:02.931Z"
+    },
+    {
+      "id": 89,
+      "bag_id": 35,
+      "bag_no": "19",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: بلازما | رقم اللي: 19 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T12:38:02.956Z"
+    },
+    {
+      "id": 90,
+      "bag_id": 36,
+      "bag_no": "98",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: دم | رقم اللي: 98 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T12:41:21.684Z"
+    },
+    {
+      "id": 91,
+      "bag_id": 37,
+      "bag_no": "98",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: بلازما | رقم اللي: 98 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T12:41:21.707Z"
+    },
+    {
+      "id": 92,
+      "bag_id": 38,
+      "bag_no": "78",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: دم | رقم اللي: 78 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T12:47:36.071Z"
+    },
+    {
+      "id": 93,
+      "bag_id": 39,
+      "bag_no": "78",
+      "event": "تسجيل كيس جديد",
+      "from_hospital_id": null,
+      "to_hospital_id": null,
+      "detail": "تم تسجيل الكيس (جمع — مكون من تبرع مفصول) | المنتج: بلازما | رقم اللي: 78 | المكونات: دم + بلازما | إعدام: تم التجميع",
+      "user_id": 1,
+      "user_name": "المدير العام",
+      "created_at": "2026-08-17T12:47:36.095Z"
     }
   ],
   "patients": [

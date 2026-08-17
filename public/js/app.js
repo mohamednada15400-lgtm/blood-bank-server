@@ -6112,7 +6112,7 @@ const EQ_GOV_COLORS = {
   'الأقصر':'#9b59b6','جنوب سيناء':'#f39c12','أسوان':'#e74c3c'
 };
 function eqGovSort(a,b){let ia=GOV_ORDER.indexOf(a),ib=GOV_ORDER.indexOf(b);if(ia===-1&&ib===-1)return a.localeCompare(b,'ar');if(ia===-1)return 1;if(ib===-1)return -1;return ia-ib;}
-const GOV_ORDER = ['بورسعيد','الإسماعيلية','السويس','الأقصر','جنوب سيناء','أسوان'];
+const GOV_ORDER = ['بورسعيد','الإسماعيلية','السويس','المنيا','الأقصر','جنوب سيناء','أسوان'];
 function eqStatusColor(s) {
   if (!s) return '#bbb';
   if (s==='يعمل'||s.includes('جيد')||s.includes('ممتاز')||s.includes('كفئ')) return '#27ae60';
@@ -9823,7 +9823,7 @@ function bbDonorCardHtml() {
     </div>
     <div class="card-body" style="padding:10px 16px">
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:8px">
-        <div class="form-group"><label>الرقم الطبي / القومي</label><input class="form-control" type="text" id="bbD_nid" maxlength="14" dir="ltr" placeholder="14 رقم" style="min-width:190px"></div>
+        <div class="form-group"><label>الرقم الطبي / القومي</label><input class="form-control" type="text" id="bbD_nid" maxlength="14" dir="ltr" placeholder="14 رقم" style="min-width:190px" data-input="bbDNidAuto"></div>
         <button class="btn btn-outline" data-click="bbDNidSearch" style="border-color:#1e8449;color:#1e8449"><i class="fas fa-search"></i> بحث</button>
         <button class="btn btn-outline" data-click="bbDNidClear" style="border-color:#7f8c8d;color:#7f8c8d"><i class="fas fa-eraser"></i> مسح</button>
       </div>
@@ -9925,6 +9925,20 @@ function bbDaysBetween(a, b) {
   const p = s => { const m = String(s).split('-').map(Number); return Date.UTC(m[0], (m[1] || 1) - 1, m[2] || 1); };
   return Math.round((p(b) - p(a)) / 86400000);
 }
+function bbDmy(dateStr) {
+  const m = String(dateStr || '').split('-');
+  if (m.length === 3) return `${m[2]}/${m[1]}/${m[0]}`;
+  return String(dateStr || '');
+}
+function bbCooldownReason(gender, lastDon, nextDon) {
+  const pDays = gender === 'أنثى' ? 120 : 90;
+  return `غير مسموح بالتبرع لعدم تجاوز المدة المسموح بها وهو ${pDays} يوم حيث أن آخر تبرع كان بتاريخ ${bbDmy(lastDon)} والتبرع القادم بتاريخ ${bbDmy(nextDon)}`;
+}
+function bbDNidAuto() {
+  const nid = (document.getElementById('bbD_nid') ? document.getElementById('bbD_nid').value : '').trim();
+  if (!/^\d{14}$/.test(nid)) return;
+  bbDNidSearch();
+}
 async function bbDNidSearch() {
   const nid = (document.getElementById('bbD_nid') ? document.getElementById('bbD_nid').value : '').trim();
   const derivedEl = document.getElementById('bbD_derived');
@@ -9940,23 +9954,18 @@ async function bbDNidSearch() {
     found = list[0] || null;
     if (found) donations = found.donations || [];
   } catch (e) { found = null; }
-  if (found && String(found.donor_status) === 'مرفوض') {
-    const rr = (donations[0] && donations[0].rejection_reason) || '';
-    derivedEl.innerHTML = `<div style="background:#fdecea;border:1px solid #f5b7b1;color:#c0392b;padding:6px 10px;border-radius:8px;font-size:12px;margin-bottom:8px">
-      <i class="fas fa-ban" style="margin-left:4px"></i> <b>ممنوع من التبرع</b>${rr ? ' — السبب: ' + esc(rr) : ''}
-    </div>`;
-    const donationsEl = document.getElementById('bbD_donations');
-    if (donationsEl) donationsEl.innerHTML = '';
-['bbD_details', 'bbD_decision', 'bbD_cooldown'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-    showToast('❌ المتبرع ممنوع من التبرع', 'error');
-    if (_bb) _bb.bannedDonorNid = nid;
-    return;
-  }
-  if (_bb) _bb.bannedDonorNid = null;
+  const statusBanner = (found && String(found.donor_status) === 'مرفوض') ? `<div style="background:#fdecea;border:1px solid #f5b7b1;color:#c0392b;padding:6px 10px;border-radius:8px;font-size:12px;margin-bottom:8px">
+      <i class="fas fa-ban" style="margin-left:4px"></i> <b>ممنوع من التبرع</b>${((donations[0] && donations[0].rejection_reason) || '') ? ' — السبب: ' + esc(donations[0].rejection_reason) : ''}
+    </div>` : (found && String(found.donor_status) === 'موجل') ? `<div style="background:#fdf6ec;border:1px solid #f0c36d;color:#b7950b;padding:6px 10px;border-radius:8px;font-size:12px;margin-bottom:8px">
+      <i class="fas fa-clock" style="margin-left:4px"></i> <b>المتبرع موجل</b>${((donations[0] && donations[0].deferral_reason) || '') ? ' — السبب: ' + esc(donations[0].deferral_reason) : ''}${(String((donations[0] && donations[0].return_date) || '').slice(0, 10)) ? ' — التبرع القادم: ' + esc(String(donations[0].return_date).slice(0, 10)) : ''}
+    </div>` : '';
+  if (found && String(found.donor_status) === 'مرفوض') showToast('⚠️ متبرع ممنوع من التبرع — يمكن تسجيل القرار «مرفوض» أو تعديله', 'warning');
+  else if (found && String(found.donor_status) === 'موجل') showToast('⚠️ متبرع موجل — يُفضَّل التبرع بعد تاريخ العودة', 'warning');
+  if (_bb) { _bb.bannedDonorNid = (found && (String(found.donor_status) === 'مرفوض' || String(found.donor_status) === 'موجل')) ? nid : null; _bb.bannedDonorStatus = _bb.bannedDonorNid ? String(found.donor_status) : ''; }
   const btLine = found && found.blood_type
     ? ` — الفصيلة: <b style="color:#8e44ad">${esc(found.blood_type)}</b>`
     : (found ? ' — <span style="color:#b7950b">الفصيلة غير محددة بعد (تُسجَّل من الفحص)</span>' : '');
-  derivedEl.innerHTML = `<div style="background:#eaf7f0;border:1px solid #a9dfbf;color:#1e8449;padding:6px 10px;border-radius:8px;font-size:12px;margin-bottom:8px">
+  derivedEl.innerHTML = (statusBanner || '') + `<div style="background:#eaf7f0;border:1px solid #a9dfbf;color:#1e8449;padding:6px 10px;border-radius:8px;font-size:12px;margin-bottom:8px">
     <i class="fas fa-id-card" style="margin-left:4px"></i> <b>${esc(parsed.governorate)}</b> — تاريخ الميلاد: <b dir="ltr">${parsed.birthDate}</b> — السن: <b>${parsed.age} سنة</b> — النوع: <b>${parsed.gender}</b>
     ${btLine}
     ${found ? ' — <b>متبرع مسجّل</b> (بياناته مُعبأة)' : ' — <span style="color:#b7950b">متبرع جديد — أدخل بياناته</span>'}
@@ -9966,7 +9975,7 @@ async function bbDNidSearch() {
     if (donations.length) {
       donationsEl.innerHTML = `<div style="font-size:12px;font-weight:700;color:#1e8449;margin:4px 0"><i class="fas fa-history"></i> سجل التبرعات السابقة (${donations.length})</div>
         <table class="data-table" style="width:100%;font-size:11px;margin-bottom:8px"><thead><tr><th>التاريخ</th><th>القرار</th><th>الملاحظات</th></tr></thead><tbody>
-        ${donations.slice(0, 5).map(d => `<tr><td>${esc(String(d.collected_at || d.created_at || '').slice(0, 10))}</td><td>${esc(d.status || 'تبرع')}</td><td>${esc(d.defer_reason || '—')}</td></tr>`).join('')}
+        ${donations.slice(0, 5).map(d => `<tr><td>${esc(String(d.collected_at || d.created_at || '').slice(0, 10))}</td><td>${esc(d.status || 'تبرع')}</td><td>${esc(d.deferral_reason || d.defer_reason || '—')}</td></tr>`).join('')}
         </tbody></table>`;
     } else donationsEl.innerHTML = '';
   }
@@ -10017,7 +10026,7 @@ async function bbDNidSearch() {
       if (todayStr < nextDon) {
         forceDefer = true;
         autoDays = bbDaysBetween(todayStr, nextDon);
-        autoReason = 'لم تمضِ مدة الأمان منذ آخر تبرع';
+        autoReason = bbCooldownReason(parsed.gender, lastDon, nextDon);
       }
     } else if (cooldownEl) cooldownEl.style.display = 'none';
   }
@@ -10040,7 +10049,7 @@ function bbDNidClear() {
   ['bbD_name', 'bbD_address', 'bbD_phone', 'bbD_age', 'bbD_gender', 'bbD_deferReason', 'bbD_deferDays', 'bbD_returnDate', 'bbD_refuseReason', 'bbD_lastDon', 'bbD_nextDon'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   ['bbD_bt'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   const now = document.getElementById('bbD_now'); if (now) now.checked = true;
-  if (_bb) _bb.bannedDonorNid = null;
+  if (_bb) { _bb.bannedDonorNid = null; _bb.bannedDonorStatus = ''; }
   bbDDecisionChanged();
 }
 function bbDCollect() {
@@ -10051,7 +10060,10 @@ function bbDCollect() {
   if (!/^\d{14}$/.test(nid)) { showToast('❌ الرقم الطبي يجب أن يكون 14 رقماً', 'error'); return 'ERROR'; }
   const parsed = parseNationalId(nid);
   if (!parsed) { showToast('❌ رقم طبي غير صالح', 'error'); return 'ERROR'; }
-  if (_bb && _bb.bannedDonorNid === nid) { showToast('❌ المتبرع ممنوع من التبرع', 'error'); return 'ERROR'; }
+  if (_bb && _bb.bannedDonorNid === nid) {
+    showToast(_bb.bannedDonorStatus === 'موجل' ? '❌ المتبرع موجل — لا يمكن بدء تجميع جديد (ممنوع حتى تاريخ العودة)' : '❌ المتبرع ممنوع من التبرع (قرار مرفوض) — لا يمكن بدء تجميع جديد', 'error');
+    return 'ERROR';
+  }
   const defer = document.getElementById('bbD_defer'), refused = document.getElementById('bbD_refused');
   let decision = refused && refused.checked ? 'مرفوض' : (defer && defer.checked ? 'موجل' : 'مقبول');
   const v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
@@ -10076,9 +10088,9 @@ function bbDCollect() {
     } else {
       const lastDon = v('bbD_lastDon'), nextDon = v('bbD_nextDon');
       if (nextDon && todayStr < nextDon) {
-        forceDefer('لم تمضِ مدة الأمان منذ آخر تبرع', Math.max(1, bbDaysBetween(todayStr, nextDon)), nextDon);
+        forceDefer(bbCooldownReason(parsed.gender, lastDon, nextDon), Math.max(1, bbDaysBetween(todayStr, nextDon)), nextDon);
       } else if (lastDon && !nextDon) {
-        forceDefer('لم تمضِ مدة الأمان منذ آخر تبرع', 0, '');
+        forceDefer(bbCooldownReason(parsed.gender, lastDon, bbAddDays(lastDon, parsed.gender === 'أنثى' ? 120 : 90)), 0, '');
       }
     }
   }
@@ -10440,14 +10452,19 @@ async function bbDoCollect() {
       expiry_date: exp || null
     });
   }
-  if (!bags.length) { showToast('❌ أضف كيس واحد على الأقل', 'error'); return; }
-  if (missing.length) { showToast('❌ أكمل البيانات الناقصة: ' + missing.join('، '), 'error'); return; }
   const dc = bbDCollect();
   if (dc === 'ERROR') return;
   if (dc && dc.decision !== 'مقبول') {
-    showToast('❌ لا يمكن الحفظ — قرار التبرع يجب أن يكون «مقبول» (القرار الحالي: «' + (dc.decision || 'غير محدد') + '»). اختر «مقبول» لتسجيل التبرع والأكياس', 'error');
+    try {
+      await api('POST', '/donations', { donor: dc.donor, screening: dc.screening, decision: dc.decision });
+      showToast('✅ تم تسجيل بيانات المتبرع (' + ((dc.donor && (dc.donor.name || dc.donor.national_id)) || '') + ') — بدون أكياس');
+      bbDNidClear();
+      await bbCollect();
+    } catch (e) { showToast('❌ ' + e.message, 'error'); }
     return;
   }
+  if (!bags.length) { showToast('❌ أضف كيس واحد على الأقل', 'error'); return; }
+  if (missing.length) { showToast('❌ أكمل البيانات الناقصة: ' + missing.join('، '), 'error'); return; }
   try {
     const r = await api('POST', '/blood-bags', Object.assign({ hospitalId, collectionDate, bags }, dc ? { donor: dc.donor, screening: dc.screening, decision: dc.decision } : {}));
     const comps = r.bags || [];
@@ -12131,7 +12148,7 @@ async function bbPreviewMonthly() {
       html += `<div class="card" style="margin-bottom:14px"><div class="card-header" style="padding:10px 16px;background:#c0392b22;color:#c0392b"><strong><i class="fas fa-chart-simple" style="margin-left:6px"></i> مؤشرات تجميعيه (${BB_MONTHS_AR[month - 1]} ${year})</strong></div>
       <div class="card-body table-scroll"><table class="data-table" style="font-size:12px">        <thead><tr><th>بنك الدم</th><th>المحافظة</th><th>إجمالي التجميع</th><th>وارد</th><th>تبرع علاجي</th><th>لم يكتمل</th><th>دهون</th><th>صفراء</th><th>سي</th><th>بي</th><th>ايدز</th><th>زهري</th><th>فحوصات الدم</th><th>مرتجع</th><th>تفاعل</th><th>نظام مفتوح</th><th>إعدامات أخرى</th></tr></thead><tbody>
       ${big.map(hid => { const d = r.big[hid]; return `<tr><td style="text-align:right;font-weight:600">${esc(hosp[hid]?.name || '')}</td><td style="text-align:center">${esc(hosp[hid]?.governorate || '')}</td>
-      <td style="text-align:center;font-weight:700">${d.collect_total || 0}</td><td style="text-align:center;font-weight:700;color:#2e86c1">${d.inc_regional || 0}</td><td style="text-align:center">${d.donation_therapeutic || 0}</td><td style="text-align:center">${d.uncompleted || 0}</td>
+      <td style="text-align:center;font-weight:700">${d.collect_total || 0}</td><td style="text-align:center;font-weight:700;color:#2e86c1">${(d.inc_blood + d.inc_plasma + d.inc_sdp + d.inc_rdp) || 0}</td><td style="text-align:center">${d.donation_therapeutic || 0}</td><td style="text-align:center">${d.uncompleted || 0}</td>
       <td style="text-align:center">${d.refused_fatty || 0}</td><td style="text-align:center">${d.refused_icteric || 0}</td><td style="text-align:center">${d.virology_c || 0}</td>
       <td style="text-align:center">${d.virology_b || 0}</td><td style="text-align:center">${d.virology_i || 0}</td><td style="text-align:center">${d.virology_dollar || 0}</td>
       <td style="text-align:center">${d.blood_groups || 0}</td><td style="text-align:center">${d.disp_returned || 0}</td><td style="text-align:center">${d.disp_reaction || 0}</td><td style="text-align:center">${d.disp_open || 0}</td><td style="text-align:center;font-weight:700;color:#c0392b">${d.disp_other || 0}</td></tr>`; }).join('')}
